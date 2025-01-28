@@ -1,6 +1,7 @@
+// widgets/bottom_nav_bar.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/navigation_provider.dart';
+import 'package:get/get.dart';
+import '../controllers/navigation_controller.dart';
 import '../utils/constants.dart';
 import '../screens/add_event/add_event_screen.dart';
 import '../screens/add_post/add_post_screen.dart';
@@ -8,41 +9,31 @@ import '../screens/add_post/add_post_screen.dart';
 class BottomNavbar extends StatelessWidget {
   const BottomNavbar({Key? key}) : super(key: key);
 
-  void _showAddOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.event),
-                title: const Text('Add Event'),
-                onTap: () {
-                  Navigator.of(ctx).pop(); // Close the modal
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AddEventScreen(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.post_add),
-                title: const Text('Add Post'),
-                onTap: () {
-                  Navigator.of(ctx).pop(); // Close the modal
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AddPostScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
+  void _showAddOptions() {
+    Get.bottomSheet(
+      SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.event),
+              title: const Text('Add Event'),
+              onTap: () {
+                Get.back(); // Close the bottom sheet
+                Get.to(() => const AddEventScreen());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.post_add),
+              title: const Text('Add Post'),
+              onTap: () {
+                Get.back(); // Close the bottom sheet
+                Get.to(() => const AddPostScreen());
+              },
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.white,
     );
   }
 
@@ -71,49 +62,55 @@ class BottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final navigationProvider = Provider.of<NavigationProvider>(context);
-    int currentIndex =
-        _mapProviderIndexToBottomNav(navigationProvider.currentIndex);
+    final NavigationController navigationController = Get.find();
 
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (index) {
-        if (index == 2) {
-          // 'Add' button tapped
-          _showAddOptions(context);
-        } else {
-          final newIndex = _mapBottomNavToProviderIndex(index);
-          if (newIndex != null) {
-            navigationProvider.updateIndex(newIndex);
-          }
-        }
+    return Obx(
+      () {
+        int currentIndex = _mapProviderIndexToBottomNav(
+            navigationController.currentIndex.value);
+
+        return BottomNavigationBar(
+          currentIndex: currentIndex,
+          onTap: (index) {
+            if (index == 2) {
+              // 'Add' button tapped
+              _showAddOptions();
+            } else {
+              final newIndex = _mapBottomNavToProviderIndex(index);
+              if (newIndex != null) {
+                navigationController.updateIndex(newIndex);
+              }
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: Constants.home,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: Constants.search,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle, size: 36), // Larger icon for 'Add'
+              label: '', // No label for 'Add'
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.message),
+              label: Constants.messaging,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: Constants.profile,
+            ),
+          ],
+          selectedItemColor: Constants.primaryColor,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: false,
+          showSelectedLabels: false,
+          type: BottomNavigationBarType.fixed,
+        );
       },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: Constants.home,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: Constants.search,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle, size: 36), // Larger icon for 'Add'
-          label: '', // No label for 'Add'
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.message),
-          label: Constants.messaging,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: Constants.profile,
-        ),
-      ],
-      selectedItemColor: Constants.primaryColor,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
     );
   }
 }
