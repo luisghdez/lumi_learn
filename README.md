@@ -1,6 +1,6 @@
-# Vibra
+# Lumi Learn
 
-Welcome to **Vibra**! This is a Flutter-based application. Follow these instructions to set up the project on your local machine.
+Welcome to **Lumi Learn**! This is a Flutter-based application. Follow these instructions to set up the project on your local machine.
 
 ## Getting Started
 
@@ -16,7 +16,7 @@ Welcome to **Vibra**! This is a Flutter-based application. Follow these instruct
    Clone the repository from GitHub to your local machine using the following command:
 
    ```bash
-   git clone git@github.com:luisghdez/vibra_app.git
+   git clone git@github.com:luisghdez/lumi_learn.git
 
 2. **Install Dependencies**
    ```bash
