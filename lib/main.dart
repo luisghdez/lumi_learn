@@ -1,16 +1,13 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vibra_app/screens/messaging/messaging_screen.dart';
 import 'controllers/navigation_controller.dart';
 import 'screens/home/home_screen.dart';
-import 'screens/search/search_screen.dart';
+import 'screens/social/social_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'utils/constants.dart';
 
 void main() {
-  // Initialize the NavigationController using GetX
   Get.put(NavigationController());
   runApp(const MyApp());
 }
@@ -20,11 +17,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use GetMaterialApp instead of MaterialApp
     return GetMaterialApp(
-      title: 'Clean Navbar App',
+      title: 'Lumi Learn',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        // make dark theme the default
+        brightness: Brightness.dark,
       ),
       home: const MainScreen(),
     );
@@ -45,12 +43,11 @@ class MainScreen extends StatelessWidget {
           children: const [
             HomeScreen(),
             SearchScreen(),
-            MessagingScreen(),
             ProfileScreen(),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavbar(),
+      bottomNavigationBar: const BottomNavbar(),
     );
   }
 }

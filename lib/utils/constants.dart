@@ -5,7 +5,8 @@ class Constants {
   static const String search = 'Search';
   static const String profile = 'Profile';
   static const String messaging = 'Messaging';
-  static const String settings = '';
+  static const String settings = 'Settings';
+  static const String social = 'Social';
 
   static const primaryColor = Color(0xFF6200EE);
 }
