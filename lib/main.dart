@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         // make dark theme the default
         brightness: Brightness.dark,
+        fontFamily: 'Poppins',
       ),
       home: const MainScreen(),
     );

@@ -7,10 +7,22 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: const Text(
-        'Welcome to the Home Screen!',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      alignment: Alignment.centerLeft,
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          Text(
+            'Welcome onboard \$userName!',
+            style: TextStyle(
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            '\$userName!',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }

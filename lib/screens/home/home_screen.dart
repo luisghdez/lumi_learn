@@ -1,5 +1,10 @@
-// lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:vibra_app/screens/courses/add_course_screen.dart';
+import 'package:vibra_app/screens/courses/course_overview_screen.dart';
+import 'package:vibra_app/widgets/app_scaffold.dart';
+// Assuming you have these
+
 import 'components/home_header.dart';
 import 'widgets/home_widget.dart';
 
@@ -8,16 +13,57 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Main layout of the Home Screen
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-      ),
-      body: const Column(
+    return AppScaffold(
+      body: Column(
         children: [
-          HomeHeader(),
-          Expanded(
-            child: HomeWidget(),
+          const HomeHeader(),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Top Picks',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text('Lets explore our courses!'),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  // Navigate to AddCourseScreen
+                  Get.to(() => AddCourseScreen());
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // A Card that the user can tap to go to CourseOverviewScreen
+          InkWell(
+            onTap: () {
+              // Navigate to CourseOverviewScreen
+              Get.to(() => CourseOverviewScreen());
+            },
+            child: Card(
+              color: Colors.teal[300], // A colored card
+              child: const SizedBox(
+                height: 100, // Adjust as desired
+                child: Center(
+                  child: Text(
+                    'View a Course Overview',
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

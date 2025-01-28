@@ -34,10 +34,11 @@ class BottomNavbar extends StatelessWidget {
               label: Constants.profile,
             ),
           ],
-          selectedItemColor: Constants.primaryColor,
-          unselectedItemColor: Colors.grey,
+          selectedItemColor: const Color.fromARGB(255, 255, 255, 255),
+          unselectedItemColor: const Color.fromARGB(255, 112, 112, 112),
           showUnselectedLabels: false,
           showSelectedLabels: false,
+          iconSize: 30,
           type: BottomNavigationBarType.fixed,
         );
       },
