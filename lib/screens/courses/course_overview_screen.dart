@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vibra_app/screens/courses/lessons/lesson_screen.dart';
-import 'package:vibra_app/widgets/app_scaffold.dart';
+import 'package:vibra_app/widgets/starry_app_scaffold.dart';
 
 class CourseOverviewScreen extends StatelessWidget {
   const CourseOverviewScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Course Overview'),
-      ),
+    return StarryAppScaffold(
       body: Center(
         child: Wrap(
           spacing: 20.0,
