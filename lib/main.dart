@@ -6,6 +6,7 @@ import 'screens/social/social_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'utils/constants.dart';
+import 'screens/launch/launch_screen.dart';
 
 void main() {
   Get.put(NavigationController());
@@ -41,14 +42,15 @@ class MainScreen extends StatelessWidget {
       body: Obx(
         () => IndexedStack(
           index: navigationController.currentIndex.value,
-          children: const [
-            HomeScreen(),
-            SearchScreen(),
-            ProfileScreen(),
+          children: [
+            LaunchScreen(),
+            const HomeScreen(),
+            const SearchScreen(),
+            const ProfileScreen(),
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavbar(),
+      // bottomNavigationBar: const BottomNavbar(),
     );
   }
 }
