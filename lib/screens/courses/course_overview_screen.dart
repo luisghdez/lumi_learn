@@ -10,24 +10,25 @@ class CourseOverviewScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StarryAppScaffold(
       body: Center(
-        child: Wrap(
-          spacing: 20.0,
-          runSpacing: 20.0,
-          children: List.generate(10, (index) {
-            return GestureDetector(
-              onTap: () {
-                Get.to(() => LessonScreen());
-              },
-              child: CircleAvatar(
-                radius: 30.0,
-                backgroundColor: const Color.fromARGB(255, 133, 175, 209),
-                child: Text(
-                  '${index + 1}',
-                  style: const TextStyle(color: Colors.white, fontSize: 20.0),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+          child: Row(
+            children: List.generate(10, (index) {
+              return GestureDetector(
+                onTap: () {
+                  Get.to(() => LessonScreen());
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10.0), // Add spacing between items
+                  child: Image.asset(
+                    'assets/planets/red1.png',
+                    width: 100.0, // Set the width of the image
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );
