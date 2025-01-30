@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:vibra_app/screens/courses/lessons/lesson_screen.dart';
 import 'package:vibra_app/widgets/starry_app_scaffold.dart';
 import 'package:vibra_app/controllers/course_controller.dart';
+import 'package:vibra_app/data/assets_data.dart'; // Import the data file
 
 class CourseOverviewScreen extends StatefulWidget {
   const CourseOverviewScreen({Key? key}) : super(key: key);
@@ -19,13 +20,16 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   int? _selectedLessonIndex;
 
   // Initialize StarPainter once
-  final StarPainter _starPainter = StarPainter(starCount: 500);
+  final StarPainter _starPainter = StarPainter(starCount: 200);
 
   void _onPlanetTap(int index) {
     setState(() {
       _isPanelVisible = true;
       _selectedLessonIndex = index;
     });
+
+    // Set the active planet in the controller
+    courseController.setActivePlanet(index);
   }
 
   void _closePanel() {
@@ -40,7 +44,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     final double frequency = pi / 3;
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final totalWidth = 20 * 200.0; // Adjust based on item count and spacing
+    final totalWidth =
+        planets.length * 200.0; // Adjust based on item count and spacing
 
     return StarryAppScaffold(
       body: Stack(
@@ -61,7 +66,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                     ),
                   ),
                   // Planets
-                  ...List.generate(20, (index) {
+                  ...List.generate(planets.length, (index) {
                     final offsetY = amplitude * sin(index * frequency + pi / 2);
                     final xPosition = index * 200.0; // Horizontal spacing
 
@@ -73,7 +78,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       child: GestureDetector(
                         onTap: () {
                           _onPlanetTap(index);
-                          courseController.setSelectedLesson(index);
                         },
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -81,17 +85,18 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                             Container(
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 4,
-                                    offset: Offset(2, 2),
-                                  ),
-                                ],
+                                // boxShadow: [
+                                //   BoxShadow(
+                                //     color: Colors.black26,
+                                //     blurRadius: 4,
+                                //     offset: Offset(2, 2),
+                                //   ),
+                                // ],
                               ),
                               child: ClipOval(
                                 child: Image.asset(
-                                  'assets/planets/red1.png',
+                                  planets[index]
+                                      .imagePath, // Use planet image from assets_data.dart
                                   width: 100.0,
                                   height: 100.0,
                                   fit: BoxFit.cover,
@@ -100,7 +105,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                             ),
                             const SizedBox(height: 8.0),
                             Text(
-                              'Lesson ${index + 1}',
+                              "Lesson ${index + 1}",
+                              // planets[index].name, // Use planet name from assets_data.dart
                               style: const TextStyle(
                                 fontSize: 16.0,
                                 fontWeight: FontWeight.w500,
@@ -116,22 +122,25 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
             ),
           ),
           // Bottom Panel
+// Inside the CourseOverviewScreen's build method
+
+// Bottom Panel
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: _isPanelVisible ? 0 : -200, // Adjust height as needed
+            bottom: _isPanelVisible ? 0 : -250, // Adjust height as needed
             left: 0,
             right: 0,
             child: Container(
-              height: 200, // Height of the panel
+              height: 250, // Height of the panel
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color.fromARGB(119, 0, 0, 0),
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
+                    const BorderRadius.vertical(top: Radius.circular(30)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
+                    blurRadius: 20,
                     offset: const Offset(0, -5),
                   ),
                 ],
@@ -139,24 +148,96 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
               child: Column(
                 children: [
                   // Close button
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: _closePanel,
-                    ),
-                  ),
-                  // Display selected lesson number
-                  Center(
-                    child: Text(
-                      'Selected Lesson: ${_selectedLessonIndex != null ? _selectedLessonIndex! + 1 : 'None'}',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                  // Align(
+                  //   alignment: Alignment.topRight,
+                  //   child: IconButton(
+                  //     icon: const Icon(Icons.close),
+                  //     onPressed: _closePanel,
+                  //   ),
+                  // ),
+                  // Display the active planet image and lesson details
+                  Obx(() {
+                    final activePlanet = courseController.activePlanet.value;
+                    if (activePlanet == null) {
+                      return const Center(child: Text('No planet selected'));
+                    }
+
+                    return Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Row(
+                            children: [
+                              // Planet image
+                              ClipOval(
+                                child: Image.asset(
+                                  activePlanet.imagePath,
+                                  width: 160,
+                                  // height: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              // Lesson details
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment
+                                      .center, // Center vertically
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Lesson ${_selectedLessonIndex != null ? _selectedLessonIndex! + 1 : 'N/A'}',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 34,
+                                        // fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'In this lesson you will learn about blablabbsbsb',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // Start button
+                                    SizedBox(
+                                      width: double
+                                          .infinity, // Make the button take full width
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Get.to(() => LessonScreen());
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromARGB(
+                                              255, 255, 255, 255),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Start!',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color:
+                                                Color.fromARGB(255, 24, 24, 24),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  // Add more content here if needed
+                    );
+                  }),
                 ],
               ),
             ),

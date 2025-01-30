@@ -1,11 +1,12 @@
 import 'package:get/get.dart';
+import 'package:vibra_app/data/assets_data.dart'; // Import the data file
 
 class CourseController extends GetxController {
-  // Reactive variable to store the selected lesson index
-  RxInt selectedLessonIndex = 0.obs;
+  // Reactive variable to store the active planet
+  var activePlanet = Rxn<Planet>();
 
-  // Method to set the selected lesson index
-  void setSelectedLesson(int index) {
-    selectedLessonIndex.value = index;
+  // Method to set the active planet
+  void setActivePlanet(int index) {
+    activePlanet.value = planets[index];
   }
 }
