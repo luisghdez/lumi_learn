@@ -3,15 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vibra_app/controllers/course_controller.dart';
+import 'dart:ui'; // For ImageFilter
 
 class BottomPanel extends StatelessWidget {
   final int? selectedLessonIndex;
   final VoidCallback onStartPressed;
+  final VoidCallback onClose; // Added onClose callback
 
   const BottomPanel({
     Key? key,
     required this.selectedLessonIndex,
     required this.onStartPressed,
+    required this.onClose, // Require onClose in constructor
   }) : super(key: key);
 
   @override
@@ -65,15 +68,20 @@ class BottomPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize
               .min, // Allows the panel to size itself based on content
           children: [
-            // Optional: Add a drag handle for better UX (commonly seen in bottom sheets)
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
+            GestureDetector(
+              onTap: onClose, // Invoke the onClose callback
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.5), // Semi-transparent
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.only(bottom: 20),
+                ),
               ),
-              margin: const EdgeInsets.only(bottom: 20),
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

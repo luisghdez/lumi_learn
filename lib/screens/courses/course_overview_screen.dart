@@ -175,6 +175,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 onStartPressed: () {
                   Get.to(() => LessonScreen());
                 },
+                onClose: _closePanel,
               ),
             ),
           ],
