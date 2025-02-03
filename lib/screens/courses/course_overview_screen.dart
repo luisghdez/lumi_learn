@@ -118,7 +118,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       Positioned.fill(
                         child: RocketAnimation(
                           planetCenter: _planetCenters[_selectedLessonIndex!],
-                          planetRadius: 20.0, // half of 100.0
+                          planetRadius: 12.0, // adjust radius
                           isActive: _isPanelVisible,
                         ),
                       ),
