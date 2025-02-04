@@ -28,9 +28,11 @@ class BottomPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color.fromARGB(140, 0, 0, 0),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2), // Light top border color
-              width: 1, // Adjust thickness as needed
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
             ),
           ),
           child: activePlanet == null
@@ -56,12 +58,12 @@ class BottomPanel extends StatelessWidget {
                           ClipOval(
                             child: Image.asset(
                               activePlanet.imagePath,
-                              width: 140,
-                              height: 140,
+                              width: 120,
+                              height: 120,
                               fit: BoxFit.contain,
                             ),
                           ),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +71,7 @@ class BottomPanel extends StatelessWidget {
                                 Text(
                                   'Lesson ${selectedLessonIndex != null ? selectedLessonIndex! + 1 : 'N/A'}',
                                   style: const TextStyle(
-                                    fontSize: 28,
+                                    fontSize: 24,
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -78,11 +80,11 @@ class BottomPanel extends StatelessWidget {
                                 const Text(
                                   'In this lesson you will learn about various fascinating topics related to your course.',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 12,
                                     color: Colors.grey,
                                   ),
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 8),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
@@ -90,11 +92,11 @@ class BottomPanel extends StatelessWidget {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 14,
+                                        horizontal: 16,
+                                        vertical: 0,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
                                     ),
                                     child: const Text(
@@ -102,7 +104,7 @@ class BottomPanel extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Color.fromARGB(255, 24, 24, 24),
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.normal,
                                       ),
                                     ),
                                   ),
@@ -112,7 +114,7 @@ class BottomPanel extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                     ],
                   ),
                 ),
