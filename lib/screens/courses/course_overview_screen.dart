@@ -34,14 +34,14 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Horizontal wave layout
+    // Horizontal wave layout parameters
     final double amplitude = 180.0;
     final double frequency = pi / 3;
 
-    // Calculate total width to hold all planets side by side
+    // Total width to hold all planets side by side
     final totalWidth = planets.length * 200.0;
 
-    // We’ll recalc _planetCenters each build
+    // Recalculate planet centers each build
     _planetCenters.clear();
 
     return StarryAppScaffold(
@@ -50,7 +50,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
         onTapDown: (details) => _handleTapDown(context, details),
         child: Stack(
           children: [
-            // SCROLLABLE HORIZONTAL
+            // Scrollable horizontal content
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
@@ -58,13 +58,12 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 height: screenHeight,
                 child: Stack(
                   children: [
-                    // Star background
+                    // Starry background
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _starPainter,
                       ),
                     ),
-
                     // Planets
                     ...List.generate(planets.length, (index) {
                       final offsetY =
@@ -73,7 +72,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       final planetTop = screenHeight / 2 - offsetY - 60;
                       final planetSize = 100.0;
 
-                      // planet center in the local coordinate system
+                      // Determine planet center in local coordinates
                       final planetCenter = Offset(
                         planetLeft + planetSize / 2,
                         planetTop + planetSize / 2,
@@ -110,24 +109,22 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         ),
                       );
                     }),
-
                     // --- ROCKET ANIMATION ---
-                    if (_selectedLessonIndex != null)
-                      // We fill the entire stack so we can
-                      // position the rocket freely in local coords
-                      Positioned.fill(
-                        child: RocketAnimation(
-                          planetCenter: _planetCenters[_selectedLessonIndex!],
-                          planetRadius: 16.0, // adjust radius
-                          isActive: _isPanelVisible,
-                        ),
-                      ),
+                    Positioned.fill(
+                      child: _selectedLessonIndex == null
+                          ? const SizedBox()
+                          : RocketAnimation(
+                              planetCenter:
+                                  _planetCenters[_selectedLessonIndex!],
+                              planetRadius: 16.0, // Adjust as needed
+                              isActive: _isPanelVisible,
+                            ),
+                    ),
                   ],
                 ),
               ),
             ),
-
-            // BOTTOM PANEL (outside the scroll area)
+            // BOTTOM PANEL (positioned outside the scroll area)
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
@@ -149,10 +146,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     );
   }
 
-  // Show/hide bottom panel
+  // When a planet is tapped, hide the panel (and rocket) then show the new one.
   void _onPlanetTap(int index) {
     if (_selectedLessonIndex == index && _isPanelVisible) {
-      // same planet tapped, do nothing
+      // Same planet tapped; do nothing.
       return;
     } else {
       setState(() {
@@ -168,7 +165,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     }
   }
 
-  // Panel outside-tap detection
+  // Detect taps outside the bottom panel to close it.
   void _handleTapDown(BuildContext context, TapDownDetails details) {
     if (!_isPanelVisible) return;
 
@@ -190,9 +187,18 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     }
   }
 
+  // Closes the panel, which causes the rocket to fade out.
   void _closePanel() {
+    // Step 1: Trigger the fade-out by going from 1.0 -> 0.0
     setState(() {
       _isPanelVisible = false;
     });
+
+    // Step 2: After the 300ms animation completes, remove the rocket widget
+    // Future.delayed(const Duration(milliseconds: 300), () {
+    //   setState(() {
+    //     _selectedLessonIndex = null;
+    //   });
+    // });
   }
 }
