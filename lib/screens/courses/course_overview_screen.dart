@@ -116,7 +116,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           : RocketAnimation(
                               planetCenter:
                                   _planetCenters[_selectedLessonIndex!],
-                              planetRadius: 16.0, // Adjust as needed
+                              planetRadius: 20.0, // Adjust as needed
                               isActive: _isPanelVisible,
                             ),
                     ),

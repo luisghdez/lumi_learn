@@ -76,12 +76,10 @@ class _RocketAnimationState extends State<RocketAnimation>
       }
     });
 
-    // Each orbit tick triggers new frames
     _orbitController.addListener(() {
-      // We always call setState so that smoke puffs will fade with time
       setState(() {
-        // If rocket is scaled out or not active, skip creating new puffs
-        if (widget.isActive && _rocketScale.value > 0) {
+        // As long as the rocket isn't fully at zero scale, keep making puffs
+        if (_rocketScale.value > 0) {
           _maybeCreateSmokePuff();
         }
         _updateSmokePuffs();
@@ -110,7 +108,6 @@ class _RocketAnimationState extends State<RocketAnimation>
     super.dispose();
   }
 
-  /// Generate a smoke puff occasionally
   void _maybeCreateSmokePuff() {
     final currentValue = _orbitController.value;
     // Add a puff every ~1/40 of a rotation
@@ -121,7 +118,15 @@ class _RocketAnimationState extends State<RocketAnimation>
         widget.planetCenter.dx + orbitRadius * cos(angle),
         widget.planetCenter.dy + orbitRadius * sin(angle),
       );
-      _smokePuffs.add(_SmokePuff(position: rocketOffset));
+
+      // Capture the current rocket scale at creation time
+      _smokePuffs.add(
+        _SmokePuff(
+          position: rocketOffset,
+          creationRocketScale:
+              _rocketScale.value, // <--- store rocketScale right now
+        ),
+      );
     }
   }
 
@@ -227,15 +232,17 @@ class _RocketAnimationState extends State<RocketAnimation>
   }
 }
 
-// Your original smoke puff model
 class _SmokePuff {
   final Offset position;
+  final double creationRocketScale; // <--- new
   final DateTime creationTime = DateTime.now();
 
-  _SmokePuff({required this.position});
+  _SmokePuff({
+    required this.position,
+    required this.creationRocketScale, // <--- capture the rocket scale
+  });
 }
 
-// Same painter as before, using scaleFor() & opacityFor() to animate
 class _SmokePuffPainter extends CustomPainter {
   final List<_SmokePuff> puffs;
   final double Function(double) scaleFor;
@@ -260,9 +267,17 @@ class _SmokePuffPainter extends CustomPainter {
       final age = now.difference(puff.creationTime).inMilliseconds / 2500.0;
       if (age > 1.0) continue; // puff fully faded
 
-      final s = scaleFor(age);
+      // Normal growth-based scale from your "scaleFor(age)" ...
+      final ageScale = scaleFor(age);
+
+      // ... multiplied by the rocket scale *at* the puff's creation
+      final s = ageScale * puff.creationRocketScale;
+
+      // Opacity + color remain the same
       final opacity = opacityFor(age);
       final color = colorFor(age).withOpacity(opacity);
+
+      // This radius no longer depends on the rocket's *current* scale
       final radius = 7.0 * scaleFactor * s;
 
       paint.color = color;
@@ -272,6 +287,7 @@ class _SmokePuffPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SmokePuffPainter oldDelegate) {
+    // Repaint if new puffs appear or something else changes
     return oldDelegate.puffs.length != puffs.length;
   }
 }
