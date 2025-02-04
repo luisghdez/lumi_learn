@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:vibra_app/screens/courses/lessons/lesson_screen.dart';
 import 'package:vibra_app/widgets/bottom_panel.dart';
+import 'package:vibra_app/widgets/course_overview_header.dart';
 import 'package:vibra_app/widgets/star_painter.dart';
 import 'package:vibra_app/widgets/starry_app_scaffold.dart';
 import 'package:vibra_app/controllers/course_controller.dart';
@@ -139,6 +140,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 },
                 onClose: _closePanel,
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CourseOverviewHeader(
+                  onBack: () => Get.back(), lessonTitle: "Math"),
             ),
           ],
         ),
