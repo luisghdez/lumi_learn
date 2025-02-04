@@ -46,7 +46,7 @@ class CourseOverviewHeader extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      vertical: 20.0, horizontal: 20.0),
+                      vertical: 14.0, horizontal: 14.0),
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(

@@ -16,13 +16,15 @@ class StarryAppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: appBar,
-      // floatingActionButton: floatingActionButton,
-      // Wrap the body in Padding
-      body: SafeArea(
-        child: Stack(
-          children: [const GalaxyBackground(), body],
-        ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: GalaxyBackground()),
+          SafeArea(
+            bottom: false,
+            child: body,
+          ),
+        ],
       ),
     );
   }
