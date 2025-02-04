@@ -27,12 +27,16 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     'Top Picks',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   SizedBox(height: 10),
-                  Text('Lets explore our courses!'),
+                  Text('Lets explore our courses!',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.white)),
                 ],
               ),
               IconButton(

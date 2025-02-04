@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'controllers/navigation_controller.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/social/social_screen.dart';
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         // make dark theme the default
         brightness: Brightness.dark,
-        fontFamily: 'Poppins',
+        textTheme: GoogleFonts.poppinsTextTheme(),
       ),
       home: const MainScreen(),
     );
