@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/options_list.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/question_card.dart';
 
 class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
@@ -38,7 +41,7 @@ class MultipleChoiceScreen extends StatelessWidget {
               width: double.infinity,
               child: Stack(
                 children: [
-                  // 1) Background image
+                  // Background image
                   Positioned.fill(
                     child: Image.asset(
                       'assets/bg/red1bg.png',
@@ -46,7 +49,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // 2) Gradient overlay
+                  // Gradient overlay
                   Positioned.fill(
                     child: Container(
                       decoration: const BoxDecoration(
@@ -62,24 +65,23 @@ class MultipleChoiceScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // 3) Question card, pinned to the left side
+                  // Question card
                   Positioned(
                     left: 16,
-                    top: 60, // Adjust as needed
-                    child: Container(
-                      width:
-                          MediaQuery.of(context).size.width * 0.70, // Optional
-                      child: _buildQuestionCard(),
+                    top: 60,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.65,
+                      child: QuestionCard(questionText: question.questionText),
                     ),
                   ),
 
-                  // 4) Astronaut image, bigger, at bottom right
+                  // Astronaut image
                   Positioned(
                     bottom: 0,
                     right: 16,
                     child: Image.asset(
                       'assets/astronaut/pointing.png',
-                      width: 120, // Make astronaut bigger
+                      width: 120,
                     ),
                   ),
                 ],
@@ -93,122 +95,20 @@ class MultipleChoiceScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: _buildOptionsList()),
-                    _buildSubmitButton(context),
+                    Expanded(
+                      child: OptionsList(
+                        options: question.options,
+                        selectedOption: _selectedOption,
+                      ),
+                    ),
+                    NextButton(
+                      onPressed: () => _submitAnswer(context),
+                    ),
                   ],
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  // Question card widget
-  Widget _buildQuestionCard() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        question.questionText,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14.0,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  // Options list
-  Widget _buildOptionsList() {
-    return ValueListenableBuilder<int>(
-      valueListenable: _selectedOption,
-      builder: (context, selected, _) {
-        return ListView.builder(
-          padding: const EdgeInsets.only(top: 16.0),
-          itemCount: question.options.length,
-          itemBuilder: (context, index) {
-            final optionText = question.options[index];
-            final isSelected = selected == index;
-            return GestureDetector(
-              onTap: () => _selectedOption.value = index,
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 8.0),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(122, 0, 0, 0),
-                  borderRadius: BorderRadius.circular(36.0),
-                  border: isSelected
-                      ? Border.all(
-                          color: Colors.white,
-                          width: 1,
-                        )
-                      : Border.all(
-                          color: const Color.fromARGB(81, 158, 158, 158),
-                        ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor:
-                          isSelected ? Colors.white : const Color(0xFF4A4A4A),
-                      child: Text(
-                        String.fromCharCode(65 + index), // A, B, C, ...
-                        style: TextStyle(
-                          color: isSelected ? Colors.black : Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        optionText,
-                        style: const TextStyle(
-                          color: Color.fromARGB(221, 244, 244, 244),
-                          fontSize: 16.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // Submit button
-  Widget _buildSubmitButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () => _submitAnswer(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text(
-            'Next Question',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-            ),
-          ),
         ),
       ),
     );
