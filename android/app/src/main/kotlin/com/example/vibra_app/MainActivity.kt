@@ -1,4 +1,4 @@
-package com.example.vibra_app
+package com.example.lumi_learn_app
 
 import io.flutter.embedding.android.FlutterActivity
 

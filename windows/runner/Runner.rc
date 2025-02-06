@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "vibra_app" "\0"
+            VALUE "FileDescription", "lumi_learn_app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "vibra_app" "\0"
+            VALUE "InternalName", "lumi_learn_app" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "vibra_app.exe" "\0"
-            VALUE "ProductName", "vibra_app" "\0"
+            VALUE "OriginalFilename", "lumi_learn_app.exe" "\0"
+            VALUE "ProductName", "lumi_learn_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

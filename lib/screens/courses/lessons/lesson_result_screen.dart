@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vibra_app/screens/courses/course_overview_screen.dart';
+import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 
 class LessonResultScreen extends StatelessWidget {
   @override

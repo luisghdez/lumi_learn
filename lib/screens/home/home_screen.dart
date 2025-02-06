@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vibra_app/screens/courses/add_course_screen.dart';
-import 'package:vibra_app/screens/courses/course_overview_screen.dart';
-import 'package:vibra_app/widgets/app_scaffold.dart';
+import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
+import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 // Assuming you have these
 
 import 'components/home_header.dart';
