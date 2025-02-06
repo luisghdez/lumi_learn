@@ -27,7 +27,8 @@ class CourseController extends GetxController {
     // TODO replace with real service call to these questions
     return [
       Question(
-        questionText: 'What is the capital of France?',
+        questionText:
+            'What is the answer to this question if this was a long question of the question and a question?',
         options: ['Paris', 'London', 'Berlin', 'Madrid'],
         lessonType: LessonType.multipleChoice,
       ),
