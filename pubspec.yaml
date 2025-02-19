@@ -40,6 +40,7 @@ dependencies:
   get: ^4.6.6
   flutter_svg: ^2.0.17
   google_fonts: ^6.2.1
+  audio_waveforms: ^1.2.0
 
 dev_dependencies:
   flutter_test:

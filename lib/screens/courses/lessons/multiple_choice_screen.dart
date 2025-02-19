@@ -70,7 +70,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                     left: 16,
                     top: 60,
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.65,
+                      width: MediaQuery.of(context).size.width * 0.75,
                       child: QuestionCard(questionText: question.questionText),
                     ),
                   ),
@@ -78,7 +78,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                   // Astronaut image
                   Positioned(
                     bottom: 0,
-                    right: 16,
+                    right: 1,
                     child: Image.asset(
                       'assets/astronaut/pointing.png',
                       width: 120,

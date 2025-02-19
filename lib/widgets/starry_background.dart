@@ -68,10 +68,9 @@ class _GalaxyBackgroundState extends State<GalaxyBackground>
   }
 
   void _scheduleNextShootingStar() {
-    final nextInterval = Duration(milliseconds: 2000 + random.nextInt(5000));
+    final nextInterval = Duration(milliseconds: 2000 + random.nextInt(10000));
     _shootingStarTimer = Timer(nextInterval, () {
-      final numberOfStars =
-          1 + random.nextInt(3); // Spawn 1 to 3 shooting stars
+      const numberOfStars = 1; // Spawn 1 star
       for (int i = 0; i < numberOfStars; i++) {
         _addShootingStar();
       }

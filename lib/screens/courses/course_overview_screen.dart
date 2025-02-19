@@ -137,6 +137,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 selectedLessonIndex: _selectedLessonIndex,
                 onStartPressed: () {
                   Get.to(() => LessonScreenMain());
+                  _closePanel();
                 },
                 onClose: _closePanel,
               ),

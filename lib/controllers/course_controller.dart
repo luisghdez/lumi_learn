@@ -33,7 +33,7 @@ class CourseController extends GetxController {
         lessonType: LessonType.multipleChoice,
       ),
       Question(
-        questionText: 'Say the word “hello” in Spanish.',
+        questionText: 'Explain what you just learned in your own words.',
         options: [],
         lessonType: LessonType.speak,
       ),

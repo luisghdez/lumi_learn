@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'lesson_result_screen.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 
@@ -27,14 +28,13 @@ class LessonScreenMain extends StatelessWidget {
             },
           );
 
-        // case LessonType.speak:
-        //   return SpeakScreen(
-        //     question: currentQuestion,
-        //     onRecordingDone: () {
-        //       // Move to the next question by incrementing the controller’s observable
-        //       courseController.nextQuestion;
-        //     },
-        //   );
+        case LessonType.speak:
+          return SpeakScreen(
+            question: currentQuestion,
+            onSubmitAnswer: () {
+              courseController.nextQuestion;
+            },
+          );
 
         // Add more cases for other lesson types if needed
         default:
