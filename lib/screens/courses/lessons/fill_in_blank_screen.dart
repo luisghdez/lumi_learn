@@ -101,7 +101,7 @@ class _FillInBlankScreenState extends State<FillInBlankScreen> {
                     onTap: () => _selectOption(index),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 30),
+                          vertical: 18, horizontal: 30),
                       decoration: BoxDecoration(
                         color: Colors.black,
                         borderRadius: BorderRadius.circular(18),
