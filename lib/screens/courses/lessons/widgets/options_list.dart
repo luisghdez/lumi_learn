@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/constants.dart';
 
 class OptionsList extends StatelessWidget {
   final List<String> options;
@@ -31,14 +32,15 @@ class OptionsList extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(122, 0, 0, 0),
-                  borderRadius: BorderRadius.circular(36.0),
+                  borderRadius: BorderRadius.circular(32.0),
                   border: isSelected
                       ? Border.all(
                           color: Colors.white,
                           width: 1,
                         )
                       : Border.all(
-                          color: const Color.fromARGB(81, 158, 158, 158),
+                          // imported from contants.dart
+                          color: greyBorder,
                         ),
                 ),
                 child: Row(

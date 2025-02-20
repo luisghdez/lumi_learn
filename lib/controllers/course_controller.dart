@@ -37,10 +37,18 @@ class CourseController extends GetxController {
         options: [],
         lessonType: LessonType.speak,
       ),
-      // fill in the blank question
       Question(
-        questionText: 'The capital of Italy is ___.',
-        options: ['Rome', 'Paris', 'Berlin', 'Madrid', 'London'],
+        questionText:
+            'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
+        options: [
+          'Rome',
+          'Paris',
+          'Berlin',
+          'Madrid',
+          'London',
+          'Tokyo',
+          'New York City'
+        ],
         lessonType: LessonType.fillInTheBlank,
       ),
       // Type in everything you learned

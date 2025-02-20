@@ -3,7 +3,7 @@ import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/audio_widget.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/options_list.dart';
-import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble_black.dart';
 
 class SpeakScreen extends StatelessWidget {
   final Question question;
@@ -17,7 +17,6 @@ class SpeakScreen extends StatelessWidget {
 
   void _submitAnswer(BuildContext context) {
     if (_selectedOption.value != -1) {
-      print('Selected option: ${question.options[_selectedOption.value]}');
       onSubmitAnswer();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,10 +80,11 @@ class SpeakScreen extends StatelessWidget {
                     left: 100,
                     child: SizedBox(
                       width: MediaQuery.of(context).size.width * 0.55,
-                      child: SpeechBubble(
+                      child: SpeechBubbleBlack(
                         text: question.questionText,
-                        bubbleColor: Colors.white,
-                        textStyle: const TextStyle(color: Colors.black),
+                        bubbleColor: const Color.fromARGB(150, 0, 0, 0),
+                        textStyle: const TextStyle(
+                            color: Color.fromARGB(255, 255, 255, 255)),
                       ),
                     ),
                   ),

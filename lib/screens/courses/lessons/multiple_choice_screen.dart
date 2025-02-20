@@ -6,7 +6,7 @@ import 'package:lumi_learn_app/screens/courses/lessons/widgets/question_card.dar
 
 class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
-  final void Function() onSubmitAnswer;
+  final Function() onSubmitAnswer;
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
 
   MultipleChoiceScreen({

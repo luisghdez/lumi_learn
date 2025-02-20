@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/fill_in_blank_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'lesson_result_screen.dart';
@@ -24,7 +25,8 @@ class LessonScreenMain extends StatelessWidget {
           return MultipleChoiceScreen(
             question: currentQuestion,
             onSubmitAnswer: () {
-              courseController.nextQuestion;
+              // print('Submitting answer for multiple choice');
+              courseController.nextQuestion();
             },
           );
 
@@ -32,7 +34,15 @@ class LessonScreenMain extends StatelessWidget {
           return SpeakScreen(
             question: currentQuestion,
             onSubmitAnswer: () {
-              courseController.nextQuestion;
+              courseController.nextQuestion();
+            },
+          );
+
+        case LessonType.fillInTheBlank:
+          return FillInBlankScreen(
+            question: currentQuestion,
+            onSubmitAnswer: () {
+              courseController.nextQuestion();
             },
           );
 

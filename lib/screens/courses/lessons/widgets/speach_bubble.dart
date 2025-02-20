@@ -9,6 +9,7 @@ class SpeechBubble extends StatelessWidget {
     Key? key,
     required this.text,
     this.bubbleColor = Colors.white,
+    // align text in center of bubble
     this.textStyle = const TextStyle(color: Colors.black),
   }) : super(key: key);
 
@@ -19,10 +20,11 @@ class SpeechBubble extends StatelessWidget {
       child: Container(
         // Extra height on the left to avoid clipping the bubble tail
         margin: const EdgeInsets.only(left: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Text(
           text,
           style: textStyle,
+          textAlign: TextAlign.center,
         ),
       ),
     );

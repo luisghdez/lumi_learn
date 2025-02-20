@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/constants.dart';
 
 class AudioWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 140,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+      height: 160,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 22),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: greyBorder,
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -22,12 +27,14 @@ class AudioWidget extends StatelessWidget {
           ),
           // Microphone Icon Button
           Container(
+            width: 90,
+            height: 90,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white24, // Light circle behind mic icon
+              color: Colors.white24,
             ),
             child: IconButton(
-              icon: const Icon(Icons.mic, color: Colors.white, size: 50),
+              icon: const Icon(Icons.mic, color: Colors.white, size: 60),
               onPressed: () {
                 // TODO: Handle microphone tap
               },
@@ -71,9 +78,6 @@ class RealisticAudioWaveform extends StatelessWidget {
     30,
     50,
     20,
-    15,
-    10,
-    25,
     35,
   ];
 

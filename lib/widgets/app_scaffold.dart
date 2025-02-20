@@ -17,6 +17,8 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       appBar: appBar,
       floatingActionButton: floatingActionButton,
+      backgroundColor: const Color.fromARGB(255, 12, 12, 12),
+
       // Wrap the body in Padding
       body: SafeArea(
         child: Padding(
