@@ -16,11 +16,13 @@ class HomeHeader extends StatelessWidget {
             'Welcome onboard \$userName!',
             style: TextStyle(
               fontSize: 14,
+              color: Colors.white,
             ),
           ),
           Text(
             '\$userName!',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ],
       ),

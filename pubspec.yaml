@@ -38,7 +38,6 @@ dependencies:
   provider: ^6.0.0 # add this line
   get: ^4.6.6
   flutter_launcher_icons: ^0.13.1
-
   # UI & Fonts
   google_fonts: ^6.1.0 # Updated to the latest stable version
   flutter_svg: ^2.0.10 # Update to avoid conflicts
@@ -50,6 +49,8 @@ flutter_icons:
   image_path: "lib/photos/pp.png" # Replace with your exported PNG path
   adaptive_icon_background: "#FFFFFF" # Optional: Background color for adaptive icons
   adaptive_icon_foreground: "lib/photos/pp.png" # Optional: Foreground icon for adaptive icons
+  flutter_svg: ^2.0.17
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -94,7 +95,10 @@ flutter:
       - lib/assets/galaxies/galaxy1.png
       - lib/assets/galaxies/galaxy2.png
       - lib/assets/stars/stars.png
-
+      - assets/images/milky_way.png
+      - assets/planets/red1.png
+      - assets/planets/ring1.png
+      - assets/astronaut/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
