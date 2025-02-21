@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vibra_app/screens/start/main_start.dart';
 import 'controllers/navigation_controller.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/social/social_screen.dart';
@@ -7,6 +8,8 @@ import 'screens/profile/profile_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'utils/constants.dart';
 import 'screens/launch/launch_screen.dart';
+import 'screens/start/login/login_screen.dart';
+import 'screens/start/sign/signup_screen.dart';
 
 void main() {
   Get.put(NavigationController());
@@ -44,6 +47,9 @@ class MainScreen extends StatelessWidget {
           index: navigationController.currentIndex.value,
           children: [
             LaunchScreen(),
+            MainStartScreen(),
+            LoginScreen(),
+            SignupScreen(),
             const HomeScreen(),
             const SearchScreen(),
             const ProfileScreen(),
