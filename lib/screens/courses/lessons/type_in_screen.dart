@@ -3,7 +3,6 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/countdown_timer.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
-import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
 class TypeInScreen extends StatefulWidget {
@@ -100,7 +99,7 @@ class _TypeInScreenState extends State<TypeInScreen> {
               keyboardType: TextInputType.multiline,
               maxLines: null, // Allow for unlimited lines
               expands: true, // Ensures it fills available space
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: const TextStyle(color: greyBorder, fontSize: 16),
               decoration: InputDecoration(
                 hintText: "Start typing...",
                 hintStyle: const TextStyle(color: Colors.white70),
@@ -108,13 +107,19 @@ class _TypeInScreenState extends State<TypeInScreen> {
                 fillColor:
                     Colors.black.withOpacity(0.3), // Slight background tint
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: greyBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
                   borderSide: const BorderSide(color: greyBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(30),
                   borderSide: const BorderSide(color: greyBorder),
                 ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               ),
             ),
           ),
