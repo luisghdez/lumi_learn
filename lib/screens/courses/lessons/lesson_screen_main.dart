@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/fill_in_blank_screen.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/type_in_screen.dart';
@@ -53,6 +54,14 @@ class LessonScreenMain extends StatelessWidget {
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
+          );
+
+        case LessonType.flashcards:
+          return FlashcardScreen(
+            question: currentQuestion,
+            // onSubmitAnswer: () {
+            //   courseController.nextQuestion();
+            // },
           );
 
         // Add more cases for other lesson types if needed
