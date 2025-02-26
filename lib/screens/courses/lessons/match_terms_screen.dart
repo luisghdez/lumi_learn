@@ -19,9 +19,15 @@ class _MatchTermsState extends State<MatchTerms> {
   // Definitions on the right side, shuffled.
   late List<Flashcard> shuffledDefinitions;
 
-  // Track the visual state (border color, opacity) for each definition card.
+  // For definition cards.
   late List<Color> definitionBorderColors;
   late List<double> definitionOpacities;
+  late List<bool> definitionMatched;
+
+  // For term cards.
+  late List<Color> termBorderColors;
+  late List<double> termOpacities;
+  late List<bool> termMatched;
 
   @override
   void initState() {
@@ -33,10 +39,39 @@ class _MatchTermsState extends State<MatchTerms> {
     shuffledDefinitions = List<Flashcard>.from(widget.question.flashcards);
     shuffledDefinitions.shuffle();
 
-    // Initialize border colors and opacities for each definition card.
-    definitionBorderColors =
-        List<Color>.filled(shuffledDefinitions.length, greyBorder);
-    definitionOpacities = List<double>.filled(shuffledDefinitions.length, 1.0);
+    // Initialize definition card states as growable lists.
+    definitionBorderColors = List<Color>.filled(
+      shuffledDefinitions.length,
+      greyBorder,
+      growable: true,
+    );
+    definitionOpacities = List<double>.filled(
+      shuffledDefinitions.length,
+      1.0,
+      growable: true,
+    );
+    definitionMatched = List<bool>.filled(
+      shuffledDefinitions.length,
+      false,
+      growable: true,
+    );
+
+    // Initialize term card states as growable lists.
+    termBorderColors = List<Color>.filled(
+      widget.question.flashcards.length,
+      greyBorder,
+      growable: true,
+    );
+    termOpacities = List<double>.filled(
+      widget.question.flashcards.length,
+      1.0,
+      growable: true,
+    );
+    termMatched = List<bool>.filled(
+      widget.question.flashcards.length,
+      false,
+      growable: true,
+    );
   }
 
   bool allMatched() {
@@ -53,7 +88,7 @@ class _MatchTermsState extends State<MatchTerms> {
           Expanded(
             child: Row(
               children: [
-                // Left: Terms + DragTarget
+                // Left: Term cards with DragTarget.
                 Expanded(
                   child: ListView.builder(
                     itemCount: widget.question.flashcards.length,
@@ -65,7 +100,7 @@ class _MatchTermsState extends State<MatchTerms> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Right: Draggable Definitions
+                // Right: Draggable Definitions (fixed positions)
                 Expanded(
                   child: _buildDefinitionsColumn(),
                 ),
@@ -90,7 +125,7 @@ class _MatchTermsState extends State<MatchTerms> {
     );
   }
 
-  /// Instructions widget (can customize further).
+  /// Instructions widget.
   Widget _buildInstructions(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -101,66 +136,104 @@ class _MatchTermsState extends State<MatchTerms> {
     );
   }
 
-  /// A card with a Term and a DragTarget area.
-  /// We wrap it in a SizedBox (or ConstrainedBox) to enforce a uniform height.
+  /// Build a term card that is also a DragTarget.
   Widget _buildTermCard(String term, String? matchedDef, int termIndex) {
-    return SizedBox(
-      height: 150, // Fixed height for all term cards
-      child: Card(
-        color: Colors.grey[850],
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: DragTarget<String>(
-            builder: (context, candidateData, rejectedData) {
-              return Align(
-                alignment: Alignment.center,
-                child: Text(
-                  term,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+    // If term is already matched, return a placeholder to keep spacing.
+    if (termMatched[termIndex]) {
+      return SizedBox(height: 150);
+    }
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 300),
+      opacity: termOpacities[termIndex],
+      child: SizedBox(
+        height: 150,
+        child: Card(
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color: termBorderColors[termIndex],
+              width: 2.0,
+            ),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          color: Colors.grey[850],
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: DragTarget<Flashcard>(
+              builder: (context, candidateData, rejectedData) {
+                return Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    term,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              );
-            },
-            onWillAccept: (data) => true,
-            onAccept: (data) {
-              final correctDefinition =
-                  widget.question.flashcards[termIndex].definition;
-              final isCorrect = (data == correctDefinition);
+                );
+              },
+              onWillAccept: (data) => true,
+              onAccept: (acceptedFlashcard) {
+                final correctDefinition =
+                    widget.question.flashcards[termIndex].definition;
+                final isCorrect =
+                    (acceptedFlashcard.definition == correctDefinition);
 
-              // Find which item in the shuffled list was dragged
-              final defIndex =
-                  shuffledDefinitions.indexWhere((fc) => fc.definition == data);
-
-              if (defIndex != -1) {
+                // Update term card's visual state.
                 setState(() {
                   if (isCorrect) {
-                    // Mark the term as matched
-                    matchedDefinitions[termIndex] = data;
-                    // Highlight in green, then fade out that definition card
-                    definitionBorderColors[defIndex] = Colors.green;
+                    termBorderColors[termIndex] = Colors.green;
+                    matchedDefinitions[termIndex] =
+                        acceptedFlashcard.definition;
+                  } else {
+                    termBorderColors[termIndex] = Colors.red;
+                  }
+                });
 
-                    // Fade out after a short delay
+                if (isCorrect) {
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    setState(() {
+                      termOpacities[termIndex] = 0.0;
+                    });
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      setState(() {
+                        termMatched[termIndex] = true;
+                      });
+                    });
+                  });
+                } else {
+                  Future.delayed(const Duration(seconds: 1), () {
+                    setState(() {
+                      termBorderColors[termIndex] = greyBorder;
+                    });
+                  });
+                }
+
+                // Update the corresponding definition card.
+                final defIndex = shuffledDefinitions
+                    .indexWhere((fc) => fc == acceptedFlashcard);
+                if (defIndex != -1) {
+                  setState(() {
+                    if (isCorrect) {
+                      definitionBorderColors[defIndex] = Colors.green;
+                    } else {
+                      definitionBorderColors[defIndex] = Colors.red;
+                    }
+                  });
+                  if (isCorrect) {
+                    final localIndex = defIndex;
                     Future.delayed(const Duration(milliseconds: 500), () {
                       setState(() {
-                        definitionOpacities[defIndex] = 0.0;
+                        definitionOpacities[localIndex] = 0.0;
                       });
-                      // Remove from list after fade completes
                       Future.delayed(const Duration(milliseconds: 300), () {
-                        if (defIndex < shuffledDefinitions.length) {
-                          setState(() {
-                            shuffledDefinitions.removeAt(defIndex);
-                            definitionBorderColors.removeAt(defIndex);
-                            definitionOpacities.removeAt(defIndex);
-                          });
-                        }
+                        setState(() {
+                          definitionMatched[localIndex] = true;
+                        });
                       });
                     });
                   } else {
-                    // Temporarily highlight in red, revert after a second
-                    definitionBorderColors[defIndex] = Colors.red;
                     Future.delayed(const Duration(seconds: 1), () {
                       setState(() {
                         if (defIndex < definitionBorderColors.length) {
@@ -169,9 +242,9 @@ class _MatchTermsState extends State<MatchTerms> {
                       });
                     });
                   }
-                });
-              }
-            },
+                }
+              },
+            ),
           ),
         ),
       ),
@@ -183,30 +256,33 @@ class _MatchTermsState extends State<MatchTerms> {
     return ListView.builder(
       itemCount: shuffledDefinitions.length,
       itemBuilder: (context, index) {
-        final definition = shuffledDefinitions[index].definition;
-        return Draggable<String>(
-          data: definition,
-          // This is what appears under the finger while dragging.
-          feedback: _buildDefinitionDragFeedback(definition, index),
-          // Show a reduced opacity when the card is dragged away.
-          childWhenDragging: Opacity(
-            opacity: 0.3,
+        // If this definition card has been matched, return a placeholder.
+        if (definitionMatched[index]) {
+          return SizedBox(height: 150);
+        } else {
+          final flashcard = shuffledDefinitions[index];
+          final definition = flashcard.definition;
+          return Draggable<Flashcard>(
+            data: flashcard,
+            feedback: _buildDefinitionDragFeedback(flashcard, index),
+            childWhenDragging: Opacity(
+              opacity: 0.3,
+              child: _buildDefinitionCard(definition, index),
+            ),
             child: _buildDefinitionCard(definition, index),
-          ),
-          child: _buildDefinitionCard(definition, index),
-        );
+          );
+        }
       },
     );
   }
 
-  /// Static card for a definition in the right column.
-  /// Also wrapped in a SizedBox to enforce uniform height.
+  /// Static card for a definition.
   Widget _buildDefinitionCard(String definition, int index) {
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
       opacity: definitionOpacities[index],
       child: SizedBox(
-        height: 150, // Fixed height for all definition cards
+        height: 150,
         child: Card(
           shape: RoundedRectangleBorder(
             side: BorderSide(
@@ -216,7 +292,6 @@ class _MatchTermsState extends State<MatchTerms> {
             borderRadius: BorderRadius.circular(8.0),
           ),
           color: Colors.white,
-          // margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Align(
@@ -225,7 +300,9 @@ class _MatchTermsState extends State<MatchTerms> {
                 textAlign: TextAlign.center,
                 definition,
                 style: const TextStyle(
-                    fontSize: 12, color: Color.fromARGB(174, 0, 0, 0)),
+                  fontSize: 12,
+                  color: Color.fromARGB(174, 0, 0, 0),
+                ),
               ),
             ),
           ),
@@ -234,13 +311,13 @@ class _MatchTermsState extends State<MatchTerms> {
     );
   }
 
-  /// Widget shown under the user's finger while dragging (full card).
-  Widget _buildDefinitionDragFeedback(String definition, int index) {
+  /// Widget shown under the user's finger while dragging a definition.
+  Widget _buildDefinitionDragFeedback(Flashcard flashcard, int index) {
     return Material(
       color: Colors.transparent,
       child: SizedBox(
-        width: 180, // Match your card width if desired
-        height: 150, // Match your card height if desired
+        width: 180,
+        height: 150,
         child: Card(
           shape: RoundedRectangleBorder(
             side: BorderSide(
@@ -256,9 +333,11 @@ class _MatchTermsState extends State<MatchTerms> {
               alignment: Alignment.center,
               child: Text(
                 textAlign: TextAlign.center,
-                definition,
+                flashcard.definition,
                 style: const TextStyle(
-                    fontSize: 12, color: Color.fromARGB(174, 0, 0, 0)),
+                  fontSize: 12,
+                  color: Color.fromARGB(174, 0, 0, 0),
+                ),
               ),
             ),
           ),
