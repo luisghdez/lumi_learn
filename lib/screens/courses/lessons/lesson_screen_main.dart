@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/fill_in_blank_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/match_terms_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/type_in_screen.dart';
@@ -54,6 +55,14 @@ class LessonScreenMain extends StatelessWidget {
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
+          );
+
+        case LessonType.matchTheTerms:
+          return MatchTerms(
+            question: currentQuestion,
+            // onSubmitAnswer: () {
+            //   courseController.nextQuestion();
+            // },
           );
 
         case LessonType.flashcards:

@@ -65,16 +65,36 @@ class CourseController extends GetxController {
       //   lessonType: LessonType.matchTheTerms,
       // ),
       // add a question for flashcards
+      // Question(
+      //   questionText: 'Flashcards',
+      //   options: [],
+      //   flashcards: [
+      //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+      //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+      //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+      //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+      //   ],
+      //   lessonType: LessonType.flashcards,
+      // ),
+      // question for match screen
       Question(
-        questionText: 'Flashcards',
+        questionText: 'Match the Terms',
         options: [],
         flashcards: [
-          Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-          Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-          Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-          Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+          Flashcard(
+              term: 'Term 1',
+              definition: 'Definition of term 1 which shuld be long like this'),
+          Flashcard(
+              term: 'Term 2',
+              definition: 'Definition of term 2 which shuld be long like this'),
+          Flashcard(
+              term: 'Term 3',
+              definition: 'Definition of term 3 which shuld be long like this'),
+          Flashcard(
+              term: 'Term 4',
+              definition: 'Definition of term 4 which shuld be long like this'),
         ],
-        lessonType: LessonType.flashcards,
+        lessonType: LessonType.matchTheTerms,
       )
     ];
   }
