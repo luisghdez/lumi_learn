@@ -2,14 +2,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:vibra_app/screens/courses/lessons/lesson_screen.dart';
-import 'package:vibra_app/widgets/bottom_panel.dart';
-import 'package:vibra_app/widgets/course_overview_header.dart';
-import 'package:vibra_app/widgets/star_painter.dart';
-import 'package:vibra_app/widgets/starry_app_scaffold.dart';
-import 'package:vibra_app/controllers/course_controller.dart';
-import 'package:vibra_app/data/assets_data.dart';
-import 'package:vibra_app/widgets/rocket_animation.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
+import 'package:lumi_learn_app/widgets/bottom_panel.dart';
+import 'package:lumi_learn_app/widgets/course_overview_header.dart';
+import 'package:lumi_learn_app/widgets/star_painter.dart';
+import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/data/assets_data.dart';
+import 'package:lumi_learn_app/widgets/rocket_animation.dart';
 
 class CourseOverviewScreen extends StatefulWidget {
   const CourseOverviewScreen({Key? key}) : super(key: key);
@@ -136,7 +136,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 key: _panelKey,
                 selectedLessonIndex: _selectedLessonIndex,
                 onStartPressed: () {
-                  Get.to(() => LessonScreen());
+                  Get.to(() => LessonScreenMain());
+                  _closePanel();
                 },
                 onClose: _closePanel,
               ),
