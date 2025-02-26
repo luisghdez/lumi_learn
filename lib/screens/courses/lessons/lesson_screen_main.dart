@@ -23,6 +23,7 @@ class LessonScreenMain extends StatelessWidget {
       final questions = courseController.getQuestions();
 
       final currentQuestion = questions[currentIndex];
+      //  TODO add header for progress bar in each step
       switch (currentQuestion.lessonType) {
         case LessonType.multipleChoice:
           return MultipleChoiceScreen(

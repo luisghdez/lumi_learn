@@ -16,15 +16,7 @@ class SpeakScreen extends StatelessWidget {
   });
 
   void _submitAnswer(BuildContext context) {
-    if (_selectedOption.value != -1) {
-      onSubmitAnswer();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select an option before submitting'),
-        ),
-      );
-    }
+    onSubmitAnswer();
   }
 
   @override
