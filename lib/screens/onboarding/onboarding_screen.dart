@@ -12,19 +12,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, dynamic>> onboardingData = [
     {
       "title": "Insights",
-      "description": "Simply add a presentation, text or image and Lumi will create a personalized lesson plan!",
-      "background": "lib/assets/worlds/purple1.png",
+      "description":
+          "Simply add a presentation, text or image and Lumi will create a personalized lesson plan!",
+      "background": "assets/worlds/purple1.png",
       "astronaut": "",
-      "quote": "\"Education is the most powerful weapon which you can use to change the world.\" — Nelson Mandela",
+      "quote":
+          "\"Education is the most powerful weapon which you can use to change the world.\" — Nelson Mandela",
       "astroSize": 0.0,
       "astroAlignment": Alignment.center,
       "astroOffset": Offset(0, 0),
     },
     {
       "title": "Galaxies",
-      "description": "Each galaxy will consist of different materials to learn!",
-      "background": "lib/assets/galaxies/galaxy1.png",
-      "astronaut": "lib/assets/astro/astrocamera.png",
+      "description":
+          "Each galaxy will consist of different materials to learn!",
+      "background": "assets/galaxies/galaxy1.png",
+      "astronaut": "assets/astronaut/astrocamera.png",
       "quote": "",
       "astroSize": 350.0,
       "astroAlignment": Alignment.centerRight,
@@ -32,9 +35,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
     {
       "title": "Planets",
-      "description": "Each lesson will consist of multiple planets. In each planet, you will learn a different topic according to your content.",
-      "background": "lib/assets/planets/planets.png",
-      "astronaut": "lib/assets/astro/astromoon.png",
+      "description":
+          "Each lesson will consist of multiple planets. In each planet, you will learn a different topic according to your content.",
+      "background": "assets/planets/planets.png",
+      "astronaut": "assets/astronaut/astromoon.png",
       "quote": "",
       "astroSize": 450.0,
       "astroAlignment": Alignment.centerLeft,
@@ -42,9 +46,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
     {
       "title": "Stars",
-      "description": "Earn stars after every lesson. Compete with your friends and chase the stars!",
-      "background": "lib/assets/stars/stars.png",
-      "astronaut": "lib/assets/astro/astrostars.png",
+      "description":
+          "Earn stars after every lesson. Compete with your friends and chase the stars!",
+      "background": "assets/stars/stars.png",
+      "astronaut": "assets/astronaut/astrostars.png",
       "quote": "",
       "astroSize": 350.0,
       "astroAlignment": Alignment.centerLeft,
@@ -62,18 +67,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-void _finishOnboarding() {
-  Navigator.of(context).pushReplacement(
-    PageRouteBuilder(
-      transitionDuration: Duration(milliseconds: 500),
-      pageBuilder: (_, __, ___) => MainStartScreen(), // Navigate to LoginScreen
-      transitionsBuilder: (_, animation, __, child) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-    ),
-  );
-}
-
+  void _finishOnboarding() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) =>
+            MainStartScreen(), // Navigate to LoginScreen
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +117,8 @@ void _finishOnboarding() {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -126,7 +132,8 @@ void _finishOnboarding() {
                             ),
                           ),
                           SizedBox(width: 5),
-                          Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                          Icon(Icons.arrow_forward,
+                              color: Colors.white, size: 18),
                         ],
                       ),
                     ),
@@ -187,9 +194,11 @@ void _finishOnboarding() {
                       duration: Duration(milliseconds: 10),
                       child: Align(
                         key: ValueKey(_currentPage),
-                        alignment: onboardingData[_currentPage]["astroAlignment"],
+                        alignment: onboardingData[_currentPage]
+                            ["astroAlignment"],
                         child: FractionalTranslation(
-                          translation: onboardingData[_currentPage]["astroOffset"],
+                          translation: onboardingData[_currentPage]
+                              ["astroOffset"],
                           child: Image.asset(
                             onboardingData[_currentPage]["astronaut"]!,
                             height: onboardingData[_currentPage]["astroSize"],
@@ -253,5 +262,3 @@ void _finishOnboarding() {
     );
   }
 }
-
-

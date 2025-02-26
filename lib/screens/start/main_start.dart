@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../start/login/login_screen.dart';
 import '../start/sign/signup_screen.dart';
 
-
 class MainStartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -12,7 +11,7 @@ class MainStartScreen extends StatelessWidget {
           // Background Image
           Positioned.fill(
             child: Image.asset(
-              'lib/assets/worlds/trees1.png', // Ensure the image is added to assets
+              'assets/worlds/trees1.png', // Ensure the image is added to assets
               fit: BoxFit.cover,
             ),
           ),
@@ -70,7 +69,8 @@ class MainStartScreen extends StatelessWidget {
                         // Navigate to LoginScreen
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -112,7 +112,8 @@ class MainStartScreen extends StatelessWidget {
                         // Navigate to SignupScreen
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignupScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => SignupScreen()),
                         );
                       },
                       child: const Text(

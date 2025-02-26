@@ -9,7 +9,7 @@ class OnboardingStep1 extends StatelessWidget {
           // Background Image
           Positioned.fill(
             child: Image.asset(
-              'lib/assets/worlds/purple1.png',
+              'assets/worlds/purple1.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -29,7 +29,8 @@ class OnboardingStep1 extends StatelessWidget {
                         // Navigate to the main app screen or next step
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.2), // Semi-transparent button
+                        backgroundColor: Colors.white
+                            .withOpacity(0.2), // Semi-transparent button
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -48,7 +49,8 @@ class OnboardingStep1 extends StatelessWidget {
                             ),
                           ),
                           SizedBox(width: 5),
-                          Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                          Icon(Icons.arrow_forward,
+                              color: Colors.white, size: 18),
                         ],
                       ),
                     ),

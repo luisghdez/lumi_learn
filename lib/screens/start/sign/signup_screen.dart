@@ -10,7 +10,7 @@ class SignupScreen extends StatelessWidget {
           // Full-Screen Background Image (Fixed)
           Positioned.fill(
             child: Image.asset(
-              'lib/assets/galaxies/galaxy2.png', // Ensure the image is correctly placed
+              'assets/galaxies/galaxy2.png', // Ensure the image is correctly placed
               fit: BoxFit.cover, // Covers the full screen properly
             ),
           ),
@@ -18,7 +18,8 @@ class SignupScreen extends StatelessWidget {
           // Dark Overlay for Better Readability (Subtle, Refined)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.4), // Slightly darker for clarity
+              color:
+                  Colors.black.withOpacity(0.4), // Slightly darker for clarity
             ),
           ),
 
@@ -38,7 +39,8 @@ class SignupScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        icon: Icon(Icons.arrow_back, color: Colors.white, size: 26),
+                        icon: Icon(Icons.arrow_back,
+                            color: Colors.white, size: 26),
                         onPressed: () {
                           Navigator.pop(context);
                         },
@@ -71,7 +73,8 @@ class SignupScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 160), // Lowering the form for better spacing
+                  const SizedBox(
+                      height: 160), // Lowering the form for better spacing
 
                   // Name Field
                   _buildInputField("Your Name", Icons.person),
@@ -122,7 +125,8 @@ class SignupScreen extends StatelessWidget {
   }
 
   // Reusable Input Field Widget (Brighter & Cleaner)
-  Widget _buildInputField(String label, IconData icon, {bool isPassword = false}) {
+  Widget _buildInputField(String label, IconData icon,
+      {bool isPassword = false}) {
     return TextField(
       obscureText: isPassword,
       style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
@@ -131,10 +135,12 @@ class SignupScreen extends StatelessWidget {
         labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
         suffixIcon: Icon(icon, color: Colors.white, size: 22),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.6), width: 1.5), // Softer look
+          borderSide: BorderSide(
+              color: Colors.white.withOpacity(0.6), width: 1.5), // Softer look
         ),
         focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white, width: 2), // Highlight effect
+          borderSide:
+              BorderSide(color: Colors.white, width: 2), // Highlight effect
         ),
       ),
     );

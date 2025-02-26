@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vibra_app/screens/start/main_start.dart';
+import 'package:lumi_learn_app/screens/start/main_start.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'controllers/navigation_controller.dart';
 import 'screens/home/home_screen.dart';

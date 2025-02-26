@@ -10,7 +10,7 @@ class LaunchScreen extends StatelessWidget {
           // Background Image
           Positioned.fill(
             child: Image.asset(
-              'lib/assets/worlds/red1.png', // Path to the background image
+              'assets/worlds/red1.png', // Path to the background image
               fit: BoxFit.cover,
             ),
           ),
@@ -60,14 +60,15 @@ class LaunchScreen extends StatelessWidget {
                   // Stack for astronaut and button
                   Stack(
                     clipBehavior: Clip.none, // Prevent clipping the astronaut
-                    alignment: Alignment.bottomRight, // Align astronaut at bottom right
+                    alignment: Alignment
+                        .bottomRight, // Align astronaut at bottom right
                     children: [
                       // Astronaut Positioned Outside the Button
                       Positioned(
                         bottom: 10, // Adjust to make it hover over button
                         right: 0, // Slightly out of bounds for better effect
                         child: Image.asset(
-                          'lib/assets/astro/astro1.png',
+                          'assets/astronaut/astro1.png',
                           height: 220, // Adjust size to match UI design
                         ),
                       ),
