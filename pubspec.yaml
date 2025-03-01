@@ -39,7 +39,9 @@ dependencies:
   get: ^4.6.6
   flutter_launcher_icons: ^0.13.1
   file_picker: ^4.2.0 # Add this line
+  audioplayers: ^6.2.0
 
+  
   # UI & Fonts
   google_fonts: ^6.1.0 # Updated to the latest stable version
   flutter_svg: ^2.0.10 # Update to avoid conflicts
