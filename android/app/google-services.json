@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "229129204738",
+    "project_id": "lumi-7f941",
+    "storage_bucket": "lumi-7f941.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229129204738:android:9d646650c3b2a1c6bc231b",
+        "android_client_info": {
+          "package_name": "com.example.lumi_learn_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "229129204738-lqfnluq2vdarrnk9mrd6vh93m3kh6ekd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeMJ5z_v1sRxD_phkOOkNykuJFvM2Kegs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "229129204738-lqfnluq2vdarrnk9mrd6vh93m3kh6ekd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "229129204738-85hvma1rfubbc8ntuadgd5m1jbhdfr6i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vibraApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
