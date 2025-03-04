@@ -22,9 +22,13 @@ Welcome to **Lumi Learn**! This is a Flutter-based application. Follow these ins
    ```bash
    flutter pub get
 
+2. **Set up firebase**
+   ```bash
+   flutterfire configue
+
 3. ***Run the Project***
    ```bash
-    flutter run
+   flutter run
 
 ## Project Structure
    ```bash
