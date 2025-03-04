@@ -123,8 +123,8 @@ class SignupScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildSocialButton(
-                            "Google", FontAwesomeIcons.google, () {
-                          // Google login logic
+                            "Google", FontAwesomeIcons.google, () async {
+                          await authController.signInWithGoogle();
                         }),
                       ),
                       const SizedBox(width: 20),

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
-import 'package:material_symbols_icons/symbols.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -153,8 +152,8 @@ class LoginScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildSocialButton(
-                            "Google", FontAwesomeIcons.google, () {
-                          // Google login logic
+                            "Google", FontAwesomeIcons.google, () async {
+                          await authController.signInWithGoogle();
                         }),
                       ),
                       const SizedBox(width: 20),
@@ -198,6 +197,39 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      child: Obx(() => ElevatedButton(
+            onPressed: authController.isLoading.value
+                ? null
+                : onPressed, // Disable button when loading
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+            ),
+            child: authController.isLoading.value
+                ? const SizedBox(
+                    height: 26,
+                    width: 26,
+                    child: CircularProgressIndicator(
+                      color: Colors.black,
+                    ),
+                  ) // Show loading indicator
+                : Text(
+                    text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+          )),
+    );
+  }
 }
 
 Widget _buildInputField(String label, IconData icon,
@@ -216,42 +248,6 @@ Widget _buildInputField(String label, IconData icon,
       ),
       focusedBorder: const UnderlineInputBorder(
         borderSide: BorderSide(color: Colors.white, width: 2),
-      ),
-    ),
-  );
-}
-
-Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
-  return SizedBox(
-    width: double.infinity,
-    child: ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            text,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(
-            Icons.arrow_forward,
-            color: Colors.black,
-            size: 22,
-          ),
-        ],
       ),
     ),
   );
