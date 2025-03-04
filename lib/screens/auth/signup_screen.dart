@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
@@ -31,19 +32,7 @@ class SignupScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back Button
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: Colors.white, size: 26),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 60),
 
                   // Title
                   RichText(
@@ -68,7 +57,7 @@ class SignupScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 160),
+                  const SizedBox(height: 150),
 
                   // Name Field
                   _buildInputField("Your Name", Icons.person,
@@ -97,64 +86,84 @@ class SignupScreen extends StatelessWidget {
                     );
                   }),
 
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 30),
 
-                  // Terms and Conditions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white.withOpacity(0.5),
+                          thickness: 1.2,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          "Or sign up with",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white.withOpacity(0.5),
+                          thickness: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Social Login Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSocialButton(
+                            "Google", FontAwesomeIcons.google, () {
+                          // Google login logic
+                        }),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _buildSocialButton(
+                            "Apple", FontAwesomeIcons.apple, () {
+                          // Apple login logic
+                        }),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Register Link
                   Center(
                     child: TextButton(
                       onPressed: () {
                         Get.to(() => LoginScreen());
                       },
+                      style: ButtonStyle(
+                        overlayColor: MaterialStateProperty.all(
+                          Colors.transparent,
+                        ),
+                      ),
                       child: Text(
-                        "I already have an account",
+                        "Already have an account? Login",
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
-                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
                   ),
-
-                  // const SizedBox(height: 30), // Space from bottom
-
-                  // // Terms and conditions
-                  // Center(
-                  //   child: Text(
-                  //     "By signing up, you agree to our Terms & Conditions",
-                  //     style: GoogleFonts.poppins(
-                  //       fontSize: 12,
-                  //       color: Colors.white,
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // Input Field
-  Widget _buildInputField(String label, IconData icon,
-      {bool isPassword = false, required TextEditingController controller}) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
-        suffixIcon: Icon(icon, color: Colors.white, size: 22),
-        enabledBorder: UnderlineInputBorder(
-          borderSide:
-              BorderSide(color: Colors.white.withOpacity(0.6), width: 1.5),
-        ),
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white, width: 2),
         ),
       ),
     );
@@ -193,4 +202,46 @@ class SignupScreen extends StatelessWidget {
           )),
     );
   }
+}
+
+// Input Field
+Widget _buildInputField(String label, IconData icon,
+    {bool isPassword = false, required TextEditingController controller}) {
+  return TextField(
+    controller: controller,
+    obscureText: isPassword,
+    style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
+      suffixIcon: Icon(icon, color: Colors.white, size: 22),
+      enabledBorder: UnderlineInputBorder(
+        borderSide:
+            BorderSide(color: Colors.white.withOpacity(0.6), width: 1.5),
+      ),
+      focusedBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.white, width: 2),
+      ),
+    ),
+  );
+}
+
+Widget _buildSocialButton(String text, IconData icon, VoidCallback onPressed) {
+  return ElevatedButton.icon(
+    onPressed: onPressed,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    ),
+    icon: Icon(icon, color: Colors.black, size: 20), // Use built-in icons
+    label: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
+    ),
+  );
 }

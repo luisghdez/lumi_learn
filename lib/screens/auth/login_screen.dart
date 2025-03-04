@@ -117,7 +117,7 @@ class LoginScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-// Divider with Text
+                  // Divider with Text
                   Row(
                     children: [
                       Expanded(
@@ -148,7 +148,7 @@ class LoginScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-// Social Login Buttons
+                  // Social Login Buttons
                   Row(
                     children: [
                       Expanded(
@@ -167,7 +167,7 @@ class LoginScreen extends StatelessWidget {
                     ],
                   ),
 
-                  SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
                   // Register Link
                   Center(
