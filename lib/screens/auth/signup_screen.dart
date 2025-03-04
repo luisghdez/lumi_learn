@@ -74,7 +74,7 @@ class SignupScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(
-                      height: 160), // Lowering the form for better spacing
+                      height: 120), // Lowering the form for better spacing
 
                   // Name Field
                   _buildInputField("Your Name", Icons.person),
@@ -89,14 +89,14 @@ class SignupScreen extends StatelessWidget {
                   // Password Field
                   _buildInputField("Password", Icons.lock, isPassword: true),
 
-                  const SizedBox(height: 50), // More space before button
+                  const SizedBox(height: 30), // More space before button
 
                   // Sign Up Button
                   _buildPrimaryButton("Sign Up", () {
                     // Signup Logic Here
                   }),
 
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 16),
 
                   // Terms and Conditions (Refined Styling)
                   Center(
