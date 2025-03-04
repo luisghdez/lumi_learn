@@ -51,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                   },
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
 
                 // Category cards
                 CategoryList(
@@ -62,7 +62,7 @@ class HomeScreen extends StatelessWidget {
                 ),
 
                 // If you want more spacing at bottom
-                const SizedBox(height: 24),
+                const SizedBox(height: 10),
               ],
             ),
           ),

@@ -3,9 +3,11 @@ import 'package:file_picker/file_picker.dart';
 
 // Local imports
 import 'widgets/syllabus_search_modal.dart';
-import 'space_game.dart';
+// import 'space_game.dart';
 import 'components/futuristic_text_field.dart';
 import 'components/futuristic_button.dart';
+import 'components/slideshow.dart';
+
 
 class AddLessonPlanScreen extends StatefulWidget {
   const AddLessonPlanScreen({super.key});
@@ -69,25 +71,44 @@ class _AddLessonPlanScreenState extends State<AddLessonPlanScreen> {
     }
   }
 
-  /// Navigates to the spaceship shooting game immediately
-  void _createLessonAndPlayGame() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SpaceGame(
-          lessonName: _lessonNameController.text,
-          subject: _subjectController.text,
-          fileName: _uploadedFileName ?? 'No file',
-          className: _className,
-          school: _school,
-          crn: _crn,
-          professorName: _professorName,
-          term: _term,
-          additionalInfo: _additionalInfo,
-        ),
+void _createLessonAndPlayGame() {
+  // Original code for navigating to the game is commented out:
+  // Navigator.pushReplacement(
+  //   context,
+  //   MaterialPageRoute(
+  //     builder: (context) => SpaceGame(
+  //       lessonName: _lessonNameController.text,
+  //       subject: _subjectController.text,
+  //       fileName: _uploadedFileName ?? 'No file',
+  //       className: _className,
+  //       school: _school,
+  //       crn: _crn,
+  //       professorName: _professorName,
+  //       term: _term,
+  //       additionalInfo: _additionalInfo,
+  //     ),
+  //   ),
+  // );
+  
+  // New navigation to SlideshowScreen:
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SlideshowScreen(
+        lessonName: _lessonNameController.text,
+        subject: _subjectController.text,
+        fileName: _uploadedFileName ?? 'No file',
+        className: _className,
+        school: _school,
+        crn: _crn,
+        professorName: _professorName,
+        term: _term,
+        additionalInfo: _additionalInfo,
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   /// Builds the main form content.
   Widget _buildFormContent() {

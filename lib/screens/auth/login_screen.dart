@@ -53,18 +53,18 @@ class LoginScreen extends StatelessWidget {
                   // Title (Updated for Correct Font & Styling)
                   RichText(
                     text: TextSpan(
-                      text: "Welcome\n",
+                      text: "Welcome\n ",
                       style: GoogleFonts.poppins(
                         fontSize: 62, // Medium size for "Welcome"
                         fontWeight: FontWeight.w400,
                         color: Colors.white,
                         height: .9, // Reduced space
-                      ),
-                      children: [
+                        ),
+                        children: [
                         TextSpan(
                           text: "Back",
                           style: GoogleFonts.poppins(
-                            fontSize: 84, // Much Bigger
+                            fontSize: 74, // Much Bigger
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
                           ),
@@ -74,7 +74,7 @@ class LoginScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(
-                      height: 200), // Lowering the form for better spacing
+                      height: 170), // Lowering the form for better spacing
 
                   // Email Field
                   _buildInputField("Email Address", Icons.email),

@@ -40,9 +40,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "background": "assets/planets/planets.png",
       "astronaut": "assets/astronaut/astromoon.png",
       "quote": "",
-      "astroSize": 450.0,
+      "astroSize": 350.0,
       "astroAlignment": Alignment.centerLeft,
-      "astroOffset": Offset(0.4, 0), // Move more left
+      "astroOffset": Offset(0.6, 0), // Move more left
     },
     {
       "title": "Stars",
