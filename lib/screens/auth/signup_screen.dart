@@ -75,7 +75,7 @@ class SignupScreen extends StatelessWidget {
                   _buildInputField("Password", Icons.lock,
                       controller: passwordController, isPassword: true),
 
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 20),
 
                   // Sign Up Button
                   _buildPrimaryButton("Sign Up", () {
