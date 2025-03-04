@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/main_start.dart';
+import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -25,8 +26,10 @@ class AuthGate extends StatelessWidget {
 
       // Show login/register screen if no user is logged in
       if (user == null) {
-        return MainStartScreen();
+        return SignupScreen();
       }
+
+      print("User is logged in: ${user.displayName}");
 
       // Show main screen if user is logged in
       return MainScreen();

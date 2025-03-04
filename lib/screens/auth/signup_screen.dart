@@ -93,6 +93,7 @@ class SignupScreen extends StatelessWidget {
                     authController.signUp(
                       emailController.text.trim(),
                       passwordController.text.trim(),
+                      nameController.text.trim(),
                     );
                   }),
 
@@ -163,23 +164,33 @@ class SignupScreen extends StatelessWidget {
   Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          padding: const EdgeInsets.symmetric(vertical: 24),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ),
+      child: Obx(() => ElevatedButton(
+            onPressed: authController.isLoading.value
+                ? null
+                : onPressed, // Disable button when loading
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+            ),
+            child: authController.isLoading.value
+                ? const SizedBox(
+                    height: 26,
+                    width: 26,
+                    child: CircularProgressIndicator(
+                      color: Colors.black,
+                    ),
+                  ) // Show loading indicator
+                : Text(
+                    text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+          )),
     );
   }
 }
