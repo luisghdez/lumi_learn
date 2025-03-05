@@ -19,7 +19,8 @@ class CourseOverviewScreen extends StatefulWidget {
 }
 
 class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
-  final CourseController courseController = Get.put(CourseController());
+  // final CourseController courseController = Get.put(CourseController());
+  final CourseController courseController = Get.find();
 
   bool _isPanelVisible = false;
   int? _selectedLessonIndex;

@@ -13,15 +13,18 @@ import 'package:lumi_learn_app/screens/settings/settings-screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // Hard-code username for now (or get from user controller)
-  final String userName = 'YUR';
-
   @override
   Widget build(BuildContext context) {
+    final AuthController authController = Get.find();
+
+    final String userName =
+        authController.firebaseUser.value!.displayName ?? 'User';
+
     return AppScaffold(
       // If AppScaffold has its own background color, you can omit Container's color
       body: SafeArea(
@@ -49,7 +52,7 @@ class HomeScreen extends StatelessWidget {
                 onAddTap: () {
                   // Navigate to your Lesson creation screen
                   // Get.to(() => const AddLessonPlanScreen());
-                  Get.to(() => CourseCreation());
+                  Get.to(() => const CourseCreation());
                 },
               ),
 

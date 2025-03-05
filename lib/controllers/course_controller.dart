@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,14 @@ class CourseController extends GetxController {
   // final activeLessonIndex = 0.obs; // example lesson index
   final activeQuestionIndex = 0.obs;
   var isLoading = false.obs;
+  var courses = [].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Fetch courses when the controller is initialized
+    fetchCourses();
+  }
 
   // Method to set the active planet
   void setActivePlanet(int index) {
@@ -127,7 +136,7 @@ class CourseController extends GetxController {
       const Center(
         child: CircularProgressIndicator(color: Colors.white),
       ),
-      barrierDismissible: false, // Prevent user from dismissing the dialog
+      barrierDismissible: false,
     );
 
     try {
@@ -151,26 +160,71 @@ class CourseController extends GetxController {
       if (response.statusCode == 201) {
         print('Course created successfully: ${response.body}');
 
-        // Show success message
+        // Parse the response JSON and extract the courseId
+        final responseData = jsonDecode(response.body);
+        final courseId = responseData['courseId'];
+
+        // Recreate the course object with the title, description, id, and createdBy
+        final newCourse = {
+          'id': courseId,
+          'title': title,
+          'description': description,
+          'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
+        };
+
+        // Insert the new course at the top of the courses list
+        courses.insert(0, newCourse);
+
         Get.snackbar("Success", "Course created successfully!",
             backgroundColor: Colors.green, colorText: Colors.white);
       } else {
         print(
             'Failed to create course [${response.statusCode}]: ${response.body}');
-
-        // Show error message
         Get.snackbar("Error", "Failed to create course.",
             backgroundColor: Colors.red, colorText: Colors.white);
       }
     } catch (e) {
       print('Error creating course: $e');
-
-      // Show error message
       Get.snackbar("Error", "Something went wrong. Please try again.",
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false; // Stop loading
+      // Navigate to MainScreen after course creation
       Get.offAll(() => const MainScreen());
+    }
+  }
+
+  // New method to fetch courses from the backend
+  Future<void> fetchCourses() async {
+    print('Fetching courses...');
+    isLoading.value = true; // Start loading
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        return;
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.getCourses(token: token);
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response and store the courses in our RxList
+        final data = jsonDecode(response.body);
+        courses.value = data['courses'];
+        print('Courses fetched successfully: ${courses.value}');
+      } else {
+        print('Failed to fetch courses: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to fetch courses.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error fetching courses: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false; // Stop loading
     }
   }
 }
