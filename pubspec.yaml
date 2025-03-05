@@ -51,6 +51,7 @@ dependencies:
   material_symbols_icons: ^4.2805.1
   font_awesome_flutter: ^10.8.0
   google_sign_in: ^6.2.2
+  mime: ^2.0.0
 
 flutter_icons:
   android: true
