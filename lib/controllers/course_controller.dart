@@ -129,7 +129,8 @@ class CourseController extends GetxController {
         print('No user token found.');
         return;
       }
-      final response = await ApiService.createCourse(
+      final apiService = ApiService();
+      final response = await apiService.createCourse(
         token: token,
         title: title,
         description: description,

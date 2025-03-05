@@ -1,44 +1,41 @@
-import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // For MediaType
+import 'package:mime/mime.dart'; // For lookupMimeType
 import 'package:path/path.dart' as p;
+import 'dart:io';
 
 class ApiService {
   static const String _baseUrl = 'http://localhost:3000';
-  // Replace with your actual base URL or environment variable
 
-  /// Create course with text fields and file uploads
-  static Future<http.Response> createCourse({
-    required String token, // Bearer token for auth
+  Future<http.Response> createCourse({
+    required String token,
     required String title,
     required String description,
-    required List<File> files, // List of file objects to upload
-    required String content, // Additional text content field
+    required List<File> files,
+    required String content,
   }) async {
-    final url = Uri.parse('$_baseUrl/courses');
+    final uri = Uri.parse('$_baseUrl/courses');
+    var request = http.MultipartRequest('POST', uri);
 
-    // Create a multipart request
-    final request = http.MultipartRequest('POST', url)
-      // Add authorization header if needed
-      ..headers['Authorization'] = 'Bearer $token'
-      // Add text fields
-      ..fields['title'] = title
-      ..fields['description'] = description;
+    // Set the auth header
+    request.headers['Authorization'] = 'Bearer $token';
 
-    // If there is content to include
-    if (content.isNotEmpty) {
-      request.fields['content'] = content;
-    }
+    // Add text fields
+    request.fields['title'] = title;
+    request.fields['description'] = description;
+    request.fields['content'] = content;
 
-    // Attach each file as a multipart file
-    for (final file in files) {
-      final fileStream = http.ByteStream(file.openRead());
-      final fileLength = await file.length();
+    // Add files with automatic MIME detection
+    for (File file in files) {
+      // Determine MIME type based on file extension or file content
+      final mimeType = lookupMimeType(file.path) ?? 'application/octet-stream';
+      final mimeTypeSplit = mimeType.split('/');
 
-      final multipartFile = http.MultipartFile(
-        'file',
-        fileStream,
-        fileLength,
+      final multipartFile = await http.MultipartFile.fromPath(
+        'file', // the field name, adjust if needed
+        file.path,
         filename: p.basename(file.path),
+        contentType: MediaType(mimeTypeSplit[0], mimeTypeSplit[1]),
       );
 
       request.files.add(multipartFile);
@@ -46,7 +43,6 @@ class ApiService {
 
     // Send the request
     final streamedResponse = await request.send();
-    // Convert streamed response into a regular Response object for easy handling
     final response = await http.Response.fromStream(streamedResponse);
 
     return response;
