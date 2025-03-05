@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/services/api_service.dart'; // Import the data file
 
 class CourseController extends GetxController {
@@ -13,6 +15,7 @@ class CourseController extends GetxController {
   // final activeCourseId = 0.obs; // example course id
   // final activeLessonIndex = 0.obs; // example lesson index
   final activeQuestionIndex = 0.obs;
+  var isLoading = false.obs;
 
   // Method to set the active planet
   void setActivePlanet(int index) {
@@ -117,18 +120,25 @@ class CourseController extends GetxController {
     required List<File> files,
     String content = '',
   }) async {
-    print('Creating course...');
-    print('Title: $title');
-    print('Description: $description');
-    print('Content: $content');
-    print('Files: $files');
+    isLoading.value = true; // Start loading
+
+    // Show loading overlay
+    Get.dialog(
+      const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+      barrierDismissible: false, // Prevent user from dismissing the dialog
+    );
 
     try {
       final token = await authController.getIdToken();
       if (token == null) {
         print('No user token found.');
+        isLoading.value = false;
+        Get.back(); // Close loading overlay
         return;
       }
+
       final apiService = ApiService();
       final response = await apiService.createCourse(
         token: token,
@@ -139,19 +149,28 @@ class CourseController extends GetxController {
       );
 
       if (response.statusCode == 201) {
-        // Successfully created the course
-        final responseData = response.body;
-        // Optionally parse the JSON or do further handling
-        print('Course created successfully: $responseData');
+        print('Course created successfully: ${response.body}');
+
+        // Show success message
+        Get.snackbar("Success", "Course created successfully!",
+            backgroundColor: Colors.green, colorText: Colors.white);
       } else {
-        // Handle error response
         print(
-          'Failed to create course [${response.statusCode}]: ${response.body}',
-        );
+            'Failed to create course [${response.statusCode}]: ${response.body}');
+
+        // Show error message
+        Get.snackbar("Error", "Failed to create course.",
+            backgroundColor: Colors.red, colorText: Colors.white);
       }
     } catch (e) {
-      // Catch any exceptions (network issues, etc.)
       print('Error creating course: $e');
+
+      // Show error message
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false; // Stop loading
+      Get.offAll(() => const MainScreen());
     }
   }
 }
