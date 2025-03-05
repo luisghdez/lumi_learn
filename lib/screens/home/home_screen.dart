@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 
 import 'components/home_header.dart';
 import 'components/search_bar.dart' as custom;
@@ -25,48 +26,49 @@ class HomeScreen extends StatelessWidget {
       // If AppScaffold has its own background color, you can omit Container's color
       body: SafeArea(
         child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with "Welcome onboard" + avatar
-                HomeHeader(
-                  userName: userName,
-                  onAvatarTap: () {
-                    // Navigate to profile screen
-                    Get.to(() => const ProfileScreen());
-                  },
-                ),
-                const SizedBox(height: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with "Welcome onboard" + avatar
+              HomeHeader(
+                userName: userName,
+                onAvatarTap: () {
+                  // Navigate to profile screen
+                  Get.to(() => const ProfileScreen());
+                },
+              ),
+              const SizedBox(height: 20),
 
-                // Search bar
-                const custom.SearchBar(),
+              // Search bar
+              const custom.SearchBar(),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // "Top Picks" row + plus icon
-                TopPicksHeader(
-                  onAddTap: () {
-                    // Navigate to your Lesson creation screen
-                    Get.to(() => const AddLessonPlanScreen());
-                  },
-                ),
+              // "Top Picks" row + plus icon
+              TopPicksHeader(
+                onAddTap: () {
+                  // Navigate to your Lesson creation screen
+                  // Get.to(() => const AddLessonPlanScreen());
+                  Get.to(() => CourseCreation());
+                },
+              ),
 
-                const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-                // Category cards
-                CategoryList(
-                  onCategoryTap: (String categoryName) {
-                    // For example, navigate to CourseOverviewScreen, passing category
-                    Get.to(() => const CourseOverviewScreen());
-                  },
-                ),
+              // Category cards
+              CategoryList(
+                onCategoryTap: (String categoryName) {
+                  // For example, navigate to CourseOverviewScreen, passing category
+                  Get.to(() => const CourseOverviewScreen());
+                },
+              ),
 
-                // If you want more spacing at bottom
-                const SizedBox(height: 10),
-              ],
-            ),
+              // If you want more spacing at bottom
+              const SizedBox(height: 10),
+            ],
           ),
         ),
+      ),
     );
   }
 }

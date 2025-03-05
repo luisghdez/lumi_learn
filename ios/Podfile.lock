@@ -5,37 +5,6 @@ PODS:
   - AppAuth/Core (1.7.6)
   - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
-  - Firebase/Auth (11.8.0):
-    - Firebase/CoreOnly
-    - FirebaseAuth (~> 11.8.0)
-  - Firebase/CoreOnly (11.8.0):
-    - FirebaseCore (~> 11.8.0)
-  - firebase_auth (5.5.1):
-    - Firebase/Auth (= 11.8.0)
-    - firebase_core
-    - Flutter
-  - firebase_core (3.12.1):
-    - Firebase/CoreOnly (= 11.8.0)
-    - Flutter
-  - FirebaseAppCheckInterop (11.9.0)
-  - FirebaseAuth (11.8.1):
-    - FirebaseAppCheckInterop (~> 11.0)
-    - FirebaseAuthInterop (~> 11.0)
-    - FirebaseCore (~> 11.8.0)
-    - FirebaseCoreExtension (~> 11.8.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
-    - GoogleUtilities/Environment (~> 8.0)
-    - GTMSessionFetcher/Core (< 5.0, >= 3.4)
-    - RecaptchaInterop (~> 100.0)
-  - FirebaseAuthInterop (11.9.0)
-  - FirebaseCore (11.8.1):
-    - FirebaseCoreInternal (~> 11.8.0)
-    - GoogleUtilities/Environment (~> 8.0)
-    - GoogleUtilities/Logger (~> 8.0)
-  - FirebaseCoreExtension (11.8.0):
-    - FirebaseCore (~> 11.8.0)
-  - FirebaseCoreInternal (11.8.0):
-    - "GoogleUtilities/NSData+zlib (~> 8.0)"
   - audioplayers_darwin (0.0.1):
     - Flutter
   - DKImagePickerController/Core (4.3.9):
@@ -72,6 +41,37 @@ PODS:
   - file_picker (0.0.1):
     - DKImagePickerController/PhotoGallery
     - Flutter
+  - Firebase/Auth (11.8.0):
+    - Firebase/CoreOnly
+    - FirebaseAuth (~> 11.8.0)
+  - Firebase/CoreOnly (11.8.0):
+    - FirebaseCore (~> 11.8.0)
+  - firebase_auth (5.5.1):
+    - Firebase/Auth (= 11.8.0)
+    - firebase_core
+    - Flutter
+  - firebase_core (3.12.1):
+    - Firebase/CoreOnly (= 11.8.0)
+    - Flutter
+  - FirebaseAppCheckInterop (11.9.0)
+  - FirebaseAuth (11.8.1):
+    - FirebaseAppCheckInterop (~> 11.0)
+    - FirebaseAuthInterop (~> 11.0)
+    - FirebaseCore (~> 11.8.0)
+    - FirebaseCoreExtension (~> 11.8.0)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GTMSessionFetcher/Core (< 5.0, >= 3.4)
+    - RecaptchaInterop (~> 100.0)
+  - FirebaseAuthInterop (11.9.0)
+  - FirebaseCore (11.8.1):
+    - FirebaseCoreInternal (~> 11.8.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/Logger (~> 8.0)
+  - FirebaseCoreExtension (11.8.0):
+    - FirebaseCore (~> 11.8.0)
+  - FirebaseCoreInternal (11.8.0):
+    - "GoogleUtilities/NSData+zlib (~> 8.0)"
   - Flutter (1.0.0)
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
@@ -122,10 +122,10 @@ PODS:
   - SwiftyGif (5.4.5)
 
 DEPENDENCIES:
-  - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
-  - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
+  - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
+  - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - Flutter (from `Flutter`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -133,6 +133,8 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
+    - DKImagePickerController
+    - DKPhotoGallery
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -145,23 +147,18 @@ SPEC REPOS:
     - GTMAppAuth
     - GTMSessionFetcher
     - RecaptchaInterop
-
-SPEC REPOS:
-  trunk:
-    - DKImagePickerController
-    - DKPhotoGallery
     - SDWebImage
     - SwiftyGif
 
 EXTERNAL SOURCES:
-  firebase_auth:
-    :path: ".symlinks/plugins/firebase_auth/ios"
-  firebase_core:
-    :path: ".symlinks/plugins/firebase_core/ios"
   audioplayers_darwin:
     :path: ".symlinks/plugins/audioplayers_darwin/ios"
   file_picker:
     :path: ".symlinks/plugins/file_picker/ios"
+  firebase_auth:
+    :path: ".symlinks/plugins/firebase_auth/ios"
+  firebase_core:
+    :path: ".symlinks/plugins/firebase_core/ios"
   Flutter:
     :path: Flutter
   google_sign_in_ios:
@@ -171,6 +168,10 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
+  audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
+  DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
+  DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
+  file_picker: 817ab1d8cd2da9d2da412a417162deee3500fc95
   Firebase: d80354ed7f6df5f9aca55e9eb47cc4b634735eaf
   firebase_auth: 3d848b9b866b201e5c8e0c06d8b2cec272fd8825
   firebase_core: ac395f994af4e28f6a38b59e05a88ca57abeb874
@@ -180,10 +181,6 @@ SPEC CHECKSUMS:
   FirebaseCore: 99fe0c4b44a39f37d99e6404e02009d2db5d718d
   FirebaseCoreExtension: 3d3f2017a00d06e09ab4ebe065391b0bb642565e
   FirebaseCoreInternal: df24ce5af28864660ecbd13596fc8dd3a8c34629
-  audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
-  DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
-  DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: 817ab1d8cd2da9d2da412a417162deee3500fc95
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   google_sign_in_ios: 4111e87aa5e24a4404f00ea13479f35e571969cc
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
