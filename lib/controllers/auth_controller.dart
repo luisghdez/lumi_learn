@@ -108,4 +108,15 @@ class AuthController extends GetxController {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  Future<String?> getIdToken() async {
+    final user = firebaseUser.value;
+    if (user == null) {
+      // User not logged in, or still being loaded
+      return null;
+    }
+
+    // Return the user's ID token (forceRefresh = false in this example)
+    return await user.getIdToken();
+  }
 }

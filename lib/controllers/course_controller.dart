@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
-import 'package:lumi_learn_app/models/question.dart'; // Import the data file
+import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/services/api_service.dart'; // Import the data file
 
 class CourseController extends GetxController {
+  final AuthController authController = Get.find();
   // Reactive variable to store the active planet
   var activePlanet = Rxn<Planet>();
   // final activeCourseId = 0.obs; // example course id
@@ -105,4 +110,47 @@ class CourseController extends GetxController {
   //     activeQuestionIndex.value--;
   //   }
   // }
+
+  Future<void> createCourse({
+    required String title,
+    required String description,
+    required List<File> files,
+    String content = '',
+  }) async {
+    print('Creating course...');
+    print('Title: $title');
+    print('Description: $description');
+    print('Content: $content');
+    print('Files: $files');
+
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return;
+      }
+      final response = await ApiService.createCourse(
+        token: token,
+        title: title,
+        description: description,
+        files: files,
+        content: content,
+      );
+
+      if (response.statusCode == 201) {
+        // Successfully created the course
+        final responseData = response.body;
+        // Optionally parse the JSON or do further handling
+        print('Course created successfully: $responseData');
+      } else {
+        // Handle error response
+        print(
+          'Failed to create course [${response.statusCode}]: ${response.body}',
+        );
+      }
+    } catch (e) {
+      // Catch any exceptions (network issues, etc.)
+      print('Error creating course: $e');
+    }
+  }
 }

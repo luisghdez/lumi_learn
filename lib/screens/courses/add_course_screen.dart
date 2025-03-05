@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -16,6 +17,8 @@ class _CourseCreationState extends State<CourseCreation> {
   List<File> selectedFiles = [];
   List<File> selectedImages = [];
   String text = "";
+  String courseTitle = "";
+  String courseDescription = "";
 
   /// Compute total items based on selected files, images, and whether text is non-empty.
   int get totalItems =>
@@ -80,6 +83,101 @@ class _CourseCreationState extends State<CourseCreation> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
+
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: greyBorder),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(
+                      icon: Icons.menu_book,
+                      title: "Course Details",
+                      context: context,
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Course Title
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Course Title (required)",
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: greyBorder),
+                          ),
+                          child: TextField(
+                            onChanged: (value) =>
+                                setState(() => courseTitle = value),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white),
+                            cursorColor: Colors.white,
+                            decoration: const InputDecoration(
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              hintText: "Enter course title",
+                              hintStyle:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Course Description
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Course Description",
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: greyBorder),
+                          ),
+                          child: TextField(
+                            onChanged: (value) =>
+                                setState(() => courseDescription = value),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white),
+                            cursorColor: Colors.white,
+                            minLines: 2,
+                            maxLines: 2,
+                            decoration: const InputDecoration(
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              hintText:
+                                  "Briefly describe what this course is about",
+                              hintStyle:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 40),
 
               /// FILES SECTION
               _buildSectionHeader(
@@ -253,7 +351,7 @@ class _CourseCreationState extends State<CourseCreation> {
                       contentPadding: EdgeInsets.symmetric(
                         vertical: 10, // Reduce top and bottom padding
                       ),
-                      hintText: "Enter course description or content here...",
+                      hintText: "Enter course content here...",
                       hintStyle: TextStyle(
                           fontSize: 12,
                           color: Colors.grey), // Hint text styling
@@ -352,7 +450,12 @@ class _CourseCreationState extends State<CourseCreation> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // Your "Create Course" logic here
+                      CourseController().createCourse(
+                        title: courseTitle,
+                        description: courseDescription,
+                        files: [...selectedFiles, ...selectedImages],
+                        content: text,
+                      );
                     },
                     icon: const Icon(Icons.add,
                         color: Colors.black), // Ensure icon is also black
@@ -418,8 +521,8 @@ class _CourseCreationState extends State<CourseCreation> {
         const SizedBox(width: 8),
         Text(
           title,
-          style:
-              const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+          style: const TextStyle(
+              fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
         ),
       ],
     );
