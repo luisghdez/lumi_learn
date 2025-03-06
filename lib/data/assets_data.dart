@@ -24,16 +24,16 @@ final List<Planet> planets = [
       // 'assets/backgrounds/bgred4.jpg',
     ],
   ),
-  Planet(
-    imagePath: 'assets/planets/ring1.png',
-    name: 'Circle Planet 2',
-    backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
-    ],
-  ),
+  // Planet(
+  //   imagePath: 'assets/planets/ring1.png',
+  //   name: 'Circle Planet 2',
+  //   backgroundPaths: [
+  //     'assets/backgrounds/bgred1.jpg',
+  //     // 'assets/backgrounds/bgred2.jpg',
+  //     // 'assets/backgrounds/bgred3.jpg',
+  //     // 'assets/backgrounds/bgred4.jpg',
+  //   ],
+  // ),
   Planet(
     imagePath: 'assets/planets/planet2.png',
     name: 'Circle Planet 2',

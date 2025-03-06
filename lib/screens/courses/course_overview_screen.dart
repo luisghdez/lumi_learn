@@ -51,6 +51,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       final lessonCount = lessons.length;
       final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
 
+      Planet? previousPlanet;
+
       return StarryAppScaffold(
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
@@ -79,8 +81,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         final lessonId = lesson['id']; // Unique lesson ID
 
                         // Assign a planet image based on the lesson
-                        final lessonPlanet =
-                            getPlanetForLesson(courseId.value, lessonId);
+                        final lessonPlanet = getPlanetForLesson(
+                            courseId.value, lessonId, previousPlanet);
+                        previousPlanet = lessonPlanet;
 
                         // Wave offset for a fun orbit effect
                         final offsetY =
@@ -174,25 +177,25 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   }
 
   Planet getPlanetForLesson(String courseId, String lessonId,
-      {Planet? previousPlanet}) {
-    // Combine course ID and lesson ID to create a unique hash
+      [Planet? previousPlanet]) {
+    // Combine course ID and lesson ID for a unique hash.
     String combinedId = courseId + lessonId;
     var bytes = utf8.encode(combinedId);
     var hash = md5.convert(bytes).toString();
 
-    // Convert hash into an integer
+    // Convert part of the hash to a number.
     int numericHash = int.parse(hash.substring(0, 6), radix: 16);
-
-    // Get a planet index
     int planetIndex = numericHash % planets.length;
+    Planet chosenPlanet = planets[planetIndex];
 
-    // Ensure the planet is different from the previous one
-    if (previousPlanet != null && planets[planetIndex] == previousPlanet) {
-      planetIndex =
-          (planetIndex + 1) % planets.length; // Shift to the next planet
+    // If the chosen planet is the same as the previous one, pick the next planet.
+    if (previousPlanet != null &&
+        chosenPlanet.imagePath == previousPlanet.imagePath) {
+      planetIndex = (planetIndex + 1) % planets.length;
+      chosenPlanet = planets[planetIndex];
     }
 
-    return planets[planetIndex];
+    return chosenPlanet;
   }
 
   // **Handling Lesson Taps**
