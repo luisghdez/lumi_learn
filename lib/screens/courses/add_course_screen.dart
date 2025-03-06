@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/widgets/app_scaffold.dart';
+import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
 class CourseCreation extends StatefulWidget {
@@ -59,7 +59,7 @@ class _CourseCreationState extends State<CourseCreation> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
+    return AppScaffoldHome(
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -479,6 +479,7 @@ class _CourseCreationState extends State<CourseCreation> {
                     ),
                   ),
                 ),
+              const SizedBox(height: 36),
             ],
           ),
         ),

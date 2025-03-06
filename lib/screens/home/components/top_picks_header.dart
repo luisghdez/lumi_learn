@@ -19,7 +19,7 @@ class TopPicksHeader extends StatelessWidget {
             Text(
               'Top picks',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 23,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

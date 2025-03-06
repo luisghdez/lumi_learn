@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 import 'components/home_header.dart';
 import 'components/search_bar.dart' as custom;
@@ -11,7 +12,6 @@ import 'components/category_list.dart';
 import 'package:lumi_learn_app/screens/settings/settings-screen.dart';
 // import 'package:lumi_learn_app/screens/lessons/lesson_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
-import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
     final String userName =
         authController.firebaseUser.value!.displayName ?? 'User';
 
-    return AppScaffold(
+    return AppScaffoldHome(
       // If AppScaffold has its own background color, you can omit Container's color
       body: SafeArea(
         child: SingleChildScrollView(
