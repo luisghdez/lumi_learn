@@ -35,6 +35,8 @@ class AuthGate extends StatelessWidget {
         Get.put(CourseController());
       }
 
+      precacheImage(const AssetImage('assets/images/milky_way.png'), context);
+
       // Show main screen if user is logged in
       return MainScreen();
     });
