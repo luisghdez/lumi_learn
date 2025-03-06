@@ -31,8 +31,8 @@ class CourseController extends GetxController {
   }
 
   // Method to set the active planet
-  void setActivePlanet(int index) {
-    activePlanet.value = planets[index];
+  void setActivePlanet(Planet planet) {
+    activePlanet.value = planet;
   }
 
   void setActiveCourse(int courseId) {

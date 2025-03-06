@@ -1,6 +1,9 @@
 import 'dart:math';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/data/assets_data.dart';
 
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
 import 'package:lumi_learn_app/widgets/bottom_panel.dart';
@@ -27,7 +30,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final GlobalKey _panelKey = GlobalKey();
   final StarPainter _starPainter = StarPainter(starCount: 200);
 
-  // For capturing each lesson’s center (similar to planetCenters)
+  // Capturing each lesson’s center (for planet positioning)
   final List<Offset> _lessonCenters = [];
 
   @override
@@ -42,12 +45,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     _lessonCenters.clear();
 
     return Obx(() {
-      // Get all lessons from the controller
+      final courseId =
+          courseController.selectedCourseId; // Get current course ID
       final lessons = courseController.lessons;
       final lessonCount = lessons.length;
-
-      // Each lesson is spaced 200px horizontally
-      final totalWidth = lessonCount * 200.0;
+      final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
 
       return StarryAppScaffold(
         body: GestureDetector(
@@ -74,6 +76,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         final lesson = lessons[index];
                         final lessonTitle =
                             lesson['title'] ?? 'Lesson ${index + 1}';
+                        final lessonId = lesson['id']; // Unique lesson ID
+
+                        // Assign a planet image based on the lesson
+                        final lessonPlanet =
+                            getPlanetForLesson(courseId.value, lessonId);
 
                         // Wave offset for a fun orbit effect
                         final offsetY =
@@ -82,27 +89,24 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         final planetTop = screenHeight / 2 - offsetY - 60;
                         final planetSize = 100.0;
 
-                        // Save the center of each “planet” (lesson icon) for the rocket animation
+                        // Save the center of each “planet” for the rocket animation
                         final lessonCenter = Offset(
                           planetLeft + planetSize / 2,
                           planetTop + planetSize / 2,
                         );
                         _lessonCenters.add(lessonCenter);
 
-                        // You can replace this image with a lesson-specific image if available
-                        final lessonImagePath = 'assets/planets/red1.png';
-
                         return Positioned(
                           left: planetLeft,
                           top: planetTop,
                           child: GestureDetector(
-                            onTap: () => _onLessonTap(index),
+                            onTap: () => _onLessonTap(index, lessonPlanet),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ClipOval(
                                   child: Image.asset(
-                                    lessonImagePath,
+                                    lessonPlanet.imagePath,
                                     width: planetSize,
                                     height: planetSize,
                                     fit: BoxFit.cover,
@@ -148,7 +152,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   key: _panelKey,
                   selectedLessonIndex: _selectedLessonIndex,
                   onStartPressed: () {
-                    // If you want to navigate to the lesson details
                     Get.to(() => LessonScreenMain());
                     _closePanel();
                   },
@@ -170,30 +173,47 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     });
   }
 
-  // 6) Handling Lesson Taps
-  void _onLessonTap(int index) {
+  Planet getPlanetForLesson(String courseId, String lessonId,
+      {Planet? previousPlanet}) {
+    // Combine course ID and lesson ID to create a unique hash
+    String combinedId = courseId + lessonId;
+    var bytes = utf8.encode(combinedId);
+    var hash = md5.convert(bytes).toString();
+
+    // Convert hash into an integer
+    int numericHash = int.parse(hash.substring(0, 6), radix: 16);
+
+    // Get a planet index
+    int planetIndex = numericHash % planets.length;
+
+    // Ensure the planet is different from the previous one
+    if (previousPlanet != null && planets[planetIndex] == previousPlanet) {
+      planetIndex =
+          (planetIndex + 1) % planets.length; // Shift to the next planet
+    }
+
+    return planets[planetIndex];
+  }
+
+  // **Handling Lesson Taps**
+  void _onLessonTap(int index, Planet planet) {
     if (_selectedLessonIndex == index && _isPanelVisible) {
-      // Same lesson tapped; do nothing if panel is already open.
       return;
     } else {
-      // Close any open panel first
       setState(() {
         _isPanelVisible = false;
       });
-      // After it hides, show the new panel and rocket
       Future.delayed(const Duration(milliseconds: 300), () {
         setState(() {
           _selectedLessonIndex = index;
           _isPanelVisible = true;
         });
-        courseController.setActivePlanet(index);
-        // Or if you want to do something specifically for the tapped lesson,
-        // you could store `selectedLessonIndex` in the controller, or handle other logic.
+        courseController.setActivePlanet(planet);
       });
     }
   }
 
-  // 7) Close the bottom panel if we tap outside it
+  // **Close the bottom panel when tapping outside**
   void _handleTapDown(BuildContext context, TapDownDetails details) {
     if (!_isPanelVisible) return;
 
@@ -215,16 +235,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     }
   }
 
-  // 8) Hides the panel & rocket
+  // **Hides the panel & rocket animation**
   void _closePanel() {
     setState(() {
       _isPanelVisible = false;
     });
-    // Optionally reset the selected index after the panel animation
-    // Future.delayed(const Duration(milliseconds: 300), () {
-    //   setState(() {
-    //     _selectedLessonIndex = null;
-    //   });
-    // });
   }
 }
