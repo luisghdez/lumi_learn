@@ -30,13 +30,20 @@ class CategoryList extends StatelessWidget {
               title: course['title'] ?? 'Untitled',
               subtitle: "Galaxy",
               imagePath: randomImagePath,
-              onTap: () {
+              onTap: () async {
                 // Set the selected course ID in the controller
                 courseController.setSelectedCourseId(
                     course['id'], course['title']);
-
+                while (courseController.isLoading.value) {
+                  await Future.delayed(const Duration(milliseconds: 100));
+                }
                 // Navigate to CourseOverviewScreen
-                Get.to(() => const CourseOverviewScreen());
+                Get.to(
+                  () => const CourseOverviewScreen(),
+                  transition: Transition.fadeIn, // Fade transition
+                  duration: const Duration(
+                      milliseconds: 500), // Custom duration (optional)
+                );
               },
             ),
           );

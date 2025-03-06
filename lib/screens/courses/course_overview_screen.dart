@@ -48,15 +48,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
       // Each lesson is spaced 200px horizontally
       final totalWidth = lessonCount * 200.0;
-      // Show loading screen if data is still loading
-      if (courseController.isLoading.value) {
-        return const Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
-        );
-      }
 
       return StarryAppScaffold(
         body: GestureDetector(
