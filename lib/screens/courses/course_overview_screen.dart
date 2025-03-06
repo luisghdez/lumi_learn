@@ -211,6 +211,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
           _selectedLessonIndex = index;
           _isPanelVisible = true;
         });
+        courseController.setActiveLessonIndex(index);
         courseController.setActivePlanet(planet);
       });
     }

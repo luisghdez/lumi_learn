@@ -21,7 +21,6 @@ class LessonScreenMain extends StatelessWidget {
     return Obx(() {
       final currentIndex = courseController.activeQuestionIndex.value;
       final questions = courseController.getQuestions();
-
       final currentQuestion = questions[currentIndex];
       //  TODO add header for progress bar in each step
       switch (currentQuestion.lessonType) {
