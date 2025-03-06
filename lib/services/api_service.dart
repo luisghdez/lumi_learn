@@ -47,4 +47,32 @@ class ApiService {
 
     return response;
   }
+
+  Future<http.Response> getCourses({
+    required String token,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
+  Future<http.Response> getLessons({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses/$courseId/lessons');
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
 }

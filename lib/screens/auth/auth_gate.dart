@@ -2,8 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
-import 'package:lumi_learn_app/screens/auth/main_start.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
@@ -30,6 +30,12 @@ class AuthGate extends StatelessWidget {
       }
 
       print("User is logged in: ${user.displayName}");
+
+      if (!Get.isRegistered<CourseController>()) {
+        Get.put(CourseController());
+      }
+
+      precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 
       // Show main screen if user is logged in
       return MainScreen();

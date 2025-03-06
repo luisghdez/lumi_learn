@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 import 'components/home_header.dart';
 import 'components/search_bar.dart' as custom;
@@ -11,18 +12,20 @@ import 'components/category_list.dart';
 import 'package:lumi_learn_app/screens/settings/settings-screen.dart';
 // import 'package:lumi_learn_app/screens/lessons/lesson_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
-import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // Hard-code username for now (or get from user controller)
-  final String userName = 'YUR';
-
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
+    final AuthController authController = Get.find();
+
+    final String userName =
+        authController.firebaseUser.value!.displayName ?? 'User';
+
+    return AppScaffoldHome(
       // If AppScaffold has its own background color, you can omit Container's color
       body: SafeArea(
         child: SingleChildScrollView(
@@ -49,19 +52,14 @@ class HomeScreen extends StatelessWidget {
                 onAddTap: () {
                   // Navigate to your Lesson creation screen
                   // Get.to(() => const AddLessonPlanScreen());
-                  Get.to(() => CourseCreation());
+                  Get.to(() => const CourseCreation());
                 },
               ),
 
               const SizedBox(height: 10),
 
               // Category cards
-              CategoryList(
-                onCategoryTap: (String categoryName) {
-                  // For example, navigate to CourseOverviewScreen, passing category
-                  Get.to(() => const CourseOverviewScreen());
-                },
-              ),
+              const CategoryList(),
 
               // If you want more spacing at bottom
               const SizedBox(height: 10),

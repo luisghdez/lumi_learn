@@ -17,9 +17,11 @@ class CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       onTap: onTap,
       child: Container(
-        height: 160,
+        height: 190,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           image: DecorationImage(
@@ -27,53 +29,77 @@ class CategoryCard extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-        child: Container(
-          // Overlay to darken the background for text visibility
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                Colors.black.withOpacity(0.3),
-                Colors.black.withOpacity(0.3),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+        child: Stack(
+          children: [
+            // Gradient layer at the bottom
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: 50, // control how tall the gradient area is
+                decoration: BoxDecoration(
+                  // Only round the bottom corners
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent, // start transparent
+                      Colors.black.withOpacity(0.7), // fade into black
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
             ),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+            // Text and arrow at the bottom
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize
+                            .min, // to hug the content at the bottom
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              // fontWeight: FontWeight.w200,
+                              color: Colors.white,
+                            ),
+                          ),
+                          // const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 14,
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child: Icon(
+                        Icons.arrow_forward_ios,
                         color: Colors.white70,
+                        size: 18,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.white70,
-                size: 18,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

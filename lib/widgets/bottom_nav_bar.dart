@@ -17,7 +17,7 @@ class BottomNavbar extends StatelessWidget {
 
         return BottomNavigationBar(
           currentIndex: currentIndex,
-          backgroundColor: const Color.fromARGB(255, 12, 12, 12),
+          backgroundColor: Colors.black,
           onTap: (index) {
             navigationController.updateIndex(index);
           },
