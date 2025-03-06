@@ -2,20 +2,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'category_card.dart';
 
 class CategoryList extends StatelessWidget {
-  final Function(String) onCategoryTap;
-
-  const CategoryList({
-    Key? key,
-    required this.onCategoryTap,
-  }) : super(key: key);
+  const CategoryList({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final courseController = Get.find<CourseController>();
-    final random = Random(); // Create a random generator instance
+    final random = Random();
 
     return Obx(() {
       final courses = courseController.courses;
@@ -33,9 +29,15 @@ class CategoryList extends StatelessWidget {
             child: CategoryCard(
               title: course['title'] ?? 'Untitled',
               subtitle: "Galaxy",
-              imagePath:
-                  randomImagePath, // Use the randomly selected image path
-              onTap: () => onCategoryTap(course['id'] ?? ''),
+              imagePath: randomImagePath,
+              onTap: () {
+                // Set the selected course ID in the controller
+                courseController.setSelectedCourseId(
+                    course['id'], course['title']);
+
+                // Navigate to CourseOverviewScreen
+                Get.to(() => const CourseOverviewScreen());
+              },
             ),
           );
         }).toList(),

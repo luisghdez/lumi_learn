@@ -8,7 +8,6 @@ import 'package:lumi_learn_app/widgets/course_overview_header.dart';
 import 'package:lumi_learn_app/widgets/star_painter.dart';
 import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
 
 class CourseOverviewScreen extends StatefulWidget {
@@ -19,7 +18,6 @@ class CourseOverviewScreen extends StatefulWidget {
 }
 
 class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
-  // final CourseController courseController = Get.put(CourseController());
   final CourseController courseController = Get.find();
 
   bool _isPanelVisible = false;
@@ -29,151 +27,183 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final GlobalKey _panelKey = GlobalKey();
   final StarPainter _starPainter = StarPainter(starCount: 200);
 
-  // For capturing each planet’s center
-  final List<Offset> _planetCenters = [];
+  // For capturing each lesson’s center (similar to planetCenters)
+  final List<Offset> _lessonCenters = [];
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Horizontal wave layout parameters
+    // Horizontal wave layout parameters (optional for the “orbit” effect)
     final double amplitude = 180.0;
     final double frequency = pi / 3;
 
-    // Total width to hold all planets side by side
-    final totalWidth = planets.length * 200.0;
+    // Get all lessons from the controller
+    final lessons = courseController.lessons;
+    final lessonCount = lessons.length;
 
-    // Recalculate planet centers each build
-    _planetCenters.clear();
+    // Each lesson is spaced 200px horizontally
+    final totalWidth = lessonCount * 200.0;
 
-    return StarryAppScaffold(
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTapDown: (details) => _handleTapDown(context, details),
-        child: Stack(
-          children: [
-            // Scrollable horizontal content
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: totalWidth,
-                height: screenHeight,
-                child: Stack(
-                  children: [
-                    // Starry background
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _starPainter,
-                      ),
-                    ),
-                    // Planets
-                    ...List.generate(planets.length, (index) {
-                      final offsetY =
-                          amplitude * sin(index * frequency + pi / 2);
-                      final planetLeft = index * 200.0;
-                      final planetTop = screenHeight / 2 - offsetY - 60;
-                      final planetSize = 100.0;
+    // Clear & recalculate lesson centers each build
+    _lessonCenters.clear();
 
-                      // Determine planet center in local coordinates
-                      final planetCenter = Offset(
-                        planetLeft + planetSize / 2,
-                        planetTop + planetSize / 2,
-                      );
-                      _planetCenters.add(planetCenter);
+    return Obx(() {
+      // Show loading screen if data is still loading
+      if (courseController.isLoading.value || lessons.isEmpty) {
+        return const Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        );
+      }
 
-                      return Positioned(
-                        left: planetLeft,
-                        top: planetTop,
-                        child: GestureDetector(
-                          onTap: () => _onPlanetTap(index),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipOval(
-                                child: Image.asset(
-                                  planets[index].imagePath,
-                                  width: planetSize,
-                                  height: planetSize,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Lesson ${index + 1}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+      return StarryAppScaffold(
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapDown: (details) => _handleTapDown(context, details),
+          child: Stack(
+            children: [
+              // 1) Scrollable horizontal region
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: totalWidth,
+                  height: screenHeight,
+                  child: Stack(
+                    children: [
+                      // Background stars
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _starPainter,
                         ),
-                      );
-                    }),
-                    // --- ROCKET ANIMATION ---
-                    Positioned.fill(
-                      child: _selectedLessonIndex == null
-                          ? const SizedBox()
-                          : RocketAnimation(
-                              planetCenter:
-                                  _planetCenters[_selectedLessonIndex!],
-                              planetRadius: 20.0, // Adjust as needed
-                              isActive: _isPanelVisible,
+                      ),
+                      // 2) Lessons as “Planets”
+                      ...List.generate(lessonCount, (index) {
+                        final lesson = lessons[index];
+                        final lessonTitle =
+                            lesson['title'] ?? 'Lesson ${index + 1}';
+
+                        // Wave offset for a fun orbit effect
+                        final offsetY =
+                            amplitude * sin(index * frequency + pi / 2);
+                        final planetLeft = index * 200.0;
+                        final planetTop = screenHeight / 2 - offsetY - 60;
+                        final planetSize = 100.0;
+
+                        // Save the center of each “planet” (lesson icon) for the rocket animation
+                        final lessonCenter = Offset(
+                          planetLeft + planetSize / 2,
+                          planetTop + planetSize / 2,
+                        );
+                        _lessonCenters.add(lessonCenter);
+
+                        // You can replace this image with a lesson-specific image if available
+                        final lessonImagePath = 'assets/planets/red1.png';
+
+                        return Positioned(
+                          left: planetLeft,
+                          top: planetTop,
+                          child: GestureDetector(
+                            onTap: () => _onLessonTap(index),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ClipOval(
+                                  child: Image.asset(
+                                    lessonImagePath,
+                                    width: planetSize,
+                                    height: planetSize,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  lessonTitle,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                    ),
-                  ],
+                          ),
+                        );
+                      }),
+                      // 3) Rocket Animation
+                      Positioned.fill(
+                        child: _selectedLessonIndex == null
+                            ? const SizedBox()
+                            : RocketAnimation(
+                                planetCenter:
+                                    _lessonCenters[_selectedLessonIndex!],
+                                planetRadius: 20.0,
+                                isActive: _isPanelVisible,
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            // BOTTOM PANEL (positioned outside the scroll area)
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              bottom: _isPanelVisible ? 0 : -250,
-              left: 0,
-              right: 0,
-              child: BottomPanel(
-                key: _panelKey,
-                selectedLessonIndex: _selectedLessonIndex,
-                onStartPressed: () {
-                  Get.to(() => LessonScreenMain());
-                  _closePanel();
-                },
-                onClose: _closePanel,
+              // 4) Bottom Panel
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                bottom: _isPanelVisible ? 0 : -250,
+                left: 0,
+                right: 0,
+                child: BottomPanel(
+                  key: _panelKey,
+                  selectedLessonIndex: _selectedLessonIndex,
+                  onStartPressed: () {
+                    // If you want to navigate to the lesson details
+                    Get.to(() => LessonScreenMain());
+                    _closePanel();
+                  },
+                  onClose: _closePanel,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CourseOverviewHeader(
-                  onBack: () => Get.back(), lessonTitle: "Math"),
-            ),
-          ],
+              // 5) Top Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: CourseOverviewHeader(
+                  onBack: () => Get.back(),
+                  lessonTitle: "${courseController.selectedCourseTitle}",
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  // When a planet is tapped, hide the panel (and rocket) then show the new one.
-  void _onPlanetTap(int index) {
+  // 6) Handling Lesson Taps
+  void _onLessonTap(int index) {
     if (_selectedLessonIndex == index && _isPanelVisible) {
-      // Same planet tapped; do nothing.
+      // Same lesson tapped; do nothing if panel is already open.
       return;
     } else {
+      // Close any open panel first
       setState(() {
         _isPanelVisible = false;
       });
+      // After it hides, show the new panel and rocket
       Future.delayed(const Duration(milliseconds: 300), () {
         setState(() {
           _selectedLessonIndex = index;
           _isPanelVisible = true;
         });
         courseController.setActivePlanet(index);
+        // Or if you want to do something specifically for the tapped lesson,
+        // you could store `selectedLessonIndex` in the controller, or handle other logic.
       });
     }
   }
 
-  // Detect taps outside the bottom panel to close it.
+  // 7) Close the bottom panel if we tap outside it
   void _handleTapDown(BuildContext context, TapDownDetails details) {
     if (!_isPanelVisible) return;
 
@@ -195,14 +225,12 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     }
   }
 
-  // Closes the panel, which causes the rocket to fade out.
+  // 8) Hides the panel & rocket
   void _closePanel() {
-    // Step 1: Trigger the fade-out by going from 1.0 -> 0.0
     setState(() {
       _isPanelVisible = false;
     });
-
-    // Step 2: After the 300ms animation completes, remove the rocket widget
+    // Optionally reset the selected index after the panel animation
     // Future.delayed(const Duration(milliseconds: 300), () {
     //   setState(() {
     //     _selectedLessonIndex = null;

@@ -18,6 +18,10 @@ class CourseController extends GetxController {
   final activeQuestionIndex = 0.obs;
   var isLoading = false.obs;
   var courses = [].obs;
+  var selectedCourseId = ''.obs;
+  var selectedCourseTitle = ''.obs;
+
+  var lessons = <Map<String, dynamic>>[].obs;
 
   @override
   void onInit() {
@@ -225,6 +229,49 @@ class CourseController extends GetxController {
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false; // Stop loading
+    }
+  }
+
+  Future<void> setSelectedCourseId(String courseId, String courseTitle) async {
+    lessons.value = []; // Clear the lessons list
+    selectedCourseId.value = courseId;
+    selectedCourseTitle.value = courseTitle;
+    isLoading.value = true; // Start loading
+
+    // // Show full-screen loading overlay
+    // Get.dialog(
+    //   const Center(
+    //     child: CircularProgressIndicator(color: Colors.white),
+    //   ),
+    //   barrierDismissible: false, // Prevent dismissing while loading
+    // );
+
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        Get.back(); // Remove loading screen
+        return;
+      }
+
+      final apiService = ApiService();
+      final response =
+          await apiService.getLessons(token: token, courseId: courseId);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Lessons fetched successfully: ${data['lessons']}');
+        lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
+      } else {
+        print(
+            'Error fetching lessons: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Exception while fetching lessons: $e');
+    } finally {
+      isLoading.value = false; // Stop loading
+      // Get.back(); // Close loading screen
     }
   }
 }

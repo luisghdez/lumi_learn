@@ -59,12 +59,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 10),
 
               // Category cards
-              CategoryList(
-                onCategoryTap: (String categoryName) {
-                  // For example, navigate to CourseOverviewScreen, passing category
-                  Get.to(() => const CourseOverviewScreen());
-                },
-              ),
+              const CategoryList(),
 
               // If you want more spacing at bottom
               const SizedBox(height: 10),
