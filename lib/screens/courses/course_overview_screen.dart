@@ -38,19 +38,18 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     final double amplitude = 180.0;
     final double frequency = pi / 3;
 
-    // Get all lessons from the controller
-    final lessons = courseController.lessons;
-    final lessonCount = lessons.length;
-
-    // Each lesson is spaced 200px horizontally
-    final totalWidth = lessonCount * 200.0;
-
     // Clear & recalculate lesson centers each build
     _lessonCenters.clear();
 
     return Obx(() {
+      // Get all lessons from the controller
+      final lessons = courseController.lessons;
+      final lessonCount = lessons.length;
+
+      // Each lesson is spaced 200px horizontally
+      final totalWidth = lessonCount * 200.0;
       // Show loading screen if data is still loading
-      if (courseController.isLoading.value || lessons.isEmpty) {
+      if (courseController.isLoading.value) {
         return const Scaffold(
           backgroundColor: Colors.black,
           body: Center(
