@@ -38,10 +38,22 @@ class CourseController extends GetxController {
   //   // activeLessonIndex = lessonIndex;
   // }
   void setActiveLessonIndex(int lessonIndex) {
-    print('Setting active lesson index: $lessonIndex');
     activeLessonIndex.value = lessonIndex;
     activeQuestionIndex.value = 0;
   }
+
+  void nextQuestion() {
+    if (activeQuestionIndex.value < getQuestions().length) {
+      activeQuestionIndex.value++;
+    }
+  }
+
+  // (Optional) Moves to the previous question if there is one
+  // void previousQuestion() {
+  //   if (activeQuestionIndex.value > 0) {
+  //     activeQuestionIndex.value--;
+  //   }
+  // }
 
   // List<Question> getQuestions() {
   //   // return questions based on activeCourseId and activeLessonIndex
@@ -199,21 +211,6 @@ class CourseController extends GetxController {
         return LessonType.multipleChoice;
     }
   }
-
-  // Possibly move to seperate controller, to seperate concerns
-
-  void nextQuestion() {
-    if (activeQuestionIndex.value < getQuestions().length) {
-      activeQuestionIndex.value++;
-    }
-  }
-
-  // (Optional) Moves to the previous question if there is one
-  // void previousQuestion() {
-  //   if (activeQuestionIndex.value > 0) {
-  //     activeQuestionIndex.value--;
-  //   }
-  // }
 
   Future<void> createCourse({
     required String title,

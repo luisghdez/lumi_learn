@@ -21,7 +21,13 @@ class LessonScreenMain extends StatelessWidget {
     return Obx(() {
       final currentIndex = courseController.activeQuestionIndex.value;
       final questions = courseController.getQuestions();
+
+      // If all questions have been answered, show the result screen.
+      if (currentIndex >= questions.length) {
+        return LessonResultScreen();
+      }
       final currentQuestion = questions[currentIndex];
+
       //  TODO add header for progress bar in each step
       switch (currentQuestion.lessonType) {
         case LessonType.multipleChoice:
@@ -68,9 +74,6 @@ class LessonScreenMain extends StatelessWidget {
         case LessonType.flashcards:
           return FlashcardScreen(
             question: currentQuestion,
-            // onSubmitAnswer: () {
-            //   courseController.nextQuestion();
-            // },
           );
 
         // Add more cases for other lesson types if needed

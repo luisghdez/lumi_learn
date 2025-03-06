@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
+import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_panel.dart';
 import 'package:lumi_learn_app/widgets/course_overview_header.dart';
 import 'package:lumi_learn_app/widgets/star_painter.dart';
@@ -165,7 +166,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: CourseOverviewHeader(
-                  onBack: () => Get.back(),
+                  onBack: () => Get.offAll(
+                    () => const MainScreen(),
+                    transition: Transition.fadeIn,
+                    duration: const Duration(milliseconds: 500),
+                  ),
                   lessonTitle: "${courseController.selectedCourseTitle}",
                 ),
               ),
