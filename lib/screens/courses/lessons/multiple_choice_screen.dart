@@ -16,8 +16,19 @@ class MultipleChoiceScreen extends StatelessWidget {
 
   void _submitAnswer(BuildContext context) {
     if (_selectedOption.value != -1) {
-      print('Selected option: ${question.options[_selectedOption.value]}');
-      onSubmitAnswer();
+      final selectedAnswer = question.options[_selectedOption.value];
+      if (selectedAnswer == question.correctAnswer) {
+        print('Correct answer: $selectedAnswer');
+        onSubmitAnswer();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "That's not the answer, the correct answer is: ${question.correctAnswer}",
+            ),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

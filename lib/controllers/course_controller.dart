@@ -131,7 +131,6 @@ class CourseController extends GetxController {
   // Modify getQuestions() to return questions only from the active lessonimport 'dart:math';
 
   List<Question> getQuestions() {
-    print('Getting questions again...');
     // Check if lessons have been loaded
     if (lessons.isEmpty) return [];
 
