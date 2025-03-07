@@ -20,7 +20,7 @@ class CourseController extends GetxController {
   var courses = [].obs;
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
-
+  final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
 
   @override
@@ -43,9 +43,14 @@ class CourseController extends GetxController {
     activeQuestionIndex.value = 0;
   }
 
+  // void nextQuestion() {
+  //   if (activeQuestionIndex.value < getQuestions().length) {
+  //     activeQuestionIndex.value++;
+  //   }
+  // }
+
   void nextQuestion() {
-    print('Next question');
-    if (activeQuestionIndex.value < getQuestions().length) {
+    if (activeQuestionIndex.value < questionsCount.value) {
       activeQuestionIndex.value++;
     }
   }
@@ -126,9 +131,10 @@ class CourseController extends GetxController {
   //   ];
   // }
 
-  // Modify getQuestions() to return questions only from the active lesson
+  // Modify getQuestions() to return questions only from the active lessonimport 'dart:math';
 
   List<Question> getQuestions() {
+    print('Getting questions again...');
     // Check if lessons have been loaded
     if (lessons.isEmpty) return [];
 
@@ -188,8 +194,12 @@ class CourseController extends GetxController {
         ));
       }
     }
-    // Additional logic: if the lesson only has one question and it is type flashcards,
-    // add matchTheTerms questions using those same flashcards 4 at a time.
+
+    // ----------------------------------------
+    // Additional logic for flashcards / matchTheTerms
+    // ----------------------------------------
+
+    // Case 1: Exactly one question that is flashcards.
     if (questions.length == 1 &&
         questions[0].lessonType == LessonType.flashcards) {
       final flashcards = questions[0].flashcards;
@@ -197,11 +207,8 @@ class CourseController extends GetxController {
         const int chunkSize = 4;
         final List<Question> matchQuestions = [];
         for (int i = 0; i < flashcards.length; i += chunkSize) {
-          // Create a chunk of flashcards (4 at a time)
-          final chunk = flashcards.sublist(
-            i,
-            min(i + chunkSize, flashcards.length),
-          );
+          final chunk =
+              flashcards.sublist(i, min(i + chunkSize, flashcards.length));
           matchQuestions.add(Question(
             questionText: "Match the Terms", // Customize as needed
             options: [],
@@ -213,9 +220,37 @@ class CourseController extends GetxController {
         questions.addAll(matchQuestions);
       }
     }
-
-    print("question count: ${questions.length}");
-
+    // Case 2: More than one question.
+    else if (questions.length > 1) {
+      // Look for a flashcards question in the list.
+      final int flashcardsIndex =
+          questions.indexWhere((q) => q.lessonType == LessonType.flashcards);
+      if (flashcardsIndex != -1) {
+        final flashcards = questions[flashcardsIndex].flashcards;
+        if (flashcards != null && flashcards.isNotEmpty) {
+          const int chunkSize = 4;
+          final List<Question> matchQuestions = [];
+          for (int i = 0; i < flashcards.length; i += chunkSize) {
+            final chunk =
+                flashcards.sublist(i, min(i + chunkSize, flashcards.length));
+            matchQuestions.add(Question(
+              questionText: "Match the Terms", // Customize as needed
+              options: [],
+              lessonType: LessonType.matchTheTerms,
+              flashcards: chunk,
+            ));
+          }
+          // Replace the original flashcards question with the new matchTheTerms ones.
+          questions.removeAt(flashcardsIndex);
+          questions.addAll(matchQuestions);
+        }
+      }
+      questions.shuffle();
+    }
+    questionsCount.value = questions.length;
+    questions.forEach((q) {
+      print('Question type: ${q.lessonType}');
+    });
     return questions;
   }
 
