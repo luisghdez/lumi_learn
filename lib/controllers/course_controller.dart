@@ -22,6 +22,7 @@ class CourseController extends GetxController {
   var selectedCourseTitle = ''.obs;
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
+  final RxList<Question> computedQuestions = <Question>[].obs;
 
   @override
   void onInit() {
@@ -35,19 +36,15 @@ class CourseController extends GetxController {
     activePlanet.value = planet;
   }
 
-  // void setActiveLesson(int lessonIndex) {
-  //   // activeLessonIndex = lessonIndex;
-  // }
   void setActiveLessonIndex(int lessonIndex) {
     activeLessonIndex.value = lessonIndex;
     activeQuestionIndex.value = 0;
   }
 
-  // void nextQuestion() {
-  //   if (activeQuestionIndex.value < getQuestions().length) {
-  //     activeQuestionIndex.value++;
-  //   }
-  // }
+  void loadQuestions() {
+    computedQuestions.value = getQuestions();
+    questionsCount.value = computedQuestions.length;
+  }
 
   void nextQuestion() {
     if (activeQuestionIndex.value < questionsCount.value) {
@@ -248,9 +245,6 @@ class CourseController extends GetxController {
       questions.shuffle();
     }
     questionsCount.value = questions.length;
-    questions.forEach((q) {
-      print('Question type: ${q.lessonType}');
-    });
     return questions;
   }
 

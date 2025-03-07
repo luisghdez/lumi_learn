@@ -20,7 +20,7 @@ class LessonScreenMain extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final currentIndex = courseController.activeQuestionIndex.value;
-      final questions = courseController.getQuestions();
+      final questions = courseController.computedQuestions;
 
       // If all questions have been answered, show the result screen.
       if (currentIndex >= questions.length) {
