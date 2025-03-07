@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -43,6 +44,7 @@ class CourseController extends GetxController {
   }
 
   void nextQuestion() {
+    print('Next question');
     if (activeQuestionIndex.value < getQuestions().length) {
       activeQuestionIndex.value++;
     }
@@ -125,6 +127,7 @@ class CourseController extends GetxController {
   // }
 
   // Modify getQuestions() to return questions only from the active lesson
+
   List<Question> getQuestions() {
     // Check if lessons have been loaded
     if (lessons.isEmpty) return [];
@@ -143,7 +146,7 @@ class CourseController extends GetxController {
         );
       }).toList();
 
-      // Using lesson title as a label (you can change this as needed)
+      // Using lesson title as a label (or change as needed)
       questions.add(Question(
         questionText: lesson['title'] ?? 'Flashcards',
         options: [],
@@ -185,8 +188,33 @@ class CourseController extends GetxController {
         ));
       }
     }
+    // Additional logic: if the lesson only has one question and it is type flashcards,
+    // add matchTheTerms questions using those same flashcards 4 at a time.
+    if (questions.length == 1 &&
+        questions[0].lessonType == LessonType.flashcards) {
+      final flashcards = questions[0].flashcards;
+      if (flashcards != null && flashcards.isNotEmpty) {
+        const int chunkSize = 4;
+        final List<Question> matchQuestions = [];
+        for (int i = 0; i < flashcards.length; i += chunkSize) {
+          // Create a chunk of flashcards (4 at a time)
+          final chunk = flashcards.sublist(
+            i,
+            min(i + chunkSize, flashcards.length),
+          );
+          matchQuestions.add(Question(
+            questionText: "Match the Terms", // Customize as needed
+            options: [],
+            lessonType: LessonType.matchTheTerms,
+            flashcards: chunk,
+          ));
+        }
+        // Append the new matchTheTerms questions to the list.
+        questions.addAll(matchQuestions);
+      }
+    }
 
-    // Add parsing for other question types (speak, typeInEverything, matchTheTerms, etc.) if needed.
+    print("question count: ${questions.length}");
 
     return questions;
   }

@@ -18,8 +18,7 @@ class FlashcardScreen extends StatefulWidget {
 }
 
 class _FlashcardScreenState extends State<FlashcardScreen> {
-  final CourseController courseController =
-      Get.find<CourseController>(); // GetX controller
+  final CourseController courseController = Get.find<CourseController>();
 
   int currentIndex = 0;
 
