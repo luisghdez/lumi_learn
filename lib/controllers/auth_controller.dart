@@ -10,11 +10,16 @@ class AuthController extends GetxController {
   RxBool isLoading = false.obs; // Track loading state
 
   final RxBool hasCompletedOnboarding = true.obs;
+  RxBool isAuthInitialized = false.obs;
 
   @override
   void onReady() {
     super.onReady();
-    firebaseUser.bindStream(_auth.authStateChanges());
+    _auth.authStateChanges().listen((User? user) {
+      firebaseUser.value = user;
+      // Set the flag to true after receiving the first auth event.
+      isAuthInitialized.value = true;
+    });
   }
 
   Future<void> signUp(String email, String password, String name) async {

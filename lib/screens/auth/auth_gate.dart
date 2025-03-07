@@ -5,6 +5,7 @@ import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
+import 'package:lumi_learn_app/screens/auth/spash_screen.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -19,6 +20,10 @@ class AuthGate extends StatelessWidget {
       final bool hasCompletedOnboarding =
           authController.hasCompletedOnboarding.value;
 
+      if (!authController.isAuthInitialized.value) {
+        return SplashScreen(); // Show a splash/loading screen
+      }
+
       // Show onboarding screen if it hasn't been completed
       if (!hasCompletedOnboarding) {
         return LaunchScreen();
@@ -26,6 +31,7 @@ class AuthGate extends StatelessWidget {
 
       // Show login/register screen if no user is logged in
       if (user == null) {
+        print("User is not logged in");
         return SignupScreen();
       }
 
@@ -34,11 +40,15 @@ class AuthGate extends StatelessWidget {
       if (!Get.isRegistered<CourseController>()) {
         Get.put(CourseController());
       }
+      final courseController = Get.find<CourseController>();
+      if (!courseController.isInitialized.value) {
+        return SplashScreen();
+      }
 
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 
       // Show main screen if user is logged in
-      return MainScreen();
+      return const MainScreen();
     });
   }
 }

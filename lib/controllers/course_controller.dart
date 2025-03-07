@@ -12,6 +12,8 @@ import 'package:lumi_learn_app/services/api_service.dart'; // Import the data fi
 
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
+  RxBool isInitialized = false.obs;
+
   // Reactive variable to store the active planet
   var activePlanet = Rxn<Planet>();
   final activeLessonIndex = 0.obs; // example lesson index
@@ -370,6 +372,7 @@ class CourseController extends GetxController {
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false; // Stop loading
+      isInitialized.value = true;
     }
   }
 
