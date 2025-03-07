@@ -70,18 +70,19 @@ class BottomPanel extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
                                   selectedLessonPlanetName!,
                                   style: const TextStyle(
                                     fontSize: 34,
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                    // fontWeight: FontWeight.w300,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                // const SizedBox(height: 8),
                                 Text(
+                                  textAlign: TextAlign.center,
                                   selectedLessonDescription!,
                                   style: const TextStyle(
                                     fontSize: 12,
