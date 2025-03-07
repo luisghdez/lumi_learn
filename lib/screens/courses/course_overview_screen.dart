@@ -26,6 +26,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
   bool _isPanelVisible = false;
   int? _selectedLessonIndex;
+  String _lessonDescription = '';
 
   // Key to detect taps outside the panel
   final GlobalKey _panelKey = GlobalKey();
@@ -77,6 +78,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       // 2) Lessons as “Planets”
                       ...List.generate(lessonCount, (index) {
                         final lesson = lessons[index];
+                        _lessonDescription = lesson['planetDescription'];
+                        final lessonPlanetName = lesson['planetName'];
                         final lessonTitle =
                             lesson['title'] ?? 'Lesson ${index + 1}';
                         final lessonId = lesson['id']; // Unique lesson ID
@@ -105,27 +108,43 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           top: planetTop,
                           child: GestureDetector(
                             onTap: () => _onLessonTap(index, lessonPlanet),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ClipOval(
-                                  child: Image.asset(
-                                    lessonPlanet.imagePath,
-                                    width: planetSize,
-                                    height: planetSize,
-                                    fit: BoxFit.cover,
+                            child: SizedBox(
+                              width:
+                                  planetSize, // Fixed width ensures the content is centered.
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ClipOval(
+                                    child: Image.asset(
+                                      lessonPlanet.imagePath,
+                                      width: planetSize,
+                                      height: planetSize,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  lessonTitle,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "$lessonPlanetName",
+                                    textAlign:
+                                        TextAlign.center, // Center the text
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    lessonTitle,
+                                    textAlign:
+                                        TextAlign.center, // Center the text
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -155,6 +174,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 child: BottomPanel(
                   key: _panelKey,
                   selectedLessonIndex: _selectedLessonIndex,
+                  selectedLessonDescription: _lessonDescription,
                   onStartPressed: () {
                     courseController.loadQuestions();
                     Get.to(() => LessonScreenMain());

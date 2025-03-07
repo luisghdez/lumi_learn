@@ -5,12 +5,14 @@ import 'dart:ui'; // For ImageFilter
 
 class BottomPanel extends StatelessWidget {
   final int? selectedLessonIndex;
+  final String? selectedLessonDescription;
   final VoidCallback onStartPressed;
   final VoidCallback onClose;
 
   const BottomPanel({
     Key? key,
     required this.selectedLessonIndex,
+    required this.selectedLessonDescription,
     required this.onStartPressed,
     required this.onClose,
   }) : super(key: key);
@@ -77,9 +79,9 @@ class BottomPanel extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  'In this lesson you will learn about various fascinating topics related to your course.',
-                                  style: TextStyle(
+                                Text(
+                                  selectedLessonDescription!,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
                                   ),
