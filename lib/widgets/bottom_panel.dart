@@ -5,6 +5,7 @@ import 'dart:ui'; // For ImageFilter
 
 class BottomPanel extends StatelessWidget {
   final int? selectedLessonIndex;
+  final String? selectedLessonPlanetName;
   final String? selectedLessonDescription;
   final VoidCallback onStartPressed;
   final VoidCallback onClose;
@@ -12,6 +13,7 @@ class BottomPanel extends StatelessWidget {
   const BottomPanel({
     Key? key,
     required this.selectedLessonIndex,
+    required this.selectedLessonPlanetName,
     required this.selectedLessonDescription,
     required this.onStartPressed,
     required this.onClose,
@@ -71,9 +73,9 @@ class BottomPanel extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Lesson ${selectedLessonIndex != null ? selectedLessonIndex! + 1 : 'N/A'}',
+                                  selectedLessonPlanetName!,
                                   style: const TextStyle(
-                                    fontSize: 24,
+                                    fontSize: 34,
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
