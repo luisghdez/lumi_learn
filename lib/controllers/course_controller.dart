@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,15 +14,15 @@ class CourseController extends GetxController {
   final AuthController authController = Get.find();
   // Reactive variable to store the active planet
   var activePlanet = Rxn<Planet>();
-  // final activeCourseId = 0.obs; // example course id
-  // final activeLessonIndex = 0.obs; // example lesson index
+  final activeLessonIndex = 0.obs; // example lesson index
   final activeQuestionIndex = 0.obs;
   var isLoading = false.obs;
   var courses = [].obs;
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
-
+  final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
+  final RxList<Question> computedQuestions = <Question>[].obs;
 
   @override
   void onInit() {
@@ -31,91 +32,22 @@ class CourseController extends GetxController {
   }
 
   // Method to set the active planet
-  void setActivePlanet(int index) {
-    activePlanet.value = planets[index];
+  void setActivePlanet(Planet planet) {
+    activePlanet.value = planet;
   }
 
-  void setActiveCourse(int courseId) {
-    // activeCourseId.value = courseId;
+  void setActiveLessonIndex(int lessonIndex) {
+    activeLessonIndex.value = lessonIndex;
+    activeQuestionIndex.value = 0;
   }
 
-  void setActiveLesson(int lessonIndex) {
-    // activeLessonIndex = lessonIndex;
+  void loadQuestions() {
+    computedQuestions.value = getQuestions();
+    questionsCount.value = computedQuestions.length;
   }
-
-  List<Question> getQuestions() {
-    // return questions based on activeCourseId and activeLessonIndex
-    // TODO replace with real service call to these questions
-    return [
-      Question(
-        questionText:
-            'What is the answer to this question if this was a long question of the question and a question?',
-        options: ['Paris', 'London', 'Berlin', 'Madrid'],
-        lessonType: LessonType.multipleChoice,
-      ),
-      Question(
-        questionText: 'Explain what you just learned in your own words.',
-        options: [],
-        lessonType: LessonType.speak,
-      ),
-      Question(
-        questionText:
-            'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
-        options: [
-          'Rome',
-          'Paris',
-          'Berlin',
-          'Madrid',
-          'London',
-          'Tokyo',
-          'New York City'
-        ],
-        lessonType: LessonType.fillInTheBlank,
-      ),
-      // Type in everything you learned
-      Question(
-        questionText:
-            'Type in everything you learned up to this point in one minute!',
-        options: [],
-        lessonType: LessonType.typeInEverything,
-      ),
-      Question(
-        questionText: 'Match the Terms',
-        options: [],
-        flashcards: [
-          Flashcard(
-              term: 'Term 1',
-              definition: 'Definition of term 1 which shuld be long like this'),
-          Flashcard(
-              term: 'Term 2',
-              definition: 'Definition of term 2 which shuld be long like this'),
-          Flashcard(
-              term: 'Term 3',
-              definition: 'Definition of term 3 which shuld be long like this'),
-          Flashcard(
-              term: 'Term 4',
-              definition: 'Definition of term 4 which shuld be long like this'),
-        ],
-        lessonType: LessonType.matchTheTerms,
-      ),
-      Question(
-        questionText: 'Flashcards',
-        options: [],
-        flashcards: [
-          Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-          Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-          Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-          Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-        ],
-        lessonType: LessonType.flashcards,
-      ),
-    ];
-  }
-
-  // Possibly move to seperate controller, to seperate concerns
 
   void nextQuestion() {
-    if (activeQuestionIndex.value < getQuestions().length) {
+    if (activeQuestionIndex.value < questionsCount.value) {
       activeQuestionIndex.value++;
     }
   }
@@ -126,6 +58,215 @@ class CourseController extends GetxController {
   //     activeQuestionIndex.value--;
   //   }
   // }
+
+  // List<Question> getQuestions() {
+  //   // return questions based on activeCourseId and activeLessonIndex
+  //   // TODO replace with real service call to these questions
+  //   return [
+  //     Question(
+  //       questionText:
+  //           'What is the answer to this question if this was a long question of the question and a question?',
+  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //       lessonType: LessonType.multipleChoice,
+  //     ),
+  //     Question(
+  //       questionText: 'Explain what you just learned in your own words.',
+  //       options: [],
+  //       lessonType: LessonType.speak,
+  //     ),
+  //     Question(
+  //       questionText:
+  //           'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
+  //       options: [
+  //         'Rome',
+  //         'Paris',
+  //         'Berlin',
+  //         'Madrid',
+  //         'London',
+  //         'Tokyo',
+  //         'New York City'
+  //       ],
+  //       lessonType: LessonType.fillInTheBlank,
+  //     ),
+  //     // Type in everything you learned
+  //     Question(
+  //       questionText:
+  //           'Type in everything you learned up to this point in one minute!',
+  //       options: [],
+  //       lessonType: LessonType.typeInEverything,
+  //     ),
+  //     Question(
+  //       questionText: 'Match the Terms',
+  //       options: [],
+  //       flashcards: [
+  //         Flashcard(
+  //             term: 'Term 1',
+  //             definition: 'Definition of term 1 which shuld be long like this'),
+  //         Flashcard(
+  //             term: 'Term 2',
+  //             definition: 'Definition of term 2 which shuld be long like this'),
+  //         Flashcard(
+  //             term: 'Term 3',
+  //             definition: 'Definition of term 3 which shuld be long like this'),
+  //         Flashcard(
+  //             term: 'Term 4',
+  //             definition: 'Definition of term 4 which shuld be long like this'),
+  //       ],
+  //       lessonType: LessonType.matchTheTerms,
+  //     ),
+  //     Question(
+  //       questionText: 'Flashcards',
+  //       options: [],
+  //       flashcards: [
+  //         Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+  //         Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+  //         Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+  //         Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+  //       ],
+  //       lessonType: LessonType.flashcards,
+  //     ),
+  //   ];
+  // }
+
+  // Modify getQuestions() to return questions only from the active lessonimport 'dart:math';
+
+  List<Question> getQuestions() {
+    // Check if lessons have been loaded
+    if (lessons.isEmpty) return [];
+
+    // Get the currently active lesson using activeLessonIndex
+    final lesson = lessons[activeLessonIndex.value];
+    final List<Question> questions = [];
+
+    // 1) Parse flashcards (if available) as one question type.
+    final flashcardsJson = lesson['flashcards'];
+    if (flashcardsJson != null && flashcardsJson is List) {
+      final flashcards = flashcardsJson.map<Flashcard>((f) {
+        return Flashcard(
+          term: f['term'] ?? '',
+          definition: f['definition'] ?? '',
+        );
+      }).toList();
+
+      // Using lesson title as a label (or change as needed)
+      questions.add(Question(
+        questionText: lesson['title'] ?? 'Flashcards',
+        options: [],
+        lessonType: LessonType.flashcards,
+        flashcards: flashcards,
+      ));
+    }
+
+    // 2) Parse multiple choice questions.
+    final multipleChoiceJson = lesson['multipleChoice'];
+    if (multipleChoiceJson != null && multipleChoiceJson is List) {
+      for (final mcItem in multipleChoiceJson) {
+        final options = (mcItem['options'] as List<dynamic>?)
+                ?.map((opt) => opt.toString())
+                .toList() ??
+            [];
+        questions.add(Question(
+          questionText: mcItem['questionText'] ?? '',
+          options: options,
+          correctAnswer: mcItem['correctAnswer'],
+          lessonType: LessonType.multipleChoice,
+        ));
+      }
+    }
+
+    // 3) Parse fill in the blank questions.
+    final fillInTheBlankJson = lesson['fillInTheBlank'];
+    if (fillInTheBlankJson != null && fillInTheBlankJson is List) {
+      for (final fibItem in fillInTheBlankJson) {
+        final options = (fibItem['options'] as List<dynamic>?)
+                ?.map((opt) => opt.toString())
+                .toList() ??
+            [];
+        questions.add(Question(
+          questionText: fibItem['questionText'] ?? '',
+          options: options,
+          correctAnswer: fibItem['correctAnswer'],
+          lessonType: LessonType.fillInTheBlank,
+        ));
+      }
+    }
+
+    // ----------------------------------------
+    // Additional logic for flashcards / matchTheTerms
+    // ----------------------------------------
+
+    // Case 1: Exactly one question that is flashcards.
+    if (questions.length == 1 &&
+        questions[0].lessonType == LessonType.flashcards) {
+      final flashcards = questions[0].flashcards;
+      if (flashcards != null && flashcards.isNotEmpty) {
+        const int chunkSize = 4;
+        final List<Question> matchQuestions = [];
+        for (int i = 0; i < flashcards.length; i += chunkSize) {
+          final chunk =
+              flashcards.sublist(i, min(i + chunkSize, flashcards.length));
+          matchQuestions.add(Question(
+            questionText: "Match the Terms", // Customize as needed
+            options: [],
+            lessonType: LessonType.matchTheTerms,
+            flashcards: chunk,
+          ));
+        }
+        // Append the new matchTheTerms questions to the list.
+        questions.addAll(matchQuestions);
+      }
+    }
+    // Case 2: More than one question.
+    else if (questions.length > 1) {
+      // Look for a flashcards question in the list.
+      final int flashcardsIndex =
+          questions.indexWhere((q) => q.lessonType == LessonType.flashcards);
+      if (flashcardsIndex != -1) {
+        final flashcards = questions[flashcardsIndex].flashcards;
+        if (flashcards != null && flashcards.isNotEmpty) {
+          const int chunkSize = 4;
+          final List<Question> matchQuestions = [];
+          for (int i = 0; i < flashcards.length; i += chunkSize) {
+            final chunk =
+                flashcards.sublist(i, min(i + chunkSize, flashcards.length));
+            matchQuestions.add(Question(
+              questionText: "Match the Terms", // Customize as needed
+              options: [],
+              lessonType: LessonType.matchTheTerms,
+              flashcards: chunk,
+            ));
+          }
+          // Replace the original flashcards question with the new matchTheTerms ones.
+          questions.removeAt(flashcardsIndex);
+          questions.addAll(matchQuestions);
+        }
+      }
+      questions.shuffle();
+    }
+    questionsCount.value = questions.length;
+    return questions;
+  }
+
+  LessonType parseLessonType(String? lessonTypeString) {
+    switch (lessonTypeString) {
+      case 'multipleChoice':
+        return LessonType.multipleChoice;
+      case 'fillInTheBlank':
+        return LessonType.fillInTheBlank;
+      case 'speak':
+        return LessonType.speak;
+      case 'typeInEverything':
+        return LessonType.typeInEverything;
+      case 'matchTheTerms':
+        return LessonType.matchTheTerms;
+      case 'flashcards':
+        return LessonType.flashcards;
+      default:
+        print('Unknown lesson type: $lessonTypeString');
+        // Handle unknown or unimplemented lesson types safely
+        return LessonType.multipleChoice;
+    }
+  }
 
   Future<void> createCourse({
     required String title,
@@ -261,7 +402,7 @@ class CourseController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('Lessons fetched successfully: ${data['lessons']}');
+        // print('Lessons fetched successfully: ${data['lessons']}');
         lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
       } else {
         print(

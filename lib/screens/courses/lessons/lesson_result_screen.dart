@@ -6,9 +6,6 @@ class LessonResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Lesson Result'),
-      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -39,7 +36,7 @@ class LessonResultScreen extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                Get.to(() => const CourseOverviewScreen());
+                Get.offAll(() => const CourseOverviewScreen());
               },
               child: const Text(
                 'Back to Courses',

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
@@ -13,6 +15,8 @@ class MatchTerms extends StatefulWidget {
 }
 
 class _MatchTermsState extends State<MatchTerms> {
+  final CourseController courseController = Get.find<CourseController>();
+
   // For each term index, store the matched definition (if any).
   late List<String?> matchedDefinitions;
 
@@ -74,8 +78,57 @@ class _MatchTermsState extends State<MatchTerms> {
     );
   }
 
+  @override
+  void didUpdateWidget(covariant MatchTerms oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.question != widget.question) {
+      _resetState();
+    }
+  }
+
   bool allMatched() {
     return matchedDefinitions.every((def) => def != null);
+  }
+
+  void _resetState() {
+    setState(() {
+      matchedDefinitions =
+          List<String?>.filled(widget.question.flashcards.length, null);
+      shuffledDefinitions = List<Flashcard>.from(widget.question.flashcards);
+      shuffledDefinitions.shuffle();
+
+      definitionBorderColors = List<Color>.filled(
+        shuffledDefinitions.length,
+        greyBorder,
+        growable: true,
+      );
+      definitionOpacities = List<double>.filled(
+        shuffledDefinitions.length,
+        1.0,
+        growable: true,
+      );
+      definitionMatched = List<bool>.filled(
+        shuffledDefinitions.length,
+        false,
+        growable: true,
+      );
+
+      termBorderColors = List<Color>.filled(
+        widget.question.flashcards.length,
+        greyBorder,
+        growable: true,
+      );
+      termOpacities = List<double>.filled(
+        widget.question.flashcards.length,
+        1.0,
+        growable: true,
+      );
+      termMatched = List<bool>.filled(
+        widget.question.flashcards.length,
+        false,
+        growable: true,
+      );
+    });
   }
 
   @override
@@ -84,7 +137,7 @@ class _MatchTermsState extends State<MatchTerms> {
       body: Column(
         children: [
           _buildInstructions(context),
-          const Divider(),
+          const Divider(height: 60),
           Expanded(
             child: Row(
               children: [
@@ -111,11 +164,8 @@ class _MatchTermsState extends State<MatchTerms> {
           if (allMatched())
             ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('All terms matched! Good job!'),
-                  ),
-                );
+                courseController.nextQuestion();
+                _resetState();
               },
               icon: const Icon(Icons.check_circle),
               label: const Text("Continue"),
@@ -129,8 +179,9 @@ class _MatchTermsState extends State<MatchTerms> {
   Widget _buildInstructions(BuildContext context) {
     return Container(
       width: double.infinity,
+      alignment: Alignment.center,
       child: const Text(
-        "Drag the matching definitions to each term.",
+        "Drag the matching definitions to each term",
         style: TextStyle(fontSize: 16.0, color: Colors.white),
       ),
     );
@@ -140,7 +191,7 @@ class _MatchTermsState extends State<MatchTerms> {
   Widget _buildTermCard(String term, String? matchedDef, int termIndex) {
     // If term is already matched, return a placeholder to keep spacing.
     if (termMatched[termIndex]) {
-      return SizedBox(height: 150);
+      return const SizedBox(height: 150);
     }
 
     return AnimatedOpacity(
@@ -164,6 +215,7 @@ class _MatchTermsState extends State<MatchTerms> {
                 return Align(
                   alignment: Alignment.center,
                   child: Text(
+                    textAlign: TextAlign.center,
                     term,
                     style: const TextStyle(
                       fontSize: 18,
@@ -278,36 +330,76 @@ class _MatchTermsState extends State<MatchTerms> {
 
   /// Static card for a definition.
   Widget _buildDefinitionCard(String definition, int index) {
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
-      opacity: definitionOpacities[index],
-      child: SizedBox(
-        height: 150,
-        child: Card(
-          shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: definitionBorderColors[index],
-              width: 2.0,
+    return GestureDetector(
+      onTap: () {
+        _showDefinitionPopup(definition);
+      },
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: definitionOpacities[index],
+        child: SizedBox(
+          height: 150,
+          child: Card(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(
+                color: definitionBorderColors[index],
+                width: 2.0,
+              ),
+              borderRadius: BorderRadius.circular(8.0),
             ),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Align(
-              alignment: Alignment.center,
-              child: Text(
-                textAlign: TextAlign.center,
-                definition,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color.fromARGB(174, 0, 0, 0),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  definition,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color.fromARGB(174, 0, 0, 0),
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// Helper method to display the definition in a popup dialog.
+  void _showDefinitionPopup(String definition) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(
+              color: greyBorder, // Match border color
+              width: 2.0,
+            ),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          backgroundColor: Colors.white, // Match definition card color
+          child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  definition,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18, // Slightly larger for readability
+                    color: Color.fromARGB(174, 0, 0, 0), // Match text color
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

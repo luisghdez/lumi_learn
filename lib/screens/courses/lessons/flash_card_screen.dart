@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 
 class FlashcardScreen extends StatefulWidget {
@@ -16,6 +18,8 @@ class FlashcardScreen extends StatefulWidget {
 }
 
 class _FlashcardScreenState extends State<FlashcardScreen> {
+  final CourseController courseController = Get.find<CourseController>();
+
   int currentIndex = 0;
 
   List<Flashcard> get flashcards => widget.question.flashcards;
@@ -32,6 +36,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     setState(() {
       if (currentIndex < flashcards.length - 1) {
         currentIndex++;
+      } else {
+        courseController.nextQuestion();
       }
     });
   }
