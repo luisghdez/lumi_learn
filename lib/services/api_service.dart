@@ -78,6 +78,28 @@ class ApiService {
     );
   }
 
+  Future<http.Response> completeLesson({
+    required String token,
+    required String courseId,
+    required String lessonId,
+    required int xp,
+  }) async {
+    final uri = Uri.parse(
+        '$_baseUrl/saved-courses/$courseId/lessons/$lessonId/complete');
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'xp': xp,
+      }),
+    );
+    print("response.body: ${response.body}");
+    return response;
+  }
+
   static Future<void> ensureUserExists(String? idToken,
       {String? email, String? name, String? profilePicture}) async {
     if (idToken == null) {

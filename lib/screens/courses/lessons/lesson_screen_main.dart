@@ -22,9 +22,8 @@ class LessonScreenMain extends StatelessWidget {
       final currentIndex = courseController.activeQuestionIndex.value;
       final questions = courseController.computedQuestions;
       final activePlanet = courseController.activePlanet.value;
-
-      // If all questions have been answered, show the result screen.
       if (currentIndex >= questions.length) {
+        courseController.completeCurrentLesson();
         return LessonResultScreen();
       }
       final currentQuestion = questions[currentIndex];
