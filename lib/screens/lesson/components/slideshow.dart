@@ -32,7 +32,7 @@ class SlideshowScreen extends StatefulWidget {
 class _SlideshowScreenState extends State<SlideshowScreen> {
   final List<String> _imagePaths = [
     'assets/worlds/trees1.png',
-    'assets/worlds/trees2.png',
+    'assets/backgrounds/trees2.png',
     'assets/worlds/trees3.png',
   ];
 
@@ -162,7 +162,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> {
                       value: _progress,
                       minHeight: 12,
                       backgroundColor: Colors.black.withOpacity(0.5),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
                 ),
