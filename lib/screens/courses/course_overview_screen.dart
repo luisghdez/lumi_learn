@@ -79,7 +79,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       // 2) Lessons as “Planets”
                       ...List.generate(lessonCount, (index) {
                         final lesson = lessons[index];
-                        final lessonDescription = lesson['planetDescription'];
                         final lessonPlanetName = lesson['planetName'];
 
                         final lessonTitle =
@@ -121,7 +120,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                       lessonPlanet.imagePath,
                                       width: planetSize,
                                       height: planetSize,
-                                      fit: BoxFit.cover,
+                                      fit: BoxFit.fitWidth,
                                     ),
                                   ),
                                   const SizedBox(height: 8),

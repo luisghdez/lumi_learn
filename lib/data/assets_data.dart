@@ -3,11 +3,13 @@
 class Planet {
   final String imagePath;
   final String name;
+  final bool hasRings;
   final List<String> backgroundPaths;
 
   Planet({
     required this.imagePath,
     required this.name,
+    required this.hasRings,
     required this.backgroundPaths,
   });
 }
@@ -15,94 +17,66 @@ class Planet {
 // List of planets with their associated backgrounds
 final List<Planet> planets = [
   Planet(
-    imagePath: 'assets/planets/planet1.png',
+    imagePath: 'assets/planets/firering1.png',
     name: 'Red Planet 1',
+    hasRings: true,
     backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
-    ],
-  ),
-  // Planet(
-  //   imagePath: 'assets/planets/ring1.png',
-  //   name: 'Circle Planet 2',
-  //   backgroundPaths: [
-  //     'assets/backgrounds/bgred1.jpg',
-  //     // 'assets/backgrounds/bgred2.jpg',
-  //     // 'assets/backgrounds/bgred3.jpg',
-  //     // 'assets/backgrounds/bgred4.jpg',
-  //   ],
-  // ),
-  Planet(
-    imagePath: 'assets/planets/planet2.png',
-    name: 'Circle Planet 2',
-    backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
+      'assets/backgrounds/fire1.jpg',
+      // 'assets/backgrounds/fire2.jpg',
     ],
   ),
   Planet(
-    imagePath: 'assets/planets/planet3.png',
+    imagePath: 'assets/planets/red1.png',
     name: 'Circle Planet 2',
+    hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
+      'assets/backgrounds/red1.jpg',
+      'assets/backgrounds/red2.jpg',
     ],
   ),
   Planet(
-    imagePath: 'assets/planets/planet4.png',
-    name: 'Circle Planet 2',
+    imagePath: 'assets/planets/red2.png',
+    name: 'Red Planet 3',
+    hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
+      'assets/backgrounds/red1.jpg',
+      'assets/backgrounds/red2.jpg',
     ],
   ),
   Planet(
-    imagePath: 'assets/planets/planet5.png',
-    name: 'Circle Planet 2',
+    imagePath: 'assets/planets/cyanring1.png',
+    name: 'Red Planet 4',
+    hasRings: true,
     backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
+      'assets/backgrounds/cyan1.jpg',
+      'assets/backgrounds/cyan2.jpg',
     ],
   ),
   Planet(
-    imagePath: 'assets/planets/planet6.png',
-    name: 'Circle Planet 2',
+    imagePath: 'assets/planets/green1.png',
+    name: 'Red Planet 5',
+    hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/bgred1.jpg',
-      // 'assets/backgrounds/bgred2.jpg',
-      // 'assets/backgrounds/bgred3.jpg',
-      // 'assets/backgrounds/bgred4.jpg',
+      'assets/backgrounds/trees1.jpg',
+      'assets/backgrounds/trees2.jpg',
     ],
   ),
-  // Planet(
-  //   imagePath: 'assets/planets/blue1.png',
-  //   name: 'Blue Planet 1',
-  //   backgroundPaths: [
-  //     'assets/backgrounds/bgblue1.jpg',
-  //     'assets/backgrounds/bgblue2.jpg',
-  //     'assets/backgrounds/bgblue3.jpg',
-  //     'assets/backgrounds/bgblue4.jpg',
-  //   ],
-  // ),
-  // Planet(
-  //   imagePath: 'assets/planets/green1.png',
-  //   name: 'Green Planet 1',
-  //   backgroundPaths: [
-  //     'assets/backgrounds/bggreen1.jpg',
-  //     'assets/backgrounds/bggreen2.jpg',
-  //     'assets/backgrounds/bggreen3.jpg',
-  //     'assets/backgrounds/bggreen4.jpg',
-  //   ],
-  // ),
-  // Add more planets as needed
+  Planet(
+    imagePath: 'assets/planets/purple1.png',
+    name: 'Red Planet 6',
+    hasRings: false,
+    backgroundPaths: [
+      'assets/backgrounds/purple1.jpg',
+      'assets/backgrounds/purple1.jpg',
+    ],
+  ),
+  Planet(
+    imagePath: 'assets/planets/tech1.png',
+    name: 'Red Planet 6',
+    hasRings: false,
+    backgroundPaths: [
+      'assets/backgrounds/ship1.jpg',
+      'assets/backgrounds/ship2.jpg',
+    ],
+  ),
 ];

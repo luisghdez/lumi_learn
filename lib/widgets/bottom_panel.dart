@@ -54,13 +54,13 @@ class BottomPanel extends StatelessWidget {
                   children: [
                     // Large planet image, partially off-screen on bottom-left, with 50% opacity
                     Positioned(
-                      left: -150,
-                      bottom: -130,
+                      left: activePlanet.hasRings ? -200 : -150,
+                      bottom: activePlanet.hasRings ? -70 : -130,
                       child: Opacity(
                         opacity: 0.7,
                         child: Image.asset(
                           activePlanet.imagePath,
-                          width: 400,
+                          width: activePlanet.hasRings ? 480 : 400,
                           fit: BoxFit.contain,
                         ),
                       ),

@@ -93,6 +93,7 @@ flutter:
     - assets/astronaut/
     - assets/bg/
     - assets/planets/
+    - assets/planetstest/
     - assets/galaxies/
     - assets/stars/
     - assets/worlds/
