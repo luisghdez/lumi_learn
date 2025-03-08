@@ -104,30 +104,46 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         );
                         _lessonCenters.add(lessonCenter);
 
+// Inside your List.generate block that creates each lesson widget:
+                        final double flagSize = 30.0;
+
                         return Positioned(
                           left: planetLeft,
                           top: planetTop,
                           child: GestureDetector(
                             onTap: () => _onLessonTap(index, lessonPlanet),
                             child: SizedBox(
-                              width:
-                                  planetSize, // Fixed width ensures the content is centered.
+                              width: planetSize,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  ClipOval(
-                                    child: Image.asset(
-                                      lessonPlanet.imagePath,
-                                      width: planetSize,
-                                      height: planetSize,
-                                      fit: BoxFit.fitWidth,
-                                    ),
+                                  Stack(
+                                    children: [
+                                      ClipOval(
+                                        child: Image.asset(
+                                          lessonPlanet.imagePath,
+                                          width: planetSize,
+                                          height: planetSize,
+                                          fit: BoxFit.fitWidth,
+                                        ),
+                                      ),
+                                      // If lesson is completed, show a cartoony flag centered at the top of the planet.
+                                      if (lesson['completed'] == true)
+                                        Positioned(
+                                          top: 0,
+                                          left: (planetSize - flagSize) / 2 + 6,
+                                          child: Image.asset(
+                                            'assets/astronaut/flag.png',
+                                            width: flagSize,
+                                            height: flagSize,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     lessonPlanetName,
-                                    textAlign:
-                                        TextAlign.center, // Center the text
+                                    textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 14,
@@ -136,8 +152,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                   ),
                                   Text(
                                     lessonTitle,
-                                    textAlign:
-                                        TextAlign.center, // Center the text
+                                    textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
