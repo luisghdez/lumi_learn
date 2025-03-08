@@ -7,10 +7,12 @@ import 'package:lumi_learn_app/models/question.dart';
 
 class FlashcardScreen extends StatefulWidget {
   final Question question;
+  final String backgroundImage;
 
   const FlashcardScreen({
     Key? key,
     required this.question,
+    required this.backgroundImage,
   }) : super(key: key);
 
   @override
@@ -55,7 +57,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             // 1) Background image
             Positioned.fill(
               child: Image.asset(
-                'assets/bg/red1bg.png',
+                widget.backgroundImage,
                 fit: BoxFit.cover,
               ),
             ),

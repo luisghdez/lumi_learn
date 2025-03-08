@@ -95,11 +95,10 @@ flutter:
     - assets/planets/
     - assets/galaxies/
     - assets/stars/
-    - assets/worlds/
-    # - assets/astro/
     - assets/fonts/
     - assets/images/
     - assets/planets/
+    - assets/backgrounds/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

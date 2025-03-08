@@ -26,6 +26,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
   bool _isPanelVisible = false;
   int? _selectedLessonIndex;
+  String? _selectedLessonPlanetName;
+  String? _lessonDescription;
 
   // Key to detect taps outside the panel
   final GlobalKey _panelKey = GlobalKey();
@@ -77,6 +79,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       // 2) Lessons as “Planets”
                       ...List.generate(lessonCount, (index) {
                         final lesson = lessons[index];
+                        final lessonPlanetName = lesson['planetName'];
+
                         final lessonTitle =
                             lesson['title'] ?? 'Lesson ${index + 1}';
                         final lessonId = lesson['id']; // Unique lesson ID
@@ -105,27 +109,43 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           top: planetTop,
                           child: GestureDetector(
                             onTap: () => _onLessonTap(index, lessonPlanet),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ClipOval(
-                                  child: Image.asset(
-                                    lessonPlanet.imagePath,
-                                    width: planetSize,
-                                    height: planetSize,
-                                    fit: BoxFit.cover,
+                            child: SizedBox(
+                              width:
+                                  planetSize, // Fixed width ensures the content is centered.
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ClipOval(
+                                    child: Image.asset(
+                                      lessonPlanet.imagePath,
+                                      width: planetSize,
+                                      height: planetSize,
+                                      fit: BoxFit.fitWidth,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  lessonTitle,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    lessonPlanetName,
+                                    textAlign:
+                                        TextAlign.center, // Center the text
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    lessonTitle,
+                                    textAlign:
+                                        TextAlign.center, // Center the text
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -155,6 +175,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 child: BottomPanel(
                   key: _panelKey,
                   selectedLessonIndex: _selectedLessonIndex,
+                  selectedLessonPlanetName: _selectedLessonPlanetName,
+                  selectedLessonDescription: _lessonDescription,
                   onStartPressed: () {
                     courseController.loadQuestions();
                     Get.to(() => LessonScreenMain());
@@ -172,7 +194,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                     transition: Transition.fadeIn,
                     duration: const Duration(milliseconds: 500),
                   ),
-                  lessonTitle: "${courseController.selectedCourseTitle}",
+                  courseTitle: "${courseController.selectedCourseTitle}",
                 ),
               ),
             ],
@@ -215,6 +237,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       Future.delayed(const Duration(milliseconds: 300), () {
         setState(() {
           _selectedLessonIndex = index;
+          _selectedLessonPlanetName =
+              courseController.lessons[index]['planetName'];
+          _lessonDescription =
+              courseController.lessons[index]['planetDescription'];
           _isPanelVisible = true;
         });
         courseController.setActiveLessonIndex(index);

@@ -47,7 +47,7 @@ class HomeHeader extends StatelessWidget {
             backgroundColor: Colors.grey.shade300,
             // Replace with actual user profile image if available
             backgroundImage: AssetImage(
-              'assets/worlds/trees2.png', 
+              'assets/backgrounds/trees2.png',
             ),
           ),
         ),
