@@ -8,9 +8,12 @@ class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
   final Function() onSubmitAnswer;
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
+  // background image
+  final String backgroundImage;
 
   MultipleChoiceScreen({
     required this.question,
+    required this.backgroundImage,
     required this.onSubmitAnswer,
   });
 
@@ -55,7 +58,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                   // Background image
                   Positioned.fill(
                     child: Image.asset(
-                      'assets/bg/red1bg.png',
+                      backgroundImage,
                       fit: BoxFit.cover,
                     ),
                   ),

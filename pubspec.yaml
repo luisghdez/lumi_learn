@@ -93,14 +93,12 @@ flutter:
     - assets/astronaut/
     - assets/bg/
     - assets/planets/
-    - assets/planetstest/
     - assets/galaxies/
     - assets/stars/
-    - assets/worlds/
-    # - assets/astro/
     - assets/fonts/
     - assets/images/
     - assets/planets/
+    - assets/backgrounds/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

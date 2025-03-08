@@ -21,8 +21,8 @@ final List<Planet> planets = [
     name: 'Red Planet 1',
     hasRings: true,
     backgroundPaths: [
-      'assets/backgrounds/fire1.jpg',
-      // 'assets/backgrounds/fire2.jpg',
+      'assets/backgrounds/fire1.png',
+      'assets/backgrounds/fire2.png',
     ],
   ),
   Planet(
@@ -30,8 +30,8 @@ final List<Planet> planets = [
     name: 'Circle Planet 2',
     hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/red1.jpg',
-      'assets/backgrounds/red2.jpg',
+      'assets/backgrounds/red1.png',
+      'assets/backgrounds/red2.png',
     ],
   ),
   Planet(
@@ -39,8 +39,8 @@ final List<Planet> planets = [
     name: 'Red Planet 3',
     hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/red1.jpg',
-      'assets/backgrounds/red2.jpg',
+      'assets/backgrounds/red1.png',
+      'assets/backgrounds/red2.png',
     ],
   ),
   Planet(
@@ -48,8 +48,8 @@ final List<Planet> planets = [
     name: 'Red Planet 4',
     hasRings: true,
     backgroundPaths: [
-      'assets/backgrounds/cyan1.jpg',
-      'assets/backgrounds/cyan2.jpg',
+      'assets/backgrounds/cyan1.png',
+      'assets/backgrounds/cyan2.png',
     ],
   ),
   Planet(
@@ -57,8 +57,8 @@ final List<Planet> planets = [
     name: 'Red Planet 5',
     hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/trees1.jpg',
-      'assets/backgrounds/trees2.jpg',
+      'assets/backgrounds/trees1.png',
+      'assets/backgrounds/trees3.png',
     ],
   ),
   Planet(
@@ -66,8 +66,8 @@ final List<Planet> planets = [
     name: 'Red Planet 6',
     hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/purple1.jpg',
-      'assets/backgrounds/purple1.jpg',
+      'assets/backgrounds/purple1.png',
+      'assets/backgrounds/purple1.png',
     ],
   ),
   Planet(
@@ -75,8 +75,26 @@ final List<Planet> planets = [
     name: 'Red Planet 6',
     hasRings: false,
     backgroundPaths: [
-      'assets/backgrounds/ship1.jpg',
-      'assets/backgrounds/ship2.jpg',
+      'assets/backgrounds/ship1.png',
+      'assets/backgrounds/ship2.png',
+    ],
+  ),
+  Planet(
+    imagePath: 'assets/planets/ice1.png',
+    name: 'Red Planet 6',
+    hasRings: false,
+    backgroundPaths: [
+      'assets/backgrounds/ice1.png',
+      'assets/backgrounds/ice2.png',
+    ],
+  ),
+  Planet(
+    imagePath: 'assets/planets/ocean1.png',
+    name: 'Red Planet 6',
+    hasRings: false,
+    backgroundPaths: [
+      'assets/backgrounds/ocean1.png',
+      'assets/backgrounds/ocean2.png',
     ],
   ),
 ];

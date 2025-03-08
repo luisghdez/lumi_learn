@@ -9,9 +9,11 @@ class SpeakScreen extends StatelessWidget {
   final Question question;
   final void Function() onSubmitAnswer;
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
+  final String backgroundImage;
 
   SpeakScreen({
     required this.question,
+    required this.backgroundImage,
     required this.onSubmitAnswer,
   });
 
@@ -38,7 +40,7 @@ class SpeakScreen extends StatelessWidget {
                   // Background image
                   Positioned.fill(
                     child: Image.asset(
-                      'assets/bg/red1bg.png',
+                      backgroundImage,
                       fit: BoxFit.cover,
                     ),
                   ),
