@@ -49,79 +49,85 @@ class BottomPanel extends StatelessWidget {
                     ),
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipOval(
-                            child: Image.asset(
-                              activePlanet.imagePath,
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  selectedLessonPlanetName!,
-                                  style: const TextStyle(
-                                    fontSize: 34,
-                                    color: Colors.white,
-                                    // fontWeight: FontWeight.w300,
-                                  ),
-                                ),
-                                // const SizedBox(height: 8),
-                                Text(
-                                  textAlign: TextAlign.center,
-                                  selectedLessonDescription!,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: onStartPressed,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 0,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Start!',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Color.fromARGB(255, 24, 24, 24),
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+              : Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    // Large planet image, partially off-screen on bottom-left, with 50% opacity
+                    Positioned(
+                      left: -150,
+                      bottom: -130,
+                      child: Opacity(
+                        opacity: 0.7,
+                        child: Image.asset(
+                          activePlanet.imagePath,
+                          width: 400,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
+                    ),
+
+                    // Foreground: text & button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 20.0,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.8, // 70% of the available width
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 10),
+                              Text(
+                                selectedLessonPlanetName ?? '',
+                                style: const TextStyle(
+                                  fontSize: 34,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w200,
+                                ),
+                              ),
+                              Text(
+                                selectedLessonDescription ?? '',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color.fromARGB(255, 213, 213, 213),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FractionallySizedBox(
+                                widthFactor: 0.7,
+                                child: ElevatedButton(
+                                  onPressed: onStartPressed,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 0,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Start!',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color.fromARGB(255, 24, 24, 24),
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
         ),
       ),
