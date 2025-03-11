@@ -117,7 +117,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                             amplitude * sin(index * frequency + pi / 2);
                         final planetLeft = index * 200.0;
                         final planetTop = screenHeight / 2 - offsetY - 60;
-                        final planetSize = 100.0;
+                        const planetSize = 100.0;
 
                         // Save the center of each “planet” for the rocket animation
                         final lessonCenter = Offset(
@@ -126,7 +126,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         );
                         _lessonCenters.add(lessonCenter);
 
-                        final double flagSize = 30.0;
+                        const double flagSize = 30.0;
 
                         return Positioned(
                           left: planetLeft,
@@ -139,11 +139,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                               // the lock/blur layer and any highlight border.
                               child: Stack(
                                 children: [
-                                  // The original Column with planet image and texts.
                                   Column(
-                                    mainAxisSize: MainAxisSize.min,
+                                    // mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Stack(
+                                        clipBehavior: Clip.none,
                                         children: [
                                           ClipOval(
                                             child: Image.asset(
@@ -156,7 +156,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                           // If the lesson is completed, show a flag.
                                           if (lesson['completed'] == true)
                                             Positioned(
-                                              top: 0,
+                                              top: lessonPlanet.hasRings
+                                                  ? -2
+                                                  : -12,
                                               left:
                                                   (planetSize - flagSize) / 2 +
                                                       6,
@@ -189,8 +191,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                       ),
                                     ],
                                   ),
-
-// If the lesson is locked, show blur + animated glowing border
                                   if (shouldBlur)
                                     Align(
                                       alignment: Alignment.center,
