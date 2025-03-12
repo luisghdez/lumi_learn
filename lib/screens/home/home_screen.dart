@@ -9,10 +9,10 @@ import 'components/top_picks_header.dart';
 import 'components/category_list.dart';
 
 // Screens you navigate to
-import 'package:lumi_learn_app/screens/settings/settings-screen.dart';
+import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 // import 'package:lumi_learn_app/screens/lessons/lesson_screen.dart';
-import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
-import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
+// import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
+// import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -37,7 +37,7 @@ class HomeScreen extends StatelessWidget {
                 userName: userName,
                 onAvatarTap: () {
                   // Navigate to profile screen
-                  Get.to(() => const ProfileScreen());
+                  Get.to(() => ProfileScreen());
                 },
               ),
               const SizedBox(height: 20),
