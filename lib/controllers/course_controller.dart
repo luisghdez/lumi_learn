@@ -250,31 +250,25 @@ class CourseController extends GetxController {
     final speakQuestionJson = lesson['speakQuestion'];
     final writeQuestionJson = lesson['writeQuestion'];
     if (speakQuestionJson != null && speakQuestionJson is Map) {
-      questions.insert(
-          0,
-          Question(
-            // questions.add(Question(
-            questionText: speakQuestionJson['prompt'] ??
-                "Explain everything you remember about this lesson.",
-            options: (speakQuestionJson['options'] as List<dynamic>?)
-                    ?.map((opt) => opt.toString())
-                    .toList() ??
-                [],
-            lessonType: LessonType.speakAll,
-          ));
+      questions.add(Question(
+        questionText: speakQuestionJson['prompt'] ??
+            "Explain everything you remember about this lesson.",
+        options: (speakQuestionJson['options'] as List<dynamic>?)
+                ?.map((opt) => opt.toString())
+                .toList() ??
+            [],
+        lessonType: LessonType.speakAll,
+      ));
     } else if (writeQuestionJson != null && writeQuestionJson is Map) {
-      questions.insert(
-          0,
-          Question(
-            // questions.add(Question(
-            questionText: writeQuestionJson['prompt'] ??
-                "Write everything you remember about this lesson.",
-            options: (writeQuestionJson['options'] as List<dynamic>?)
-                    ?.map((opt) => opt.toString())
-                    .toList() ??
-                [],
-            lessonType: LessonType.writeAll,
-          ));
+      questions.add(Question(
+        questionText: writeQuestionJson['prompt'] ??
+            "Write everything you remember about this lesson.",
+        options: (writeQuestionJson['options'] as List<dynamic>?)
+                ?.map((opt) => opt.toString())
+                .toList() ??
+            [],
+        lessonType: LessonType.writeAll,
+      ));
     }
 
     questionsCount.value = questions.length;

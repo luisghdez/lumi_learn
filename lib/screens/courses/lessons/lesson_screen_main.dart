@@ -29,6 +29,7 @@ class LessonScreenMain extends StatelessWidget {
       }
 
       final currentQuestion = questions[currentIndex];
+      final progress = (currentIndex + 1) / questions.length;
 
       // Generate a random image from activePlanet.backgroundPaths.
       final random = Random();
@@ -45,6 +46,7 @@ class LessonScreenMain extends StatelessWidget {
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
+            progress: progress,
           );
           break;
         case LessonType.speakAll:

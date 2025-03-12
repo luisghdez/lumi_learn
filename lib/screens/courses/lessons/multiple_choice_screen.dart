@@ -7,14 +7,16 @@ import 'package:lumi_learn_app/screens/courses/lessons/widgets/question_card.dar
 class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
   final Function() onSubmitAnswer;
-  final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
-  // background image
   final String backgroundImage;
+  final double progress; // New parameter for progress
+
+  final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
 
   MultipleChoiceScreen({
     required this.question,
     required this.backgroundImage,
     required this.onSubmitAnswer,
+    required this.progress, // Must be provided when creating this screen
   });
 
   void _submitAnswer(BuildContext context) {
@@ -62,7 +64,6 @@ class MultipleChoiceScreen extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                   ),
-
                   // Gradient overlay
                   Positioned.fill(
                     child: Container(
@@ -78,7 +79,6 @@ class MultipleChoiceScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   // Question card
                   Positioned(
                     left: 16,
@@ -88,7 +88,6 @@ class MultipleChoiceScreen extends StatelessWidget {
                       child: QuestionCard(questionText: question.questionText),
                     ),
                   ),
-
                   // Astronaut image
                   Positioned(
                     bottom: 0,
@@ -101,8 +100,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Bottom section
+            // Bottom section: options and next button
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
