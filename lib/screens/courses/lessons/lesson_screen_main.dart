@@ -47,7 +47,7 @@ class LessonScreenMain extends StatelessWidget {
             },
           );
           break;
-        case LessonType.speak:
+        case LessonType.speakAll:
           questionWidget = SpeakScreen(
             question: currentQuestion,
             backgroundImage: backgroundImage ?? '',
@@ -64,7 +64,7 @@ class LessonScreenMain extends StatelessWidget {
             },
           );
           break;
-        case LessonType.typeInEverything:
+        case LessonType.writeAll:
           questionWidget = TypeInScreen(
             question: currentQuestion,
             onSubmitAnswer: () {

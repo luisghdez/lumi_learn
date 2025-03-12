@@ -130,8 +130,6 @@ class CourseController extends GetxController {
   //   ];
   // }
 
-  // Modify getQuestions() to return questions only from the active lessonimport 'dart:math';
-
   List<Question> getQuestions() {
     // Check if lessons have been loaded
     if (lessons.isEmpty) return [];
@@ -245,6 +243,40 @@ class CourseController extends GetxController {
       }
       questions.shuffle();
     }
+
+    // After processing and shuffling the standard questions,
+    // check if there is a speak or write question in the lesson.
+    // If so, create a corresponding Question and add it at the end.
+    final speakQuestionJson = lesson['speakQuestion'];
+    final writeQuestionJson = lesson['writeQuestion'];
+    if (speakQuestionJson != null && speakQuestionJson is Map) {
+      questions.insert(
+          0,
+          Question(
+            // questions.add(Question(
+            questionText: speakQuestionJson['prompt'] ??
+                "Explain everything you remember about this lesson.",
+            options: (speakQuestionJson['options'] as List<dynamic>?)
+                    ?.map((opt) => opt.toString())
+                    .toList() ??
+                [],
+            lessonType: LessonType.speakAll,
+          ));
+    } else if (writeQuestionJson != null && writeQuestionJson is Map) {
+      questions.insert(
+          0,
+          Question(
+            // questions.add(Question(
+            questionText: writeQuestionJson['prompt'] ??
+                "Write everything you remember about this lesson.",
+            options: (writeQuestionJson['options'] as List<dynamic>?)
+                    ?.map((opt) => opt.toString())
+                    .toList() ??
+                [],
+            lessonType: LessonType.writeAll,
+          ));
+    }
+
     questionsCount.value = questions.length;
     return questions;
   }
@@ -255,10 +287,10 @@ class CourseController extends GetxController {
         return LessonType.multipleChoice;
       case 'fillInTheBlank':
         return LessonType.fillInTheBlank;
-      case 'speak':
-        return LessonType.speak;
-      case 'typeInEverything':
-        return LessonType.typeInEverything;
+      case 'speakAll':
+        return LessonType.speakAll;
+      case 'writeAll':
+        return LessonType.writeAll;
       case 'matchTheTerms':
         return LessonType.matchTheTerms;
       case 'flashcards':
