@@ -22,10 +22,12 @@ class LessonScreenMain extends StatelessWidget {
       final currentIndex = courseController.activeQuestionIndex.value;
       final questions = courseController.computedQuestions;
       final activePlanet = courseController.activePlanet.value;
+
       if (currentIndex >= questions.length) {
         courseController.completeCurrentLesson();
         return LessonResultScreen();
       }
+
       final currentQuestion = questions[currentIndex];
 
       // Generate a random image from activePlanet.backgroundPaths.
@@ -33,55 +35,71 @@ class LessonScreenMain extends StatelessWidget {
       final backgroundImage = activePlanet?.backgroundPaths[
           random.nextInt(activePlanet.backgroundPaths.length)];
 
-      // TODO: add header for progress bar in each step
+      // Determine which widget to show based on the lesson type.
+      Widget questionWidget;
       switch (currentQuestion.lessonType) {
         case LessonType.multipleChoice:
-          return MultipleChoiceScreen(
+          questionWidget = MultipleChoiceScreen(
             question: currentQuestion,
             backgroundImage: backgroundImage ?? '', // Ensure non-null value
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
           );
+          break;
         case LessonType.speak:
-          return SpeakScreen(
+          questionWidget = SpeakScreen(
             question: currentQuestion,
-            backgroundImage: backgroundImage ?? '', // Pass the random image
+            backgroundImage: backgroundImage ?? '',
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
           );
+          break;
         case LessonType.fillInTheBlank:
-          return FillInBlankScreen(
+          questionWidget = FillInBlankScreen(
             question: currentQuestion,
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
           );
+          break;
         case LessonType.typeInEverything:
-          return TypeInScreen(
+          questionWidget = TypeInScreen(
             question: currentQuestion,
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
           );
+          break;
         case LessonType.matchTheTerms:
-          return MatchTerms(
+          questionWidget = MatchTerms(
             question: currentQuestion,
-            // onSubmitAnswer: () {
-            //   courseController.nextQuestion();
-            // },
+            // You can add onSubmitAnswer if needed.
           );
+          break;
         case LessonType.flashcards:
-          return FlashcardScreen(
+          questionWidget = FlashcardScreen(
             question: currentQuestion,
-            backgroundImage: backgroundImage ?? '', // Pass the random image
+            backgroundImage: backgroundImage ?? '',
           );
-        // Add more cases for other lesson types if needed
+          break;
         default:
-          // A fallback widget or container for unhandled lesson types
-          return const Center(child: Text('Unknown lesson type.'));
+          questionWidget = const Center(child: Text('Unknown lesson type.'));
       }
+
+      // Wrap the questionWidget in a Container with a key based on the currentIndex.
+      // This ensures the AnimatedSwitcher detects a change when the question updates.
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        child: Container(
+          key: ValueKey<int>(currentIndex),
+          child: questionWidget,
+        ),
+      );
     });
   }
 }
