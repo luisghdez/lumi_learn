@@ -350,7 +350,7 @@ class _MatchTermsState extends State<MatchTerms> {
             shape: RoundedRectangleBorder(
               side: BorderSide(
                 color: definitionBorderColors[index],
-                width: 2.0,
+                width: 1.0,
               ),
               borderRadius: BorderRadius.circular(8.0),
             ),
@@ -398,7 +398,7 @@ class _MatchTermsState extends State<MatchTerms> {
                   definition,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 18, // Slightly larger for readability
+                    fontSize: 20, // Slightly larger for readability
                     color: Color.fromARGB(174, 0, 0, 0), // Match text color
                   ),
                 ),

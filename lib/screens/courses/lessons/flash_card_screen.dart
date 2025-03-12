@@ -195,7 +195,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       child: Text(
         widget.flashcard.term,
         style: const TextStyle(
-            fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            fontSize: 24, fontWeight: FontWeight.w200, color: Colors.white),
         textAlign: TextAlign.center,
       ),
     );
