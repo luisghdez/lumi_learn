@@ -230,7 +230,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                                     Icons.lock,
                                                     color: Color.fromARGB(
                                                         255, 158, 158, 158),
-                                                    size: 36,
+                                                    size: 24,
                                                   ),
                                                   // White lock that fades in/out using _glowOpacity
                                                   AnimatedOpacity(
@@ -244,7 +244,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                                     child: const Icon(
                                                       Icons.lock,
                                                       color: Colors.white,
-                                                      size: 36,
+                                                      size: 24,
                                                     ),
                                                   ),
                                                 ],

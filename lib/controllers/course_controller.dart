@@ -441,6 +441,7 @@ class CourseController extends GetxController {
 
       if (response.statusCode == 200) {
         print('Lesson completed successfully: ${response.body}');
+        lessons[activeLessonIndex.value]['completed'] = true;
       } else {
         print('Failed to complete lesson: ${response.statusCode}');
         Get.snackbar("Error", "Failed to complete lesson.",
