@@ -61,7 +61,7 @@ class SpeakScreen extends StatelessWidget {
                   ),
                   // Astronaut
                   Positioned(
-                    bottom: 0,
+                    bottom: -15,
                     left: 5,
                     child: Image.asset(
                       'assets/astronaut/standing.png',
@@ -85,61 +85,16 @@ class SpeakScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // -----------------------------
-            // SPEAK ROW (Waveform + Mic)
-            // -----------------------------
-            // Container(
-            //   // Just an example height; adjust to fit your layout
-            //   height: 80,
-            //   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            //   padding: const EdgeInsets.symmetric(horizontal: 16),
-            //   decoration: BoxDecoration(
-            //     color: Colors.black,
-            //     borderRadius: BorderRadius.circular(12),
-            //   ),
-            //   child: Row(
-            //     children: [
-            //       // Waveform placeholder – you can replace this
-            //       // with your actual audio visualization widget
-            //       Expanded(
-            //         child: Container(
-            //           // Center a mock waveform icon or animation
-            //           alignment: Alignment.centerLeft,
-            //           child: Text(
-            //             'Audio Waveform',
-            //             style: TextStyle(color: Colors.white54),
-            //           ),
-            //         ),
-            //       ),
-            //       // Microphone Icon Button
-            //       IconButton(
-            //         icon: const Icon(Icons.mic, color: Colors.white, size: 32),
-            //         onPressed: () {
-            //           // TODO: handle microphone tap
-            //         },
-            //       ),
-            //     ],
-            //   ),
-            // ),
             AudioWidget(),
             // -----------------------------
-            // BOTTOM SECTION (Options + Next)
+            // BOTTOM SECTION  (Next)
             // -----------------------------
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // If you want to show multiple-choice options
-                    // you can keep the OptionsList. Otherwise remove it.
-                    Expanded(
-                      child: OptionsList(
-                        options: question.options,
-                        selectedOption: _selectedOption,
-                      ),
-                    ),
                     NextButton(
                       onPressed: () => _submitAnswer(context),
                     ),
