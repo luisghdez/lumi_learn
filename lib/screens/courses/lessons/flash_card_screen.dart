@@ -67,49 +67,61 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.center, // adjust as needed
-                    end: Alignment.bottomCenter, // adjust as needed
+                    begin: Alignment.center,
+                    end: Alignment.bottomCenter,
                     colors: [
-                      Colors.transparent, // start color
-                      Color.fromARGB(255, 12, 12, 12), // end color
+                      Colors.transparent,
+                      Color.fromARGB(255, 12, 12, 12),
                     ],
                   ),
                 ),
               ),
             ),
 
-            // 3) Your main UI content on top
+            // 3) Main UI content on top
             Column(
               children: [
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Center(
-                      child: FlashcardWidget(flashcard: currentFlashcard),
+                      child: FlashcardWidget(
+                        key: ValueKey(currentFlashcard),
+                        flashcard: currentFlashcard,
+                      ),
                     ),
                   ),
                 ),
-                // Padding(
-                //   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                //   child: Text(
-                //     'Tap the card to flip',
-                //     style: TextStyle(
-                //         fontSize: 16,
-                //         color: Colors.white), // White to stand out
-                //   ),
-                // ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Tap the card to flip',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w200,
+                        color: Colors.white),
+                  ),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
                       onPressed: _moveToPreviousCard,
-                      icon: Icon(Icons.navigate_before),
-                      // label: Text(''),
+                      icon: const Icon(Icons.navigate_before),
+                      color: Colors.white,
+                    ),
+                    // Display current flashcard count
+                    Text(
+                      '${currentIndex + 1}/${flashcards.length}',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w200),
                     ),
                     IconButton(
                       onPressed: _moveToNextCard,
-                      icon: Icon(Icons.navigate_next),
-                      // label: Text('Next'),
+                      icon: const Icon(Icons.navigate_next),
+                      color: Colors.white,
                     ),
                   ],
                 ),
@@ -145,10 +157,22 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _animation = Tween<double>(begin: 0, end: pi).animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(covariant FlashcardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When the flashcard changes, reset the animation and show the term (front side)
+    if (oldWidget.flashcard != widget.flashcard) {
+      _controller.reset();
+      setState(() {
+        isFront = true;
+      });
+    }
   }
 
   void _flipCard() {
@@ -205,7 +229,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     return _buildCard(
       child: Text(
         widget.flashcard.definition,
-        style: const TextStyle(fontSize: 20, color: Colors.white),
+        style: const TextStyle(
+            fontSize: 20, fontWeight: FontWeight.w300, color: Colors.white),
         textAlign: TextAlign.center,
       ),
     );
@@ -214,22 +239,19 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   Widget _buildCard({required Widget child}) {
     return Container(
       height: 400,
-      // We only apply the outer shadow to the parent container
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: Stack(
           children: [
-            // 1) This BackdropFilter will blur whatever is *behind* this card
+            // Backdrop blur filter
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
               child: Container(),
             ),
-
-            // 2) Semi-transparent black overlay
+            // Semi-transparent black overlay
             Container(
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.6),
