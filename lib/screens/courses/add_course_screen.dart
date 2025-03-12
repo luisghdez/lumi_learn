@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
@@ -450,7 +451,7 @@ class _CourseCreationState extends State<CourseCreation> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      CourseController().createCourse(
+                      Get.find<CourseController>().createCourse(
                         title: courseTitle,
                         description: courseDescription,
                         files: [...selectedFiles, ...selectedImages],

@@ -7,7 +7,7 @@ import 'package:lumi_learn_app/screens/social/social_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart';
 
 class MainScreen extends StatelessWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  MainScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +17,10 @@ class MainScreen extends StatelessWidget {
       body: Obx(
         () => IndexedStack(
           index: navigationController.currentIndex.value,
-          children: const [
+          children: [
             HomeScreen(),
-            SearchScreen(),
-            ProfileScreen(),
+            const SearchScreen(),
+            const ProfileScreen(),
           ],
         ),
       ),

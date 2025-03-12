@@ -6,11 +6,11 @@ import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'category_card.dart';
 
 class CategoryList extends StatelessWidget {
-  const CategoryList({Key? key}) : super(key: key);
+  CategoryList({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final courseController = Get.find<CourseController>();
+    final CourseController courseController = Get.find<CourseController>();
     final random = Random();
 
     return Obx(() {

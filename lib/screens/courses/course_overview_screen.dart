@@ -329,7 +329,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: CourseOverviewHeader(
                   onBack: () => Get.offAll(
-                    () => const MainScreen(),
+                    () => MainScreen(),
                     transition: Transition.fadeIn,
                     duration: const Duration(milliseconds: 500),
                   ),
