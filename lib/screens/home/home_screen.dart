@@ -16,7 +16,7 @@ import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +59,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 10),
 
               // Category cards
-              const CategoryList(),
+              CategoryList(),
 
               // If you want more spacing at bottom
               const SizedBox(height: 10),

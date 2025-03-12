@@ -322,6 +322,8 @@ class CourseController extends GetxController {
         // Insert the new course at the top of the courses list
         courses.insert(0, newCourse);
 
+        await fetchCourses();
+
         Get.snackbar("Success", "Course created successfully!",
             backgroundColor: Colors.green, colorText: Colors.white);
       } else {
@@ -337,7 +339,7 @@ class CourseController extends GetxController {
     } finally {
       isLoading.value = false; // Stop loading
       // Navigate to MainScreen after course creation
-      Get.offAll(() => const MainScreen());
+      Get.offAll(() => MainScreen());
     }
   }
 
@@ -359,8 +361,10 @@ class CourseController extends GetxController {
       if (response.statusCode == 200) {
         // Parse the JSON response and store the courses in our RxList
         final data = jsonDecode(response.body);
+        print('Courses fetched successfully: ${data['courses']}');
         courses.value = data['courses'];
-        print('Courses fetched successfully: ${courses.value}');
+        print('fetchCourses controller hash: ${this.hashCode}');
+        print('Courses saved succesfully: ${courses}');
       } else {
         print('Failed to fetch courses: ${response.statusCode}');
         Get.snackbar("Error", "Failed to fetch courses.",
@@ -416,6 +420,43 @@ class CourseController extends GetxController {
     } finally {
       isLoading.value = false; // Stop loading
       // Get.back(); // Close loading screen
+    }
+  }
+
+  Future<void> completeCurrentLesson() async {
+    try {
+      final lessonId = lessons[activeLessonIndex.value]['id'];
+      final xp = 100; // Example XP value
+      isLoading.value = true; // Start loading
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        return;
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.completeLesson(
+        token: token,
+        courseId: selectedCourseId.value,
+        lessonId: lessonId,
+        xp: xp,
+      );
+
+      if (response.statusCode == 200) {
+        print('Lesson completed successfully: ${response.body}');
+        lessons[activeLessonIndex.value]['completed'] = true;
+      } else {
+        print('Failed to complete lesson: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to complete lesson.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error completing lesson: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false; // Stop loading
     }
   }
 }

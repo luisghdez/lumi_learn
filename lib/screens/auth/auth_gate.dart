@@ -38,7 +38,7 @@ class AuthGate extends StatelessWidget {
       print("User is logged in: ${user.displayName}");
 
       if (!Get.isRegistered<CourseController>()) {
-        Get.put(CourseController());
+        Get.put<CourseController>(CourseController(), permanent: true);
       }
       final courseController = Get.find<CourseController>();
       if (!courseController.isInitialized.value) {
@@ -48,7 +48,7 @@ class AuthGate extends StatelessWidget {
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 
       // Show main screen if user is logged in
-      return const MainScreen();
+      return MainScreen();
     });
   }
 }
