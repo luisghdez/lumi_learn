@@ -58,7 +58,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             Positioned.fill(
               child: Image.asset(
                 widget.backgroundImage,
-                fit: BoxFit.cover,
+                fit: BoxFit.fitHeight,
               ),
             ),
 

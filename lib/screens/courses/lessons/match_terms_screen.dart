@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
 class MatchTerms extends StatefulWidget {
@@ -152,7 +153,7 @@ class _MatchTermsState extends State<MatchTerms> {
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 6),
                 // Right: Draggable Definitions (fixed positions)
                 Expanded(
                   child: _buildDefinitionsColumn(),
@@ -162,13 +163,11 @@ class _MatchTermsState extends State<MatchTerms> {
           ),
           const SizedBox(height: 16),
           if (allMatched())
-            ElevatedButton.icon(
-              onPressed: () {
+            SizedBox(
+              child: NextButton(onPressed: () {
                 courseController.nextQuestion();
                 _resetState();
-              },
-              icon: const Icon(Icons.check_circle),
-              label: const Text("Continue"),
+              }),
             ),
         ],
       ),
@@ -177,13 +176,20 @@ class _MatchTermsState extends State<MatchTerms> {
 
   /// Instructions widget.
   Widget _buildInstructions(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      alignment: Alignment.center,
-      child: const Text(
-        "Drag the matching definitions to each term",
-        style: TextStyle(fontSize: 16.0, color: Colors.white),
-      ),
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Drag the matching definitions to each term",
+          style: TextStyle(fontSize: 16.0, color: Colors.white),
+        ),
+        SizedBox(height: 8),
+        Text(
+          "Tap on a definition to expand it",
+          style: TextStyle(
+              fontSize: 14.0, color: Color.fromARGB(167, 158, 158, 158)),
+        ),
+      ],
     );
   }
 
@@ -203,11 +209,12 @@ class _MatchTermsState extends State<MatchTerms> {
           shape: RoundedRectangleBorder(
             side: BorderSide(
               color: termBorderColors[termIndex],
-              width: 2.0,
+              width: 1.0,
             ),
             borderRadius: BorderRadius.circular(8.0),
           ),
-          color: Colors.grey[850],
+          // color: Colors.grey[1000],
+          color: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: DragTarget<Flashcard>(
@@ -219,7 +226,7 @@ class _MatchTermsState extends State<MatchTerms> {
                     term,
                     style: const TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w200,
                       color: Colors.white,
                     ),
                   ),
