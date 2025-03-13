@@ -43,83 +43,80 @@ class MultipleChoiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 12, 12, 12),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // Top section: background, gradient, question card, astronaut
-            Container(
-              height: MediaQuery.of(context).size.height * 0.35,
-              width: double.infinity,
-              child: Stack(
-                children: [
-                  // Background image
-                  Positioned.fill(
-                    child: Image.asset(
-                      backgroundImage,
-                      fit: BoxFit.cover,
-                    ),
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: [
+          // Top section: background, gradient, question card, astronaut
+          Container(
+            height: MediaQuery.of(context).size.height * 0.35,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                // Background image
+                Positioned.fill(
+                  child: Image.asset(
+                    backgroundImage,
+                    fit: BoxFit.cover,
                   ),
-                  // Gradient overlay
-                  Positioned.fill(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.center,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Color.fromARGB(255, 12, 12, 12),
-                          ],
-                        ),
+                ),
+                // Gradient overlay
+                Positioned.fill(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.center,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Color.fromARGB(255, 12, 12, 12),
+                        ],
                       ),
                     ),
                   ),
-                  // Question card
-                  Positioned(
-                    left: 16,
-                    top: MediaQuery.of(context).padding.top + 60,
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.75,
-                      child: QuestionCard(questionText: question.questionText),
+                ),
+                // Question card
+                Positioned(
+                  left: 16,
+                  top: MediaQuery.of(context).padding.top + 60,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    child: QuestionCard(questionText: question.questionText),
+                  ),
+                ),
+                // Astronaut image
+                Positioned(
+                  bottom: 0,
+                  right: 1,
+                  child: Image.asset(
+                    'assets/astronaut/pointing.png',
+                    width: 120,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Bottom section: options and next button
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: OptionsList(
+                      options: question.options,
+                      selectedOption: _selectedOption,
                     ),
                   ),
-                  // Astronaut image
-                  Positioned(
-                    bottom: 0,
-                    right: 1,
-                    child: Image.asset(
-                      'assets/astronaut/pointing.png',
-                      width: 120,
-                    ),
+                  NextButton(
+                    onPressed: () => _submitAnswer(context),
                   ),
                 ],
               ),
             ),
-            // Bottom section: options and next button
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: OptionsList(
-                        options: question.options,
-                        selectedOption: _selectedOption,
-                      ),
-                    ),
-                    NextButton(
-                      onPressed: () => _submitAnswer(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

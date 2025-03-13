@@ -134,53 +134,50 @@ class _MatchTermsState extends State<MatchTerms> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 12, 12, 12),
-      body: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-          child: Column(
-            children: [
-              SizedBox(height: MediaQuery.of(context).padding.top),
-              _buildInstructions(context),
-              const Divider(height: 60),
-              Expanded(
-                child: Row(
-                  children: [
-                    // Left: Term cards with DragTarget.
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: widget.question.flashcards.length,
-                        itemBuilder: (context, index) {
-                          final term = widget.question.flashcards[index].term;
-                          final matchedDef = matchedDefinitions[index];
-                          return _buildTermCard(term, matchedDef, index);
-                        },
-                      ),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+        child: Column(
+          children: [
+            SizedBox(height: MediaQuery.of(context).padding.top),
+            _buildInstructions(context),
+            const Divider(height: 60),
+            Expanded(
+              child: Row(
+                children: [
+                  // Left: Term cards with DragTarget.
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: widget.question.flashcards.length,
+                      itemBuilder: (context, index) {
+                        final term = widget.question.flashcards[index].term;
+                        final matchedDef = matchedDefinitions[index];
+                        return _buildTermCard(term, matchedDef, index);
+                      },
                     ),
-                    const SizedBox(width: 6),
-                    // Right: Draggable Definitions (fixed positions)
-                    Expanded(
-                      child: _buildDefinitionsColumn(),
-                    ),
-                  ],
+                  ),
+                  const SizedBox(width: 6),
+                  // Right: Draggable Definitions (fixed positions)
+                  Expanded(
+                    child: _buildDefinitionsColumn(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (allMatched()) ...[
+              SizedBox(
+                child: NextButton(
+                  onPressed: () {
+                    courseController.nextQuestion();
+                    _resetState();
+                  },
                 ),
               ),
-              const SizedBox(height: 16),
-              if (allMatched()) ...[
-                SizedBox(
-                  child: NextButton(
-                    onPressed: () {
-                      courseController.nextQuestion();
-                      _resetState();
-                    },
-                  ),
-                ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ]
-            ],
-          ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ]
+          ],
         ),
       ),
     );
