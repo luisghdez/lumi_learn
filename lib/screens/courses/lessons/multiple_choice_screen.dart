@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/options_list.dart';
@@ -6,7 +8,6 @@ import 'package:lumi_learn_app/screens/courses/lessons/widgets/question_card.dar
 
 class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
-  final Function() onSubmitAnswer;
   final String backgroundImage;
 
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
@@ -14,24 +15,18 @@ class MultipleChoiceScreen extends StatelessWidget {
   MultipleChoiceScreen({
     required this.question,
     required this.backgroundImage,
-    required this.onSubmitAnswer,
   });
 
   void _submitAnswer(BuildContext context) {
     if (_selectedOption.value != -1) {
       final selectedAnswer = question.options[_selectedOption.value];
-      if (selectedAnswer == question.correctAnswer) {
-        print('Correct answer: $selectedAnswer');
-        onSubmitAnswer();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "That's not the answer, the correct answer is: ${question.correctAnswer}",
-            ),
-          ),
-        );
-      }
+      final controller = Get.find<CourseController>();
+
+      controller.submitAnswerForQuestion(
+        question: question,
+        selectedAnswer: selectedAnswer,
+        context: context,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

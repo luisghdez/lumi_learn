@@ -24,9 +24,8 @@ class LessonScreenMain extends StatelessWidget {
       final questions = courseController.computedQuestions;
       final activePlanet = courseController.activePlanet.value;
 
-      if (currentIndex >= questions.length) {
-        courseController.completeCurrentLesson();
-        return LessonResultScreen();
+      if (questions.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
       }
 
       final currentQuestion = questions[currentIndex];
@@ -44,9 +43,6 @@ class LessonScreenMain extends StatelessWidget {
           questionWidget = MultipleChoiceScreen(
             question: currentQuestion,
             backgroundImage: backgroundImage ?? '', // Ensure non-null value
-            onSubmitAnswer: () {
-              courseController.nextQuestion();
-            },
           );
           break;
         case LessonType.speakAll:
