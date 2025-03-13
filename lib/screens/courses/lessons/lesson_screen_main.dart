@@ -8,6 +8,7 @@ import 'package:lumi_learn_app/screens/courses/lessons/match_terms_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/type_in_screen.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/lesson_progress_bar.dart';
 import 'lesson_result_screen.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 
@@ -29,7 +30,7 @@ class LessonScreenMain extends StatelessWidget {
       }
 
       final currentQuestion = questions[currentIndex];
-      final progress = (currentIndex + 1) / questions.length;
+      final progress = (currentIndex) / questions.length;
 
       // Generate a random image from activePlanet.backgroundPaths.
       final random = Random();
@@ -46,7 +47,6 @@ class LessonScreenMain extends StatelessWidget {
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
-            progress: progress,
           );
           break;
         case LessonType.speakAll:
@@ -92,14 +92,32 @@ class LessonScreenMain extends StatelessWidget {
 
       // Wrap the questionWidget in a Container with a key based on the currentIndex.
       // This ensures the AnimatedSwitcher detects a change when the question updates.
-      return AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        child: Container(
-          key: ValueKey<int>(currentIndex),
-          child: questionWidget,
+      return Scaffold(
+        backgroundColor: const Color.fromARGB(255, 12, 12, 12),
+        body: Stack(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Container(
+                key: ValueKey<int>(currentIndex),
+                child: questionWidget,
+              ),
+            ),
+
+            // Progress bar overlay at the top
+            Positioned(
+              top: MediaQuery.of(context).padding.top,
+              left: 16,
+              right: 16,
+              child: LessonProgressBar(
+                progress: progress,
+                onClose: () => Get.back(),
+              ),
+            ),
+          ],
         ),
       );
     });

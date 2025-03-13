@@ -8,7 +8,6 @@ class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
   final Function() onSubmitAnswer;
   final String backgroundImage;
-  final double progress; // New parameter for progress
 
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
 
@@ -16,7 +15,6 @@ class MultipleChoiceScreen extends StatelessWidget {
     required this.question,
     required this.backgroundImage,
     required this.onSubmitAnswer,
-    required this.progress, // Must be provided when creating this screen
   });
 
   void _submitAnswer(BuildContext context) {
@@ -82,7 +80,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                   // Question card
                   Positioned(
                     left: 16,
-                    top: 60,
+                    top: MediaQuery.of(context).padding.top + 60,
                     child: SizedBox(
                       width: MediaQuery.of(context).size.width * 0.75,
                       child: QuestionCard(questionText: question.questionText),

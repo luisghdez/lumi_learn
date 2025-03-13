@@ -74,7 +74,7 @@ class CourseController extends GetxController {
   //     Question(
   //       questionText: 'Explain what you just learned in your own words.',
   //       options: [],
-  //       lessonType: LessonType.speak,
+  //       lessonType: LessonType.speakAll,
   //     ),
   //     Question(
   //       questionText:
@@ -95,7 +95,7 @@ class CourseController extends GetxController {
   //       questionText:
   //           'Type in everything you learned up to this point in one minute!',
   //       options: [],
-  //       lessonType: LessonType.typeInEverything,
+  //       lessonType: LessonType.writeAll,
   //     ),
   //     Question(
   //       questionText: 'Match the Terms',
