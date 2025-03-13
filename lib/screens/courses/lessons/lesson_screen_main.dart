@@ -87,32 +87,134 @@ class LessonScreenMain extends StatelessWidget {
       // This ensures the AnimatedSwitcher detects a change when the question updates.
       return Scaffold(
         backgroundColor: const Color.fromARGB(255, 12, 12, 12),
-        body: Stack(
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: Container(
-                key: ValueKey<int>(currentIndex),
-                child: questionWidget,
+        body: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: Container(
+                  key: ValueKey<int>(currentIndex),
+                  child: questionWidget,
+                ),
               ),
-            ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Stack(
+                    children: [
+                      // Outer border
 
-            // Progress bar overlay at the top
-            Positioned(
-              top: MediaQuery.of(context).padding.top,
-              left: 16,
-              right: 16,
-              child: LessonProgressBar(
-                progress: progress,
-                onClose: () => Get.back(),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        switchInCurve: Curves.easeOutBack,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: Tween<double>(begin: 0.99, end: 1.0)
+                                  .animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: courseController.showGreenGlow.value
+                            ? Stack(
+                                key: const ValueKey('greenGlow'),
+                                children: [
+                                  // Border
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.greenAccent,
+                                        width: 4,
+                                      ),
+                                      borderRadius: BorderRadius.circular(60),
+                                    ),
+                                  ),
+
+                                  // Glow
+                                  Container(
+                                    margin: const EdgeInsets.all(
+                                        6), // Same as border width
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(60),
+                                      color: Colors.transparent,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurStyle: BlurStyle.outer,
+                                          color: Colors.greenAccent
+                                              .withOpacity(0.25),
+                                          blurRadius: 100,
+                                          spreadRadius: -5,
+                                          offset: Offset(0, 0),
+                                        ),
+                                        BoxShadow(
+                                          blurStyle: BlurStyle.outer,
+                                          color: Colors.greenAccent
+                                              .withOpacity(0.12),
+                                          blurRadius: 200,
+                                          spreadRadius: -10,
+                                          offset: Offset(0, 0),
+                                        ),
+                                        BoxShadow(
+                                          blurStyle: BlurStyle.outer,
+                                          color: Colors.greenAccent
+                                              .withOpacity(0.05),
+                                          blurRadius: 400,
+                                          spreadRadius: -20,
+                                          offset: Offset(0, 0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const SizedBox(
+                                key: ValueKey(
+                                    'noGlow')), // Empty widget placeholder
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+
+              // Progress bar overlay at the top.
+              Positioned(
+                top: MediaQuery.of(context).padding.top,
+                left: 16,
+                right: 16,
+                child: LessonProgressBar(
+                  progress: progress,
+                  onClose: () => Get.back(),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     });
   }
+}
+
+class InnerGlowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final borderRadius = BorderRadius.circular(60);
+    final outerRRect = borderRadius.toRRect(rect);
+
+    final paint = Paint()
+      ..color = Colors.greenAccent.withOpacity(0.3)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 15);
+
+    canvas.drawRRect(outerRRect.deflate(6), paint); // glow inside the border
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

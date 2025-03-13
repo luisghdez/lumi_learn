@@ -26,6 +26,7 @@ class CourseController extends GetxController {
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
   final RxList<Question> computedQuestions = <Question>[].obs;
+  RxBool showGreenGlow = false.obs;
 
   @override
   void onInit() {
@@ -101,43 +102,43 @@ class CourseController extends GetxController {
   //       options: [],
   //       lessonType: LessonType.speakAll,
   //     ),
-  // // Type in everything you learned
-  // Question(
-  //   questionText:
-  //       'Type in everything you learned up to this point in one minute!',
-  //   options: [],
-  //   lessonType: LessonType.writeAll,
-  // ),
-  // Question(
-  //   questionText: 'Match the Terms',
-  //   options: [],
-  //   flashcards: [
-  //     Flashcard(
-  //         term: 'Term 1',
-  //         definition: 'Definition of term 1 which shuld be long like this'),
-  //     Flashcard(
-  //         term: 'Term 2',
-  //         definition: 'Definition of term 2 which shuld be long like this'),
-  //     Flashcard(
-  //         term: 'Term 3',
-  //         definition: 'Definition of term 3 which shuld be long like this'),
-  //     Flashcard(
-  //         term: 'Term 4',
-  //         definition: 'Definition of term 4 which shuld be long like this'),
-  //   ],
-  //   lessonType: LessonType.matchTheTerms,
-  // ),
-  // Question(
-  //   questionText: 'Flashcards',
-  //   options: [],
-  //   flashcards: [
-  //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-  //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-  //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-  //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-  //   ],
-  //   lessonType: LessonType.flashcards,
-  // ),
+  //     // Type in everything you learned
+  //     Question(
+  //       questionText:
+  //           'Type in everything you learned up to this point in one minute!',
+  //       options: [],
+  //       lessonType: LessonType.writeAll,
+  //     ),
+  //     Question(
+  //       questionText: 'Match the Terms',
+  //       options: [],
+  //       flashcards: [
+  //         Flashcard(
+  //             term: 'Term 1',
+  //             definition: 'Definition of term 1 which shuld be long like this'),
+  //         Flashcard(
+  //             term: 'Term 2',
+  //             definition: 'Definition of term 2 which shuld be long like this'),
+  //         Flashcard(
+  //             term: 'Term 3',
+  //             definition: 'Definition of term 3 which shuld be long like this'),
+  //         Flashcard(
+  //             term: 'Term 4',
+  //             definition: 'Definition of term 4 which shuld be long like this'),
+  //       ],
+  //       lessonType: LessonType.matchTheTerms,
+  //     ),
+  //     Question(
+  //       questionText: 'Flashcards',
+  //       options: [],
+  //       flashcards: [
+  //         Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+  //         Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+  //         Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+  //         Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+  //       ],
+  //       lessonType: LessonType.flashcards,
+  //     ),
   //   ];
   // }
 
@@ -493,10 +494,15 @@ class CourseController extends GetxController {
     required Question question,
     required String selectedAnswer,
     required BuildContext context,
-    // required VoidCallback onSubmitAnswer,
   }) {
     if (selectedAnswer == question.correctAnswer) {
-      nextQuestion();
+      // Trigger the green glow:
+      showGreenGlow.value = true;
+      // Wait 300 milliseconds before moving on (adjust duration as needed)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        showGreenGlow.value = false;
+        nextQuestion();
+      });
     } else {
       // Incorrect answer: show dialog and move the question to the end.
       Get.dialog(
@@ -563,8 +569,6 @@ class CourseController extends GetxController {
 
                       int index = computedQuestions.indexOf(question);
                       if (index != -1) {
-                        // computedQuestions.removeAt(index);
-
                         final endSectionIndex =
                             computedQuestions.lastIndexWhere(
                           (q) =>
@@ -578,7 +582,6 @@ class CourseController extends GetxController {
                           computedQuestions.add(question);
                         }
                       }
-
                       nextQuestion();
                     },
                     child: const Text('NEXT QUESTION'),

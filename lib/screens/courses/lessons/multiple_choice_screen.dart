@@ -94,6 +94,7 @@ class MultipleChoiceScreen extends StatelessWidget {
           // Bottom section: options and next button
           Expanded(
             child: Container(
+              color: const Color.fromARGB(255, 12, 12, 12),
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
