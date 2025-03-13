@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/services/api_service.dart'; // Import the data file
 
@@ -49,17 +50,18 @@ class CourseController extends GetxController {
   }
 
   void nextQuestion() {
-    if (activeQuestionIndex.value < questionsCount.value) {
+    if (activeQuestionIndex.value < computedQuestions.length - 1) {
       activeQuestionIndex.value++;
+    } else {
+      // Last question reached
+      completeCurrentLesson();
+
+      // Navigate to LessonResultScreen from controller
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.offAll(() => LessonResultScreen());
+      });
     }
   }
-
-  // (Optional) Moves to the previous question if there is one
-  // void previousQuestion() {
-  //   if (activeQuestionIndex.value > 0) {
-  //     activeQuestionIndex.value--;
-  //   }
-  // }
 
   // List<Question> getQuestions() {
   //   // return questions based on activeCourseId and activeLessonIndex
@@ -67,20 +69,23 @@ class CourseController extends GetxController {
   //   return [
   //     Question(
   //       questionText:
-  //           'What is the answer to this question if this was a long question of the question and a question?',
+  //           'Q1 What is the answer to this question if this was a long question of the question and a question?',
   //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //       correctAnswer: 'Paris',
   //       lessonType: LessonType.multipleChoice,
   //     ),
   //     Question(
-  //       questionText: 'Explain what you just learned in your own words.',
-  //       options: [],
-  //       lessonType: LessonType.speakAll,
+  //       questionText:
+  //           'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
+  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //       correctAnswer: 'Paris',
+  //       lessonType: LessonType.multipleChoice,
   //     ),
   //     Question(
   //       questionText:
   //           'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
   //       options: [
-  //         'Rome',
+  //         'Italy',
   //         'Paris',
   //         'Berlin',
   //         'Madrid',
@@ -88,45 +93,51 @@ class CourseController extends GetxController {
   //         'Tokyo',
   //         'New York City'
   //       ],
+  //       correctAnswer: 'Italy',
   //       lessonType: LessonType.fillInTheBlank,
   //     ),
-  //     // Type in everything you learned
   //     Question(
-  //       questionText:
-  //           'Type in everything you learned up to this point in one minute!',
+  //       questionText: 'Explain what you just learned in your own words.',
   //       options: [],
-  //       lessonType: LessonType.writeAll,
+  //       lessonType: LessonType.speakAll,
   //     ),
-  //     Question(
-  //       questionText: 'Match the Terms',
-  //       options: [],
-  //       flashcards: [
-  //         Flashcard(
-  //             term: 'Term 1',
-  //             definition: 'Definition of term 1 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 2',
-  //             definition: 'Definition of term 2 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 3',
-  //             definition: 'Definition of term 3 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 4',
-  //             definition: 'Definition of term 4 which shuld be long like this'),
-  //       ],
-  //       lessonType: LessonType.matchTheTerms,
-  //     ),
-  //     Question(
-  //       questionText: 'Flashcards',
-  //       options: [],
-  //       flashcards: [
-  //         Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-  //         Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-  //         Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-  //         Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-  //       ],
-  //       lessonType: LessonType.flashcards,
-  //     ),
+  // // Type in everything you learned
+  // Question(
+  //   questionText:
+  //       'Type in everything you learned up to this point in one minute!',
+  //   options: [],
+  //   lessonType: LessonType.writeAll,
+  // ),
+  // Question(
+  //   questionText: 'Match the Terms',
+  //   options: [],
+  //   flashcards: [
+  //     Flashcard(
+  //         term: 'Term 1',
+  //         definition: 'Definition of term 1 which shuld be long like this'),
+  //     Flashcard(
+  //         term: 'Term 2',
+  //         definition: 'Definition of term 2 which shuld be long like this'),
+  //     Flashcard(
+  //         term: 'Term 3',
+  //         definition: 'Definition of term 3 which shuld be long like this'),
+  //     Flashcard(
+  //         term: 'Term 4',
+  //         definition: 'Definition of term 4 which shuld be long like this'),
+  //   ],
+  //   lessonType: LessonType.matchTheTerms,
+  // ),
+  // Question(
+  //   questionText: 'Flashcards',
+  //   options: [],
+  //   flashcards: [
+  //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+  //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+  //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+  //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+  //   ],
+  //   lessonType: LessonType.flashcards,
+  // ),
   //   ];
   // }
 
@@ -412,14 +423,6 @@ class CourseController extends GetxController {
     selectedCourseTitle.value = courseTitle;
     isLoading.value = true; // Start loading
 
-    // // Show full-screen loading overlay
-    // Get.dialog(
-    //   const Center(
-    //     child: CircularProgressIndicator(color: Colors.white),
-    //   ),
-    //   barrierDismissible: false, // Prevent dismissing while loading
-    // );
-
     try {
       final token = await authController.getIdToken();
       if (token == null) {
@@ -483,6 +486,110 @@ class CourseController extends GetxController {
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isLoading.value = false; // Stop loading
+    }
+  }
+
+  void submitAnswerForQuestion({
+    required Question question,
+    required String selectedAnswer,
+    required BuildContext context,
+    // required VoidCallback onSubmitAnswer,
+  }) {
+    if (selectedAnswer == question.correctAnswer) {
+      nextQuestion();
+    } else {
+      // Incorrect answer: show dialog and move the question to the end.
+      Get.dialog(
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade700,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.close_rounded, color: Colors.white, size: 30),
+                    SizedBox(width: 8),
+                    Text(
+                      'Incorrect',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 20,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Correct Answer:",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  question.correctAnswer ?? 'No correct answer provided',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.red.shade900,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.back(); // Close the dialog
+
+                      int index = computedQuestions.indexOf(question);
+                      if (index != -1) {
+                        // computedQuestions.removeAt(index);
+
+                        final endSectionIndex =
+                            computedQuestions.lastIndexWhere(
+                          (q) =>
+                              q.lessonType == LessonType.speakAll ||
+                              q.lessonType == LessonType.writeAll,
+                        );
+
+                        if (endSectionIndex != -1) {
+                          computedQuestions.insert(endSectionIndex, question);
+                        } else {
+                          computedQuestions.add(question);
+                        }
+                      }
+
+                      nextQuestion();
+                    },
+                    child: const Text('NEXT QUESTION'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
     }
   }
 }
