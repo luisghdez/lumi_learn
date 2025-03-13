@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble.dart';
@@ -7,34 +9,27 @@ import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
 class FillInBlankScreen extends StatelessWidget {
   final Question question;
-  final Function() onSubmitAnswer;
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
 
   FillInBlankScreen({
     Key? key,
     required this.question,
-    required this.onSubmitAnswer,
   }) : super(key: key);
 
   void _submitAnswer(BuildContext context) {
     if (_selectedOption.value != -1) {
       final selectedAnswer = question.options[_selectedOption.value];
-      if (selectedAnswer == question.correctAnswer) {
-        print('Correct answer: $selectedAnswer');
-        onSubmitAnswer();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "That's not the answer, the correct answer is: ${question.correctAnswer}",
-            ),
-          ),
-        );
-      }
+      final controller = Get.find<CourseController>();
+
+      controller.submitAnswerForQuestion(
+        question: question,
+        selectedAnswer: selectedAnswer,
+        context: context,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select an answer.'),
+          content: Text('Please select an option before submitting'),
         ),
       );
     }

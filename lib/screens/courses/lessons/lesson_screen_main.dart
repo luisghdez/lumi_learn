@@ -45,18 +45,15 @@ class LessonScreenMain extends StatelessWidget {
             backgroundImage: backgroundImage ?? '', // Ensure non-null value
           );
           break;
+        case LessonType.fillInTheBlank:
+          questionWidget = FillInBlankScreen(
+            question: currentQuestion,
+          );
+          break;
         case LessonType.speakAll:
           questionWidget = SpeakScreen(
             question: currentQuestion,
             backgroundImage: backgroundImage ?? '',
-            onSubmitAnswer: () {
-              courseController.nextQuestion();
-            },
-          );
-          break;
-        case LessonType.fillInTheBlank:
-          questionWidget = FillInBlankScreen(
-            question: currentQuestion,
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },
