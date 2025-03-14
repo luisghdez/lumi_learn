@@ -19,7 +19,7 @@ class _MatchTermsState extends State<MatchTerms> {
   final CourseController courseController = Get.find<CourseController>();
 
   // For each term index, store the matched definition (if any).
-  late List<String?> matchedDefinitions;
+  List<String?> matchedDefinitions = [];
 
   // Definitions on the right side, shuffled.
   late List<Flashcard> shuffledDefinitions;
@@ -40,10 +40,7 @@ class _MatchTermsState extends State<MatchTerms> {
   void initState() {
     super.initState();
 
-    // Delay setup until after the widget is actually on screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeMatchTermsState();
-    });
+    _initializeMatchTermsState();
   }
 
   void _initializeMatchTermsState() {
