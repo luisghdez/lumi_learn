@@ -19,7 +19,7 @@ class _MatchTermsState extends State<MatchTerms> {
   final CourseController courseController = Get.find<CourseController>();
 
   // For each term index, store the matched definition (if any).
-  late List<String?> matchedDefinitions;
+  List<String?> matchedDefinitions = [];
 
   // Definitions on the right side, shuffled.
   late List<Flashcard> shuffledDefinitions;
@@ -34,67 +34,20 @@ class _MatchTermsState extends State<MatchTerms> {
   late List<double> termOpacities;
   late List<bool> termMatched;
 
+  bool _autoAdvanceTriggered = false;
+
   @override
   void initState() {
     super.initState();
-    matchedDefinitions =
-        List<String?>.filled(widget.question.flashcards.length, null);
 
-    // Shuffle definitions.
-    shuffledDefinitions = List<Flashcard>.from(widget.question.flashcards);
-    shuffledDefinitions.shuffle();
-
-    // Initialize definition card states as growable lists.
-    definitionBorderColors = List<Color>.filled(
-      shuffledDefinitions.length,
-      greyBorder,
-      growable: true,
-    );
-    definitionOpacities = List<double>.filled(
-      shuffledDefinitions.length,
-      1.0,
-      growable: true,
-    );
-    definitionMatched = List<bool>.filled(
-      shuffledDefinitions.length,
-      false,
-      growable: true,
-    );
-
-    // Initialize term card states as growable lists.
-    termBorderColors = List<Color>.filled(
-      widget.question.flashcards.length,
-      greyBorder,
-      growable: true,
-    );
-    termOpacities = List<double>.filled(
-      widget.question.flashcards.length,
-      1.0,
-      growable: true,
-    );
-    termMatched = List<bool>.filled(
-      widget.question.flashcards.length,
-      false,
-      growable: true,
-    );
+    _initializeMatchTermsState();
   }
 
-  @override
-  void didUpdateWidget(covariant MatchTerms oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.question != widget.question) {
-      _resetState();
-    }
-  }
-
-  bool allMatched() {
-    return matchedDefinitions.every((def) => def != null);
-  }
-
-  void _resetState() {
+  void _initializeMatchTermsState() {
     setState(() {
       matchedDefinitions =
           List<String?>.filled(widget.question.flashcards.length, null);
+
       shuffledDefinitions = List<Flashcard>.from(widget.question.flashcards);
       shuffledDefinitions.shuffle();
 
@@ -129,47 +82,73 @@ class _MatchTermsState extends State<MatchTerms> {
         false,
         growable: true,
       );
+
+      _autoAdvanceTriggered = false; // reset auto-advance flag
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant MatchTerms oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.question != widget.question) {
+      _resetState();
+    }
+  }
+
+  bool allMatched() {
+    return matchedDefinitions.every((def) => def != null);
+  }
+
+  void _resetState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeMatchTermsState();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      body: Column(
-        children: [
-          _buildInstructions(context),
-          const Divider(height: 60),
-          Expanded(
-            child: Row(
-              children: [
-                // Left: Term cards with DragTarget.
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: widget.question.flashcards.length,
-                    itemBuilder: (context, index) {
-                      final term = widget.question.flashcards[index].term;
-                      final matchedDef = matchedDefinitions[index];
-                      return _buildTermCard(term, matchedDef, index);
-                    },
+    if (allMatched() && !_autoAdvanceTriggered) {
+      _autoAdvanceTriggered = true;
+      Future.delayed(const Duration(seconds: 1), () {
+        courseController.nextQuestion();
+        // Reset the flag for the next question
+        _autoAdvanceTriggered = false;
+      });
+    }
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+        child: Column(
+          children: [
+            SizedBox(height: MediaQuery.of(context).padding.top),
+            _buildInstructions(context),
+            const Divider(height: 60),
+            Expanded(
+              child: Row(
+                children: [
+                  // Left: Term cards with DragTarget.
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: widget.question.flashcards.length,
+                      itemBuilder: (context, index) {
+                        final term = widget.question.flashcards[index].term;
+                        final matchedDef = matchedDefinitions[index];
+                        return _buildTermCard(term, matchedDef, index);
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                // Right: Draggable Definitions (fixed positions)
-                Expanded(
-                  child: _buildDefinitionsColumn(),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  // Right: Draggable Definitions (fixed positions)
+                  Expanded(
+                    child: _buildDefinitionsColumn(),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          if (allMatched())
-            SizedBox(
-              child: NextButton(onPressed: () {
-                courseController.nextQuestion();
-                _resetState();
-              }),
-            ),
-        ],
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -243,6 +222,7 @@ class _MatchTermsState extends State<MatchTerms> {
                 setState(() {
                   if (isCorrect) {
                     termBorderColors[termIndex] = Colors.green;
+                    courseController.playSmallCorrectSound();
                     matchedDefinitions[termIndex] =
                         acceptedFlashcard.definition;
                   } else {

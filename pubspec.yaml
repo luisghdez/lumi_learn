@@ -39,7 +39,7 @@ dependencies:
   get: ^4.6.6
   flutter_launcher_icons: ^0.13.1
   file_picker: ^4.2.0 # Add this line
-  audioplayers: ^6.2.0
+  audioplayers: ^6.4.0
 
   
   # UI & Fonts
@@ -99,6 +99,7 @@ flutter:
     - assets/images/
     - assets/planets/
     - assets/backgrounds/
+    - assets/sounds/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

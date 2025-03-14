@@ -99,7 +99,7 @@ class _TypeInScreenState extends State<TypeInScreen> {
               keyboardType: TextInputType.multiline,
               maxLines: null, // Allow for unlimited lines
               expands: true, // Ensures it fills available space
-              style: const TextStyle(color: greyBorder, fontSize: 16),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
               decoration: InputDecoration(
                 hintText: "Start typing...",
                 hintStyle: const TextStyle(color: Colors.white70),
