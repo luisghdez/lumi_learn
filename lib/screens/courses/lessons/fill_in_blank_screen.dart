@@ -76,45 +76,48 @@ class FillInBlankScreen extends StatelessWidget {
           const SizedBox(height: 30),
           // Options Bubbles
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ValueListenableBuilder<int>(
-                valueListenable: _selectedOption,
-                builder: (context, selected, _) {
-                  return Wrap(
-                    spacing: 4.0,
-                    runSpacing: 8.0,
-                    alignment: WrapAlignment.center,
-                    children: List.generate(question.options.length, (index) {
-                      final option = question.options[index];
-                      final isSelected = selected == index;
-                      return GestureDetector(
-                        onTap: () => _selectedOption.value = index,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 18, horizontal: 30),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color.fromARGB(255, 255, 255, 255)
-                                  : greyBorder,
-                              width: 1,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _selectedOption,
+                  builder: (context, selected, _) {
+                    return Wrap(
+                      spacing: 4.0,
+                      runSpacing: 8.0,
+                      alignment: WrapAlignment.center,
+                      children: List.generate(question.options.length, (index) {
+                        final option = question.options[index];
+                        final isSelected = selected == index;
+                        return GestureDetector(
+                          onTap: () => _selectedOption.value = index,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 18, horizontal: 30),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color.fromARGB(255, 255, 255, 255)
+                                    : greyBorder,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              option,
+                              style: TextStyle(
+                                color:
+                                    isSelected ? Colors.white : Colors.white70,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            option,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  );
-                },
+                        );
+                      }),
+                    );
+                  },
+                ),
               ),
             ),
           ),
