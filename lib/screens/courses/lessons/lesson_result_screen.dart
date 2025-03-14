@@ -4,10 +4,12 @@ import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 
 class LessonResultScreen extends StatefulWidget {
   final String backgroundImage;
+  final int xp;
 
   const LessonResultScreen({
     Key? key,
     required this.backgroundImage,
+    required this.xp,
   }) : super(key: key);
 
   @override
@@ -16,7 +18,6 @@ class LessonResultScreen extends StatefulWidget {
 
 class _LessonResultScreenState extends State<LessonResultScreen> {
   final String astronautImage = 'assets/astronaut/celebrating.png';
-  final double xpCount = 36;
 
   bool _isTopStarFilled = false;
   bool _isBottomLeftStarFilled = false;
@@ -171,7 +172,7 @@ class _LessonResultScreenState extends State<LessonResultScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0, end: xpCount),
+                      tween: Tween<double>(begin: 0, end: widget.xp.toDouble()),
                       duration: const Duration(seconds: 2),
                       builder: (context, value, child) {
                         return Text(

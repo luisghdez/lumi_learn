@@ -29,6 +29,7 @@ class CourseController extends GetxController {
   final RxList<Question> computedQuestions = <Question>[].obs;
   RxBool showGreenGlow = false.obs;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  int totalXP = 50; // 50 default
 
   @override
   void onInit() {
@@ -64,6 +65,7 @@ class CourseController extends GetxController {
         playLessonCompleteSound();
         Get.offAll(() => LessonResultScreen(
               backgroundImage: activePlanet.value!.backgroundPaths.first,
+              xp: totalXP, // Pass the accumulated XP here
             ));
       });
     }
@@ -461,7 +463,6 @@ class CourseController extends GetxController {
   Future<void> completeCurrentLesson() async {
     try {
       final lessonId = lessons[activeLessonIndex.value]['id'];
-      final xp = 100; // Example XP value
       isLoading.value = true; // Start loading
       final token = await authController.getIdToken();
       if (token == null) {
@@ -475,7 +476,7 @@ class CourseController extends GetxController {
         token: token,
         courseId: selectedCourseId.value,
         lessonId: lessonId,
-        xp: xp,
+        xp: totalXP,
       );
 
       if (response.statusCode == 200) {
@@ -504,6 +505,7 @@ class CourseController extends GetxController {
       // Trigger the green glow:
       showGreenGlow.value = true;
       playCorrectAnswerSound();
+      totalXP += 12;
 
       // Wait 300 milliseconds before moving on (adjust duration as needed)
       Future.delayed(const Duration(milliseconds: 500), () {
