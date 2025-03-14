@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
@@ -27,6 +28,7 @@ class CourseController extends GetxController {
   var lessons = <Map<String, dynamic>>[].obs;
   final RxList<Question> computedQuestions = <Question>[].obs;
   RxBool showGreenGlow = false.obs;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void onInit() {
@@ -59,6 +61,7 @@ class CourseController extends GetxController {
 
       // Navigate to LessonResultScreen from controller
       Future.delayed(const Duration(milliseconds: 300), () {
+        playLessonCompleteSound();
         Get.offAll(() => LessonResultScreen());
       });
     }
@@ -498,6 +501,8 @@ class CourseController extends GetxController {
     if (selectedAnswer == question.correctAnswer) {
       // Trigger the green glow:
       showGreenGlow.value = true;
+      playCorrectAnswerSound();
+
       // Wait 300 milliseconds before moving on (adjust duration as needed)
       Future.delayed(const Duration(milliseconds: 500), () {
         showGreenGlow.value = false;
@@ -550,6 +555,7 @@ class CourseController extends GetxController {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
+                    fontWeight: FontWeight.normal,
                     decoration: TextDecoration.none,
                   ),
                 ),
@@ -594,5 +600,17 @@ class CourseController extends GetxController {
         barrierDismissible: false,
       );
     }
+  }
+
+  Future<void> playCorrectAnswerSound() async {
+    await _audioPlayer.play(AssetSource('sounds/correct.wav'));
+  }
+
+  void playSmallCorrectSound() async {
+    await _audioPlayer.play(AssetSource('sounds/small_correct.wav'));
+  }
+
+  void playLessonCompleteSound() async {
+    await _audioPlayer.play(AssetSource('sounds/lesson_complete.wav'));
   }
 }

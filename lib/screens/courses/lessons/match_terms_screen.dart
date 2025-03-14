@@ -34,6 +34,8 @@ class _MatchTermsState extends State<MatchTerms> {
   late List<double> termOpacities;
   late List<bool> termMatched;
 
+  bool _autoAdvanceTriggered = false;
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +136,15 @@ class _MatchTermsState extends State<MatchTerms> {
 
   @override
   Widget build(BuildContext context) {
+    if (allMatched() && !_autoAdvanceTriggered) {
+      _autoAdvanceTriggered = true;
+      Future.delayed(const Duration(seconds: 1), () {
+        _resetState();
+        courseController.nextQuestion();
+        // Reset the flag for the next question
+        _autoAdvanceTriggered = false;
+      });
+    }
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -166,17 +177,6 @@ class _MatchTermsState extends State<MatchTerms> {
               ),
             ),
             const SizedBox(height: 16),
-            if (allMatched()) ...[
-              SizedBox(
-                child: NextButton(
-                  onPressed: () {
-                    courseController.nextQuestion();
-                    _resetState();
-                  },
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(context).padding.bottom),
-            ]
           ],
         ),
       ),
@@ -252,6 +252,7 @@ class _MatchTermsState extends State<MatchTerms> {
                 setState(() {
                   if (isCorrect) {
                     termBorderColors[termIndex] = Colors.green;
+                    courseController.playSmallCorrectSound();
                     matchedDefinitions[termIndex] =
                         acceptedFlashcard.definition;
                   } else {
