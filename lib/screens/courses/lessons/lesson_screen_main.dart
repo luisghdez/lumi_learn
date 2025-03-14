@@ -190,7 +190,6 @@ class LessonScreenMain extends StatelessWidget {
                 right: 16,
                 child: LessonProgressBar(
                   progress: progress,
-                  onClose: () => Get.back(),
                 ),
               ),
             ],
@@ -199,22 +198,4 @@ class LessonScreenMain extends StatelessWidget {
       );
     });
   }
-}
-
-class InnerGlowPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final borderRadius = BorderRadius.circular(60);
-    final outerRRect = borderRadius.toRRect(rect);
-
-    final paint = Paint()
-      ..color = Colors.greenAccent.withOpacity(0.3)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 15);
-
-    canvas.drawRRect(outerRRect.deflate(6), paint); // glow inside the border
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
