@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 
-class LessonResultScreen extends StatelessWidget {
+class LessonResultScreen extends StatefulWidget {
   final String backgroundImage;
 
   const LessonResultScreen({
@@ -10,7 +10,38 @@ class LessonResultScreen extends StatelessWidget {
     required this.backgroundImage,
   }) : super(key: key);
 
+  @override
+  _LessonResultScreenState createState() => _LessonResultScreenState();
+}
+
+class _LessonResultScreenState extends State<LessonResultScreen> {
   final String astronautImage = 'assets/astronaut/celebrating.png';
+  final double xpCount = 36;
+
+  bool _isTopStarFilled = false;
+  bool _isBottomLeftStarFilled = false;
+  bool _isBottomRightStarFilled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Animate stars in the order: left, top, right with 200ms intervals
+    Future.delayed(const Duration(milliseconds: 200), () {
+      setState(() {
+        _isBottomLeftStarFilled = true;
+      });
+    });
+    Future.delayed(const Duration(milliseconds: 400), () {
+      setState(() {
+        _isTopStarFilled = true;
+      });
+    });
+    Future.delayed(const Duration(milliseconds: 600), () {
+      setState(() {
+        _isBottomRightStarFilled = true;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +58,7 @@ class LessonResultScreen extends StatelessWidget {
                 // Background image
                 Positioned.fill(
                   child: Image.asset(
-                    backgroundImage,
+                    widget.backgroundImage,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -49,7 +80,6 @@ class LessonResultScreen extends StatelessWidget {
               ],
             ),
           ),
-
           // Top layer: "Victory" content
           Center(
             child: Column(
@@ -64,33 +94,71 @@ class LessonResultScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
-                // Stars
-                // Replace the Row of stars with this:
-                const Column(
+                // Animated Stars arranged with top star and bottom row of left/right stars
+                Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Top star
-                    Icon(Icons.star, color: Colors.white, size: 60),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _isTopStarFilled
+                          ? const Icon(
+                              Icons.star,
+                              key: ValueKey('filled_top'),
+                              color: Colors.white,
+                              size: 60,
+                            )
+                          : const Icon(
+                              Icons.star_border,
+                              key: ValueKey('unfilled_top'),
+                              color: Colors.white,
+                              size: 60,
+                            ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.star, color: Colors.white, size: 60),
-                        SizedBox(width: 58), // space between bottom stars
-                        Icon(Icons.star_border, color: Colors.white, size: 60),
+                        // Left star
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: _isBottomLeftStarFilled
+                              ? const Icon(
+                                  Icons.star,
+                                  key: ValueKey('filled_left'),
+                                  color: Colors.white,
+                                  size: 60,
+                                )
+                              : const Icon(
+                                  Icons.star_border,
+                                  key: ValueKey('unfilled_left'),
+                                  color: Colors.white,
+                                  size: 60,
+                                ),
+                        ),
+                        const SizedBox(width: 58), // space between bottom stars
+                        // Right star
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: _isBottomRightStarFilled
+                              ? const Icon(
+                                  Icons.star,
+                                  key: ValueKey('filled_right'),
+                                  color: Colors.white,
+                                  size: 60,
+                                )
+                              : const Icon(
+                                  Icons.star_border,
+                                  key: ValueKey('unfilled_right'),
+                                  color: Colors.white,
+                                  size: 60,
+                                ),
+                        ),
                       ],
                     ),
                   ],
                 ),
-                // // Points
-                // const Text(
-                //   '8/10 Points',
-                //   style: TextStyle(
-                //     fontSize: 24,
-                //     color: Colors.white,
-                //   ),
-                // ),
-
                 // Astronaut image
                 SizedBox(
                   width: 200,
@@ -98,19 +166,25 @@ class LessonResultScreen extends StatelessWidget {
                   child: Image.asset(astronautImage),
                 ),
                 const SizedBox(height: 40),
-                // Reward
-                const Row(
+                // Animated XP count starting from 0 and counting up to 36
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '+36',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Colors.white,
-                      ),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: xpCount),
+                      duration: const Duration(seconds: 2),
+                      builder: (context, value, child) {
+                        return Text(
+                          '+${value.toInt()}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
                     ),
-                    SizedBox(width: 6),
-                    Icon(
+                    const SizedBox(width: 6),
+                    const Icon(
                       Icons.star,
                       color: Colors.yellow,
                       size: 24,
@@ -118,7 +192,6 @@ class LessonResultScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 40),
-
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: SizedBox(
@@ -145,12 +218,6 @@ class LessonResultScreen extends StatelessWidget {
                               fontSize: 20,
                             ),
                           ),
-                          // SizedBox(width: 8),
-                          // Icon(
-                          //   Icons.home_rounded,
-                          //   color: Colors.black,
-                          //   size: 30,
-                          // ),
                         ],
                       ),
                     ),
