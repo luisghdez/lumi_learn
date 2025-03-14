@@ -62,7 +62,9 @@ class CourseController extends GetxController {
       // Navigate to LessonResultScreen from controller
       Future.delayed(const Duration(milliseconds: 300), () {
         playLessonCompleteSound();
-        Get.offAll(() => LessonResultScreen());
+        Get.offAll(() => LessonResultScreen(
+              backgroundImage: activePlanet.value!.backgroundPaths.first,
+            ));
       });
     }
   }
