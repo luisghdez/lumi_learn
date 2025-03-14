@@ -39,64 +39,18 @@ class _MatchTermsState extends State<MatchTerms> {
   @override
   void initState() {
     super.initState();
-    matchedDefinitions =
-        List<String?>.filled(widget.question.flashcards.length, null);
 
-    // Shuffle definitions.
-    shuffledDefinitions = List<Flashcard>.from(widget.question.flashcards);
-    shuffledDefinitions.shuffle();
-
-    // Initialize definition card states as growable lists.
-    definitionBorderColors = List<Color>.filled(
-      shuffledDefinitions.length,
-      greyBorder,
-      growable: true,
-    );
-    definitionOpacities = List<double>.filled(
-      shuffledDefinitions.length,
-      1.0,
-      growable: true,
-    );
-    definitionMatched = List<bool>.filled(
-      shuffledDefinitions.length,
-      false,
-      growable: true,
-    );
-
-    // Initialize term card states as growable lists.
-    termBorderColors = List<Color>.filled(
-      widget.question.flashcards.length,
-      greyBorder,
-      growable: true,
-    );
-    termOpacities = List<double>.filled(
-      widget.question.flashcards.length,
-      1.0,
-      growable: true,
-    );
-    termMatched = List<bool>.filled(
-      widget.question.flashcards.length,
-      false,
-      growable: true,
-    );
+    // Delay setup until after the widget is actually on screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeMatchTermsState();
+    });
   }
 
-  @override
-  void didUpdateWidget(covariant MatchTerms oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.question != widget.question) {
-      _resetState();
-    }
-  }
-
-  bool allMatched() {
-    return matchedDefinitions.every((def) => def != null);
-  }
-
-  void _resetState() {
+  void _initializeMatchTermsState() {
     setState(() {
       matchedDefinitions =
           List<String?>.filled(widget.question.flashcards.length, null);
+
       shuffledDefinitions = List<Flashcard>.from(widget.question.flashcards);
       shuffledDefinitions.shuffle();
 
@@ -131,6 +85,26 @@ class _MatchTermsState extends State<MatchTerms> {
         false,
         growable: true,
       );
+
+      _autoAdvanceTriggered = false; // reset auto-advance flag
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant MatchTerms oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.question != widget.question) {
+      _resetState();
+    }
+  }
+
+  bool allMatched() {
+    return matchedDefinitions.every((def) => def != null);
+  }
+
+  void _resetState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeMatchTermsState();
     });
   }
 
@@ -139,7 +113,6 @@ class _MatchTermsState extends State<MatchTerms> {
     if (allMatched() && !_autoAdvanceTriggered) {
       _autoAdvanceTriggered = true;
       Future.delayed(const Duration(seconds: 1), () {
-        _resetState();
         courseController.nextQuestion();
         // Reset the flag for the next question
         _autoAdvanceTriggered = false;
