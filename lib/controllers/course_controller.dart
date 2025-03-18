@@ -479,6 +479,8 @@ class CourseController extends GetxController {
         xp: totalXP,
       );
 
+      lessons[activeLessonIndex.value]['completed'] = true;
+
       if (response.statusCode == 200) {
         print('Lesson completed successfully: ${response.body}');
         lessons[activeLessonIndex.value]['completed'] = true;
