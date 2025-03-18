@@ -18,15 +18,16 @@ class SpeakScreen extends StatelessWidget {
   final void Function() onSubmitAnswer;
   final String backgroundImage;
 
-  /// GetX: put the controller so it lives for this screen
-  final SpeakController speakController = Get.put(SpeakController());
-
   void _submitAnswer(BuildContext context) {
     onSubmitAnswer();
   }
 
   @override
   Widget build(BuildContext context) {
+    final SpeakController speakController = Get.put(
+      SpeakController(terms: question.options),
+      tag: question.hashCode.toString(),
+    );
     // For demonstration, let's trigger fetch from backend
     // when this screen first builds
     speakController.fetchDataFromBackend();
@@ -78,18 +79,14 @@ class SpeakScreen extends StatelessWidget {
             const Spacer(),
 
             // Wrap each TermMasteryItem in an Obx so it rebuilds when the Rx changes
-            Obx(() => TermMasteryItem(
-                  term: 'Black Holes',
-                  progress: speakController.blackHoleProgress.value,
-                )),
-            Obx(() => TermMasteryItem(
-                  term: 'Event Horizon',
-                  progress: speakController.eventHorizonProgress.value,
-                )),
-            Obx(() => TermMasteryItem(
-                  term: 'Gravitational Waves',
-                  progress: speakController.gravitationalWavesProgress.value,
-                )),
+            Column(
+              children: List.generate(question.options.length, (index) {
+                return Obx(() => TermMasteryItem(
+                      term: question.options[index],
+                      progress: speakController.termProgress[index],
+                    ));
+              }),
+            ),
 
             const SizedBox(height: 16),
 
