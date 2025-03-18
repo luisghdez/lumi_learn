@@ -1,3 +1,4 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Add this
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
@@ -71,9 +72,14 @@ class SpeakScreen extends StatelessWidget {
                     : null,
               ),
             ),
-            const SpeechBubbleMessage(
+// Inside your SpeakScreen build method, replace the SpeechBubbleMessage widget:
+            TypewriterSpeechBubbleMessage(
               message:
-                  "Hi there! I'm Lumi, your space buddy. Let's review what you just learned!",
+                  "Hey there! Ready to share what you know about these three terms? Hit 'Record' and explain each one out loud!",
+              speed: const Duration(milliseconds: 30),
+              onFinished: () {
+                // Optionally, do something when the typing finishes.
+              },
             ),
 
             const Spacer(),
@@ -293,12 +299,18 @@ class TermMasteryItem extends StatelessWidget {
   }
 }
 
-class SpeechBubbleMessage extends StatelessWidget {
+class TypewriterSpeechBubbleMessage extends StatelessWidget {
   final String message;
+  final TextStyle? textStyle;
+  final Duration speed;
+  final VoidCallback? onFinished;
 
-  const SpeechBubbleMessage({
+  const TypewriterSpeechBubbleMessage({
     Key? key,
     required this.message,
+    this.textStyle,
+    this.speed = const Duration(milliseconds: 30),
+    this.onFinished,
   }) : super(key: key);
 
   @override
@@ -311,14 +323,23 @@ class SpeechBubbleMessage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
+      child: AnimatedTextKit(
+        animatedTexts: [
+          TypewriterAnimatedText(
+            message,
+            textStyle: textStyle ??
+                const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+            speed: speed,
+            cursor: '',
+          ),
+        ],
+        totalRepeatCount: 1,
+        isRepeatingAnimation: false,
+        onFinished: onFinished,
       ),
     );
   }

@@ -1,20 +1,35 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 
 class SpeakController extends GetxController {
   final List<String> terms;
   // Track progress by index: each term has its progress stored in a list.
   final RxList<double> termProgress = <double>[].obs;
+  final AudioPlayer audioPlayer = AudioPlayer();
 
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
     termProgress.assignAll(List<double>.filled(terms.length, 0.0));
 
     // For our expected 3 terms, set custom initial values.
-    if (terms.length == 3) {
-      termProgress[0] = 0.45;
-      termProgress[1] = 0.2;
-      termProgress[2] = 0.75;
-    }
+    termProgress[0] = 0.0;
+    termProgress[1] = 0.0;
+    termProgress[2] = 0.0;
+
+    print(
+        "SpeakController initialized with terms: $terms and progress: $termProgress");
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    playIntroAudio();
+  }
+
+  /// Plays the introductory audio.
+  Future<void> playIntroAudio() async {
+    // Assumes your mark_intro.mp3 is in your assets folder and declared in pubspec.yaml
+    await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
   }
 
   /// When recording starts, simulate marking the first term as mastered.
@@ -33,9 +48,9 @@ class SpeakController extends GetxController {
   Future<void> fetchDataFromBackend() async {
     try {
       await Future.delayed(const Duration(seconds: 2));
-      if (terms.length > 1) {
-        termProgress[1] = 0.8;
-      }
+      // if (terms.length > 1) {
+      //   termProgress[1] = 0.8;
+      // }
     } catch (e) {
       print("Error fetching data: $e");
     }
