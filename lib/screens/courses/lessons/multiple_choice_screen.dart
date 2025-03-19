@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/options_list.dart';
@@ -6,29 +8,25 @@ import 'package:lumi_learn_app/screens/courses/lessons/widgets/question_card.dar
 
 class MultipleChoiceScreen extends StatelessWidget {
   final Question question;
-  final Function() onSubmitAnswer;
+  final String backgroundImage;
+
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
 
   MultipleChoiceScreen({
     required this.question,
-    required this.onSubmitAnswer,
+    required this.backgroundImage,
   });
 
   void _submitAnswer(BuildContext context) {
     if (_selectedOption.value != -1) {
       final selectedAnswer = question.options[_selectedOption.value];
-      if (selectedAnswer == question.correctAnswer) {
-        print('Correct answer: $selectedAnswer');
-        onSubmitAnswer();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "That's not the answer, the correct answer is: ${question.correctAnswer}",
-            ),
-          ),
-        );
-      }
+      final controller = Get.find<CourseController>();
+
+      controller.submitAnswerForQuestion(
+        question: question,
+        selectedAnswer: selectedAnswer,
+        context: context,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -40,87 +38,81 @@ class MultipleChoiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 12, 12, 12),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // Top section: background, gradient, question card, astronaut
-            Container(
-              height: MediaQuery.of(context).size.height * 0.35,
-              width: double.infinity,
-              child: Stack(
-                children: [
-                  // Background image
-                  Positioned.fill(
-                    child: Image.asset(
-                      'assets/bg/red1bg.png',
-                      fit: BoxFit.cover,
-                    ),
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: [
+          // Top section: background, gradient, question card, astronaut
+          Container(
+            height: MediaQuery.of(context).size.height * 0.35,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                // Background image
+                Positioned.fill(
+                  child: Image.asset(
+                    backgroundImage,
+                    fit: BoxFit.cover,
                   ),
-
-                  // Gradient overlay
-                  Positioned.fill(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.center,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Color.fromARGB(255, 12, 12, 12),
-                          ],
-                        ),
+                ),
+                // Gradient overlay
+                Positioned.fill(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.center,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Color.fromARGB(255, 12, 12, 12),
+                        ],
                       ),
                     ),
                   ),
-
-                  // Question card
-                  Positioned(
-                    left: 16,
-                    top: 60,
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.75,
-                      child: QuestionCard(questionText: question.questionText),
+                ),
+                // Question card
+                Positioned(
+                  left: 16,
+                  top: MediaQuery.of(context).padding.top + 60,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    child: QuestionCard(questionText: question.questionText),
+                  ),
+                ),
+                // Astronaut image
+                Positioned(
+                  bottom: 0,
+                  right: 1,
+                  child: Image.asset(
+                    'assets/astronaut/pointing.png',
+                    width: 120,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Bottom section: options and next button
+          Expanded(
+            child: Container(
+              color: const Color.fromARGB(255, 12, 12, 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: OptionsList(
+                      options: question.options,
+                      selectedOption: _selectedOption,
                     ),
                   ),
-
-                  // Astronaut image
-                  Positioned(
-                    bottom: 0,
-                    right: 1,
-                    child: Image.asset(
-                      'assets/astronaut/pointing.png',
-                      width: 120,
-                    ),
+                  NextButton(
+                    onPressed: () => _submitAnswer(context),
                   ),
                 ],
               ),
             ),
-
-            // Bottom section
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: OptionsList(
-                        options: question.options,
-                        selectedOption: _selectedOption,
-                      ),
-                    ),
-                    NextButton(
-                      onPressed: () => _submitAnswer(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

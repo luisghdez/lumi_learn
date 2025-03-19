@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 
 class CourseOverviewHeader extends StatelessWidget {
   final Function onBack;
-  final String lessonTitle;
+  final String courseTitle;
 
   const CourseOverviewHeader({
     Key? key,
     required this.onBack,
-    required this.lessonTitle,
+    required this.courseTitle,
   }) : super(key: key);
 
   @override
@@ -50,7 +50,7 @@ class CourseOverviewHeader extends StatelessWidget {
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      text: lessonTitle,
+                      text: courseTitle,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,

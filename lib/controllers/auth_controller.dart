@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:lumi_learn_app/services/api_service.dart';
 
 class AuthController extends GetxController {
   static AuthController instance = Get.find();
@@ -48,6 +49,15 @@ class AuthController extends GetxController {
         await userCredential.user!.reload();
       }
 
+      final token = await getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return;
+      }
+
+      await ApiService.ensureUserExists(token,
+          email: email, name: name, profilePicture: "");
+
       Get.snackbar("Success", "Account created successfully!");
     } catch (e) {
       Get.snackbar("Error", e.toString());
@@ -90,17 +100,34 @@ class AuthController extends GetxController {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-
       // Sign in with Firebase using the credential
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
 
-      // (Optional) Check if the user is new and perform additional actions
-      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        Get.snackbar("Welcome!", "Account created via Google sign-in.");
-      } else {
-        Get.snackbar("Success", "Logged in via Google!");
+      // If sign-in is successful, check Firestore doc
+      if (userCredential.user != null) {
+        final User user = userCredential.user!;
+
+        final token = await getIdToken();
+        if (token == null) {
+          print('No user token found.');
+          return;
+        }
+
+        await ApiService.ensureUserExists(
+          token,
+          email: user.email,
+          name: user.displayName,
+          profilePicture: "default",
+        );
+
+        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+          Get.snackbar("Welcome!", "Account created via Google sign-in.");
+        } else {
+          Get.snackbar("Success", "Logged in via Google!");
+        }
       }
+
       Get.offAll(() => AuthGate());
     } catch (e) {
       Get.snackbar("Error", e.toString());

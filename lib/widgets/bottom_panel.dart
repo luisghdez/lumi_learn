@@ -5,12 +5,16 @@ import 'dart:ui'; // For ImageFilter
 
 class BottomPanel extends StatelessWidget {
   final int? selectedLessonIndex;
+  final String? selectedLessonPlanetName;
+  final String? selectedLessonDescription;
   final VoidCallback onStartPressed;
   final VoidCallback onClose;
 
   const BottomPanel({
     Key? key,
     required this.selectedLessonIndex,
+    required this.selectedLessonPlanetName,
+    required this.selectedLessonDescription,
     required this.onStartPressed,
     required this.onClose,
   }) : super(key: key);
@@ -45,78 +49,85 @@ class BottomPanel extends StatelessWidget {
                     ),
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipOval(
-                            child: Image.asset(
-                              activePlanet.imagePath,
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Lesson ${selectedLessonIndex != null ? selectedLessonIndex! + 1 : 'N/A'}',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'In this lesson you will learn about various fascinating topics related to your course.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: onStartPressed,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 0,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Start!',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Color.fromARGB(255, 24, 24, 24),
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+              : Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    // Large planet image, partially off-screen on bottom-left, with 50% opacity
+                    Positioned(
+                      left: activePlanet.hasRings ? -200 : -150,
+                      bottom: activePlanet.hasRings ? -70 : -130,
+                      child: Opacity(
+                        opacity: 0.7,
+                        child: Image.asset(
+                          activePlanet.imagePath,
+                          width: activePlanet.hasRings ? 480 : 400,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
+                    ),
+
+                    // Foreground: text & button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 20.0,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.8, // 70% of the available width
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 10),
+                              Text(
+                                selectedLessonPlanetName ?? '',
+                                style: const TextStyle(
+                                  fontSize: 34,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w200,
+                                ),
+                              ),
+                              Text(
+                                selectedLessonDescription ?? '',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color.fromARGB(255, 213, 213, 213),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FractionallySizedBox(
+                                widthFactor: 0.7,
+                                child: ElevatedButton(
+                                  onPressed: onStartPressed,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 0,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Start!',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color.fromARGB(255, 24, 24, 24),
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
         ),
       ),

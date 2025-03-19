@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Lumi Learn',
       theme: ThemeData(
+        scaffoldBackgroundColor: const Color.fromARGB(255, 12, 12, 12),
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,
         textTheme: GoogleFonts.poppinsTextTheme(),

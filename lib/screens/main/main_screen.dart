@@ -12,7 +12,7 @@ import 'package:lumi_learn_app/screens/leaderboard/leaderboard_screen.dart';
 
 
 class MainScreen extends StatelessWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  MainScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

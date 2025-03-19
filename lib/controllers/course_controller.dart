@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/services/api_service.dart'; // Import the data file
 
@@ -25,6 +27,9 @@ class CourseController extends GetxController {
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
   final RxList<Question> computedQuestions = <Question>[].obs;
+  RxBool showGreenGlow = false.obs;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  int totalXP = 50; // 50 default
 
   @override
   void onInit() {
@@ -49,17 +54,22 @@ class CourseController extends GetxController {
   }
 
   void nextQuestion() {
-    if (activeQuestionIndex.value < questionsCount.value) {
+    if (activeQuestionIndex.value < computedQuestions.length - 1) {
       activeQuestionIndex.value++;
+    } else {
+      // Last question reached
+      completeCurrentLesson();
+
+      // Navigate to LessonResultScreen from controller
+      Future.delayed(const Duration(milliseconds: 300), () {
+        playLessonCompleteSound();
+        Get.offAll(() => LessonResultScreen(
+              backgroundImage: activePlanet.value!.backgroundPaths.first,
+              xp: totalXP, // Pass the accumulated XP here
+            ));
+      });
     }
   }
-
-  // (Optional) Moves to the previous question if there is one
-  // void previousQuestion() {
-  //   if (activeQuestionIndex.value > 0) {
-  //     activeQuestionIndex.value--;
-  //   }
-  // }
 
   // List<Question> getQuestions() {
   //   // return questions based on activeCourseId and activeLessonIndex
@@ -67,20 +77,23 @@ class CourseController extends GetxController {
   //   return [
   //     Question(
   //       questionText:
-  //           'What is the answer to this question if this was a long question of the question and a question?',
+  //           'Q1 What is the answer to this question if this was a long question of the question and a question?',
   //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //       correctAnswer: 'Paris',
   //       lessonType: LessonType.multipleChoice,
   //     ),
   //     Question(
-  //       questionText: 'Explain what you just learned in your own words.',
-  //       options: [],
-  //       lessonType: LessonType.speak,
+  //       questionText:
+  //           'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
+  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //       correctAnswer: 'Paris',
+  //       lessonType: LessonType.multipleChoice,
   //     ),
   //     Question(
   //       questionText:
   //           'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
   //       options: [
-  //         'Rome',
+  //         'Italy',
   //         'Paris',
   //         'Berlin',
   //         'Madrid',
@@ -88,14 +101,20 @@ class CourseController extends GetxController {
   //         'Tokyo',
   //         'New York City'
   //       ],
+  //       correctAnswer: 'Italy',
   //       lessonType: LessonType.fillInTheBlank,
+  //     ),
+  //     Question(
+  //       questionText: 'Explain what you just learned in your own words.',
+  //       options: [],
+  //       lessonType: LessonType.speakAll,
   //     ),
   //     // Type in everything you learned
   //     Question(
   //       questionText:
   //           'Type in everything you learned up to this point in one minute!',
   //       options: [],
-  //       lessonType: LessonType.typeInEverything,
+  //       lessonType: LessonType.writeAll,
   //     ),
   //     Question(
   //       questionText: 'Match the Terms',
@@ -129,8 +148,6 @@ class CourseController extends GetxController {
   //     ),
   //   ];
   // }
-
-  // Modify getQuestions() to return questions only from the active lessonimport 'dart:math';
 
   List<Question> getQuestions() {
     // Check if lessons have been loaded
@@ -245,6 +262,34 @@ class CourseController extends GetxController {
       }
       questions.shuffle();
     }
+
+    // After processing and shuffling the standard questions,
+    // check if there is a speak or write question in the lesson.
+    // If so, create a corresponding Question and add it at the end.
+    final speakQuestionJson = lesson['speakQuestion'];
+    final writeQuestionJson = lesson['writeQuestion'];
+    if (speakQuestionJson != null && speakQuestionJson is Map) {
+      questions.add(Question(
+        questionText: speakQuestionJson['prompt'] ??
+            "Explain everything you remember about this lesson.",
+        options: (speakQuestionJson['options'] as List<dynamic>?)
+                ?.map((opt) => opt.toString())
+                .toList() ??
+            [],
+        lessonType: LessonType.speakAll,
+      ));
+    } else if (writeQuestionJson != null && writeQuestionJson is Map) {
+      questions.add(Question(
+        questionText: writeQuestionJson['prompt'] ??
+            "Write everything you remember about this lesson.",
+        options: (writeQuestionJson['options'] as List<dynamic>?)
+                ?.map((opt) => opt.toString())
+                .toList() ??
+            [],
+        lessonType: LessonType.writeAll,
+      ));
+    }
+
     questionsCount.value = questions.length;
     return questions;
   }
@@ -255,10 +300,10 @@ class CourseController extends GetxController {
         return LessonType.multipleChoice;
       case 'fillInTheBlank':
         return LessonType.fillInTheBlank;
-      case 'speak':
-        return LessonType.speak;
-      case 'typeInEverything':
-        return LessonType.typeInEverything;
+      case 'speakAll':
+        return LessonType.speakAll;
+      case 'writeAll':
+        return LessonType.writeAll;
       case 'matchTheTerms':
         return LessonType.matchTheTerms;
       case 'flashcards':
@@ -322,6 +367,8 @@ class CourseController extends GetxController {
         // Insert the new course at the top of the courses list
         courses.insert(0, newCourse);
 
+        await fetchCourses();
+
         Get.snackbar("Success", "Course created successfully!",
             backgroundColor: Colors.green, colorText: Colors.white);
       } else {
@@ -337,7 +384,7 @@ class CourseController extends GetxController {
     } finally {
       isLoading.value = false; // Stop loading
       // Navigate to MainScreen after course creation
-      Get.offAll(() => const MainScreen());
+      Get.offAll(() => MainScreen());
     }
   }
 
@@ -359,8 +406,10 @@ class CourseController extends GetxController {
       if (response.statusCode == 200) {
         // Parse the JSON response and store the courses in our RxList
         final data = jsonDecode(response.body);
+        print('Courses fetched successfully: ${data['courses']}');
         courses.value = data['courses'];
-        print('Courses fetched successfully: ${courses.value}');
+        print('fetchCourses controller hash: ${this.hashCode}');
+        print('Courses saved succesfully: ${courses}');
       } else {
         print('Failed to fetch courses: ${response.statusCode}');
         Get.snackbar("Error", "Failed to fetch courses.",
@@ -381,14 +430,6 @@ class CourseController extends GetxController {
     selectedCourseId.value = courseId;
     selectedCourseTitle.value = courseTitle;
     isLoading.value = true; // Start loading
-
-    // // Show full-screen loading overlay
-    // Get.dialog(
-    //   const Center(
-    //     child: CircularProgressIndicator(color: Colors.white),
-    //   ),
-    //   barrierDismissible: false, // Prevent dismissing while loading
-    // );
 
     try {
       final token = await authController.getIdToken();
@@ -417,5 +458,163 @@ class CourseController extends GetxController {
       isLoading.value = false; // Stop loading
       // Get.back(); // Close loading screen
     }
+  }
+
+  Future<void> completeCurrentLesson() async {
+    try {
+      final lessonId = lessons[activeLessonIndex.value]['id'];
+      isLoading.value = true; // Start loading
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        return;
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.completeLesson(
+        token: token,
+        courseId: selectedCourseId.value,
+        lessonId: lessonId,
+        xp: totalXP,
+      );
+
+      if (response.statusCode == 200) {
+        print('Lesson completed successfully: ${response.body}');
+        lessons[activeLessonIndex.value]['completed'] = true;
+      } else {
+        print('Failed to complete lesson: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to complete lesson.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error completing lesson: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false; // Stop loading
+    }
+  }
+
+  void submitAnswerForQuestion({
+    required Question question,
+    required String selectedAnswer,
+    required BuildContext context,
+  }) {
+    if (selectedAnswer == question.correctAnswer) {
+      // Trigger the green glow:
+      showGreenGlow.value = true;
+      playCorrectAnswerSound();
+      totalXP += 12;
+
+      // Wait 300 milliseconds before moving on (adjust duration as needed)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        showGreenGlow.value = false;
+        nextQuestion();
+      });
+    } else {
+      // Incorrect answer: show dialog and move the question to the end.
+      Get.dialog(
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade700,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.close_rounded, color: Colors.white, size: 30),
+                    SizedBox(width: 8),
+                    Text(
+                      'Incorrect',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 20,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Correct Answer:",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  question.correctAnswer ?? 'No correct answer provided',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.normal,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.red.shade900,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.back(); // Close the dialog
+
+                      int index = computedQuestions.indexOf(question);
+                      if (index != -1) {
+                        final endSectionIndex =
+                            computedQuestions.lastIndexWhere(
+                          (q) =>
+                              q.lessonType == LessonType.speakAll ||
+                              q.lessonType == LessonType.writeAll,
+                        );
+
+                        if (endSectionIndex != -1) {
+                          computedQuestions.insert(endSectionIndex, question);
+                        } else {
+                          computedQuestions.add(question);
+                        }
+                      }
+                      nextQuestion();
+                    },
+                    child: const Text('NEXT QUESTION'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+    }
+  }
+
+  Future<void> playCorrectAnswerSound() async {
+    await _audioPlayer.play(AssetSource('sounds/correct.wav'));
+  }
+
+  void playSmallCorrectSound() async {
+    await _audioPlayer.play(AssetSource('sounds/small_correct.wav'));
+  }
+
+  void playLessonCompleteSound() async {
+    await _audioPlayer.play(AssetSource('sounds/lesson_complete.wav'));
   }
 }
