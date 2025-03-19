@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
@@ -7,6 +8,8 @@ import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class SpeakController extends GetxController {
   final AuthController authController = Get.find();
@@ -99,23 +102,12 @@ class SpeakController extends GetxController {
 
     // Update marker to the current end if you plan to continue without resetting.
     _segmentStartIndex = fullTranscript.length;
+    await submitReview(transcript: segmentTranscript, attemptNumber: 1);
   }
 
   /// This callback continuously updates the transcript as the user speaks.
   void _onSpeechResult(SpeechRecognitionResult result) {
     transcript.value = result.recognizedWords;
-  }
-
-  /// Example method to simulate a backend update.
-  Future<void> fetchDataFromBackend() async {
-    try {
-      await Future.delayed(const Duration(seconds: 2));
-      // if (terms.length > 1) {
-      //   termProgress[1] = 0.8;
-      // }
-    } catch (e) {
-      print("Error fetching data: $e");
-    }
   }
 
   /// Submits a review to the backend.
@@ -178,7 +170,7 @@ class SpeakController extends GetxController {
         }
 
         // Optionally delay a bit to allow audio generation to finish.
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(const Duration(seconds: 2));
         // Immediately attempt to fetch the review audio.
         await fetchReviewAudio();
       } else {
@@ -197,45 +189,48 @@ class SpeakController extends GetxController {
     }
   }
 
-  /// Retrieves the AI feedback audio for the given review session.
-  Future<void> fetchReviewAudio() async {
-    print("Fetching review audio...");
-    isLoading.value = true;
+  Future<void> fetchReviewAudio({int attempt = 1, int maxAttempts = 3}) async {
+    print("Fetching review audio... Attempt: $attempt");
     try {
       if (sessionId.value.isEmpty) {
         print("No session id available");
-        isLoading.value = false;
         return;
       }
-      final authController = Get.find<AuthController>();
       final token = await authController.getIdToken();
       if (token == null) {
         print("No user token found.");
-        isLoading.value = false;
         return;
       }
-
       final response = await ApiService().getReviewAudio(
         token: token,
         sessionId: sessionId.value,
       );
-
       if (response.statusCode == 200) {
-        reviewAudioBytes.value = response.bodyBytes;
         print("Review audio fetched successfully.");
+        // Instead of using playBytes, write to a file and play it.
+        await _playAudioFromBytes(response.bodyBytes);
+      } else if (response.statusCode == 404 && attempt < maxAttempts) {
+        print("Review audio not available yet (404), retrying...");
+        await Future.delayed(const Duration(seconds: 1));
+        await fetchReviewAudio(attempt: attempt + 1, maxAttempts: maxAttempts);
       } else {
         print("Failed to fetch review audio: ${response.statusCode}");
-        Get.snackbar("Error", "Failed to fetch review audio.",
-            backgroundColor: const Color(0xFFFF0000),
-            colorText: const Color(0xFFFFFFFF));
       }
     } catch (e) {
       print("Error fetching review audio: $e");
-      Get.snackbar("Error", "Something went wrong. Please try again.",
-          backgroundColor: const Color(0xFFFF0000),
-          colorText: const Color(0xFFFFFFFF));
-    } finally {
-      isLoading.value = false;
+    }
+  }
+
+  Future<void> _playAudioFromBytes(Uint8List bytes) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      // Ensure you use the proper file extension (e.g., .wav, .mp3) as per your audio format.
+      final filePath = p.join(tempDir.path, 'review_audio.wav');
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+      await audioPlayer.play(DeviceFileSource(filePath));
+    } catch (e) {
+      print("Error playing audio from bytes: $e");
     }
   }
 }

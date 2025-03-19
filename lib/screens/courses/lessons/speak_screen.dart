@@ -29,9 +29,6 @@ class SpeakScreen extends StatelessWidget {
       SpeakController(terms: question.options),
       tag: question.hashCode.toString(),
     );
-    // For demonstration, let's trigger fetch from backend
-    // when this screen first builds
-    speakController.fetchDataFromBackend();
 
     print("SpeakScreen: ${question.options}");
     return Container(
