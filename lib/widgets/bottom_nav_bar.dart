@@ -1,48 +1,89 @@
-// widgets/bottom_nav_bar.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import '../controllers/navigation_controller.dart';
 import '../utils/constants.dart';
 
-class BottomNavbar extends StatelessWidget {
+class BottomNavbar extends StatefulWidget {
   const BottomNavbar({Key? key}) : super(key: key);
 
   @override
+  State<BottomNavbar> createState() => _HideableNavBarPageState();
+}
+
+class _HideableNavBarPageState extends State<BottomNavbar> {
+  final NavigationController navigationController = Get.find();
+  
+  @override
   Widget build(BuildContext context) {
-    final NavigationController navigationController = Get.find();
-
-    return Obx(
-      () {
-        int currentIndex = navigationController.currentIndex.value;
-
-        return BottomNavigationBar(
-          currentIndex: currentIndex,
-          backgroundColor: Colors.black,
-          onTap: (index) {
-            navigationController.updateIndex(index);
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: Constants.home,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.emoji_events), // Using group icon for 'Social'
-              label: Constants.social, // Ensure Constants.social is defined
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: Constants.profile,
-            ),
-          ],
-          selectedItemColor: const Color.fromARGB(255, 255, 255, 255),
-          unselectedItemColor: const Color.fromARGB(255, 112, 112, 112),
-          showUnselectedLabels: false,
-          showSelectedLabels: false,
-          iconSize: 30,
-          type: BottomNavigationBarType.fixed,
-        );
-      },
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0), // Adjust bottom padding
+        child: _buildAnimatedNavBar(),
+      ),
     );
+  }
+
+  Widget _buildAnimatedNavBar() {
+    return Obx(() {
+      int currentIndex = navigationController.currentIndex.value;
+
+      return AnimatedSlide(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        offset: navigationController.isNavBarVisible.value ? Offset.zero : const Offset(0, 1),
+        child: SafeArea(
+          bottom: true,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            width: MediaQuery.of(context).size.width * .95,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: SizedBox(
+                height: 65, // Controlled height to avoid overflow
+                child: BottomNavigationBar(
+                  currentIndex: currentIndex,
+                  backgroundColor: Colors.grey[900],
+                  onTap: (index) {
+                    navigationController.updateIndex(index); // Updated index
+                  },
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home),
+                      label: Constants.home,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.group),
+                      label: Constants.social,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.emoji_events), // Leaderboard (Trophy)
+                      label: Constants.leaderboard,
+                    ),
+                  ],
+                  selectedItemColor: Colors.white,
+                  unselectedItemColor: Colors.grey,
+                  showUnselectedLabels: false,
+                  showSelectedLabels: false,
+                  iconSize: 28,
+                  type: BottomNavigationBarType.fixed,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 }

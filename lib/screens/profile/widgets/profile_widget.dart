@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
 class ProfileWidget extends StatelessWidget {

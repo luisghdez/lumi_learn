@@ -1,13 +1,22 @@
 import 'package:get/get.dart';
 
 class NavigationController extends GetxController {
-  // Reactive variable for currentIndex
-  var currentIndex = 0.obs; // .obs makes it observable
+  RxInt currentIndex = 0.obs;
+  RxBool isNavBarVisible = true.obs;
 
-  // Method to update the index
-  void updateIndex(int newIndex) {
-    if (newIndex != currentIndex.value) {
-      currentIndex.value = newIndex;
+  void updateIndex(int index) {
+    currentIndex.value = index;
+  }
+
+  void hideNavBar() {
+    if (isNavBarVisible.value) {
+      isNavBarVisible.value = false;
+    }
+  }
+
+  void showNavBar() {
+    if (!isNavBarVisible.value) {
+      isNavBarVisible.value = true;
     }
   }
 }

@@ -9,10 +9,7 @@ import 'components/top_picks_header.dart';
 import 'components/category_list.dart';
 
 // Screens you navigate to
-import 'package:lumi_learn_app/screens/settings/settings-screen.dart';
-// import 'package:lumi_learn_app/screens/lessons/lesson_screen.dart';
-import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
-import 'package:lumi_learn_app/screens/lesson/add_lesson_plan_screen.dart';
+// import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -26,20 +23,14 @@ class HomeScreen extends StatelessWidget {
         authController.firebaseUser.value!.displayName ?? 'User';
 
     return AppScaffoldHome(
-      // If AppScaffold has its own background color, you can omit Container's color
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header with "Welcome onboard" + avatar
-              HomeHeader(
-                userName: userName,
-                onAvatarTap: () {
-                  // Navigate to profile screen
-                  Get.to(() => const ProfileScreen());
-                },
-              ),
+              HomeHeader(userName: userName), 
+
               const SizedBox(height: 20),
 
               // Search bar
@@ -50,8 +41,6 @@ class HomeScreen extends StatelessWidget {
               // "Top Picks" row + plus icon
               TopPicksHeader(
                 onAddTap: () {
-                  // Navigate to your Lesson creation screen
-                  // Get.to(() => const AddLessonPlanScreen());
                   Get.to(() => const CourseCreation());
                 },
               ),
@@ -61,7 +50,6 @@ class HomeScreen extends StatelessWidget {
               // Category cards
               CategoryList(),
 
-              // If you want more spacing at bottom
               const SizedBox(height: 10),
             ],
           ),
