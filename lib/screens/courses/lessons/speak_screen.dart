@@ -98,8 +98,8 @@ class SpeakScreen extends StatelessWidget {
 
             Center(
               child: RecordButton(
-                onStartRecording: speakController.startRecording,
-                onStopRecording: speakController.stopRecording,
+                onStartRecording: speakController.startListening,
+                onStopRecording: speakController.stopListening,
               ),
             ),
           ],

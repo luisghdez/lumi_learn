@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class SpeakController extends GetxController {
   final AuthController authController = Get.find();
@@ -20,6 +21,10 @@ class SpeakController extends GetxController {
   final RxList updatedTerms = <dynamic>[].obs;
   final RxString feedbackMessage = ''.obs;
   final Rx<Uint8List> reviewAudioBytes = Rx<Uint8List>(Uint8List(0));
+  late SpeechToText _speechToText;
+  final RxBool speechEnabled = false.obs;
+  final RxString transcript = ''.obs;
+  int _segmentStartIndex = 0;
 
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
@@ -38,6 +43,14 @@ class SpeakController extends GetxController {
   void onInit() {
     super.onInit();
     playIntroAudio();
+    _initSpeech();
+  }
+
+  @override
+  void onClose() {
+    // Stop the speech recognizer when the controller is disposed.
+    _speechToText.stop();
+    super.onClose();
   }
 
   /// Plays the introductory audio.
@@ -46,16 +59,51 @@ class SpeakController extends GetxController {
     await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
   }
 
-  /// When recording starts, simulate marking the first term as mastered.
-  void startRecording() {
-    if (termProgress.isNotEmpty) {
-      termProgress[0] = 1.0;
+  Future<void> _initSpeech() async {
+    try {
+      _speechToText = SpeechToText();
+      speechEnabled.value = await _speechToText.initialize(
+        onStatus: (status) => print('Speech status: $status'),
+        onError: (error) => print('Speech error: $error'),
+      );
+      // rm await or add
+      _speechToText.listen(
+        onResult: _onSpeechResult,
+        listenFor: const Duration(minutes: 2),
+        localeId: "en_US",
+      );
+      print("Speech enabled: ${speechEnabled.value}");
+    } catch (e) {
+      print("Error initializing speech recognizer: $e");
+      speechEnabled.value = false;
     }
-    print("Recording started, term at index 0 mastered");
   }
 
-  void stopRecording() {
-    print("Recording stopped");
+  /// Called when the user taps "start" for a new segment.
+  Future<void> startListening() async {
+    // Mark the current index in the transcript.
+    _segmentStartIndex = transcript.value.length;
+    print("Segment started. Marker index: $_segmentStartIndex");
+  }
+
+  /// Called when the user taps "stop" for the current segment.
+  Future<void> stopListening() async {
+    // Get the complete transcript
+    String fullTranscript = transcript.value;
+    // Extract only the words after the marker.
+    String segmentTranscript = '';
+    if (fullTranscript.length >= _segmentStartIndex) {
+      segmentTranscript = fullTranscript.substring(_segmentStartIndex);
+    }
+    print("Segment transcript: $segmentTranscript");
+
+    // Update marker to the current end if you plan to continue without resetting.
+    _segmentStartIndex = fullTranscript.length;
+  }
+
+  /// This callback continuously updates the transcript as the user speaks.
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    transcript.value = result.recognizedWords;
   }
 
   /// Example method to simulate a backend update.
