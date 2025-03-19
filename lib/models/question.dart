@@ -1,10 +1,10 @@
 enum LessonType {
   multipleChoice,
-  speak,
   fillInTheBlank,
-  typeInEverything,
   matchTheTerms,
   flashcards,
+  writeAll,
+  speakAll,
   // add other lesson types here
 }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // For MediaType
 import 'package:mime/mime.dart'; // For lookupMimeType
@@ -78,8 +80,7 @@ class ApiService {
       },
     );
   }
-
-
+  
 //leaderboard future
 
   static Future<List<Player>> fetchLeaderboard() async {
@@ -93,6 +94,50 @@ class ApiService {
     }
   }
 
+  Future<http.Response> completeLesson({
+    required String token,
+    required String courseId,
+    required String lessonId,
+    required int xp,
+  }) async {
+    final uri = Uri.parse(
+        '$_baseUrl/saved-courses/$courseId/lessons/$lessonId/complete');
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'xp': xp,
+      }),
+    );
+    print("response.body: ${response.body}");
+    return response;
+  }
 
+  static Future<void> ensureUserExists(String? idToken,
+      {String? email, String? name, String? profilePicture}) async {
+    if (idToken == null) {
+      throw Exception("ID token is null, cannot ensure user exists");
+    }
+    final url = Uri.parse("$_baseUrl/users/me");
 
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $idToken", // Send the token to your backend
+      },
+      body: jsonEncode({
+        "email": email,
+        "name": name,
+        "profilePicture": profilePicture,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to ensure user exists: ${response.body}");
+    }
+  }
 }

@@ -49,9 +49,11 @@ class HomeHeader extends StatelessWidget {
           ],
         ),
 
+
         // Right side: Profile avatar with glow effect
         ProfileAvatar(
           onTap: () => _navigateToProfile(context),
+
         ),
       ],
     );
