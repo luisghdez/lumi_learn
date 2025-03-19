@@ -124,4 +124,20 @@ class AuthController extends GetxController {
     // Return the user's ID token (forceRefresh = false in this example)
     return await user.getIdToken();
   }
+
+  Future<void> updateProfilePicture(String imageUrl) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        await user.updatePhotoURL(imageUrl);
+        await user.reload();
+        firebaseUser.value = _auth.currentUser; // Refresh user instance
+
+        Get.snackbar("Success", "Profile picture updated successfully!");
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to update profile picture: $e");
+    }
+  }
+  
 }

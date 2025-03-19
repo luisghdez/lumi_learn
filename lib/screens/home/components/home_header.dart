@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
+import 'package:lumi_learn_app/widgets/profile_avatar.dart';
+
 
 class HomeHeader extends StatelessWidget {
   final String userName;
-  final VoidCallback onAvatarTap;
 
   const HomeHeader({
     Key? key,
     required this.userName,
-    required this.onAvatarTap,
   }) : super(key: key);
+
+  
+
+  void _navigateToProfile(BuildContext context) {
+    // Replace this with your actual navigation logic
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfileScreen()), // Ensure you have ProfilePage defined
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      // Space between text on the left and avatar on the right
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Left side: Welcome text
@@ -39,16 +49,9 @@ class HomeHeader extends StatelessWidget {
           ],
         ),
 
-        // Right side: Profile avatar
-        InkWell(
-          onTap: onAvatarTap,
-          child: CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.grey.shade300,
-            backgroundImage: AssetImage(
-              'assets/worlds/trees2.png', 
-            ),
-          ),
+        // Right side: Profile avatar with glow effect
+        ProfileAvatar(
+          onTap: () => _navigateToProfile(context),
         ),
       ],
     );

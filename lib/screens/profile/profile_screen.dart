@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart'; // Import GetX
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/screens/profile/widgets/pfp_selector.dart';
 
-
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   ProfileScreen({super.key});
 
-  final AuthController authController = AuthController(); // Initialize AuthController
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthController authController = Get.find<AuthController>(); // GetX Controller
+
+  void _openPictureSelector() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfilePictureSelector(
+          onPictureSelected: (String newImage) async {
+            await authController.updateProfilePicture(newImage); // Ensure Firebase updates before UI change
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,57 +61,60 @@ class ProfileScreen extends StatelessWidget {
                     alignment: Alignment.center,
                     children: [
                       Container(
-                        width: 115,
-                        height: 115,
+                        width: 105,
+                        height: 105,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.grey.withOpacity(0.3),
+                          color: Colors.white.withOpacity(0.40),
                         ),
                       ),
                       Container(
-                        width: 100,
-                        height: 100,
+                        width: 125,
+                        height: 125,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Colors.white.withOpacity(0.12),
                         ),
                       ),
-                      const CircleAvatar(
-                        radius: 45,
-                        backgroundImage: NetworkImage(
-                          'https://placehold.co/100x100', // Replace with actual avatar URL
-                        ),
-                      ),
+                      Obx(() => CircleAvatar(
+                            radius: 45,
+                            backgroundImage: authController.firebaseUser.value?.photoURL != null
+                                ? NetworkImage(authController.firebaseUser.value!.photoURL!)
+                                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                          )),
                       Positioned(
                         bottom: 5,
                         right: 5,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
+                        child: GestureDetector(
+                          onTap: _openPictureSelector, // Opens the picture selector
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.edit, size: 16, color: Colors.black),
                           ),
-                          child: const Icon(Icons.edit, size: 16, color: Colors.black),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Sam Lop',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Text(
-                    'slop@gmail.com',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
+                  Obx(() => Text(
+                        authController.firebaseUser.value?.displayName ?? 'User',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )),
+                  Obx(() => Text(
+                        authController.firebaseUser.value?.email ?? 'No Email',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      )),
                 ],
               ),
             ),
