@@ -71,6 +71,7 @@ class CourseController extends GetxController {
     }
   }
 
+  // test questions
   // List<Question> getQuestions() {
   //   // return questions based on activeCourseId and activeLessonIndex
   //   // TODO replace with real service call to these questions
@@ -106,7 +107,7 @@ class CourseController extends GetxController {
   //     ),
   //     Question(
   //       questionText: 'Explain what you just learned in your own words.',
-  //       options: [],
+  //       options: ["Black Holes", "Event Horizon", "Gravitational Waves"],
   //       lessonType: LessonType.speakAll,
   //     ),
   //     // Type in everything you learned
