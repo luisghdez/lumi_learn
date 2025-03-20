@@ -28,6 +28,7 @@ class SpeakController extends GetxController {
   final RxBool speechEnabled = false.obs;
   final RxString transcript = ''.obs;
   int _segmentStartIndex = 0;
+  int attemptNumber = 1;
 
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
@@ -102,7 +103,9 @@ class SpeakController extends GetxController {
 
     // Update marker to the current end if you plan to continue without resetting.
     _segmentStartIndex = fullTranscript.length;
-    await submitReview(transcript: segmentTranscript, attemptNumber: 1);
+    await submitReview(
+        transcript: segmentTranscript, attemptNumber: attemptNumber);
+    attemptNumber++;
   }
 
   /// This callback continuously updates the transcript as the user speaks.
@@ -142,6 +145,8 @@ class SpeakController extends GetxController {
         termsData.add({'term': terms[i], 'status': status});
       }
 
+      print('Submitting review with terms: $termsData');
+
       final response = await ApiService().submitReview(
         token: token,
         transcript: transcript,
@@ -153,7 +158,6 @@ class SpeakController extends GetxController {
         final data = jsonDecode(response.body);
         sessionId.value = data['sessionId'];
         updatedTerms.assignAll(data['updatedTerms']);
-        feedbackMessage.value = data['feedbackMessage'];
         print('Review submitted successfully: $data');
 
         // Update termProgress based on the JSON response.
@@ -173,6 +177,8 @@ class SpeakController extends GetxController {
         await Future.delayed(const Duration(seconds: 2));
         // Immediately attempt to fetch the review audio.
         await fetchReviewAudio();
+        // down here to trigger rebuild of message once audio is fetched
+        feedbackMessage.value = data['feedbackMessage'];
       } else {
         print('Failed to submit review: ${response.statusCode}');
         Get.snackbar("Error", "Failed to submit review.",

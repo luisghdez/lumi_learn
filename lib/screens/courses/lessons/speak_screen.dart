@@ -1,11 +1,9 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Add this
+import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
-// import 'package:lumi_learn_app/screens/courses/lessons/widgets/audio_widget.dart';
-// import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
-// import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble_black.dart';
 
 class SpeakScreen extends StatelessWidget {
   SpeakScreen({
@@ -69,15 +67,17 @@ class SpeakScreen extends StatelessWidget {
                     : null,
               ),
             ),
-// Inside your SpeakScreen build method, replace the SpeechBubbleMessage widget:
-            TypewriterSpeechBubbleMessage(
-              message:
-                  "Hey there! Ready to share what you know about these three terms? Hit 'Record' and explain each one out loud!",
-              speed: const Duration(milliseconds: 30),
-              onFinished: () {
-                // Optionally, do something when the typing finishes.
-              },
-            ),
+            Obx(() => TypewriterSpeechBubbleMessage(
+                  key: ValueKey(speakController.feedbackMessage.value),
+                  message: speakController.feedbackMessage.value.isEmpty
+                      ? "Hey there! Ready to share what you know about these three terms? Hit 'Record' and explain each one out loud!"
+                      : speakController.feedbackMessage.value,
+                  speed: const Duration(milliseconds: 50),
+                  maxHeight: 100,
+                  onFinished: () {
+                    // Optionally, do something when typing finishes.
+                  },
+                )),
 
             const Spacer(),
 
@@ -94,10 +94,11 @@ class SpeakScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             Center(
-              child: RecordButton(
-                onStartRecording: speakController.startListening,
-                onStopRecording: speakController.stopListening,
-              ),
+              child: Obx(() => RecordButton(
+                    onStartRecording: speakController.startListening,
+                    onStopRecording: speakController.stopListening,
+                    isLoading: speakController.isLoading.value,
+                  )),
             ),
           ],
         ),
@@ -109,11 +110,13 @@ class SpeakScreen extends StatelessWidget {
 class RecordButton extends StatefulWidget {
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
+  final bool isLoading;
 
   const RecordButton({
     Key? key,
     required this.onStartRecording,
     required this.onStopRecording,
+    required this.isLoading,
   }) : super(key: key);
 
   @override
@@ -124,6 +127,7 @@ class _RecordButtonState extends State<RecordButton> {
   bool isRecording = false;
 
   void _toggleRecording() {
+    if (widget.isLoading) return; // Prevent toggling while loading.
     setState(() {
       isRecording = !isRecording;
     });
@@ -139,30 +143,58 @@ class _RecordButtonState extends State<RecordButton> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _toggleRecording,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isRecording
-                ? Colors.redAccent.withOpacity(0.5)
-                : Colors.white.withOpacity(0.9),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.isLoading
+                  ? Colors.white.withOpacity(0.3)
+                  : isRecording
+                      ? Colors.redAccent.withOpacity(0.5)
+                      : Colors.white.withOpacity(0.9),
+            ),
+            child: widget.isLoading
+                ? const Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 4,
+                          valueColor: AlwaysStoppedAnimation<Color>(greyBorder),
+                        ),
+                      ),
+                      Icon(
+                        Icons.mic_outlined,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ],
+                  )
+                : Icon(
+                    isRecording ? Icons.mic_off : Icons.mic_outlined,
+                    color: isRecording ? Colors.white : Colors.black87,
+                    size: 28,
+                  ),
           ),
-          child: Icon(
-            isRecording ? Icons.mic_off : Icons.mic_outlined,
-            color: isRecording ? Colors.white : Colors.black87,
-            size: 28,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(isRecording ? "Tap to stop" : "Tap to record",
+          const SizedBox(height: 8),
+          Text(
+            widget.isLoading
+                ? "Loading..."
+                : (isRecording ? "Tap to stop" : "Tap to record"),
             style: const TextStyle(
               color: Color.fromARGB(129, 255, 255, 255),
               fontSize: 14,
               fontWeight: FontWeight.w500,
-            )),
-      ]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -301,6 +333,7 @@ class TypewriterSpeechBubbleMessage extends StatelessWidget {
   final TextStyle? textStyle;
   final Duration speed;
   final VoidCallback? onFinished;
+  final double maxHeight;
 
   const TypewriterSpeechBubbleMessage({
     Key? key,
@@ -308,6 +341,7 @@ class TypewriterSpeechBubbleMessage extends StatelessWidget {
     this.textStyle,
     this.speed = const Duration(milliseconds: 30),
     this.onFinished,
+    this.maxHeight = 200, // set your desired max height
   }) : super(key: key);
 
   @override
@@ -320,23 +354,29 @@ class TypewriterSpeechBubbleMessage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      child: AnimatedTextKit(
-        animatedTexts: [
-          TypewriterAnimatedText(
-            message,
-            textStyle: textStyle ??
-                const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-            speed: speed,
-            cursor: '',
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          reverse: true,
+          child: AnimatedTextKit(
+            animatedTexts: [
+              TypewriterAnimatedText(
+                message,
+                textStyle: textStyle ??
+                    const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                speed: speed,
+                cursor: '',
+              ),
+            ],
+            totalRepeatCount: 1,
+            isRepeatingAnimation: false,
+            onFinished: onFinished,
           ),
-        ],
-        totalRepeatCount: 1,
-        isRepeatingAnimation: false,
-        onFinished: onFinished,
+        ),
       ),
     );
   }
