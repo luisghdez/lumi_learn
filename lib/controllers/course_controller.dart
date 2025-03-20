@@ -72,228 +72,227 @@ class CourseController extends GetxController {
   }
 
   // test questions
-  // List<Question> getQuestions() {
-  //   // return questions based on activeCourseId and activeLessonIndex
-  //   // TODO replace with real service call to these questions
-  //   return [
-  //     Question(
-  //       questionText:
-  //           'Q1 What is the answer to this question if this was a long question of the question and a question?',
-  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
-  //       correctAnswer: 'Paris',
-  //       lessonType: LessonType.multipleChoice,
-  //     ),
-  //     Question(
-  //       questionText:
-  //           'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
-  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
-  //       correctAnswer: 'Paris',
-  //       lessonType: LessonType.multipleChoice,
-  //     ),
-  //     Question(
-  //       questionText:
-  //           'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
-  //       options: [
-  //         'Italy',
-  //         'Paris',
-  //         'Berlin',
-  //         'Madrid',
-  //         'London',
-  //         'Tokyo',
-  //         'New York City'
-  //       ],
-  //       correctAnswer: 'Italy',
-  //       lessonType: LessonType.fillInTheBlank,
-  //     ),
-  //     Question(
-  //       questionText: 'Explain what you just learned in your own words.',
-  //       options: ["Black Holes", "Event Horizon", "Gravitational Waves"],
-  //       lessonType: LessonType.speakAll,
-  //     ),
-  //     // Type in everything you learned
-  //     Question(
-  //       questionText:
-  //           'Type in everything you learned up to this point in one minute!',
-  //       options: [],
-  //       lessonType: LessonType.writeAll,
-  //     ),
-  //     Question(
-  //       questionText: 'Match the Terms',
-  //       options: [],
-  //       flashcards: [
-  //         Flashcard(
-  //             term: 'Term 1',
-  //             definition: 'Definition of term 1 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 2',
-  //             definition: 'Definition of term 2 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 3',
-  //             definition: 'Definition of term 3 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 4',
-  //             definition: 'Definition of term 4 which shuld be long like this'),
-  //       ],
-  //       lessonType: LessonType.matchTheTerms,
-  //     ),
-  //     Question(
-  //       questionText: 'Flashcards',
-  //       options: [],
-  //       flashcards: [
-  //         Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-  //         Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-  //         Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-  //         Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-  //       ],
-  //       lessonType: LessonType.flashcards,
-  //     ),
-  //   ];
-  // }
-
   List<Question> getQuestions() {
-    // Check if lessons have been loaded
-    if (lessons.isEmpty) return [];
-
-    // Get the currently active lesson using activeLessonIndex
-    final lesson = lessons[activeLessonIndex.value];
-    final List<Question> questions = [];
-
-    // 1) Parse flashcards (if available) as one question type.
-    final flashcardsJson = lesson['flashcards'];
-    if (flashcardsJson != null && flashcardsJson is List) {
-      final flashcards = flashcardsJson.map<Flashcard>((f) {
-        return Flashcard(
-          term: f['term'] ?? '',
-          definition: f['definition'] ?? '',
-        );
-      }).toList();
-
-      // Using lesson title as a label (or change as needed)
-      questions.add(Question(
-        questionText: lesson['title'] ?? 'Flashcards',
-        options: [],
-        lessonType: LessonType.flashcards,
-        flashcards: flashcards,
-      ));
-    }
-
-    // 2) Parse multiple choice questions.
-    final multipleChoiceJson = lesson['multipleChoice'];
-    if (multipleChoiceJson != null && multipleChoiceJson is List) {
-      for (final mcItem in multipleChoiceJson) {
-        final options = (mcItem['options'] as List<dynamic>?)
-                ?.map((opt) => opt.toString())
-                .toList() ??
-            [];
-        questions.add(Question(
-          questionText: mcItem['questionText'] ?? '',
-          options: options,
-          correctAnswer: mcItem['correctAnswer'],
-          lessonType: LessonType.multipleChoice,
-        ));
-      }
-    }
-
-    // 3) Parse fill in the blank questions.
-    final fillInTheBlankJson = lesson['fillInTheBlank'];
-    if (fillInTheBlankJson != null && fillInTheBlankJson is List) {
-      for (final fibItem in fillInTheBlankJson) {
-        final options = (fibItem['options'] as List<dynamic>?)
-                ?.map((opt) => opt.toString())
-                .toList() ??
-            [];
-        questions.add(Question(
-          questionText: fibItem['questionText'] ?? '',
-          options: options,
-          correctAnswer: fibItem['correctAnswer'],
-          lessonType: LessonType.fillInTheBlank,
-        ));
-      }
-    }
-
-    // ----------------------------------------
-    // Additional logic for flashcards / matchTheTerms
-    // ----------------------------------------
-
-    // Case 1: Exactly one question that is flashcards.
-    if (questions.length == 1 &&
-        questions[0].lessonType == LessonType.flashcards) {
-      final flashcards = questions[0].flashcards;
-      if (flashcards != null && flashcards.isNotEmpty) {
-        const int chunkSize = 4;
-        final List<Question> matchQuestions = [];
-        for (int i = 0; i < flashcards.length; i += chunkSize) {
-          final chunk =
-              flashcards.sublist(i, min(i + chunkSize, flashcards.length));
-          matchQuestions.add(Question(
-            questionText: "Match the Terms", // Customize as needed
-            options: [],
-            lessonType: LessonType.matchTheTerms,
-            flashcards: chunk,
-          ));
-        }
-        // Append the new matchTheTerms questions to the list.
-        questions.addAll(matchQuestions);
-      }
-    }
-    // Case 2: More than one question.
-    else if (questions.length > 1) {
-      // Look for a flashcards question in the list.
-      final int flashcardsIndex =
-          questions.indexWhere((q) => q.lessonType == LessonType.flashcards);
-      if (flashcardsIndex != -1) {
-        final flashcards = questions[flashcardsIndex].flashcards;
-        if (flashcards != null && flashcards.isNotEmpty) {
-          const int chunkSize = 4;
-          final List<Question> matchQuestions = [];
-          for (int i = 0; i < flashcards.length; i += chunkSize) {
-            final chunk =
-                flashcards.sublist(i, min(i + chunkSize, flashcards.length));
-            matchQuestions.add(Question(
-              questionText: "Match the Terms", // Customize as needed
-              options: [],
-              lessonType: LessonType.matchTheTerms,
-              flashcards: chunk,
-            ));
-          }
-          // Replace the original flashcards question with the new matchTheTerms ones.
-          questions.removeAt(flashcardsIndex);
-          questions.addAll(matchQuestions);
-        }
-      }
-      questions.shuffle();
-    }
-
-    // After processing and shuffling the standard questions,
-    // check if there is a speak or write question in the lesson.
-    // If so, create a corresponding Question and add it at the end.
-    final speakQuestionJson = lesson['speakQuestion'];
-    final writeQuestionJson = lesson['writeQuestion'];
-    if (speakQuestionJson != null && speakQuestionJson is Map) {
-      questions.add(Question(
-        questionText: speakQuestionJson['prompt'] ??
-            "Explain everything you remember about this lesson.",
-        options: (speakQuestionJson['options'] as List<dynamic>?)
-                ?.map((opt) => opt.toString())
-                .toList() ??
-            [],
+    // return questions based on activeCourseId and activeLessonIndex
+    return [
+      Question(
+        questionText: 'Explain what you just learned in your own words.',
+        options: ["Black Holes", "Event Horizon", "Gravitational Waves"],
         lessonType: LessonType.speakAll,
-      ));
-    } else if (writeQuestionJson != null && writeQuestionJson is Map) {
-      questions.add(Question(
-        questionText: writeQuestionJson['prompt'] ??
-            "Write everything you remember about this lesson.",
-        options: (writeQuestionJson['options'] as List<dynamic>?)
-                ?.map((opt) => opt.toString())
-                .toList() ??
-            [],
-        lessonType: LessonType.writeAll,
-      ));
-    }
-
-    questionsCount.value = questions.length;
-    return questions;
+      ),
+      // Question(
+      //   questionText:
+      //       'Q1 What is the answer to this question if this was a long question of the question and a question?',
+      //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+      //   correctAnswer: 'Paris',
+      //   lessonType: LessonType.multipleChoice,
+      // ),
+      // Question(
+      //   questionText:
+      //       'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
+      //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+      //   correctAnswer: 'Paris',
+      //   lessonType: LessonType.multipleChoice,
+      // ),
+      // Question(
+      //   questionText:
+      //       'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
+      //   options: [
+      //     'Italy',
+      //     'Paris',
+      //     'Berlin',
+      //     'Madrid',
+      //     'London',
+      //     'Tokyo',
+      //     'New York City'
+      //   ],
+      //   correctAnswer: 'Italy',
+      //   lessonType: LessonType.fillInTheBlank,
+      // ),
+      // // Type in everything you learned
+      // Question(
+      //   questionText:
+      //       'Type in everything you learned up to this point in one minute!',
+      //   options: [],
+      //   lessonType: LessonType.writeAll,
+      // ),
+      // Question(
+      //   questionText: 'Match the Terms',
+      //   options: [],
+      //   flashcards: [
+      //     Flashcard(
+      //         term: 'Term 1',
+      //         definition: 'Definition of term 1 which shuld be long like this'),
+      //     Flashcard(
+      //         term: 'Term 2',
+      //         definition: 'Definition of term 2 which shuld be long like this'),
+      //     Flashcard(
+      //         term: 'Term 3',
+      //         definition: 'Definition of term 3 which shuld be long like this'),
+      //     Flashcard(
+      //         term: 'Term 4',
+      //         definition: 'Definition of term 4 which shuld be long like this'),
+      //   ],
+      //   lessonType: LessonType.matchTheTerms,
+      // ),
+      // Question(
+      //   questionText: 'Flashcards',
+      //   options: [],
+      //   flashcards: [
+      //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+      //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+      //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+      //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+      //   ],
+      //   lessonType: LessonType.flashcards,
+      // ),
+    ];
   }
+
+  // List<Question> getQuestions() {
+  //   // Check if lessons have been loaded
+  //   if (lessons.isEmpty) return [];
+
+  //   // Get the currently active lesson using activeLessonIndex
+  //   final lesson = lessons[activeLessonIndex.value];
+  //   final List<Question> questions = [];
+
+  //   // 1) Parse flashcards (if available) as one question type.
+  //   final flashcardsJson = lesson['flashcards'];
+  //   if (flashcardsJson != null && flashcardsJson is List) {
+  //     final flashcards = flashcardsJson.map<Flashcard>((f) {
+  //       return Flashcard(
+  //         term: f['term'] ?? '',
+  //         definition: f['definition'] ?? '',
+  //       );
+  //     }).toList();
+
+  //     // Using lesson title as a label (or change as needed)
+  //     questions.add(Question(
+  //       questionText: lesson['title'] ?? 'Flashcards',
+  //       options: [],
+  //       lessonType: LessonType.flashcards,
+  //       flashcards: flashcards,
+  //     ));
+  //   }
+
+  //   // 2) Parse multiple choice questions.
+  //   final multipleChoiceJson = lesson['multipleChoice'];
+  //   if (multipleChoiceJson != null && multipleChoiceJson is List) {
+  //     for (final mcItem in multipleChoiceJson) {
+  //       final options = (mcItem['options'] as List<dynamic>?)
+  //               ?.map((opt) => opt.toString())
+  //               .toList() ??
+  //           [];
+  //       questions.add(Question(
+  //         questionText: mcItem['questionText'] ?? '',
+  //         options: options,
+  //         correctAnswer: mcItem['correctAnswer'],
+  //         lessonType: LessonType.multipleChoice,
+  //       ));
+  //     }
+  //   }
+
+  //   // 3) Parse fill in the blank questions.
+  //   final fillInTheBlankJson = lesson['fillInTheBlank'];
+  //   if (fillInTheBlankJson != null && fillInTheBlankJson is List) {
+  //     for (final fibItem in fillInTheBlankJson) {
+  //       final options = (fibItem['options'] as List<dynamic>?)
+  //               ?.map((opt) => opt.toString())
+  //               .toList() ??
+  //           [];
+  //       questions.add(Question(
+  //         questionText: fibItem['questionText'] ?? '',
+  //         options: options,
+  //         correctAnswer: fibItem['correctAnswer'],
+  //         lessonType: LessonType.fillInTheBlank,
+  //       ));
+  //     }
+  //   }
+
+  //   // ----------------------------------------
+  //   // Additional logic for flashcards / matchTheTerms
+  //   // ----------------------------------------
+
+  //   // Case 1: Exactly one question that is flashcards.
+  //   if (questions.length == 1 &&
+  //       questions[0].lessonType == LessonType.flashcards) {
+  //     final flashcards = questions[0].flashcards;
+  //     if (flashcards != null && flashcards.isNotEmpty) {
+  //       const int chunkSize = 4;
+  //       final List<Question> matchQuestions = [];
+  //       for (int i = 0; i < flashcards.length; i += chunkSize) {
+  //         final chunk =
+  //             flashcards.sublist(i, min(i + chunkSize, flashcards.length));
+  //         matchQuestions.add(Question(
+  //           questionText: "Match the Terms", // Customize as needed
+  //           options: [],
+  //           lessonType: LessonType.matchTheTerms,
+  //           flashcards: chunk,
+  //         ));
+  //       }
+  //       // Append the new matchTheTerms questions to the list.
+  //       questions.addAll(matchQuestions);
+  //     }
+  //   }
+  //   // Case 2: More than one question.
+  //   else if (questions.length > 1) {
+  //     // Look for a flashcards question in the list.
+  //     final int flashcardsIndex =
+  //         questions.indexWhere((q) => q.lessonType == LessonType.flashcards);
+  //     if (flashcardsIndex != -1) {
+  //       final flashcards = questions[flashcardsIndex].flashcards;
+  //       if (flashcards != null && flashcards.isNotEmpty) {
+  //         const int chunkSize = 4;
+  //         final List<Question> matchQuestions = [];
+  //         for (int i = 0; i < flashcards.length; i += chunkSize) {
+  //           final chunk =
+  //               flashcards.sublist(i, min(i + chunkSize, flashcards.length));
+  //           matchQuestions.add(Question(
+  //             questionText: "Match the Terms", // Customize as needed
+  //             options: [],
+  //             lessonType: LessonType.matchTheTerms,
+  //             flashcards: chunk,
+  //           ));
+  //         }
+  //         // Replace the original flashcards question with the new matchTheTerms ones.
+  //         questions.removeAt(flashcardsIndex);
+  //         questions.addAll(matchQuestions);
+  //       }
+  //     }
+  //     questions.shuffle();
+  //   }
+
+  //   // After processing and shuffling the standard questions,
+  //   // check if there is a speak or write question in the lesson.
+  //   // If so, create a corresponding Question and add it at the end.
+  //   final speakQuestionJson = lesson['speakQuestion'];
+  //   final writeQuestionJson = lesson['writeQuestion'];
+  //   if (speakQuestionJson != null && speakQuestionJson is Map) {
+  //     questions.add(Question(
+  //       questionText: speakQuestionJson['prompt'] ??
+  //           "Explain everything you remember about this lesson.",
+  //       options: (speakQuestionJson['options'] as List<dynamic>?)
+  //               ?.map((opt) => opt.toString())
+  //               .toList() ??
+  //           [],
+  //       lessonType: LessonType.speakAll,
+  //     ));
+  //   } else if (writeQuestionJson != null && writeQuestionJson is Map) {
+  //     questions.add(Question(
+  //       questionText: writeQuestionJson['prompt'] ??
+  //           "Write everything you remember about this lesson.",
+  //       options: (writeQuestionJson['options'] as List<dynamic>?)
+  //               ?.map((opt) => opt.toString())
+  //               .toList() ??
+  //           [],
+  //       lessonType: LessonType.writeAll,
+  //     ));
+  //   }
+
+  //   questionsCount.value = questions.length;
+  //   return questions;
+  // }
 
   LessonType parseLessonType(String? lessonTypeString) {
     switch (lessonTypeString) {

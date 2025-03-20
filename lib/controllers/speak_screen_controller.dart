@@ -29,6 +29,7 @@ class SpeakController extends GetxController {
   final RxString transcript = ''.obs;
   int _segmentStartIndex = 0;
   int attemptNumber = 1;
+  final RxBool isUserListening = true.obs;
 
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
@@ -54,6 +55,7 @@ class SpeakController extends GetxController {
   void onClose() {
     // Stop the speech recognizer when the controller is disposed.
     _speechToText.stop();
+    isUserListening.value = false;
     super.onClose();
   }
 
@@ -67,7 +69,7 @@ class SpeakController extends GetxController {
     try {
       _speechToText = SpeechToText();
       speechEnabled.value = await _speechToText.initialize(
-        onStatus: (status) => print('Speech status: $status'),
+        onStatus: _onStatus,
         onError: (error) => print('Speech error: $error'),
       );
       // rm await or add
@@ -108,6 +110,28 @@ class SpeakController extends GetxController {
     attemptNumber++;
   }
 
+  void _startListening() {
+    // You can also set 'pauseFor' here if the API supports it.
+    print("Starting listening.. agaiaaaaan.");
+    _speechToText.listen(
+      onResult: _onSpeechResult,
+      listenFor: const Duration(minutes: 2),
+      localeId: "en_US",
+    );
+  }
+
+  void _onStatus(String status) {
+    print("Speech status: $status");
+    // If the recognizer stops and the user still wants to listen, restart.
+    if (isUserListening.value) {
+      print("Restarting listening due to inactivity...");
+      // Delay briefly if needed to ensure a smooth restart.
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _startListening();
+      });
+    }
+  }
+
   /// This callback continuously updates the transcript as the user speaks.
   void _onSpeechResult(SpeechRecognitionResult result) {
     transcript.value = result.recognizedWords;
@@ -146,6 +170,8 @@ class SpeakController extends GetxController {
       }
 
       print('Submitting review with terms: $termsData');
+      print('Transcript: $transcript');
+      print('Attempt number: $attemptNumber');
 
       final response = await ApiService().submitReview(
         token: token,
