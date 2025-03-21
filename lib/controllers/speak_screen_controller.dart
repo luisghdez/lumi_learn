@@ -30,9 +30,10 @@ class SpeakController extends GetxController {
   final RxBool speechEnabled = false.obs;
   final RxString transcript = ''.obs;
 
-  int _segmentStartIndex = 0;
   int attemptNumber = 1;
   final RxBool isUserListening = true.obs;
+
+  bool _hasSubmitted = false; // Flag to prevent duplicate submissions
 
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
@@ -84,9 +85,9 @@ class SpeakController extends GetxController {
       print("Speech recognition not enabled or not initialized.");
       return;
     }
-    // Mark the current transcript length to note the beginning of this segment.
-    _segmentStartIndex = transcript.value.length;
-    print("Segment started. Marker index: $_segmentStartIndex");
+
+    transcript.value = "";
+    _hasSubmitted = false;
 
     // Start listening only when the user initiates.
     _speechToText.listen(
@@ -100,30 +101,24 @@ class SpeakController extends GetxController {
   Future<void> stopListening() async {
     // Stop listening to speech.
     _speechToText.stop();
-
-    // Extract the current segment from the transcript.
-    String fullTranscript = transcript.value;
-    String segmentTranscript = fullTranscript.substring(_segmentStartIndex);
-    print("Full transcript: $fullTranscript");
-    print("Segment transcript: $segmentTranscript");
-
-    // Update the marker for future segments.
-    _segmentStartIndex = fullTranscript.length;
-
-    // Submit the review with the extracted segment.
-    await submitReview(
-        transcript: segmentTranscript, attemptNumber: attemptNumber);
-    attemptNumber++;
-
-    // Optionally clear the transcript for the next session.
-    transcript.value = "";
   }
 
   /// Updates the transcript as speech is recognized.
   void _onSpeechResult(SpeechRecognitionResult result) {
     transcript.value = result.recognizedWords;
-    print("Transcript: ${result.recognizedWords}");
-    // No automatic reinitialization here: control is fully manual.
+    if (result.finalResult && !_hasSubmitted) {
+      _hasSubmitted = true;
+      print("Transcript: ${result.recognizedWords}");
+
+      // Submit the full transcript once the final result is ready.
+      submitReview(
+        transcript: transcript.value,
+        attemptNumber: attemptNumber,
+      );
+      attemptNumber++;
+      // Optionally clear the transcript for the next session.
+      transcript.value = "";
+    }
   }
 
   void _onStatus(String status) {
