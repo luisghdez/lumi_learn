@@ -132,12 +132,14 @@ class ApiService {
     required String transcript,
     required List<Map<String, String>> terms,
     required int attemptNumber,
+    List<Map<String, String>>? conversationHistory,
   }) async {
     final uri = Uri.parse('$_baseUrl/review');
     final body = jsonEncode({
       'transcript': transcript,
       'terms': terms,
       'attemptNumber': attemptNumber,
+      'conversationHistory': conversationHistory ?? [],
     });
 
     final response = await http.post(

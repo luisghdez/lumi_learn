@@ -32,8 +32,12 @@ class SpeakController extends GetxController {
 
   int attemptNumber = 1;
   final RxBool isUserListening = true.obs;
-
   bool _hasSubmitted = false; // Flag to prevent duplicate submissions
+
+  // New: Conversation history for the session.
+  // Each entry is a map with keys 'role' (either "user" or "tutor") and 'message'.
+  final RxList<Map<String, String>> conversationHistory =
+      <Map<String, String>>[].obs;
 
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
@@ -123,13 +127,11 @@ class SpeakController extends GetxController {
 
   void _onStatus(String status) {
     print("Speech status: $status");
-    // You can handle additional status updates if needed.
   }
 
   void _onSpeechError(SpeechRecognitionError error) {
     print("Speech error: ${error.errorMsg}, permanent: ${error.permanent}");
     if (error.permanent) {
-      // Cancel and try reinitializing after a delay if the error is permanent.
       _speechToText.cancel();
       Future.delayed(const Duration(seconds: 1), () {
         _initSpeech();
@@ -166,15 +168,16 @@ class SpeakController extends GetxController {
         termsData.add({'term': terms[i], 'status': status});
       }
 
-      print('Submitting review with terms: $termsData');
-      print('Transcript: $transcript');
-      print('Attempt number: $attemptNumber');
+      // Add the current user transcript to the conversation history.
+      conversationHistory.add({'role': 'user', 'message': transcript});
 
+      // Submit review including conversationHistory.
       final response = await ApiService().submitReview(
         token: token,
         transcript: transcript,
         terms: termsData,
         attemptNumber: attemptNumber,
+        conversationHistory: conversationHistory,
       );
 
       if (response.statusCode == 200) {
@@ -198,10 +201,13 @@ class SpeakController extends GetxController {
 
         // Optionally delay a bit to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
-        // Trigger rebuild or update UI with feedback.
         await fetchReviewAudio();
-        // down here to trigger rebuild of message once audio is fetched
+        // Update UI with the tutor's feedback.
         feedbackMessage.value = data['feedbackMessage'];
+
+        // Add tutor's feedback to the conversation history.
+        conversationHistory
+            .add({'role': 'tutor', 'message': data['feedbackMessage']});
       } else {
         print('Failed to submit review: ${response.statusCode}');
         Get.snackbar("Error", "Failed to submit review.",
