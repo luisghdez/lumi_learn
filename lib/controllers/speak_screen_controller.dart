@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:path_provider/path_provider.dart';
@@ -24,9 +25,11 @@ class SpeakController extends GetxController {
   final RxList updatedTerms = <dynamic>[].obs;
   final RxString feedbackMessage = ''.obs;
   final Rx<Uint8List> reviewAudioBytes = Rx<Uint8List>(Uint8List(0));
+
   late SpeechToText _speechToText;
   final RxBool speechEnabled = false.obs;
   final RxString transcript = ''.obs;
+
   int _segmentStartIndex = 0;
   int attemptNumber = 1;
   final RxBool isUserListening = true.obs;
@@ -34,14 +37,6 @@ class SpeakController extends GetxController {
   SpeakController({required this.terms}) {
     // Initialize the list with a default value (0.0) for each term.
     termProgress.assignAll(List<double>.filled(terms.length, 0.0));
-
-    // For our expected 3 terms, set custom initial values.
-    termProgress[0] = 0.0;
-    termProgress[1] = 0.0;
-    termProgress[2] = 0.0;
-
-    print(
-        "SpeakController initialized with terms: $terms and progress: $termProgress");
   }
 
   @override
@@ -61,58 +56,39 @@ class SpeakController extends GetxController {
 
   /// Plays the introductory audio.
   Future<void> playIntroAudio() async {
-    // Assumes your mark_intro.mp3 is in your assets folder and declared in pubspec.yaml
     await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
   }
 
+  /// Initialize the speech recognizer without starting to listen.
   Future<void> _initSpeech() async {
     try {
       _speechToText = SpeechToText();
       speechEnabled.value = await _speechToText.initialize(
         onStatus: _onStatus,
-        onError: (error) => print('Speech error: $error'),
+        onError: _onSpeechError,
       );
-      // rm await or add
-      _speechToText.listen(
-        onResult: _onSpeechResult,
-        listenFor: const Duration(minutes: 2),
-        localeId: "en_US",
-      );
-      print("Speech enabled: ${speechEnabled.value}");
+      if (speechEnabled.value) {
+        print("Speech recognition initialized and ready.");
+      } else {
+        print("Speech recognition not enabled.");
+      }
     } catch (e) {
       print("Error initializing speech recognizer: $e");
       speechEnabled.value = false;
     }
   }
 
-  /// Called when the user taps "start" for a new segment.
+  /// Called when the user taps "start" to begin a new segment.
   Future<void> startListening() async {
-    // Mark the current index in the transcript.
+    if (!speechEnabled.value) {
+      print("Speech recognition not enabled or not initialized.");
+      return;
+    }
+    // Mark the current transcript length to note the beginning of this segment.
     _segmentStartIndex = transcript.value.length;
     print("Segment started. Marker index: $_segmentStartIndex");
-  }
 
-  /// Called when the user taps "stop" for the current segment.
-  Future<void> stopListening() async {
-    // Get the complete transcript
-    String fullTranscript = transcript.value;
-    // Extract only the words after the marker.
-    String segmentTranscript = '';
-    if (fullTranscript.length >= _segmentStartIndex) {
-      segmentTranscript = fullTranscript.substring(_segmentStartIndex);
-    }
-    print("Segment transcript: $segmentTranscript");
-
-    // Update marker to the current end if you plan to continue without resetting.
-    _segmentStartIndex = fullTranscript.length;
-    await submitReview(
-        transcript: segmentTranscript, attemptNumber: attemptNumber);
-    attemptNumber++;
-  }
-
-  void _startListening() {
-    // You can also set 'pauseFor' here if the API supports it.
-    print("Starting listening.. agaiaaaaan.");
+    // Start listening only when the user initiates.
     _speechToText.listen(
       onResult: _onSpeechResult,
       listenFor: const Duration(minutes: 2),
@@ -120,33 +96,59 @@ class SpeakController extends GetxController {
     );
   }
 
+  /// Called when the user taps "stop" to end the current segment.
+  Future<void> stopListening() async {
+    // Stop listening to speech.
+    _speechToText.stop();
+
+    // Extract the current segment from the transcript.
+    String fullTranscript = transcript.value;
+    String segmentTranscript = fullTranscript.substring(_segmentStartIndex);
+    print("Full transcript: $fullTranscript");
+    print("Segment transcript: $segmentTranscript");
+
+    // Update the marker for future segments.
+    _segmentStartIndex = fullTranscript.length;
+
+    // Submit the review with the extracted segment.
+    await submitReview(
+        transcript: segmentTranscript, attemptNumber: attemptNumber);
+    attemptNumber++;
+
+    // Optionally clear the transcript for the next session.
+    transcript.value = "";
+  }
+
+  /// Updates the transcript as speech is recognized.
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    transcript.value = result.recognizedWords;
+    print("Transcript: ${result.recognizedWords}");
+    // No automatic reinitialization here: control is fully manual.
+  }
+
   void _onStatus(String status) {
     print("Speech status: $status");
-    // If the recognizer stops and the user still wants to listen, restart.
-    if (isUserListening.value) {
-      print("Restarting listening due to inactivity...");
-      // Delay briefly if needed to ensure a smooth restart.
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _startListening();
+    // You can handle additional status updates if needed.
+  }
+
+  void _onSpeechError(SpeechRecognitionError error) {
+    print("Speech error: ${error.errorMsg}, permanent: ${error.permanent}");
+    if (error.permanent) {
+      // Cancel and try reinitializing after a delay if the error is permanent.
+      _speechToText.cancel();
+      Future.delayed(const Duration(seconds: 1), () {
+        _initSpeech();
       });
     }
   }
 
-  /// This callback continuously updates the transcript as the user speaks.
-  void _onSpeechResult(SpeechRecognitionResult result) {
-    transcript.value = result.recognizedWords;
-  }
-
   /// Submits a review to the backend.
-  /// After receiving the JSON response, updates term progress and immediately tries to retrieve the feedback audio.
   Future<void> submitReview({
     required String transcript,
     required int attemptNumber,
   }) async {
-    print('Submitting review...');
     isLoading.value = true;
     try {
-      final authController = Get.find<AuthController>();
       final token = await authController.getIdToken();
       if (token == null) {
         print('No user token found.');
@@ -201,7 +203,7 @@ class SpeakController extends GetxController {
 
         // Optionally delay a bit to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
-        // Immediately attempt to fetch the review audio.
+        // Trigger rebuild or update UI with feedback.
         await fetchReviewAudio();
         // down here to trigger rebuild of message once audio is fetched
         feedbackMessage.value = data['feedbackMessage'];
@@ -239,7 +241,6 @@ class SpeakController extends GetxController {
       );
       if (response.statusCode == 200) {
         print("Review audio fetched successfully.");
-        // Instead of using playBytes, write to a file and play it.
         await _playAudioFromBytes(response.bodyBytes);
       } else if (response.statusCode == 404 && attempt < maxAttempts) {
         print("Review audio not available yet (404), retrying...");
@@ -256,7 +257,6 @@ class SpeakController extends GetxController {
   Future<void> _playAudioFromBytes(Uint8List bytes) async {
     try {
       final tempDir = await getTemporaryDirectory();
-      // Ensure you use the proper file extension (e.g., .wav, .mp3) as per your audio format.
       final filePath = p.join(tempDir.path, 'review_audio.wav');
       final file = File(filePath);
       await file.writeAsBytes(bytes);
