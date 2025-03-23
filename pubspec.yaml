@@ -40,6 +40,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   file_picker: ^4.2.0 # Add this line
   audioplayers: ^6.4.0
+  image_picker: ^0.8.7
 
   
   # UI & Fonts

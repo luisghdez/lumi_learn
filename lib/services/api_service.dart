@@ -5,6 +5,9 @@ import 'package:http_parser/http_parser.dart'; // For MediaType
 import 'package:mime/mime.dart'; // For lookupMimeType
 import 'package:path/path.dart' as p;
 import 'dart:io';
+import 'dart:convert';
+import 'package:lumi_learn_app/models/leaderboard_model.dart';
+
 
 class ApiService {
   static const String _baseUrl = 'http://localhost:3000';
@@ -76,6 +79,19 @@ class ApiService {
         'Content-Type': 'application/json',
       },
     );
+  }
+  
+//leaderboard future
+
+  static Future<List<Player>> fetchLeaderboard() async {
+    final response = await http.get(Uri.parse('https://api.example.com/leaderboard'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = json.decode(response.body);
+      return jsonData.map((e) => Player.fromJson(e)).toList();
+    } else {
+      throw Exception("Failed to load leaderboard");
+    }
   }
 
   Future<http.Response> completeLesson({
