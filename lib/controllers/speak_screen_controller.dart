@@ -31,7 +31,6 @@ class SpeakController extends GetxController {
   final RxString transcript = ''.obs;
 
   int attemptNumber = 1;
-  final RxBool isUserListening = true.obs;
   bool _hasSubmitted = false; // Flag to prevent duplicate submissions
 
   // New: Conversation history for the session.
@@ -55,7 +54,6 @@ class SpeakController extends GetxController {
   void onClose() {
     // Stop the speech recognizer when the controller is disposed.
     _speechToText.stop();
-    isUserListening.value = false;
     super.onClose();
   }
 
@@ -103,6 +101,7 @@ class SpeakController extends GetxController {
 
   /// Called when the user taps "stop" to end the current segment.
   Future<void> stopListening() async {
+    isLoading.value = true;
     // Stop listening to speech.
     _speechToText.stop();
   }

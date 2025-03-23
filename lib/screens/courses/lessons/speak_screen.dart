@@ -96,7 +96,10 @@ class SpeakScreen extends StatelessWidget {
             Center(
               child: Obx(() => RecordButton(
                     onStartRecording: speakController.startListening,
-                    onStopRecording: speakController.stopListening,
+                    onStopRecording: () {
+                      speakController.isLoading.value = true;
+                      speakController.stopListening();
+                    },
                     isLoading: speakController.isLoading.value,
                   )),
             ),
@@ -128,14 +131,18 @@ class _RecordButtonState extends State<RecordButton> {
 
   void _toggleRecording() {
     if (widget.isLoading) return; // Prevent toggling while loading.
-    setState(() {
-      isRecording = !isRecording;
-    });
 
     if (isRecording) {
-      widget.onStartRecording();
-    } else {
+      // When stopping, call onStopRecording first to trigger the loading state.
       widget.onStopRecording();
+      setState(() {
+        isRecording = false;
+      });
+    } else {
+      setState(() {
+        isRecording = true;
+      });
+      widget.onStartRecording();
     }
   }
 
