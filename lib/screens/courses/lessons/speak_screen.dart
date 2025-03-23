@@ -24,9 +24,7 @@ class SpeakScreen extends StatelessWidget {
     final SpeakController speakController = Get.find<SpeakController>();
     speakController.setTerms(question.options);
     speakController.playIntroAudio();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      speakController.preWarmSpeechEngine();
-    });
+
     print("SpeakScreen: ${question.options}");
     return Container(
       padding: const EdgeInsets.all(16),

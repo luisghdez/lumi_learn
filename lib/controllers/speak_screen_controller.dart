@@ -81,9 +81,8 @@ class SpeakController extends GetxController {
     _speechToText.listen(
       onResult: (_) {},
       listenFor: const Duration(seconds: 1),
-      partialResults: false,
     );
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
     await _speechToText.stop();
   }
 
@@ -212,7 +211,7 @@ class SpeakController extends GetxController {
 
         // Optionally delay a bit to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
-        await fetchReviewAudio();
+        // await fetchReviewAudio();
         // Update UI with the tutor's feedback.
         feedbackMessage.value = data['feedbackMessage'];
 
