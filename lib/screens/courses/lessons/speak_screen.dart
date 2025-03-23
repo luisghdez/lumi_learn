@@ -297,9 +297,7 @@ class TermMasteryItem extends StatelessWidget {
                           ),
                           if (isMastered) const SizedBox(width: 4),
                           Text(
-                            isMastered
-                                ? 'Mastered'
-                                : '${(progress * 100).toInt()}%',
+                            isMastered ? '' : '${(progress * 100).toInt()}%',
                             style: TextStyle(
                               color: isMastered
                                   ? const Color(0xFFFFD700)
