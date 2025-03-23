@@ -71,81 +71,81 @@ class CourseController extends GetxController {
     }
   }
 
+  // test questions
   // List<Question> getQuestions() {
   //   // return questions based on activeCourseId and activeLessonIndex
-  //   // TODO replace with real service call to these questions
   //   return [
   //     Question(
-  //       questionText:
-  //           'Q1 What is the answer to this question if this was a long question of the question and a question?',
-  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
-  //       correctAnswer: 'Paris',
-  //       lessonType: LessonType.multipleChoice,
-  //     ),
-  //     Question(
-  //       questionText:
-  //           'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
-  //       options: ['Paris', 'London', 'Berlin', 'Madrid'],
-  //       correctAnswer: 'Paris',
-  //       lessonType: LessonType.multipleChoice,
-  //     ),
-  //     Question(
-  //       questionText:
-  //           'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
-  //       options: [
-  //         'Italy',
-  //         'Paris',
-  //         'Berlin',
-  //         'Madrid',
-  //         'London',
-  //         'Tokyo',
-  //         'New York City'
-  //       ],
-  //       correctAnswer: 'Italy',
-  //       lessonType: LessonType.fillInTheBlank,
-  //     ),
-  //     Question(
   //       questionText: 'Explain what you just learned in your own words.',
-  //       options: [],
+  //       options: ["Black Holes", "Event Horizon", "Gravitational Waves"],
   //       lessonType: LessonType.speakAll,
   //     ),
-  //     // Type in everything you learned
-  //     Question(
-  //       questionText:
-  //           'Type in everything you learned up to this point in one minute!',
-  //       options: [],
-  //       lessonType: LessonType.writeAll,
-  //     ),
-  //     Question(
-  //       questionText: 'Match the Terms',
-  //       options: [],
-  //       flashcards: [
-  //         Flashcard(
-  //             term: 'Term 1',
-  //             definition: 'Definition of term 1 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 2',
-  //             definition: 'Definition of term 2 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 3',
-  //             definition: 'Definition of term 3 which shuld be long like this'),
-  //         Flashcard(
-  //             term: 'Term 4',
-  //             definition: 'Definition of term 4 which shuld be long like this'),
-  //       ],
-  //       lessonType: LessonType.matchTheTerms,
-  //     ),
-  //     Question(
-  //       questionText: 'Flashcards',
-  //       options: [],
-  //       flashcards: [
-  //         Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-  //         Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-  //         Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-  //         Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-  //       ],
-  //       lessonType: LessonType.flashcards,
-  //     ),
+  //     // Question(
+  //     //   questionText:
+  //     //       'Q1 What is the answer to this question if this was a long question of the question and a question?',
+  //     //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //     //   correctAnswer: 'Paris',
+  //     //   lessonType: LessonType.multipleChoice,
+  //     // ),
+  //     // Question(
+  //     //   questionText:
+  //     //       'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
+  //     //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //     //   correctAnswer: 'Paris',
+  //     //   lessonType: LessonType.multipleChoice,
+  //     // ),
+  //     // Question(
+  //     //   questionText:
+  //     //       'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
+  //     //   options: [
+  //     //     'Italy',
+  //     //     'Paris',
+  //     //     'Berlin',
+  //     //     'Madrid',
+  //     //     'London',
+  //     //     'Tokyo',
+  //     //     'New York City'
+  //     //   ],
+  //     //   correctAnswer: 'Italy',
+  //     //   lessonType: LessonType.fillInTheBlank,
+  //     // ),
+  //     // // Type in everything you learned
+  //     // Question(
+  //     //   questionText:
+  //     //       'Type in everything you learned up to this point in one minute!',
+  //     //   options: [],
+  //     //   lessonType: LessonType.writeAll,
+  //     // ),
+  //     // Question(
+  //     //   questionText: 'Match the Terms',
+  //     //   options: [],
+  //     //   flashcards: [
+  //     //     Flashcard(
+  //     //         term: 'Term 1',
+  //     //         definition: 'Definition of term 1 which shuld be long like this'),
+  //     //     Flashcard(
+  //     //         term: 'Term 2',
+  //     //         definition: 'Definition of term 2 which shuld be long like this'),
+  //     //     Flashcard(
+  //     //         term: 'Term 3',
+  //     //         definition: 'Definition of term 3 which shuld be long like this'),
+  //     //     Flashcard(
+  //     //         term: 'Term 4',
+  //     //         definition: 'Definition of term 4 which shuld be long like this'),
+  //     //   ],
+  //     //   lessonType: LessonType.matchTheTerms,
+  //     // ),
+  //     // Question(
+  //     //   questionText: 'Flashcards',
+  //     //   options: [],
+  //     //   flashcards: [
+  //     //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+  //     //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+  //     //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+  //     //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+  //     //   ],
+  //     //   lessonType: LessonType.flashcards,
+  //     // ),
   //   ];
   // }
 
@@ -274,6 +274,7 @@ class CourseController extends GetxController {
             "Explain everything you remember about this lesson.",
         options: (speakQuestionJson['options'] as List<dynamic>?)
                 ?.map((opt) => opt.toString())
+                .take(3)
                 .toList() ??
             [],
         lessonType: LessonType.speakAll,
@@ -478,6 +479,8 @@ class CourseController extends GetxController {
         lessonId: lessonId,
         xp: totalXP,
       );
+
+      lessons[activeLessonIndex.value]['completed'] = true;
 
       if (response.statusCode == 200) {
         print('Lesson completed successfully: ${response.body}');

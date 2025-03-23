@@ -140,4 +140,52 @@ class ApiService {
       throw Exception("Failed to ensure user exists: ${response.body}");
     }
   }
+
+  /// POST /review
+  /// Process user explanation of terms and get guided AI feedback.
+  Future<http.Response> submitReview({
+    required String token,
+    required String transcript,
+    required List<Map<String, String>> terms,
+    required int attemptNumber,
+    List<Map<String, String>>? conversationHistory,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/review');
+    final body = jsonEncode({
+      'transcript': transcript,
+      'terms': terms,
+      'attemptNumber': attemptNumber,
+      'conversationHistory': conversationHistory ?? [],
+    });
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+
+    return response;
+  }
+
+  /// GET /review/audio?sessionId=abc123-session-id
+  /// Retrieve the TTS audio for the AI feedback associated with a previous review session.
+  Future<http.Response> getReviewAudio({
+    required String token,
+    required String sessionId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/review/audio?sessionId=$sessionId');
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    return response;
+  }
 }
