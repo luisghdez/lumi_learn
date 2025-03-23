@@ -51,7 +51,7 @@ class SpeakController extends GetxController {
     super.onInit();
     _initSpeech();
 
-    // Anytime audio finishes, set [isAudioPlaying] to false
+    // Anytime audio finishes, set [isAudioPlaying] to false.
     audioPlayer.onPlayerComplete.listen((_) {
       isAudioPlaying.value = false;
     });
@@ -68,13 +68,13 @@ class SpeakController extends GetxController {
     try {
       isAudioPlaying.value = true;
       await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
-      // onPlayerComplete stream will switch isAudioPlaying back to false for us.
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
     }
   }
 
+  /// Plays the closing audio.
   Future<void> playClosingAudio() async {
     try {
       isAudioPlaying.value = true;
@@ -104,7 +104,7 @@ class SpeakController extends GetxController {
     }
   }
 
-  // This is your "fake" or "silent" pre-warm
+  // This is your "fake" or "silent" pre-warm.
   Future<void> preWarmSpeechEngine() async {
     print("Pre-warming speech engine...");
     if (!speechEnabled.value) return;
@@ -116,7 +116,7 @@ class SpeakController extends GetxController {
     await _speechToText.stop();
   }
 
-  /// Set or reset terms from outside
+  /// Set or reset terms from outside.
   void setTerms(List<String> newTerms) {
     terms.value = newTerms;
     termProgress.assignAll(List<double>.filled(newTerms.length, 0.0));
@@ -128,10 +128,6 @@ class SpeakController extends GetxController {
       print("Speech recognition not enabled or not initialized.");
       return;
     }
-
-    // Mark the controller as "loading" so that we block the record button
-    // from repeated fast presses while we set up the speech engine.
-    // isLoading.value = true;
 
     transcript.value = "";
     _hasSubmitted = false;
@@ -145,9 +141,7 @@ class SpeakController extends GetxController {
 
   /// Called when the user taps "stop" to end the current segment.
   Future<void> stopListening() async {
-    // Mark as loading so user cannot start again or spam
     isLoading.value = true;
-    // Stop listening to speech.
     _speechToText.stop();
   }
 
@@ -158,32 +152,25 @@ class SpeakController extends GetxController {
       _hasSubmitted = true;
       print("Transcript: ${result.recognizedWords}");
       print("attemptNumber: $attemptNumber");
-      // If this is the 4th attempt, bypass submission and play closing audio.
       if (attemptNumber == 4) {
+        // On 4th attempt: Play closing audio, wait for it to finish, then go to next question.
         await playClosingAudio();
         await audioPlayer.onPlayerComplete.first;
         courseController.nextQuestion();
       } else {
-        // Submit the full transcript once the final result is ready.
-        submitReview(
+        // Otherwise, submit the transcript.
+        await submitReview(
           transcript: transcript.value,
           attemptNumber: attemptNumber,
         );
       }
       attemptNumber++;
-      // Optionally clear the transcript for the next session.
       transcript.value = "";
     }
   }
 
   void _onStatus(String status) {
     print("Speech status: $status");
-    // Once we know we are truly "listening", let's allow user
-    // to press stop. E.g. status can be "listening" or "notListening"
-    // if (status == "listening") {
-    //   // We’re fully engaged in speech recognition, user can press stop
-    //   isLoading.value = false;
-    // }
   }
 
   void _onSpeechError(SpeechRecognitionError error) {
@@ -227,7 +214,7 @@ class SpeakController extends GetxController {
       // Add the current user transcript to the conversation history.
       conversationHistory.add({'role': 'user', 'message': transcript});
 
-      // Submit review including conversationHistory.
+      // Submit review including conversation history.
       final response = await ApiService().submitReview(
         token: token,
         transcript: transcript,
@@ -249,27 +236,31 @@ class SpeakController extends GetxController {
             termProgress[i] = 1.0;
           } else if (status == 'needs_improvement') {
             double currentProgress = termProgress[i];
-            // If current progress is not between 40% (0.4) and 60% (0.6), randomize it.
+            // Randomize if the current progress is not between 40% (0.4) and 60% (0.6).
             if (currentProgress < 0.4 || currentProgress > 0.6) {
               final random = Random();
-              termProgress[i] =
-                  0.4 + random.nextDouble() * 0.2; // random between 0.4 and 0.6
+              termProgress[i] = 0.4 + random.nextDouble() * 0.2;
             }
-            // If it's already between 0.4 and 0.6, leave it as is.
           } else if (status == 'unattempted') {
             termProgress[i] = 0.0;
           }
         }
 
-        // Optionally delay a bit to allow audio generation to finish.
+        // Optionally delay to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
         await fetchReviewAudio();
-        // Update UI with the tutor's feedback.
         feedbackMessage.value = data['feedbackMessage'];
-
-        // Add tutor's feedback to the conversation history.
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
+
+        // Check if all returned terms are "mastered".
+        bool allMastered =
+            updated.every((element) => element['status'] == 'mastered');
+        if (allMastered) {
+          // Wait for the audio to finish playing, then trigger next question.
+          await audioPlayer.onPlayerComplete.first;
+          courseController.nextQuestion();
+        }
       } else {
         print('Failed to submit review: ${response.statusCode}');
         Get.snackbar("Error", "Failed to submit audio.");
@@ -278,7 +269,6 @@ class SpeakController extends GetxController {
       print('Error submitting review: $e');
       Get.snackbar("Error", "Something went wrong. Please try again.");
     } finally {
-      // Now that we’re done uploading, let user record again
       isLoading.value = false;
     }
   }
@@ -322,7 +312,6 @@ class SpeakController extends GetxController {
       final file = File(filePath);
       await file.writeAsBytes(bytes);
       await audioPlayer.play(DeviceFileSource(filePath));
-      // onPlayerComplete will set isAudioPlaying to false
     } catch (e) {
       isAudioPlaying.value = false;
       print("Error playing audio from bytes: $e");
