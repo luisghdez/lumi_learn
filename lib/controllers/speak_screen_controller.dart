@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
@@ -223,14 +224,20 @@ class SpeakController extends GetxController {
         updatedTerms.assignAll(data['updatedTerms']);
         print('Review submitted successfully: $data');
 
-        // Update termProgress based on the JSON response.
         final List<dynamic> updated = data['updatedTerms'];
         for (int i = 0; i < updated.length; i++) {
           final status = updated[i]['status'];
           if (status == 'mastered') {
             termProgress[i] = 1.0;
           } else if (status == 'needs_improvement') {
-            termProgress[i] = 0.45;
+            double currentProgress = termProgress[i];
+            // If current progress is not between 40% (0.4) and 60% (0.6), randomize it.
+            if (currentProgress < 0.4 || currentProgress > 0.6) {
+              final random = Random();
+              termProgress[i] =
+                  0.4 + random.nextDouble() * 0.2; // random between 0.4 and 0.6
+            }
+            // If it's already between 0.4 and 0.6, leave it as is.
           } else if (status == 'unattempted') {
             termProgress[i] = 0.0;
           }
