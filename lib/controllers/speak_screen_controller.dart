@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -15,6 +16,7 @@ import 'package:path/path.dart' as p;
 
 class SpeakController extends GetxController {
   final AuthController authController = Get.find();
+  final CourseController courseController = Get.find();
 
   RxList<String> terms = <String>[].obs;
   final RxList<double> termProgress = <double>[].obs;
@@ -67,6 +69,16 @@ class SpeakController extends GetxController {
       isAudioPlaying.value = true;
       await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
       // onPlayerComplete stream will switch isAudioPlaying back to false for us.
+    } catch (e) {
+      isAudioPlaying.value = false;
+      rethrow;
+    }
+  }
+
+  Future<void> playClosingAudio() async {
+    try {
+      isAudioPlaying.value = true;
+      await audioPlayer.play(AssetSource("sounds/mark_intro.mp3"));
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -140,19 +152,25 @@ class SpeakController extends GetxController {
   }
 
   /// Updates the transcript as speech is recognized.
-  void _onSpeechResult(SpeechRecognitionResult result) {
+  Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
     transcript.value = result.recognizedWords;
     if (result.finalResult && !_hasSubmitted) {
       _hasSubmitted = true;
       print("Transcript: ${result.recognizedWords}");
-
-      // Submit the full transcript once the final result is ready.
-      submitReview(
-        transcript: transcript.value,
-        attemptNumber: attemptNumber,
-      );
+      print("attemptNumber: $attemptNumber");
+      // If this is the 4th attempt, bypass submission and play closing audio.
+      if (attemptNumber == 4) {
+        await playClosingAudio();
+        await audioPlayer.onPlayerComplete.first;
+        courseController.nextQuestion();
+      } else {
+        // Submit the full transcript once the final result is ready.
+        submitReview(
+          transcript: transcript.value,
+          attemptNumber: attemptNumber,
+        );
+      }
       attemptNumber++;
-
       // Optionally clear the transcript for the next session.
       transcript.value = "";
     }
