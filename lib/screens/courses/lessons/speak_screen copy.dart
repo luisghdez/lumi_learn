@@ -4,13 +4,13 @@ import 'package:lumi_learn_app/screens/courses/lessons/widgets/audio_widget.dart
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble_black.dart';
 
-class SpeakScreen extends StatelessWidget {
+class SpeakScreenCopy extends StatelessWidget {
   final Question question;
   final void Function() onSubmitAnswer;
   final ValueNotifier<int> _selectedOption = ValueNotifier<int>(-1);
   final String backgroundImage;
 
-  SpeakScreen({
+  SpeakScreenCopy({
     required this.question,
     required this.backgroundImage,
     required this.onSubmitAnswer,

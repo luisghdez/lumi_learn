@@ -9,13 +9,11 @@ class SpeakScreen extends StatelessWidget {
   SpeakScreen({
     Key? key,
     required this.question,
-    required this.backgroundImage,
     required this.onSubmitAnswer,
   }) : super(key: key);
 
   final Question question;
   final void Function() onSubmitAnswer;
-  final String backgroundImage;
 
   void _submitAnswer(BuildContext context) {
     onSubmitAnswer();
@@ -23,11 +21,12 @@ class SpeakScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SpeakController speakController = Get.put(
-      SpeakController(terms: question.options),
-      tag: question.hashCode.toString(),
-    );
-
+    final SpeakController speakController = Get.find<SpeakController>();
+    speakController.setTerms(question.options);
+    speakController.playIntroAudio();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      speakController.preWarmSpeechEngine();
+    });
     print("SpeakScreen: ${question.options}");
     return Container(
       padding: const EdgeInsets.all(16),
@@ -62,9 +61,6 @@ class SpeakScreen extends StatelessWidget {
                       image: AssetImage('assets/astronaut/thinking.png'),
                       fit: BoxFit.cover,
                     )),
-                child: backgroundImage.isEmpty
-                    ? const Icon(Icons.person, size: 60, color: Colors.white70)
-                    : null,
               ),
             ),
             Obx(() => TypewriterSpeechBubbleMessage(

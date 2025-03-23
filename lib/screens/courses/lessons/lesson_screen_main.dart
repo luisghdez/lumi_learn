@@ -53,7 +53,6 @@ class LessonScreenMain extends StatelessWidget {
         case LessonType.speakAll:
           questionWidget = SpeakScreen(
             question: currentQuestion,
-            backgroundImage: backgroundImage ?? '',
             onSubmitAnswer: () {
               courseController.nextQuestion();
             },

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/auth/spash_screen.dart';
@@ -43,6 +44,13 @@ class AuthGate extends StatelessWidget {
       final courseController = Get.find<CourseController>();
       if (!courseController.isInitialized.value) {
         return SplashScreen();
+      }
+
+      if (!Get.isRegistered<SpeakController>()) {
+        Get.put<SpeakController>(
+          SpeakController(), // no terms yet, we'll set them later
+          permanent: true,
+        );
       }
 
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);

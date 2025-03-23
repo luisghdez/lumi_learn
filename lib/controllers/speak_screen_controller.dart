@@ -15,7 +15,7 @@ import 'package:path/path.dart' as p;
 class SpeakController extends GetxController {
   final AuthController authController = Get.find();
 
-  final List<String> terms;
+  RxList<String> terms = <String>[].obs;
   // Track progress by index: each term has its progress stored in a list.
   final RxList<double> termProgress = <double>[].obs;
   final AudioPlayer audioPlayer = AudioPlayer();
@@ -33,26 +33,19 @@ class SpeakController extends GetxController {
   int attemptNumber = 1;
   bool _hasSubmitted = false; // Flag to prevent duplicate submissions
 
-  // New: Conversation history for the session.
-  // Each entry is a map with keys 'role' (either "user" or "tutor") and 'message'.
   final RxList<Map<String, String>> conversationHistory =
       <Map<String, String>>[].obs;
 
-  SpeakController({required this.terms}) {
-    // Initialize the list with a default value (0.0) for each term.
-    termProgress.assignAll(List<double>.filled(terms.length, 0.0));
-  }
+  SpeakController();
 
   @override
   void onInit() {
     super.onInit();
-    playIntroAudio();
     _initSpeech();
   }
 
   @override
   void onClose() {
-    // Stop the speech recognizer when the controller is disposed.
     _speechToText.stop();
     super.onClose();
   }
@@ -79,6 +72,25 @@ class SpeakController extends GetxController {
       print("Error initializing speech recognizer: $e");
       speechEnabled.value = false;
     }
+  }
+
+  // This is your "fake" or "silent" pre-warm
+  Future<void> preWarmSpeechEngine() async {
+    print("Pre-warming speech engine...");
+    if (!speechEnabled.value) return;
+    _speechToText.listen(
+      onResult: (_) {},
+      listenFor: const Duration(seconds: 1),
+      partialResults: false,
+    );
+    await Future.delayed(const Duration(seconds: 1));
+    await _speechToText.stop();
+  }
+
+  /// If you want to set or reset terms from outside
+  void setTerms(List<String> newTerms) {
+    terms.value = newTerms;
+    termProgress.assignAll(List<double>.filled(newTerms.length, 0.0));
   }
 
   /// Called when the user taps "start" to begin a new segment.
