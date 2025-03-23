@@ -53,9 +53,6 @@ class LessonScreenMain extends StatelessWidget {
         case LessonType.speakAll:
           questionWidget = SpeakScreen(
             question: currentQuestion,
-            onSubmitAnswer: () {
-              courseController.nextQuestion();
-            },
           );
           break;
         case LessonType.writeAll:

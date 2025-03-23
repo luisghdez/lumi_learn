@@ -9,15 +9,9 @@ class SpeakScreen extends StatelessWidget {
   SpeakScreen({
     Key? key,
     required this.question,
-    required this.onSubmitAnswer,
   }) : super(key: key);
 
   final Question question;
-  final void Function() onSubmitAnswer;
-
-  void _submitAnswer(BuildContext context) {
-    onSubmitAnswer();
-  }
 
   @override
   Widget build(BuildContext context) {
