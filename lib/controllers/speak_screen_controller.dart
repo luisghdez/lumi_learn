@@ -16,11 +16,17 @@ class SpeakController extends GetxController {
   final AuthController authController = Get.find();
 
   RxList<String> terms = <String>[].obs;
-  // Track progress by index: each term has its progress stored in a list.
   final RxList<double> termProgress = <double>[].obs;
+
   final AudioPlayer audioPlayer = AudioPlayer();
 
+  /// Track loading states to disable UI or show spinners, etc.
   final RxBool isLoading = false.obs;
+
+  /// Track if any audio (intro or feedback) is currently playing
+  /// so we can disable the record button.
+  final RxBool isAudioPlaying = false.obs;
+
   final RxString sessionId = ''.obs;
   final RxList updatedTerms = <dynamic>[].obs;
   final RxString feedbackMessage = ''.obs;
@@ -32,7 +38,6 @@ class SpeakController extends GetxController {
 
   int attemptNumber = 1;
   bool _hasSubmitted = false; // Flag to prevent duplicate submissions
-
   final RxList<Map<String, String>> conversationHistory =
       <Map<String, String>>[].obs;
 
@@ -42,6 +47,11 @@ class SpeakController extends GetxController {
   void onInit() {
     super.onInit();
     _initSpeech();
+
+    // Anytime audio finishes, set [isAudioPlaying] to false
+    audioPlayer.onPlayerComplete.listen((_) {
+      isAudioPlaying.value = false;
+    });
   }
 
   @override
@@ -50,9 +60,16 @@ class SpeakController extends GetxController {
     super.onClose();
   }
 
-  /// Plays the introductory audio.
+  /// Plays the introductory audio and marks the controller as currently playing.
   Future<void> playIntroAudio() async {
-    await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
+    try {
+      isAudioPlaying.value = true;
+      await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
+      // onPlayerComplete stream will switch isAudioPlaying back to false for us.
+    } catch (e) {
+      isAudioPlaying.value = false;
+      rethrow;
+    }
   }
 
   /// Initialize the speech recognizer without starting to listen.
@@ -86,7 +103,7 @@ class SpeakController extends GetxController {
     await _speechToText.stop();
   }
 
-  /// If you want to set or reset terms from outside
+  /// Set or reset terms from outside
   void setTerms(List<String> newTerms) {
     terms.value = newTerms;
     termProgress.assignAll(List<double>.filled(newTerms.length, 0.0));
@@ -99,10 +116,13 @@ class SpeakController extends GetxController {
       return;
     }
 
+    // Mark the controller as "loading" so that we block the record button
+    // from repeated fast presses while we set up the speech engine.
+    // isLoading.value = true;
+
     transcript.value = "";
     _hasSubmitted = false;
 
-    // Start listening only when the user initiates.
     _speechToText.listen(
       onResult: _onSpeechResult,
       listenFor: const Duration(minutes: 2),
@@ -112,6 +132,7 @@ class SpeakController extends GetxController {
 
   /// Called when the user taps "stop" to end the current segment.
   Future<void> stopListening() async {
+    // Mark as loading so user cannot start again or spam
     isLoading.value = true;
     // Stop listening to speech.
     _speechToText.stop();
@@ -130,6 +151,7 @@ class SpeakController extends GetxController {
         attemptNumber: attemptNumber,
       );
       attemptNumber++;
+
       // Optionally clear the transcript for the next session.
       transcript.value = "";
     }
@@ -137,6 +159,12 @@ class SpeakController extends GetxController {
 
   void _onStatus(String status) {
     print("Speech status: $status");
+    // Once we know we are truly "listening", let's allow user
+    // to press stop. E.g. status can be "listening" or "notListening"
+    // if (status == "listening") {
+    //   // We’re fully engaged in speech recognition, user can press stop
+    //   isLoading.value = false;
+    // }
   }
 
   void _onSpeechError(SpeechRecognitionError error) {
@@ -154,7 +182,6 @@ class SpeakController extends GetxController {
     required String transcript,
     required int attemptNumber,
   }) async {
-    isLoading.value = true;
     try {
       final token = await authController.getIdToken();
       if (token == null) {
@@ -211,7 +238,7 @@ class SpeakController extends GetxController {
 
         // Optionally delay a bit to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
-        // await fetchReviewAudio();
+        await fetchReviewAudio();
         // Update UI with the tutor's feedback.
         feedbackMessage.value = data['feedbackMessage'];
 
@@ -220,16 +247,13 @@ class SpeakController extends GetxController {
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
       } else {
         print('Failed to submit review: ${response.statusCode}');
-        Get.snackbar("Error", "Failed to submit review.",
-            backgroundColor: const Color(0xFFFF0000),
-            colorText: const Color(0xFFFFFFFF));
+        Get.snackbar("Error", "Failed to submit audio.");
       }
     } catch (e) {
       print('Error submitting review: $e');
-      Get.snackbar("Error", "Something went wrong. Please try again.",
-          backgroundColor: const Color(0xFFFF0000),
-          colorText: const Color(0xFFFFFFFF));
+      Get.snackbar("Error", "Something went wrong. Please try again.");
     } finally {
+      // Now that we’re done uploading, let user record again
       isLoading.value = false;
     }
   }
@@ -267,12 +291,15 @@ class SpeakController extends GetxController {
 
   Future<void> _playAudioFromBytes(Uint8List bytes) async {
     try {
+      isAudioPlaying.value = true;
       final tempDir = await getTemporaryDirectory();
       final filePath = p.join(tempDir.path, 'review_audio.wav');
       final file = File(filePath);
       await file.writeAsBytes(bytes);
       await audioPlayer.play(DeviceFileSource(filePath));
+      // onPlayerComplete will set isAudioPlaying to false
     } catch (e) {
+      isAudioPlaying.value = false;
       print("Error playing audio from bytes: $e");
     }
   }

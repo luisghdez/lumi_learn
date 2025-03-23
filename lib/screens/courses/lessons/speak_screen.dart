@@ -1,6 +1,6 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Add this
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
@@ -45,14 +45,14 @@ class SpeakScreen extends StatelessWidget {
                 width: 200,
                 height: 200,
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white
-                        .withOpacity(0.1), // Simulated soft light background
-                    border: Border.all(color: Colors.white30, width: 2),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/astronaut/thinking.png'),
-                      fit: BoxFit.cover,
-                    )),
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.1),
+                  border: Border.all(color: Colors.white30, width: 2),
+                  image: const DecorationImage(
+                    image: AssetImage('assets/astronaut/thinking.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
             Obx(() => TypewriterSpeechBubbleMessage(
@@ -66,7 +66,6 @@ class SpeakScreen extends StatelessWidget {
                     // Optionally, do something when typing finishes.
                   },
                 )),
-
             const Spacer(),
 
             // Wrap each TermMasteryItem in an Obx so it rebuilds when the Rx changes
@@ -81,15 +80,21 @@ class SpeakScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
+            // The Record Button
             Center(
-              child: Obx(() => RecordButton(
-                    onStartRecording: speakController.startListening,
-                    onStopRecording: () {
-                      speakController.isLoading.value = true;
-                      speakController.stopListening();
-                    },
-                    isLoading: speakController.isLoading.value,
-                  )),
+              child: Obx(
+                () => RecordButton(
+                  onStartRecording: speakController.startListening,
+                  onStopRecording: () {
+                    speakController.isLoading.value = true;
+                    speakController.stopListening();
+                  },
+                  isLoading: speakController.isLoading.value,
+                  // disable if *either* audio is playing or isLoading
+                  isDisabled: speakController.isAudioPlaying.value ||
+                      speakController.isLoading.value,
+                ),
+              ),
             ),
           ],
         ),
@@ -103,11 +108,15 @@ class RecordButton extends StatefulWidget {
   final VoidCallback onStopRecording;
   final bool isLoading;
 
+  /// If true, user cannot press
+  final bool isDisabled;
+
   const RecordButton({
     Key? key,
     required this.onStartRecording,
     required this.onStopRecording,
     required this.isLoading,
+    required this.isDisabled,
   }) : super(key: key);
 
   @override
@@ -118,10 +127,10 @@ class _RecordButtonState extends State<RecordButton> {
   bool isRecording = false;
 
   void _toggleRecording() {
-    if (widget.isLoading) return; // Prevent toggling while loading.
+    // If disabled, do nothing.
+    if (widget.isDisabled) return;
 
     if (isRecording) {
-      // When stopping, call onStopRecording first to trigger the loading state.
       widget.onStopRecording();
       setState(() {
         isRecording = false;
@@ -136,59 +145,70 @@ class _RecordButtonState extends State<RecordButton> {
 
   @override
   Widget build(BuildContext context) {
+    // Visually fade out if disabled
+    final double opacityValue = widget.isDisabled ? 0.5 : 1.0;
+
     return GestureDetector(
       onTap: _toggleRecording,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.isLoading
-                  ? Colors.white.withOpacity(0.3)
-                  : isRecording
-                      ? Colors.redAccent.withOpacity(0.5)
-                      : Colors.white.withOpacity(0.9),
-            ),
-            child: widget.isLoading
-                ? const Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 4,
-                          valueColor: AlwaysStoppedAnimation<Color>(greyBorder),
+      child: Opacity(
+        opacity: opacityValue,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.isDisabled
+                    ? Colors.grey.withOpacity(0.3)
+                    : widget.isLoading
+                        ? Colors.white.withOpacity(0.3)
+                        : isRecording
+                            ? Colors.redAccent.withOpacity(0.5)
+                            : Colors.white.withOpacity(0.9),
+              ),
+              child: widget.isLoading
+                  ? const Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 4,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(greyBorder),
+                          ),
                         ),
-                      ),
-                      Icon(
-                        Icons.mic_outlined,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ],
-                  )
-                : Icon(
-                    isRecording ? Icons.mic_off : Icons.mic_outlined,
-                    color: isRecording ? Colors.white : Colors.black87,
-                    size: 28,
-                  ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.isLoading
-                ? "Loading..."
-                : (isRecording ? "Tap to stop" : "Tap to record"),
-            style: const TextStyle(
-              color: Color.fromARGB(129, 255, 255, 255),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+                        Icon(
+                          Icons.mic_outlined,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ],
+                    )
+                  : Icon(
+                      isRecording ? Icons.mic_off : Icons.mic_outlined,
+                      color: isRecording ? Colors.white : Colors.black87,
+                      size: 28,
+                    ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              widget.isDisabled
+                  ? ""
+                  : widget.isLoading
+                      ? "Loading..."
+                      : (isRecording ? "Tap to stop" : "Tap to record"),
+              style: const TextStyle(
+                color: Color.fromARGB(129, 255, 255, 255),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -336,7 +356,7 @@ class TypewriterSpeechBubbleMessage extends StatelessWidget {
     this.textStyle,
     this.speed = const Duration(milliseconds: 30),
     this.onFinished,
-    this.maxHeight = 200, // set your desired max height
+    this.maxHeight = 200,
   }) : super(key: key);
 
   @override
