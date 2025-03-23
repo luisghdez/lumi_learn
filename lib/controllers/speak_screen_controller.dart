@@ -78,7 +78,7 @@ class SpeakController extends GetxController {
   Future<void> playClosingAudio() async {
     try {
       isAudioPlaying.value = true;
-      await audioPlayer.play(AssetSource("sounds/mark_intro.mp3"));
+      await audioPlayer.play(AssetSource("sounds/mark_outro.mp3"));
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
