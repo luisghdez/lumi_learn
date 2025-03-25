@@ -80,10 +80,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
             children: [
               const SizedBox(height: 20),
               // Header Row: Title and Profile Avatar
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -106,7 +106,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       ),
                     ],
                   ),
-                  ProfileAvatar(onTap: _navigateToProfile),
                 ],
               ),
               const SizedBox(height: 20),

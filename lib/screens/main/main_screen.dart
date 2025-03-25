@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/home/home_screen.dart';
+import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 // import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart';
@@ -35,8 +36,8 @@ class MainScreen extends StatelessWidget {
                 index: navigationController.currentIndex.value,
                 children: [
                   HomeScreen(),
-                  const FriendsScreen(),
                   LeaderboardPage(),
+                  ProfileScreen(),
                 ],
               ),
             ),
