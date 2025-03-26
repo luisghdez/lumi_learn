@@ -42,7 +42,7 @@ class ProfileAvatar extends StatelessWidget {
             radius: 22,
             backgroundColor: Colors.grey.shade300,
             backgroundImage: profileImage != null
-                ? NetworkImage(profileImage)
+                ? AssetImage(profileImage)
                 : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
           ),
         ],

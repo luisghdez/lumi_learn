@@ -3,11 +3,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/leaderboard/widget/top_three_widget.dart';
 import 'package:lumi_learn_app/screens/leaderboard/components/leaderboard_list.dart';
 import 'package:lumi_learn_app/controllers/leaderboard_controller.dart';
-import 'package:lumi_learn_app/widgets/profile_avatar.dart';
 import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
-
-
-
 
 class LeaderboardPage extends StatelessWidget {
   final LeaderboardController controller = Get.put(LeaderboardController());
@@ -17,7 +13,7 @@ class LeaderboardPage extends StatelessWidget {
   void _navigateToProfile(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) =>  ProfileScreen()),
+      MaterialPageRoute(builder: (_) => ProfileScreen()),
     );
   }
 
@@ -25,57 +21,95 @@ class LeaderboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // Title
-              // Header Row: Title and Profile Avatar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Stack(
+        children: [
+          // 🌌 Galaxy Background (Fixed behind content)
+          Positioned.fill(
+            child: Column(
+              children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.45,
+                    child: Stack(
+                      children: [
+                        // 🌌 Galaxy Image
+                        Image.asset(
+                          'assets/galaxies/galaxy2.png',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                        // Gradient overlay
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [Colors.black, Colors.transparent],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+              ],
+            ),
+          ),
+
+          // 🧾 Scrollable Content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 20),
+
+                  // 🏆 Title Section (on top of galaxy)
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "Top Perfoemers",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                          height: 1.2,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Leaderboard",
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Top Performers",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Leaderboard",
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  ProfileAvatar(onTap: () => _navigateToProfile(context)),
+
+                  const SizedBox(height: 40),
+
+                  // 👑 Top 3 players
+                  TopThreeWidget(),
+
+                  const SizedBox(height: 12),
+
+                  // 📜 Full list
+                  LeaderboardList(),
+
+                  const SizedBox(height: 40),
                 ],
               ),
-
-              const SizedBox(height: 20),
-
-              // Top 3 Players
-              TopThreeWidget(),
-
-              const SizedBox(height: 5),
-
-              // Full Leaderboard List
-              Expanded(child: LeaderboardList()),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

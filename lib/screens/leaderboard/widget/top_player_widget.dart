@@ -24,7 +24,7 @@ class TopPlayerWidget extends StatelessWidget {
             
             CircleAvatar(
               radius: avatarSize / 2,
-              backgroundImage: NetworkImage(player.avatar),
+              backgroundImage: AssetImage(player.avatar),
             ),
 
             // **Position Badge**

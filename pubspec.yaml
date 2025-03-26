@@ -106,6 +106,7 @@ flutter:
     - assets/planets/
     - assets/backgrounds/
     - assets/sounds/
+    - assets/pfp/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

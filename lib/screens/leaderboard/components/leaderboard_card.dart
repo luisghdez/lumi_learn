@@ -42,7 +42,7 @@ class LeaderboardCard extends StatelessWidget {
               ),
               CircleAvatar(
                 radius: 23,
-                backgroundImage: NetworkImage(player.avatar),
+                backgroundImage: AssetImage(player.avatar),
               ),
             ],
           ),

@@ -1,11 +1,10 @@
-// screens/friends_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
-import 'package:lumi_learn_app/screens/social/widgets/friend_widget.dart';
-import 'package:lumi_learn_app/widgets/profile_avatar.dart';
-import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
+import 'package:lumi_learn_app/screens/social/widgets/friend_tile.dart';
+import 'package:lumi_learn_app/screens/social/components/search_bar.dart'
+    as Custom;
+import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart'; // Assuming this exists
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({Key? key}) : super(key: key);
@@ -27,7 +26,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     _fetchAllFriends();
   }
 
-  /// Fetch all friends from the service
   Future<void> _fetchAllFriends() async {
     setState(() => _isLoading = true);
     try {
@@ -40,7 +38,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
-  /// Search friends based on user query
   Future<void> _searchFriends(String query) async {
     setState(() {
       _isLoading = true;
@@ -61,163 +58,132 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
-  void _navigateToProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) =>  ProfileScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // BG set to black
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // Header Row: Title and Profile Avatar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Your",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                          height: 1.2,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Friends",
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ProfileAvatar(onTap: _navigateToProfile),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Search Bar
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF262626),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Color(0xFFB0B0B0)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: TextField(
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Search friends...',
-                          hintStyle: TextStyle(
-                            color: Color(0xFFB0B0B0),
-                            fontFamily: 'Inter',
-                          ),
-                          border: InputBorder.none,
-                        ),
-                        onChanged: (query) => _searchFriends(query),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Friend List
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.separated(
-                        itemCount: _friends.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final friend = _friends[index];
-                          return FriendTile(
-                            friend: friend,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      FriendProfile(friend: friend),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      // Floating action button for adding new friends
+      backgroundColor: Colors.black,
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFA099FF),
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () {
-          // Open modal to search for new friends or send a friend request
+          // Add friend logic
         },
       ),
-    );
-  }
-}
+      body: Stack(
+        children: [
+          // 🌌 Background image with gradient
+          Positioned.fill(
+            child: Column(
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.45,
+                  child: Stack(
+                    children: [
+                      Image.asset(
+                        'assets/galaxies/galaxy2.png',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [Colors.black, Colors.transparent],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-class FriendTile extends StatelessWidget {
-  final Friend friend;
-  final VoidCallback? onTap;
+          // ✅ TITLE (top left overlay)
+          const Positioned(
+            left: 20,
+            top: 82,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Your",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  "Friends",
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-  const FriendTile({
-    Key? key,
-    required this.friend,
-    this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: CircleAvatar(
-        backgroundImage: NetworkImage(friend.avatarUrl),
+          const SizedBox(height: 200),
+SafeArea(
+  child: CustomScrollView(
+    slivers: [
+      // 👇 Push content down to avoid overlap with "Your Profile"
+      const SliverToBoxAdapter(
+        child: SizedBox(height: 160),
       ),
-      title: Text(
-        friend.name,
-        style: const TextStyle(
-          color: Colors.white,
-          fontFamily: 'Inter',
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+
+      // 🔍 Search bar
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Custom.SearchBar(
+            onChanged: (query) => _searchFriends(query),
+          ),
         ),
       ),
-      trailing: Text(
-        '${friend.points} pts',
-        style: const TextStyle(
-          color: Color(0xFFB4B2FF),
-          fontFamily: 'Inter',
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+      // 👥 Friends list or loading
+      if (_isLoading)
+        const SliverFillRemaining(
+          child: Center(child: CircularProgressIndicator()),
+        )
+      else
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final friend = _friends[index];
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                child: FriendTile(
+                  friend: friend,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FriendProfile(friend: friend),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            childCount: _friends.length,
+          ),
         ),
+
+      const SliverToBoxAdapter(child: SizedBox(height: 100)),
+    ],
+  ),
+),
+        ],
       ),
     );
   }

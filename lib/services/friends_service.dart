@@ -12,7 +12,7 @@ class FriendsService {
       Friend(
         id: '1',
         name: 'Kathryn',
-        avatarUrl: 'https://placehold.co/50x50',
+        avatarUrl: 'assets/pfp/pfp2.png',
         points: 150,
         dayStreak: 3,
         totalXP: 1771,
@@ -24,7 +24,7 @@ class FriendsService {
       Friend(
         id: '2',
         name: 'Jacob',
-        avatarUrl: 'https://placehold.co/50x50',
+        avatarUrl:  'assets/pfp/pfp3.png',
         points: 200,
         dayStreak: 1,
         totalXP: 2033,
@@ -36,7 +36,7 @@ class FriendsService {
       Friend(
         id: '3',
         name: 'Jane',
-        avatarUrl: 'https://placehold.co/50x50',
+        avatarUrl: 'assets/pfp/pfp4.png',
         points: 175,
         dayStreak: 5,
         totalXP: 1500,

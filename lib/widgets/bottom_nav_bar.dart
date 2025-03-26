@@ -64,12 +64,12 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                       label: Constants.home,
                     ),
                     BottomNavigationBarItem(
-                      icon: Icon(Icons.group),
-                      label: Constants.social,
-                    ),
-                    BottomNavigationBarItem(
                       icon: Icon(Icons.emoji_events), // Leaderboard (Trophy)
                       label: Constants.leaderboard,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.person), // Leaderboard (Trophy)
+                      label: Constants.profile,
                     ),
                   ],
                   selectedItemColor: Colors.white,
