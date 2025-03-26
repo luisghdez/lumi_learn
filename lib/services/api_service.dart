@@ -5,12 +5,11 @@ import 'package:http_parser/http_parser.dart'; // For MediaType
 import 'package:mime/mime.dart'; // For lookupMimeType
 import 'package:path/path.dart' as p;
 import 'dart:io';
-import 'dart:convert';
 import 'package:lumi_learn_app/models/leaderboard_model.dart';
-
 
 class ApiService {
   static const String _baseUrl = 'http://localhost:3000';
+  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,
@@ -80,11 +79,12 @@ class ApiService {
       },
     );
   }
-  
+
 //leaderboard future
 
   static Future<List<Player>> fetchLeaderboard() async {
-    final response = await http.get(Uri.parse('https://api.example.com/leaderboard'));
+    final response =
+        await http.get(Uri.parse('https://api.example.com/leaderboard'));
 
     if (response.statusCode == 200) {
       List<dynamic> jsonData = json.decode(response.body);
