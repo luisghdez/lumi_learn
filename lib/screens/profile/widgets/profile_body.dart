@@ -52,7 +52,7 @@ class _ProfileBodyState extends State<ProfileBody> {
       children: [
         // Main content area
         SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 16, right: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 40),
           child: Column(
             children: [
               // PFP Viewer
