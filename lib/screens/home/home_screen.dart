@@ -31,8 +31,10 @@ class HomeScreen extends StatelessWidget {
 
           // 📜 Scrollable content (padding top to make space for header)
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 16, bottom: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

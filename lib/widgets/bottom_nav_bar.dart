@@ -13,15 +13,12 @@ class BottomNavbar extends StatefulWidget {
 
 class _HideableNavBarPageState extends State<BottomNavbar> {
   final NavigationController navigationController = Get.find();
-  
+
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0), // Adjust bottom padding
-        child: _buildAnimatedNavBar(),
-      ),
+      child: _buildAnimatedNavBar(),
     );
   }
 
@@ -32,52 +29,56 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
       return AnimatedSlide(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        offset: navigationController.isNavBarVisible.value ? Offset.zero : const Offset(0, 1),
+        offset: navigationController.isNavBarVisible.value
+            ? Offset.zero
+            : const Offset(0, 1),
         child: SafeArea(
           bottom: true,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            width: MediaQuery.of(context).size.width * .95,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: SizedBox(
-                height: 65, // Controlled height to avoid overflow
-                child: BottomNavigationBar(
-                  currentIndex: currentIndex,
-                  backgroundColor: Colors.grey[900],
-                  onTap: (index) {
-                    navigationController.updateIndex(index); // Updated index
-                  },
-                  items: const [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.home),
-                      label: Constants.home,
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.emoji_events), // Leaderboard (Trophy)
-                      label: Constants.leaderboard,
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.person), // Leaderboard (Trophy)
-                      label: Constants.profile,
-                    ),
-                  ],
-                  selectedItemColor: Colors.white,
-                  unselectedItemColor: Colors.grey,
-                  showUnselectedLabels: false,
-                  showSelectedLabels: false,
-                  iconSize: 28,
-                  type: BottomNavigationBarType.fixed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: SizedBox(
+                  height: 65, // Controlled height to avoid overflow
+                  child: BottomNavigationBar(
+                    currentIndex: currentIndex,
+                    backgroundColor: Colors.grey[900],
+                    onTap: (index) {
+                      navigationController.updateIndex(index); // Updated index
+                    },
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.home),
+                        label: Constants.home,
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.emoji_events), // Leaderboard (Trophy)
+                        label: Constants.leaderboard,
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.person), // Leaderboard (Trophy)
+                        label: Constants.profile,
+                      ),
+                    ],
+                    selectedItemColor: Colors.white,
+                    unselectedItemColor: Colors.grey,
+                    showUnselectedLabels: false,
+                    showSelectedLabels: false,
+                    iconSize: 28,
+                    type: BottomNavigationBarType.fixed,
+                  ),
                 ),
               ),
             ),

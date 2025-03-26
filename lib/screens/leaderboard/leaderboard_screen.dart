@@ -57,15 +57,16 @@ class LeaderboardPage extends StatelessWidget {
 
           // 🧾 Scrollable Content
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // 🏆 Title Section (on top of galaxy)
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
@@ -76,12 +77,12 @@ class LeaderboardPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,
-                              color: Colors.white,
+                              color: Colors.white.withOpacity(0.8),
                               letterSpacing: -0.5,
                             ),
                           ),
                           SizedBox(height: 5),
-                          Text(
+                          const Text(
                             "Leaderboard",
                             style: TextStyle(
                               fontSize: 28,
