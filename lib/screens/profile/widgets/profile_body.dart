@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
 import '../components/xp_chart_box.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
-import 'package:lumi_learn_app/screens/home/home_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 
@@ -52,7 +52,7 @@ class _ProfileBodyState extends State<ProfileBody> {
       children: [
         // Main content area
         SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16),
           child: Column(
             children: [
               // PFP Viewer
@@ -80,11 +80,10 @@ class _ProfileBodyState extends State<ProfileBody> {
                             decoration: BoxDecoration(
                               color: const Color(0xFF1A1A1A),
                               borderRadius: BorderRadius.circular(20),
-                              border:
-                                  Border.all(color: Colors.white24, width: 0.8),
+                              border: Border.all(color: greyBorder, width: 0.8),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20, horizontal: 16),
+                            padding: const EdgeInsets.only(
+                                top: 16, left: 16, right: 16),
                             child: Column(
                               children: [
                                 Obx(() => Text(
@@ -105,11 +104,6 @@ class _ProfileBodyState extends State<ProfileBody> {
                                       style: const TextStyle(
                                           color: Colors.grey, fontSize: 14),
                                     )),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16),
-                                  child: Divider(
-                                      color: Colors.white24, thickness: 1),
-                                ),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
@@ -120,25 +114,23 @@ class _ProfileBodyState extends State<ProfileBody> {
                                             .updateIndex(0); // Go to HomeScreen
                                       },
                                       child: const InfoStatCard(
-                                        icon: Icons.public,
                                         label: 'Courses',
-                                        value: '+5',
+                                        value: '5',
                                         background: false,
                                       ),
                                     ),
-                                    const VerticalDivider(
-                                      color: Colors.white24,
-                                      thickness: 1,
-                                      width: 20,
-                                      indent: 10,
-                                      endIndent: 10,
+                                    const SizedBox(
+                                      height: 60,
+                                      child: VerticalDivider(
+                                        color: greyBorder,
+                                        thickness: 1,
+                                      ),
                                     ),
                                     GestureDetector(
                                       onTap: () {
                                         Get.to(() => const FriendsScreen());
                                       },
                                       child: const InfoStatCard(
-                                        icon: Icons.people,
                                         label: 'Friends',
                                         value: '3',
                                         background: false,

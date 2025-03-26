@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+
+import 'package:lumi_learn_app/constants.dart';
 
 class XPChartBox extends StatelessWidget {
   const XPChartBox({super.key});
@@ -11,9 +12,9 @@ class XPChartBox extends StatelessWidget {
       height: 180,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.15),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white24, width: 0.8),
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: greyBorder, width: 0.8),
       ),
       child: CustomPaint(
         painter: _XPChartPainter(),
