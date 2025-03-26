@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class GalaxyHeader extends StatelessWidget {
 
-  const GalaxyHeader({super.key});
+  const GalaxyHeader({super.key, required Padding child});
 
 
   @override
@@ -30,7 +30,7 @@ class GalaxyHeader extends StatelessWidget {
             ),
           ),
 
-          // ✅ TITLE (bottom left)
+          // ✅ TITLE (TOP left)
           const Positioned(
             left: 20,
             top: 82,
@@ -38,7 +38,7 @@ class GalaxyHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Welcome Back",
+                  "Your",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w400,

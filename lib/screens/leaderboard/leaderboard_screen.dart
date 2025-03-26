@@ -27,30 +27,30 @@ class LeaderboardPage extends StatelessWidget {
           Positioned.fill(
             child: Column(
               children: [
-                SizedBox(
-                  height: 340,
-                  width: double.infinity,
-                  child: Stack(
-                    children: [
-                      Image.asset(
-                        'assets/galaxies/galaxy2.png',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                      Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [Colors.black, Colors.transparent],
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.45,
+                    child: Stack(
+                      children: [
+                        // 🌌 Galaxy Image
+                        Image.asset(
+                          'assets/galaxies/galaxy2.png',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                        // Gradient overlay
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [Colors.black, Colors.transparent],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(child: Container(color: Colors.black)),
+                      ],
+                    ),
+                  )
               ],
             ),
           ),

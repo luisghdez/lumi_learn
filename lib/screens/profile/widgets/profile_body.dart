@@ -6,19 +6,25 @@ import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
 import '../components/xp_chart_box.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
+import 'package:lumi_learn_app/screens/home/home_screen.dart';
+import 'package:lumi_learn_app/screens/social/friends_screen.dart';
+import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 
 class ProfileBody extends StatefulWidget {
   final bool isEditingPfp;
   final Function(bool) onEditModeChange;
+  final NavigationController navController;
 
   const ProfileBody({
     super.key,
     required this.isEditingPfp,
     required this.onEditModeChange,
+    required this.navController,
   });
 
   @override
   State<ProfileBody> createState() => _ProfileBodyState();
+  
 }
 
 class _ProfileBodyState extends State<ProfileBody> {
@@ -42,6 +48,7 @@ class _ProfileBodyState extends State<ProfileBody> {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
+
 
     return Stack(
       children: [
@@ -106,22 +113,40 @@ class _ProfileBodyState extends State<ProfileBody> {
                                   child: Divider(
                                       color: Colors.white24, thickness: 1),
                                 ),
-                                const Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    InfoStatCard(
-                                        icon: Icons.public,
-                                        label: 'Courses',
-                                        value: '+5',
-                                        background: false),
-                                    InfoStatCard(
-                                        icon: Icons.people,
-                                        label: 'Friends',
-                                        value: '3',
-                                        background: false),
-                                  ],
-                                )
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              widget.navController.updateIndex(0); // Go to HomeScreen
+                                            },
+                                            child: const InfoStatCard(
+                                              icon: Icons.public,
+                                              label: 'Courses',
+                                              value: '+5',
+                                              background: false,
+                                            ),
+                                          ),
+                                          const VerticalDivider(
+                                            color: Colors.white24,
+                                            thickness: 1,
+                                            width: 20,
+                                            indent: 10,
+                                            endIndent: 10,
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              Get.to(() => const FriendsScreen());
+                                            },
+                                            child: const InfoStatCard(
+                                              icon: Icons.people,
+                                              label: 'Friends',
+                                              value: '3',
+                                              background: false,
+                                            ),
+                                          ),
+                                        ],
+                                      )
                               ],
                             ),
                           ),

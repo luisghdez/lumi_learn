@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/profile/widgets/profile_body.dart';
 import 'package:lumi_learn_app/screens/profile/widgets/galaxy_header.dart';
+import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,6 +23,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+  final navController = Get.find<NavigationController>();
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -28,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ProfileBody(
             isEditingPfp: isEditingPfp,
             onEditModeChange: handleEditModeChange,
+            navController: navController,
           ),
         ],
       ),

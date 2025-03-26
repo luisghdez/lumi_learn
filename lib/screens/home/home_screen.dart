@@ -23,7 +23,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌌 Galaxy background
           const Positioned(
             top: 0,
             left: 0,
