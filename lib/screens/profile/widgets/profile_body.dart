@@ -24,7 +24,6 @@ class ProfileBody extends StatefulWidget {
 
   @override
   State<ProfileBody> createState() => _ProfileBodyState();
-  
 }
 
 class _ProfileBodyState extends State<ProfileBody> {
@@ -49,15 +48,13 @@ class _ProfileBodyState extends State<ProfileBody> {
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
 
-
     return Stack(
       children: [
         // Main content area
         SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 0, left: 20, right: 20),
+          padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
           child: Column(
             children: [
-              const SizedBox(height: 40),
               // PFP Viewer
               Center(
                 child: PfpViewer(
@@ -83,8 +80,8 @@ class _ProfileBodyState extends State<ProfileBody> {
                             decoration: BoxDecoration(
                               color: const Color(0xFF1A1A1A),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                  color: Colors.white24, width: 0.8),
+                              border:
+                                  Border.all(color: Colors.white24, width: 0.8),
                             ),
                             padding: const EdgeInsets.symmetric(
                                 vertical: 20, horizontal: 16),
@@ -113,40 +110,42 @@ class _ProfileBodyState extends State<ProfileBody> {
                                   child: Divider(
                                       color: Colors.white24, thickness: 1),
                                 ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {
-                                              widget.navController.updateIndex(0); // Go to HomeScreen
-                                            },
-                                            child: const InfoStatCard(
-                                              icon: Icons.public,
-                                              label: 'Courses',
-                                              value: '+5',
-                                              background: false,
-                                            ),
-                                          ),
-                                          const VerticalDivider(
-                                            color: Colors.white24,
-                                            thickness: 1,
-                                            width: 20,
-                                            indent: 10,
-                                            endIndent: 10,
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              Get.to(() => const FriendsScreen());
-                                            },
-                                            child: const InfoStatCard(
-                                              icon: Icons.people,
-                                              label: 'Friends',
-                                              value: '3',
-                                              background: false,
-                                            ),
-                                          ),
-                                        ],
-                                      )
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        widget.navController
+                                            .updateIndex(0); // Go to HomeScreen
+                                      },
+                                      child: const InfoStatCard(
+                                        icon: Icons.public,
+                                        label: 'Courses',
+                                        value: '+5',
+                                        background: false,
+                                      ),
+                                    ),
+                                    const VerticalDivider(
+                                      color: Colors.white24,
+                                      thickness: 1,
+                                      width: 20,
+                                      indent: 10,
+                                      endIndent: 10,
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Get.to(() => const FriendsScreen());
+                                      },
+                                      child: const InfoStatCard(
+                                        icon: Icons.people,
+                                        label: 'Friends',
+                                        value: '3',
+                                        background: false,
+                                      ),
+                                    ),
+                                  ],
+                                )
                               ],
                             ),
                           ),
@@ -211,25 +210,27 @@ class _ProfileBodyState extends State<ProfileBody> {
         ),
 
         // ✅ Settings Button
-        Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 82, right: 18),
-            child: AbsorbPointer(
-              absorbing: widget.isEditingPfp,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SettingsScreen(),
-                    ),
-                  );
-                },
-                child: Icon(
-                  Icons.settings,
-                  color: widget.isEditingPfp ? Colors.grey : Colors.white,
-                  size: 28,
+        SafeArea(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 0, right: 16),
+              child: AbsorbPointer(
+                absorbing: widget.isEditingPfp,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SettingsScreen(),
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    Icons.settings,
+                    color: widget.isEditingPfp ? Colors.grey : Colors.white,
+                    size: 28,
+                  ),
                 ),
               ),
             ),

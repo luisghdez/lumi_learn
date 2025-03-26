@@ -27,30 +27,30 @@ class LeaderboardPage extends StatelessWidget {
           Positioned.fill(
             child: Column(
               children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.45,
-                    child: Stack(
-                      children: [
-                        // 🌌 Galaxy Image
-                        Image.asset(
-                          'assets/galaxies/galaxy2.png',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                        // Gradient overlay
-                        Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [Colors.black, Colors.transparent],
-                            ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.45,
+                  child: Stack(
+                    children: [
+                      // 🌌 Galaxy Image
+                      Image.asset(
+                        'assets/galaxies/galaxy2.png',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                      // Gradient overlay
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [Colors.black, Colors.transparent],
                           ),
                         ),
-                      ],
-                    ),
-                  )
+                      ),
+                    ],
+                  ),
+                )
               ],
             ),
           ),
@@ -74,19 +74,21 @@ class LeaderboardPage extends StatelessWidget {
                           Text(
                             "Top Performers",
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.w400,
                               color: Colors.white,
-                              height: 1.2,
+                              letterSpacing: -0.5,
                             ),
                           ),
                           SizedBox(height: 5),
                           Text(
                             "Leaderboard",
                             style: TextStyle(
-                              fontSize: 36,
+                              fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
+                              height: 0.9,
+                              letterSpacing: -1,
                             ),
                           ),
                         ],

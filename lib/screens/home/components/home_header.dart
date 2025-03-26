@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class HomeHeader extends StatelessWidget {
   final String userName;
 
@@ -11,21 +10,24 @@ class HomeHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Welcome',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w400,
-            color: Colors.white,
+            color: Colors.white.withOpacity(0.8),
+            letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          userName,
+          userName.length > 15 ? '${userName.substring(0, 15)}-' : userName,
           style: const TextStyle(
-            fontSize: 36,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            height: 0.9,
+            letterSpacing: -1,
           ),
         ),
       ],
