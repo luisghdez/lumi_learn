@@ -13,7 +13,6 @@ import 'package:lumi_learn_app/screens/home/widget/galaxybg.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
-  
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
@@ -29,7 +28,6 @@ class HomeScreen extends StatelessWidget {
             right: 0,
             child: GalaxyHeader(),
           ),
-
 
           // 📜 Scrollable content (padding top to make space for header)
           SafeArea(

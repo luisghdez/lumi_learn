@@ -25,8 +25,6 @@
 //   }
 // }
 
-
-
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/leaderboard_model.dart';
 
@@ -48,11 +46,11 @@ class LeaderboardController extends GetxController {
       await Future.delayed(Duration(seconds: 1)); // Simulate network delay
 
       leaderboard.value = [
-        Player(name: "Sam", points: 542, avatar: "https://placehold.co/100x100"),
-        Player(name: "Tig", points: 450, avatar: "https://placehold.co/100x100"),
-        Player(name: "Nick", points: 312, avatar: "https://placehold.co/100x100"),
-        Player(name: "You", points: 275, avatar: "https://placehold.co/100x100"),
-        Player(name: "Gr", points: 290, avatar: "https://placehold.co/100x100"),
+        Player(name: "Sam", points: 542, avatar: ""),
+        Player(name: "Tig", points: 450, avatar: ""),
+        Player(name: "Nick", points: 312, avatar: ""),
+        Player(name: "You", points: 275, avatar: ""),
+        Player(name: "Gr", points: 290, avatar: ""),
       ];
     } catch (e) {
       print("Error fetching leaderboard: $e");
