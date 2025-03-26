@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class PfpViewer extends StatefulWidget {
   final double offsetUp;
   final bool isEditing;
@@ -50,12 +51,13 @@ class _PfpViewerState extends State<PfpViewer> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Image.asset(avatars[currentIndex], height: 250),
+            Image.asset(avatars[currentIndex], height: 350),
             if (widget.isEditing)
               Positioned(
                 left: 10,
                 child: IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Colors.white, size: 32),
+                  icon: const Icon(Icons.chevron_left,
+                      color: Colors.white, size: 32),
                   onPressed: _prev,
                 ),
               ),
@@ -63,7 +65,8 @@ class _PfpViewerState extends State<PfpViewer> {
               Positioned(
                 right: 10,
                 child: IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Colors.white, size: 32),
+                  icon: const Icon(Icons.chevron_right,
+                      color: Colors.white, size: 32),
                   onPressed: _next,
                 ),
               ),

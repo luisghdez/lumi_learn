@@ -58,7 +58,7 @@ class _ProfileBodyState extends State<ProfileBody> {
               // PFP Viewer
               Center(
                 child: PfpViewer(
-                  offsetUp: -90,
+                  offsetUp: -120,
                   isEditing: widget.isEditingPfp,
                   onEditModeChange: toggleEditMode,
                 ),
@@ -68,7 +68,7 @@ class _ProfileBodyState extends State<ProfileBody> {
               AnimatedPadding(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOut,
-                padding: EdgeInsets.only(top: widget.isEditingPfp ? 120 : 20),
+                padding: EdgeInsets.only(top: widget.isEditingPfp ? 120 : 0),
                 child: Stack(
                   children: [
                     IgnorePointer(
@@ -92,8 +92,9 @@ class _ProfileBodyState extends State<ProfileBody> {
                                           'error',
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w300,
+                                        letterSpacing: -1,
                                       ),
                                     )),
                                 const SizedBox(height: 4),
