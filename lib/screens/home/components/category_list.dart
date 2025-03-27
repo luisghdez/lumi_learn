@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'category_card.dart';
 import 'package:crypto/crypto.dart';
@@ -34,6 +35,20 @@ class CategoryList extends StatelessWidget {
                 // Set the selected course ID in the controller.
                 courseController.setSelectedCourseId(
                     course['id'], course['title']);
+
+                Get.to(
+                  () => LoadingScreen(),
+                  transition: Transition.fadeIn,
+                  duration: const Duration(milliseconds: 500),
+                );
+                await Future.wait([
+                  Future.delayed(const Duration(milliseconds: 1000)),
+                  precacheImage(
+                    const AssetImage('assets/images/milky_way.png'),
+                    context,
+                  ),
+                ]);
+
                 while (courseController.isLoading.value) {
                   await Future.delayed(const Duration(milliseconds: 100));
                 }
