@@ -169,15 +169,19 @@ class _ProfileBodyState extends State<ProfileBody> {
 
                           const Row(
                             children: [
-                              InfoStatCard(
-                                  icon: Icons.rocket_launch,
-                                  label: 'Day streak',
-                                  value: '6'),
+                              Expanded(
+                                child: InfoStatCard(
+                                    icon: Icons.rocket_launch,
+                                    label: 'Day streak',
+                                    value: '6'),
+                              ),
                               SizedBox(width: 16),
-                              InfoStatCard(
-                                  icon: Icons.star,
-                                  label: 'Total Stars',
-                                  value: '1525'),
+                              Expanded(
+                                child: InfoStatCard(
+                                    icon: Icons.star,
+                                    label: 'Total Stars',
+                                    value: '1525'),
+                              ),
                             ],
                           ),
 
