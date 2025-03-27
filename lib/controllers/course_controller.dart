@@ -524,18 +524,18 @@ class CourseController extends GetxController {
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.shade700,
+              color: const Color.fromARGB(255, 26, 26, 26),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.close_rounded, color: Colors.white, size: 30),
-                    SizedBox(width: 8),
-                    Text(
+                    Icon(Icons.cancel, color: Colors.red.shade900, size: 30),
+                    const SizedBox(width: 8),
+                    const Text(
                       'Incorrect',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -568,36 +568,40 @@ class CourseController extends GetxController {
                 ),
                 const SizedBox(height: 10),
                 Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.shade900,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                  // widthFactor: double.infinity,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red.shade900,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
-                    ),
-                    onPressed: () {
-                      Get.back(); // Close the dialog
+                      onPressed: () {
+                        Get.back(); // Close the dialog
 
-                      int index = computedQuestions.indexOf(question);
-                      if (index != -1) {
-                        final endSectionIndex =
-                            computedQuestions.lastIndexWhere(
-                          (q) =>
-                              q.lessonType == LessonType.speakAll ||
-                              q.lessonType == LessonType.writeAll,
-                        );
+                        int index = computedQuestions.indexOf(question);
+                        if (index != -1) {
+                          final endSectionIndex =
+                              computedQuestions.lastIndexWhere(
+                            (q) =>
+                                q.lessonType == LessonType.speakAll ||
+                                q.lessonType == LessonType.writeAll,
+                          );
 
-                        if (endSectionIndex != -1) {
-                          computedQuestions.insert(endSectionIndex, question);
-                        } else {
-                          computedQuestions.add(question);
+                          if (endSectionIndex != -1) {
+                            computedQuestions.insert(endSectionIndex, question);
+                          } else {
+                            computedQuestions.add(question);
+                          }
                         }
-                      }
-                      nextQuestion();
-                    },
-                    child: const Text('NEXT QUESTION'),
+
+                        nextQuestion();
+                      },
+                      child: const Text('GOT IT!'),
+                    ),
                   ),
                 ),
               ],
