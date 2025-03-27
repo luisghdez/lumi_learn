@@ -25,6 +25,7 @@ class CourseOverviewScreen extends StatefulWidget {
 
 class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final CourseController courseController = Get.find();
+  final ScrollController _scrollController = ScrollController();
 
   bool _isPanelVisible = false;
   int? _selectedLessonIndex;
@@ -42,6 +43,41 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final List<Offset> _lessonCenters = [];
 
   double _glowOpacity = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Schedule the auto-scroll after the first frame is rendered.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final lessons = courseController.lessons;
+      int lastCompletedIndex = -1;
+      for (int i = 0; i < lessons.length; i++) {
+        if (lessons[i]['completed'] == true) {
+          lastCompletedIndex = i;
+        }
+      }
+      int nextLessonIndex = lastCompletedIndex + 1;
+
+      // Define the planet size as used in your layout.
+      const double planetSize = 100.0;
+
+      // Calculate the center of the next lesson planet.
+      double planetCenterX = nextLessonIndex * 200.0 + planetSize / 2;
+
+      // Get the screen width.
+      double screenWidth = MediaQuery.of(context).size.width;
+
+      // Adjust the target offset so that the planet's center is aligned in the middle.
+      double targetOffset = planetCenterX - screenWidth / 2;
+
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +117,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
             children: [
               // 1) Scrollable horizontal region
               SingleChildScrollView(
+                controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: totalWidth,
