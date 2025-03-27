@@ -47,7 +47,6 @@ class _LessonResultScreenState extends State<LessonResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: const Color.fromARGB(255, 12, 12, 12),
       body: Stack(
         children: [
           // Bottom layer: half-screen background with gradient
@@ -72,7 +71,7 @@ class _LessonResultScreenState extends State<LessonResultScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Color.fromARGB(255, 12, 12, 12),
+                          Color.fromARGB(255, 0, 0, 0),
                         ],
                       ),
                     ),
@@ -87,7 +86,7 @@ class _LessonResultScreenState extends State<LessonResultScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Victory',
+                  'Great Job',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,

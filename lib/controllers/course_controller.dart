@@ -624,4 +624,45 @@ class CourseController extends GetxController {
   void playLessonCompleteSound() async {
     await _audioPlayer.play(AssetSource('sounds/lesson_complete.wav'));
   }
+
+  Future<void> fadeInWriteLessonSound(
+      {Duration fadeDuration = const Duration(seconds: 2)}) async {
+    // Start the sound with volume 0
+    await _audioPlayer.setVolume(0.0);
+    // Play the writing lesson music (ensure looping if desired)
+    await _audioPlayer.play(AssetSource('sounds/writing_lesson_music.wav'));
+
+    // Gradually increase the volume to 1.0
+    const int steps = 20;
+    double stepVolume = 1.0 / steps;
+    Duration stepDuration =
+        Duration(milliseconds: fadeDuration.inMilliseconds ~/ steps);
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(stepDuration);
+      double newVolume = stepVolume * (i + 1);
+      await _audioPlayer.setVolume(newVolume);
+    }
+    await _audioPlayer.setVolume(1.0);
+  }
+
+  Future<void> fadeOutWriteLessonSound(
+      {Duration fadeDuration = const Duration(seconds: 2)}) async {
+    // Gradually decrease the volume from the current value (assumed 1.0) to 0
+    const int steps = 20;
+    double stepVolume = 1.0 / steps;
+    Duration stepDuration =
+        Duration(milliseconds: fadeDuration.inMilliseconds ~/ steps);
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(stepDuration);
+      double newVolume = 1.0 - stepVolume * (i + 1);
+      if (newVolume < 0) newVolume = 0;
+      await _audioPlayer.setVolume(newVolume);
+    }
+    // Stop the writing lesson sound
+    await _audioPlayer.stop();
+    // Reset the volume back to full for subsequent sounds
+    await _audioPlayer.setVolume(1.0);
+  }
 }
