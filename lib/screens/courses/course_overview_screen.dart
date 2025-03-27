@@ -363,7 +363,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
               // 5) Top Header
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: CourseOverviewHeader(
                   onBack: () => Get.offAll(
                     () => MainScreen(),
@@ -371,6 +371,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                     duration: const Duration(milliseconds: 500),
                   ),
                   courseTitle: "${courseController.selectedCourseTitle}",
+                  progress: 0.3,
+                  onViewFlashcards: Get.back,
                 ),
               ),
             ],
