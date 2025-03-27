@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NextButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // Made nullable
 
   const NextButton({
     Key? key,
@@ -15,7 +15,7 @@ class NextButton extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: onPressed,
+          onPressed: onPressed, // If onPressed is null, button is disabled
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 18),

@@ -121,8 +121,14 @@ class FillInBlankScreen extends StatelessWidget {
               ),
             ),
           ),
-          NextButton(
-            onPressed: () => _submitAnswer(context),
+          // Wrap the NextButton with ValueListenableBuilder
+          ValueListenableBuilder<int>(
+            valueListenable: _selectedOption,
+            builder: (context, selected, _) {
+              return NextButton(
+                onPressed: selected != -1 ? () => _submitAnswer(context) : null,
+              );
+            },
           ),
         ],
       ),

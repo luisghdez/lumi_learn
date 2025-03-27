@@ -105,8 +105,15 @@ class MultipleChoiceScreen extends StatelessWidget {
                       selectedOption: _selectedOption,
                     ),
                   ),
-                  NextButton(
-                    onPressed: () => _submitAnswer(context),
+                  // Wrap the NextButton with a ValueListenableBuilder
+                  ValueListenableBuilder<int>(
+                    valueListenable: _selectedOption,
+                    builder: (context, value, child) {
+                      return NextButton(
+                        onPressed:
+                            value != -1 ? () => _submitAnswer(context) : null,
+                      );
+                    },
                   ),
                 ],
               ),
