@@ -2,17 +2,16 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 
 class FlashcardScreen extends StatefulWidget {
-  final Question question;
-  final String backgroundImage;
+  final List<Flashcard> flashcards;
 
   const FlashcardScreen({
     Key? key,
-    required this.question,
-    required this.backgroundImage,
+    required this.flashcards,
   }) : super(key: key);
 
   @override
@@ -24,8 +23,6 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   int currentIndex = 0;
 
-  List<Flashcard> get flashcards => widget.question.flashcards;
-
   void _moveToPreviousCard() {
     setState(() {
       if (currentIndex > 0) {
@@ -36,7 +33,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   void _moveToNextCard() {
     setState(() {
-      if (currentIndex < flashcards.length - 1) {
+      if (currentIndex < widget.flashcards.length - 1) {
         currentIndex++;
       } else {
         courseController.nextQuestion();
@@ -46,88 +43,60 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentFlashcard = flashcards[currentIndex];
+    final currentFlashcard = widget.flashcards[currentIndex];
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       body: SafeArea(
         top: false,
         bottom: false,
-        child: Stack(
+        child: Column(
           children: [
-            // 1) Background image
-            Positioned.fill(
-              child: Image.asset(
-                widget.backgroundImage,
-                fit: BoxFit.fitHeight,
-              ),
-            ),
-
-            // 2) Gradient overlay
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.center,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Color.fromARGB(255, 12, 12, 12),
-                    ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(
+                  child: FlashcardWidget(
+                    key: ValueKey(currentFlashcard),
+                    flashcard: currentFlashcard,
                   ),
                 ),
               ),
             ),
-
-            // 3) Main UI content on top
-            Column(
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'Tap the card to flip',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w200,
+                    color: Colors.white),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Center(
-                      child: FlashcardWidget(
-                        key: ValueKey(currentFlashcard),
-                        flashcard: currentFlashcard,
-                      ),
-                    ),
-                  ),
+                IconButton(
+                  onPressed: _moveToPreviousCard,
+                  icon: const Icon(Icons.navigate_before),
+                  color: Colors.white,
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    'Tap the card to flip',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w200,
-                        color: Colors.white),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      onPressed: _moveToPreviousCard,
-                      icon: const Icon(Icons.navigate_before),
+                // Display current flashcard count
+                Text(
+                  '${currentIndex + 1}/${widget.flashcards.length}',
+                  style: const TextStyle(
                       color: Colors.white,
-                    ),
-                    // Display current flashcard count
-                    Text(
-                      '${currentIndex + 1}/${flashcards.length}',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w200),
-                    ),
-                    IconButton(
-                      onPressed: _moveToNextCard,
-                      icon: const Icon(Icons.navigate_next),
-                      color: Colors.white,
-                    ),
-                  ],
+                      fontSize: 16,
+                      fontWeight: FontWeight.w200),
                 ),
-                const SizedBox(height: 30),
+                IconButton(
+                  onPressed: _moveToNextCard,
+                  icon: const Icon(Icons.navigate_next),
+                  color: Colors.white,
+                ),
               ],
             ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -255,7 +224,8 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             Container(
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: greyBorder, width: 1),
               ),
               padding: const EdgeInsets.all(24.0),
               child: Center(child: child),

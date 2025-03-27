@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/fill_in_blank_screen.dart';
-import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/match_terms_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/type_in_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/lesson_progress_bar.dart';
-import 'lesson_result_screen.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 
 class LessonScreenMain extends StatelessWidget {
@@ -67,12 +65,6 @@ class LessonScreenMain extends StatelessWidget {
           questionWidget = MatchTerms(
             question: currentQuestion,
             // You can add onSubmitAnswer if needed.
-          );
-          break;
-        case LessonType.flashcards:
-          questionWidget = FlashcardScreen(
-            question: currentQuestion,
-            backgroundImage: backgroundImage ?? '',
           );
           break;
         default:

@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
+import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
@@ -96,6 +98,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       final lessons = courseController.lessons;
       final lessonCount = lessons.length;
       final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
+      int completedCount =
+          lessons.where((lesson) => lesson['completed'] == true).length;
+      double progress = lessonCount == 0 ? 0 : completedCount / lessonCount;
 
       Planet? previousPlanet;
 
@@ -108,6 +113,14 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       }
       // The next lesson is right after the last completed
       int nextLessonIndex = lastCompletedIndex + 1;
+
+      final rawFlashcards = lessons.first['flashcards'] as List<dynamic>;
+      final flashcards = rawFlashcards
+          .map((item) => Flashcard.fromMap(item as Map<String, dynamic>))
+          .toList();
+
+      print("flashcards: $flashcards");
+      // final flashcards = courseController.flashcards;
 
       return StarryAppScaffold(
         body: GestureDetector(
@@ -371,8 +384,13 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                     duration: const Duration(milliseconds: 500),
                   ),
                   courseTitle: "${courseController.selectedCourseTitle}",
-                  progress: 0.3,
-                  onViewFlashcards: Get.back,
+                  progress: progress,
+                  // go to flashcard screen
+                  onViewFlashcards: () {
+                    Get.to(() => FlashcardScreen(
+                          flashcards: flashcards,
+                        ));
+                  },
                 ),
               ),
             ],

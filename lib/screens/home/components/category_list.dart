@@ -53,7 +53,7 @@ class CategoryList extends StatelessWidget {
                   await Future.delayed(const Duration(milliseconds: 100));
                 }
                 // Navigate to CourseOverviewScreen.
-                Get.to(
+                Get.offAll(
                   () => const CourseOverviewScreen(),
                   transition: Transition.fadeIn,
                   duration: const Duration(milliseconds: 500),

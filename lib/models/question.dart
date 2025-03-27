@@ -13,6 +13,13 @@ class Flashcard {
   final String definition;
 
   Flashcard({required this.term, required this.definition});
+
+  factory Flashcard.fromMap(Map<String, dynamic> map) {
+    return Flashcard(
+      term: map['term'] ?? '',
+      definition: map['definition'] ?? '',
+    );
+  }
 }
 
 class Question {
