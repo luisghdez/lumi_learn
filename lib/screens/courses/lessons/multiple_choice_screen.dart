@@ -85,7 +85,7 @@ class MultipleChoiceScreen extends StatelessWidget {
                   right: 1,
                   child: Image.asset(
                     'assets/astronaut/pointing.png',
-                    width: 120,
+                    width: 140,
                   ),
                 ),
               ],

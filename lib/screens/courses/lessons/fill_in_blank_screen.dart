@@ -66,7 +66,7 @@ class FillInBlankScreen extends StatelessWidget {
                   alignment: Alignment.bottomLeft,
                   child: Image.asset(
                     'assets/astronaut/thinking.png',
-                    width: 150,
+                    width: 170,
                     height: 140,
                   ),
                 ),
