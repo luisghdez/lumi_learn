@@ -5,7 +5,9 @@ class LeaderboardCard extends StatelessWidget {
   final int position;
   final Player player;
 
-  const LeaderboardCard({required this.position, required this.player, Key? key}) : super(key: key);
+  const LeaderboardCard(
+      {required this.position, required this.player, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,7 @@ class LeaderboardCard extends StatelessWidget {
                 ),
               ),
               CircleAvatar(
+                backgroundColor: Colors.transparent,
                 radius: 23,
                 backgroundImage: AssetImage(player.avatar),
               ),

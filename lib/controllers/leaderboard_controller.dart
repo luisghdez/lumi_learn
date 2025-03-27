@@ -46,11 +46,11 @@ class LeaderboardController extends GetxController {
       await Future.delayed(Duration(seconds: 1)); // Simulate network delay
 
       leaderboard.value = [
-        Player(name: "Sam", points: 542, avatar: ""),
-        Player(name: "Tig", points: 450, avatar: ""),
-        Player(name: "Nick", points: 312, avatar: ""),
-        Player(name: "You", points: 275, avatar: ""),
-        Player(name: "Gr", points: 290, avatar: ""),
+        Player(name: "Sam", points: 542, avatar: "assets/pfp/pfp1.png"),
+        Player(name: "Tig", points: 450, avatar: "assets/pfp/pfp2.png"),
+        Player(name: "Nick", points: 312, avatar: "assets/pfp/pfp3.png"),
+        Player(name: "You", points: 275, avatar: "assets/pfp/pfp4.png"),
+        Player(name: "Gr", points: 290, avatar: "assets/pfp/pfp5.png"),
       ];
     } catch (e) {
       print("Error fetching leaderboard: $e");
