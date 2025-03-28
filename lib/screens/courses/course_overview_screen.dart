@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
+import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
@@ -25,6 +27,7 @@ class CourseOverviewScreen extends StatefulWidget {
 
 class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final CourseController courseController = Get.find();
+  final ScrollController _scrollController = ScrollController();
 
   bool _isPanelVisible = false;
   int? _selectedLessonIndex;
@@ -44,6 +47,44 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   double _glowOpacity = 0.0;
 
   @override
+  void initState() {
+    super.initState();
+
+    // Schedule the auto-scroll after the first frame is rendered.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final lessons = courseController.lessons;
+      int lastCompletedIndex = -1;
+      for (int i = 0; i < lessons.length; i++) {
+        if (lessons[i]['completed'] == true) {
+          lastCompletedIndex = i;
+        }
+      }
+      int nextLessonIndex = lastCompletedIndex + 1;
+
+      // Only auto-scroll if we're past the first lesson.
+      if (nextLessonIndex == 0) return;
+
+      // Define the planet size as used in your layout.
+      const double planetSize = 100.0;
+
+      // Calculate the center of the next lesson planet.
+      double planetCenterX = nextLessonIndex * 200.0 + planetSize / 2;
+
+      // Get the screen width.
+      double screenWidth = MediaQuery.of(context).size.width;
+
+      // Adjust the target offset so that the planet's center is aligned in the middle.
+      double targetOffset = planetCenterX - screenWidth / 2;
+
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -60,6 +101,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       final lessons = courseController.lessons;
       final lessonCount = lessons.length;
       final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
+      int completedCount =
+          lessons.where((lesson) => lesson['completed'] == true).length;
+      double progress = lessonCount == 0 ? 0 : completedCount / lessonCount;
 
       Planet? previousPlanet;
 
@@ -73,6 +117,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       // The next lesson is right after the last completed
       int nextLessonIndex = lastCompletedIndex + 1;
 
+      final flashcards = courseController.flashcards
+          .map((item) => Flashcard.fromMap(item))
+          .toList();
+
       return StarryAppScaffold(
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
@@ -81,6 +129,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
             children: [
               // 1) Scrollable horizontal region
               SingleChildScrollView(
+                controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: totalWidth,
@@ -326,14 +375,23 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
               // 5) Top Header
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: CourseOverviewHeader(
                   onBack: () => Get.offAll(
                     () => MainScreen(),
                     transition: Transition.fadeIn,
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 1000),
                   ),
                   courseTitle: "${courseController.selectedCourseTitle}",
+                  progress: progress,
+                  // go to flashcard screen
+                  onViewFlashcards: () {
+                    Get.to(
+                      () => FlashcardScreen(flashcards: flashcards),
+                      transition: Transition.fadeIn,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
                 ),
               ),
             ],

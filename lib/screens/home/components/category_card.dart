@@ -67,19 +67,19 @@ class CategoryCard extends StatelessWidget {
                             .min, // to hug the content at the bottom
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Text(
+                          //   title,
+                          //   style: const TextStyle(
+                          //     fontSize: 16,
+                          //     // fontWeight: FontWeight.w200,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 4),
                           Text(
                             title,
                             style: const TextStyle(
-                              fontSize: 16,
-                              // fontWeight: FontWeight.w200,
-                              color: Colors.white,
-                            ),
-                          ),
-                          // const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            style: const TextStyle(
-                              fontSize: 30,
+                              fontSize: 24,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                             ),

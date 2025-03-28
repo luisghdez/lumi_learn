@@ -32,7 +32,10 @@ class TopThreeWidget extends StatelessWidget {
           children: [
             const Text(
               "Top Space Voyager",
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
 
@@ -46,7 +49,8 @@ class TopThreeWidget extends StatelessWidget {
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      TopPlayerWidget(player: controller.leaderboard[1], position: 2),
+                      TopPlayerWidget(
+                          player: controller.leaderboard[1], position: 2),
                     ],
                   ),
                 ),
@@ -55,7 +59,10 @@ class TopThreeWidget extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      TopPlayerWidget(player: controller.leaderboard[0], position: 1, hasCrown: true),
+                      TopPlayerWidget(
+                          player: controller.leaderboard[0],
+                          position: 1,
+                          hasCrown: true),
                     ],
                   ),
                 ),
@@ -65,7 +72,8 @@ class TopThreeWidget extends StatelessWidget {
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      TopPlayerWidget(player: controller.leaderboard[2], position: 3),
+                      TopPlayerWidget(
+                          player: controller.leaderboard[2], position: 3),
                     ],
                   ),
                 ),

@@ -7,7 +7,12 @@ class TopPlayerWidget extends StatelessWidget {
   final int position;
   final bool hasCrown;
 
-  const TopPlayerWidget({required this.player, required this.position, this.hasCrown = false, Key? key}) : super(key: key);
+  const TopPlayerWidget(
+      {required this.player,
+      required this.position,
+      this.hasCrown = false,
+      Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +26,9 @@ class TopPlayerWidget extends StatelessWidget {
           children: [
             _buildBlurredCircle(avatarSize + 25), // Extra blur effect
             _buildBlurredCircle(avatarSize + 10),
-            
+
             CircleAvatar(
+              backgroundColor: Colors.transparent,
               radius: avatarSize / 2,
               backgroundImage: AssetImage(player.avatar),
             ),
@@ -35,7 +41,10 @@ class TopPlayerWidget extends StatelessWidget {
                 backgroundColor: Colors.white,
                 child: Text(
                   "$position",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                 ),
               ),
             ),
@@ -55,7 +64,8 @@ class TopPlayerWidget extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           player.name,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
         ),
         Text(
           "${player.points} pts",

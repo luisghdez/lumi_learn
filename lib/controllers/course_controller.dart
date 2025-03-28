@@ -26,6 +26,7 @@ class CourseController extends GetxController {
   var selectedCourseTitle = ''.obs;
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
+  var flashcards = <Map<String, dynamic>>[].obs;
   final RxList<Question> computedQuestions = <Question>[].obs;
   RxBool showGreenGlow = false.obs;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -51,6 +52,23 @@ class CourseController extends GetxController {
   void loadQuestions() {
     computedQuestions.value = getQuestions();
     questionsCount.value = computedQuestions.length;
+  }
+
+  void addPlaceholderCourse(Map<String, dynamic> course) {
+    courses.add(course);
+  }
+
+  // Update a placeholder course once the backend call finishes
+  void updatePlaceholderCourse(
+      String tempId, Map<String, dynamic> updatedData) {
+    int index = courses.indexWhere((course) => course['id'] == tempId);
+    if (index != -1) {
+      courses[index] = {...courses[index], ...updatedData};
+    }
+  }
+
+  void removePlaceholderCourse(String tempId) {
+    courses.removeWhere((course) => course['id'] == tempId);
   }
 
   void nextQuestion() {
@@ -316,7 +334,7 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<void> createCourse({
+  Future<String> createCourse({
     required String title,
     required String description,
     required List<File> files,
@@ -324,21 +342,12 @@ class CourseController extends GetxController {
   }) async {
     isLoading.value = true; // Start loading
 
-    // Show loading overlay
-    Get.dialog(
-      const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
-      barrierDismissible: false,
-    );
-
     try {
       final token = await authController.getIdToken();
       if (token == null) {
-        print('No user token found.');
         isLoading.value = false;
         Get.back(); // Close loading overlay
-        return;
+        throw Exception("No user token found.");
       }
 
       final apiService = ApiService();
@@ -351,41 +360,50 @@ class CourseController extends GetxController {
       );
 
       if (response.statusCode == 201) {
-        print('Course created successfully: ${response.body}');
-
         // Parse the response JSON and extract the courseId
         final responseData = jsonDecode(response.body);
-        final courseId = responseData['courseId'];
+        final courseId = responseData['courseId'] as String;
 
-        // Recreate the course object with the title, description, id, and createdBy
+        // Create the new course object and update the courses list.
         final newCourse = {
           'id': courseId,
           'title': title,
           'description': description,
           'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
+          'loading': false,
         };
 
-        // Insert the new course at the top of the courses list
+        // Insert the new course at the top of the courses list.
         courses.insert(0, newCourse);
+        // await fetchCourses();
 
-        await fetchCourses();
+        Get.snackbar(
+          "Success",
+          "Course created successfully!",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
 
-        Get.snackbar("Success", "Course created successfully!",
-            backgroundColor: Colors.green, colorText: Colors.white);
+        return courseId;
       } else {
-        print(
-            'Failed to create course [${response.statusCode}]: ${response.body}');
-        Get.snackbar("Error", "Failed to create course.",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          "Error",
+          "Failed to create course.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        throw Exception('Failed to create course: ${response.body}');
       }
     } catch (e) {
-      print('Error creating course: $e');
-      Get.snackbar("Error", "Something went wrong. Please try again.",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      throw Exception(e);
     } finally {
-      isLoading.value = false; // Stop loading
-      // Navigate to MainScreen after course creation
-      Get.offAll(() => MainScreen());
+      isLoading.value = false;
     }
   }
 
@@ -407,10 +425,7 @@ class CourseController extends GetxController {
       if (response.statusCode == 200) {
         // Parse the JSON response and store the courses in our RxList
         final data = jsonDecode(response.body);
-        print('Courses fetched successfully: ${data['courses']}');
         courses.value = data['courses'];
-        print('fetchCourses controller hash: ${this.hashCode}');
-        print('Courses saved succesfully: ${courses}');
       } else {
         print('Failed to fetch courses: ${response.statusCode}');
         Get.snackbar("Error", "Failed to fetch courses.",
@@ -447,8 +462,9 @@ class CourseController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // print('Lessons fetched successfully: ${data['lessons']}');
         lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
+        flashcards.value =
+            List<Map<String, dynamic>>.from(data['mergedFlashcards']);
       } else {
         print(
             'Error fetching lessons: ${response.statusCode} - ${response.body}');
@@ -456,8 +472,7 @@ class CourseController extends GetxController {
     } catch (e) {
       print('Exception while fetching lessons: $e');
     } finally {
-      isLoading.value = false; // Stop loading
-      // Get.back(); // Close loading screen
+      isLoading.value = false;
     }
   }
 
@@ -524,18 +539,18 @@ class CourseController extends GetxController {
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.shade700,
+              color: const Color.fromARGB(255, 26, 26, 26),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.close_rounded, color: Colors.white, size: 30),
-                    SizedBox(width: 8),
-                    Text(
+                    Icon(Icons.cancel, color: Colors.red.shade900, size: 30),
+                    const SizedBox(width: 8),
+                    const Text(
                       'Incorrect',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -568,36 +583,40 @@ class CourseController extends GetxController {
                 ),
                 const SizedBox(height: 10),
                 Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.shade900,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                  // widthFactor: double.infinity,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.red.shade900,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
-                    ),
-                    onPressed: () {
-                      Get.back(); // Close the dialog
+                      onPressed: () {
+                        Get.back(); // Close the dialog
 
-                      int index = computedQuestions.indexOf(question);
-                      if (index != -1) {
-                        final endSectionIndex =
-                            computedQuestions.lastIndexWhere(
-                          (q) =>
-                              q.lessonType == LessonType.speakAll ||
-                              q.lessonType == LessonType.writeAll,
-                        );
+                        int index = computedQuestions.indexOf(question);
+                        if (index != -1) {
+                          final endSectionIndex =
+                              computedQuestions.lastIndexWhere(
+                            (q) =>
+                                q.lessonType == LessonType.speakAll ||
+                                q.lessonType == LessonType.writeAll,
+                          );
 
-                        if (endSectionIndex != -1) {
-                          computedQuestions.insert(endSectionIndex, question);
-                        } else {
-                          computedQuestions.add(question);
+                          if (endSectionIndex != -1) {
+                            computedQuestions.insert(endSectionIndex, question);
+                          } else {
+                            computedQuestions.add(question);
+                          }
                         }
-                      }
-                      nextQuestion();
-                    },
-                    child: const Text('NEXT QUESTION'),
+
+                        nextQuestion();
+                      },
+                      child: const Text('GOT IT!'),
+                    ),
                   ),
                 ),
               ],
@@ -619,5 +638,46 @@ class CourseController extends GetxController {
 
   void playLessonCompleteSound() async {
     await _audioPlayer.play(AssetSource('sounds/lesson_complete.wav'));
+  }
+
+  Future<void> fadeInWriteLessonSound(
+      {Duration fadeDuration = const Duration(seconds: 2)}) async {
+    // Start the sound with volume 0
+    await _audioPlayer.setVolume(0.0);
+    // Play the writing lesson music (ensure looping if desired)
+    await _audioPlayer.play(AssetSource('sounds/writing_lesson_music.wav'));
+
+    // Gradually increase the volume to 1.0
+    const int steps = 20;
+    double stepVolume = 1.0 / steps;
+    Duration stepDuration =
+        Duration(milliseconds: fadeDuration.inMilliseconds ~/ steps);
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(stepDuration);
+      double newVolume = stepVolume * (i + 1);
+      await _audioPlayer.setVolume(newVolume);
+    }
+    await _audioPlayer.setVolume(1.0);
+  }
+
+  Future<void> fadeOutWriteLessonSound(
+      {Duration fadeDuration = const Duration(seconds: 2)}) async {
+    // Gradually decrease the volume from the current value (assumed 1.0) to 0
+    const int steps = 20;
+    double stepVolume = 1.0 / steps;
+    Duration stepDuration =
+        Duration(milliseconds: fadeDuration.inMilliseconds ~/ steps);
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(stepDuration);
+      double newVolume = 1.0 - stepVolume * (i + 1);
+      if (newVolume < 0) newVolume = 0;
+      await _audioPlayer.setVolume(newVolume);
+    }
+    // Stop the writing lesson sound
+    await _audioPlayer.stop();
+    // Reset the volume back to full for subsequent sounds
+    await _audioPlayer.setVolume(1.0);
   }
 }

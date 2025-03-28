@@ -66,7 +66,7 @@ class FillInBlankScreen extends StatelessWidget {
                   alignment: Alignment.bottomLeft,
                   child: Image.asset(
                     'assets/astronaut/thinking.png',
-                    width: 150,
+                    width: 170,
                     height: 140,
                   ),
                 ),
@@ -121,8 +121,14 @@ class FillInBlankScreen extends StatelessWidget {
               ),
             ),
           ),
-          NextButton(
-            onPressed: () => _submitAnswer(context),
+          // Wrap the NextButton with ValueListenableBuilder
+          ValueListenableBuilder<int>(
+            valueListenable: _selectedOption,
+            builder: (context, selected, _) {
+              return NextButton(
+                onPressed: selected != -1 ? () => _submitAnswer(context) : null,
+              );
+            },
           ),
         ],
       ),
