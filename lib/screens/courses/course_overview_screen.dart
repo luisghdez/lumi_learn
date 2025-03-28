@@ -381,15 +381,17 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   onBack: () => Get.offAll(
                     () => MainScreen(),
                     transition: Transition.fadeIn,
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 1000),
                   ),
                   courseTitle: "${courseController.selectedCourseTitle}",
                   progress: progress,
                   // go to flashcard screen
                   onViewFlashcards: () {
-                    Get.to(() => FlashcardScreen(
-                          flashcards: flashcards,
-                        ));
+                    Get.to(
+                      () => FlashcardScreen(flashcards: flashcards),
+                      transition: Transition.fadeIn,
+                      duration: const Duration(milliseconds: 300),
+                    );
                   },
                 ),
               ),

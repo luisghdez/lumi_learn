@@ -174,6 +174,7 @@ class _GalaxyBackgroundState extends State<GalaxyBackground>
             child: Image.asset(
               'assets/images/milky_way.png',
               fit: BoxFit.cover,
+              gaplessPlayback: true,
             ),
           ),
         ),
