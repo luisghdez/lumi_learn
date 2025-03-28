@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -451,12 +452,44 @@ class _CourseCreationState extends State<CourseCreation> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Get.find<CourseController>().createCourse(
+                      final courseController = Get.find<CourseController>();
+
+                      // Create a temporary ID for the placeholder course.
+                      final tempId =
+                          "temp_${DateTime.now().millisecondsSinceEpoch}";
+                      // Add a placeholder course with a loading flag to the controller.
+                      courseController.addPlaceholderCourse({
+                        "id": tempId,
+                        "title": courseTitle,
+                        "description": courseDescription,
+                        "loading": true,
+                        // Additional fields as needed.
+                      });
+
+                      // Navigate immediately back to the HomeScreen.
+                      Get.offAll(() => MainScreen());
+
+                      // Initiate the createCourse request in the background.
+                      courseController
+                          .createCourse(
                         title: courseTitle,
                         description: courseDescription,
                         files: [...selectedFiles, ...selectedImages],
                         content: text,
-                      );
+                      )
+                          .then((courseId) {
+                        // Once complete, update the placeholder course with real data.
+                        courseController.updatePlaceholderCourse(tempId, {
+                          "id": courseId,
+                          "loading": false,
+                          // Update any additional fields from the backend if needed.
+                        });
+                      }).catchError((error) {
+                        // Remove the placeholder if there's an error.
+                        courseController.removePlaceholderCourse(tempId);
+                        // Optionally, show an error notification.
+                        Get.snackbar("Error", "Failed to create course");
+                      });
                     },
                     icon: const Icon(Icons.add,
                         color: Colors.black), // Ensure icon is also black

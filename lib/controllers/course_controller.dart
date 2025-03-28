@@ -53,6 +53,23 @@ class CourseController extends GetxController {
     questionsCount.value = computedQuestions.length;
   }
 
+  void addPlaceholderCourse(Map<String, dynamic> course) {
+    courses.add(course);
+  }
+
+  // Update a placeholder course once the backend call finishes
+  void updatePlaceholderCourse(
+      String tempId, Map<String, dynamic> updatedData) {
+    int index = courses.indexWhere((course) => course['id'] == tempId);
+    if (index != -1) {
+      courses[index] = {...courses[index], ...updatedData};
+    }
+  }
+
+  void removePlaceholderCourse(String tempId) {
+    courses.removeWhere((course) => course['id'] == tempId);
+  }
+
   void nextQuestion() {
     if (activeQuestionIndex.value < computedQuestions.length - 1) {
       activeQuestionIndex.value++;
@@ -316,7 +333,7 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<void> createCourse({
+  Future<String> createCourse({
     required String title,
     required String description,
     required List<File> files,
@@ -324,21 +341,20 @@ class CourseController extends GetxController {
   }) async {
     isLoading.value = true; // Start loading
 
-    // Show loading overlay
-    Get.dialog(
-      const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
-      barrierDismissible: false,
-    );
+    // // Show loading overlay
+    // Get.dialog(
+    //   const Center(
+    //     child: CircularProgressIndicator(color: Colors.white),
+    //   ),
+    //   barrierDismissible: false,
+    // );
 
     try {
       final token = await authController.getIdToken();
       if (token == null) {
-        print('No user token found.');
         isLoading.value = false;
         Get.back(); // Close loading overlay
-        return;
+        throw Exception("No user token found.");
       }
 
       final apiService = ApiService();
@@ -351,40 +367,50 @@ class CourseController extends GetxController {
       );
 
       if (response.statusCode == 201) {
-        print('Course created successfully: ${response.body}');
-
         // Parse the response JSON and extract the courseId
         final responseData = jsonDecode(response.body);
-        final courseId = responseData['courseId'];
+        final courseId = responseData['courseId'] as String;
 
-        // Recreate the course object with the title, description, id, and createdBy
+        // Create the new course object and update the courses list.
         final newCourse = {
           'id': courseId,
           'title': title,
           'description': description,
           'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
+          'loading': false,
         };
 
-        // Insert the new course at the top of the courses list
+        // Insert the new course at the top of the courses list.
         courses.insert(0, newCourse);
+        // await fetchCourses();
 
-        await fetchCourses();
+        Get.snackbar(
+          "Success",
+          "Course created successfully!",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
 
-        Get.snackbar("Success", "Course created successfully!",
-            backgroundColor: Colors.green, colorText: Colors.white);
+        return courseId;
       } else {
-        print(
-            'Failed to create course [${response.statusCode}]: ${response.body}');
-        Get.snackbar("Error", "Failed to create course.",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          "Error",
+          "Failed to create course.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        throw Exception('Failed to create course: ${response.body}');
       }
     } catch (e) {
-      print('Error creating course: $e');
-      Get.snackbar("Error", "Something went wrong. Please try again.",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      throw Exception(e);
     } finally {
-      isLoading.value = false; // Stop loading
-      // Navigate to MainScreen after course creation
+      isLoading.value = false;
       Get.offAll(() => MainScreen());
     }
   }

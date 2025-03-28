@@ -22,45 +22,78 @@ class CategoryList extends StatelessWidget {
           height: 200,
         );
       }
+
+      // Sort the courses so that any course with loading == true is first.
+      final sortedCourses = List.from(courses);
+      sortedCourses.sort((a, b) {
+        if (a['loading'] == true && b['loading'] != true) return -1;
+        if (a['loading'] != true && b['loading'] == true) return 1;
+        return 0;
+      });
+
       return Column(
-        children: courses.map<Widget>((course) {
+        children: sortedCourses.map<Widget>((course) {
           // Use the course id to determine the galaxy image.
           String galaxyImagePath = getGalaxyForCourse(course['id']);
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: CategoryCard(
-              title: course['title'] ?? 'Untitled',
-              subtitle: "Galaxy",
-              imagePath: galaxyImagePath,
-              onTap: () async {
-                // Set the selected course ID in the controller.
-                courseController.setSelectedCourseId(
-                    course['id'], course['title']);
+            child: Stack(
+              children: [
+                CategoryCard(
+                  title: course['title'] ?? 'Untitled',
+                  subtitle: "Galaxy",
+                  imagePath: galaxyImagePath,
+                  onTap: () async {
+                    // Prevent navigation if the course is still loading.
+                    if (course['loading'] == true) return;
+                    // Set the selected course ID in the controller.
+                    courseController.setSelectedCourseId(
+                        course['id'], course['title']);
 
-                Get.to(
-                  () => LoadingScreen(),
-                  transition: Transition.fadeIn,
-                  duration: const Duration(milliseconds: 500),
-                );
-                await Future.wait([
-                  Future.delayed(const Duration(milliseconds: 1000)),
-                  precacheImage(
-                    const AssetImage('assets/images/milky_way.png'),
-                    context,
+                    Get.to(
+                      () => LoadingScreen(),
+                      transition: Transition.fadeIn,
+                      duration: const Duration(milliseconds: 500),
+                    );
+                    await Future.wait([
+                      Future.delayed(const Duration(milliseconds: 1000)),
+                      precacheImage(
+                        const AssetImage('assets/images/milky_way.png'),
+                        context,
+                      ),
+                    ]);
+
+                    while (courseController.isLoading.value) {
+                      await Future.delayed(const Duration(milliseconds: 100));
+                    }
+                    // Navigate to CourseOverviewScreen.
+                    Get.offAll(
+                      () => const CourseOverviewScreen(),
+                      transition: Transition.fadeIn,
+                      duration: const Duration(milliseconds: 500),
+                    );
+                  },
+                ),
+                if (course['loading'] == true)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: FractionallySizedBox(
+                          heightFactor: 0.9,
+                          child: Image.asset(
+                            'assets/astronaut/minute.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ]);
-
-                while (courseController.isLoading.value) {
-                  await Future.delayed(const Duration(milliseconds: 100));
-                }
-                // Navigate to CourseOverviewScreen.
-                Get.offAll(
-                  () => const CourseOverviewScreen(),
-                  transition: Transition.fadeIn,
-                  duration: const Duration(milliseconds: 500),
-                );
-              },
+              ],
             ),
           );
         }).toList(),
