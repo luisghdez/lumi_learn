@@ -18,7 +18,9 @@ class CategoryList extends StatelessWidget {
     return Obx(() {
       final courses = courseController.courses;
       if (courses.isEmpty) {
-        return const Center(child: Text('No courses available.'));
+        return const SizedBox(
+          height: 200,
+        );
       }
       return Column(
         children: courses.map<Widget>((course) {
