@@ -61,6 +61,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       }
       int nextLessonIndex = lastCompletedIndex + 1;
 
+      // Only auto-scroll if we're past the first lesson.
+      if (nextLessonIndex == 0) return;
+
       // Define the planet size as used in your layout.
       const double planetSize = 100.0;
 
