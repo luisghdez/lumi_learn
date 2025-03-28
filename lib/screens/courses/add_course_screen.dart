@@ -478,13 +478,13 @@ class _CourseCreationState extends State<CourseCreation> {
                         content: text,
                       )
                           .then((courseId) {
+                        courseController.removePlaceholderCourse(tempId);
                         // Once complete, update the placeholder course with real data.
                         courseController.updatePlaceholderCourse(tempId, {
                           "id": courseId,
                           "loading": false,
                           // Update any additional fields from the backend if needed.
                         });
-                        courseController.removePlaceholderCourse(tempId);
                       }).catchError((error) {
                         // Remove the placeholder if there's an error.
                         courseController.removePlaceholderCourse(tempId);

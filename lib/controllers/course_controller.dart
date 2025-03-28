@@ -342,14 +342,6 @@ class CourseController extends GetxController {
   }) async {
     isLoading.value = true; // Start loading
 
-    // // Show loading overlay
-    // Get.dialog(
-    //   const Center(
-    //     child: CircularProgressIndicator(color: Colors.white),
-    //   ),
-    //   barrierDismissible: false,
-    // );
-
     try {
       final token = await authController.getIdToken();
       if (token == null) {
@@ -412,7 +404,6 @@ class CourseController extends GetxController {
       throw Exception(e);
     } finally {
       isLoading.value = false;
-      Get.offAll(() => MainScreen());
     }
   }
 
