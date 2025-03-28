@@ -114,13 +114,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       // The next lesson is right after the last completed
       int nextLessonIndex = lastCompletedIndex + 1;
 
-      final rawFlashcards = lessons.first['flashcards'] as List<dynamic>;
-      final flashcards = rawFlashcards
-          .map((item) => Flashcard.fromMap(item as Map<String, dynamic>))
+      final flashcards = courseController.flashcards
+          .map((item) => Flashcard.fromMap(item))
           .toList();
-
-      print("flashcards: $flashcards");
-      // final flashcards = courseController.flashcards;
 
       return StarryAppScaffold(
         body: GestureDetector(

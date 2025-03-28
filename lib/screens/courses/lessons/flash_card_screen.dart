@@ -36,8 +36,6 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     setState(() {
       if (currentIndex < widget.flashcards.length - 1) {
         currentIndex++;
-      } else {
-        courseController.nextQuestion();
       }
     });
   }

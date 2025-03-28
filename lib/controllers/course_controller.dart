@@ -26,6 +26,7 @@ class CourseController extends GetxController {
   var selectedCourseTitle = ''.obs;
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
+  var flashcards = <Map<String, dynamic>>[].obs;
   final RxList<Question> computedQuestions = <Question>[].obs;
   RxBool showGreenGlow = false.obs;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -433,10 +434,7 @@ class CourseController extends GetxController {
       if (response.statusCode == 200) {
         // Parse the JSON response and store the courses in our RxList
         final data = jsonDecode(response.body);
-        print('Courses fetched successfully: ${data['courses']}');
         courses.value = data['courses'];
-        print('fetchCourses controller hash: ${this.hashCode}');
-        print('Courses saved succesfully: ${courses}');
       } else {
         print('Failed to fetch courses: ${response.statusCode}');
         Get.snackbar("Error", "Failed to fetch courses.",
@@ -473,8 +471,9 @@ class CourseController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // print('Lessons fetched successfully: ${data['lessons']}');
         lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
+        flashcards.value =
+            List<Map<String, dynamic>>.from(data['mergedFlashcards']);
       } else {
         print(
             'Error fetching lessons: ${response.statusCode} - ${response.body}');
@@ -482,8 +481,7 @@ class CourseController extends GetxController {
     } catch (e) {
       print('Exception while fetching lessons: $e');
     } finally {
-      isLoading.value = false; // Stop loading
-      // Get.back(); // Close loading screen
+      isLoading.value = false;
     }
   }
 
