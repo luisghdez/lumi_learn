@@ -196,19 +196,12 @@ class SpeakController extends GetxController {
         return;
       }
 
-      // Build terms list with statuses based on progress.
-      final List<Map<String, String>> termsData = [];
+      // Build terms list with scores based on progress.
+      final List<Map<String, dynamic>> termsData = [];
       for (var i = 0; i < terms.length; i++) {
-        final progress = termProgress[i];
-        String status;
-        if (progress >= 1.0) {
-          status = "mastered";
-        } else if (progress < 0.5) {
-          status = "needs_improvement";
-        } else {
-          status = "unattempted";
-        }
-        termsData.add({'term': terms[i], 'status': status});
+        final score = (termProgress[i] * 100)
+            .round(); // Convert back to 0–100 scale for api service call
+        termsData.add({'term': terms[i], 'score': score});
       }
 
       // Add the current user transcript to the conversation history.
@@ -230,20 +223,11 @@ class SpeakController extends GetxController {
         print('Review submitted successfully: $data');
 
         final List<dynamic> updated = data['updatedTerms'];
+
         for (int i = 0; i < updated.length; i++) {
-          final status = updated[i]['status'];
-          if (status == 'mastered') {
-            termProgress[i] = 1.0;
-          } else if (status == 'needs_improvement') {
-            double currentProgress = termProgress[i];
-            // Randomize if the current progress is not between 40% (0.4) and 60% (0.6).
-            if (currentProgress < 0.4 || currentProgress > 0.6) {
-              final random = Random();
-              termProgress[i] = 0.4 + random.nextDouble() * 0.2;
-            }
-          } else if (status == 'unattempted') {
-            termProgress[i] = 0.0;
-          }
+          final score = updated[i]['score'];
+          termProgress[i] = (score / 100).clamp(0.0, 1.0);
+          // 0-1 scale for progress bar
         }
 
         // Optionally delay to allow audio generation to finish.
@@ -253,9 +237,9 @@ class SpeakController extends GetxController {
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
 
-        // Check if all returned terms are "mastered".
-        bool allMastered =
-            updated.every((element) => element['status'] == 'mastered');
+        // Check if all returned terms are "100".
+        bool allMastered = updated.every((element) => element['score'] == 100);
+
         if (allMastered) {
           // Wait for the audio to finish playing, then trigger next question.
           await audioPlayer.onPlayerComplete.first;

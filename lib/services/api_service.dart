@@ -146,7 +146,7 @@ class ApiService {
   Future<http.Response> submitReview({
     required String token,
     required String transcript,
-    required List<Map<String, String>> terms,
+    required List<Map<String, dynamic>> terms,
     required int attemptNumber,
     List<Map<String, String>>? conversationHistory,
   }) async {
