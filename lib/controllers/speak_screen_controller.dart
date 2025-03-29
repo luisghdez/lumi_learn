@@ -60,6 +60,7 @@ class SpeakController extends GetxController {
   @override
   void onClose() {
     _speechToText.stop();
+    audioPlayer.dispose();
     super.onClose();
   }
 
@@ -67,7 +68,7 @@ class SpeakController extends GetxController {
   Future<void> playIntroAudio() async {
     try {
       isAudioPlaying.value = true;
-      await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
+      await audioPlayer.play(AssetSource("sounds/echo_intro.wav"));
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -78,7 +79,18 @@ class SpeakController extends GetxController {
   Future<void> playClosingAudio() async {
     try {
       isAudioPlaying.value = true;
-      await audioPlayer.play(AssetSource("sounds/mark_outro.mp3"));
+      await audioPlayer.play(AssetSource("sounds/echo_outro_2.wav"));
+    } catch (e) {
+      isAudioPlaying.value = false;
+      rethrow;
+    }
+  }
+
+  /// Plays fallback silence audio when no speech is detected.
+  Future<void> playSilenceAudio() async {
+    try {
+      isAudioPlaying.value = true;
+      await audioPlayer.play(AssetSource("sounds/echo_silence.wav"));
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -142,19 +154,37 @@ class SpeakController extends GetxController {
   /// Called when the user taps "stop" to end the current segment.
   Future<void> stopListening() async {
     isLoading.value = true;
-    _speechToText.stop();
+    await _speechToText.stop();
+
+    // Wait a short moment to allow any pending final results to be processed
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // If no speech was detected and _onSpeechResult wasn’t triggered,
+    // trigger the fallback silence audio.
+    if (transcript.value.trim().isEmpty && !_hasSubmitted) {
+      _hasSubmitted = true;
+      await playSilenceAudio();
+      feedbackMessage.value =
+          "Uhhh... you there? I didn’t hear ANYTHING, let’s try that again!";
+      isLoading.value = false;
+      transcript.value = "";
+    }
   }
 
   /// Updates the transcript as speech is recognized.
   Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
     transcript.value = result.recognizedWords;
+
     if (result.finalResult && !_hasSubmitted) {
       _hasSubmitted = true;
       print("Transcript: ${result.recognizedWords}");
       print("attemptNumber: $attemptNumber");
+
       if (attemptNumber == 4) {
         // On 4th attempt: Play closing audio, wait for it to finish, then go to next question.
         await playClosingAudio();
+        feedbackMessage.value =
+            "Hey that was AWESOME! I mean, look at you go, you’re really soaking this stuff up. Honestly, just keep going like this and we’re gonna make some SERIOUS progress.";
         await audioPlayer.onPlayerComplete.first;
         courseController.nextQuestion();
       } else {

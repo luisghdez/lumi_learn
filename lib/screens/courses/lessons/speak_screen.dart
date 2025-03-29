@@ -58,7 +58,7 @@ class SpeakScreen extends StatelessWidget {
             Obx(() => TypewriterSpeechBubbleMessage(
                   key: ValueKey(speakController.feedbackMessage.value),
                   message: speakController.feedbackMessage.value.isEmpty
-                      ? "Hey there! Ready to share what you know about these three terms? Hit 'Record' and explain each one out loud!"
+                      ? "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know."
                       : speakController.feedbackMessage.value,
                   speed: const Duration(milliseconds: 50),
                   maxHeight: 100,
