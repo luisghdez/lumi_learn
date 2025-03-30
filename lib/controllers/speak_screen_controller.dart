@@ -60,14 +60,44 @@ class SpeakController extends GetxController {
   @override
   void onClose() {
     _speechToText.stop();
+    audioPlayer.dispose();
+
     super.onClose();
+  }
+
+  void resetValues() {
+    // Stop any audio currently playing.
+    if (isAudioPlaying.value) {
+      audioPlayer.stop();
+    }
+
+    // Stop speech recognition.
+    _speechToText.stop();
+
+    // Reset all reactive variables.
+    terms.clear();
+    termProgress.clear();
+    feedbackMessage.value = '';
+    reviewAudioBytes.value = Uint8List(0);
+    transcript.value = '';
+    conversationHistory.clear();
+    sessionId.value = '';
+    updatedTerms.clear();
+
+    // Reset counters and flags.
+    attemptNumber = 1;
+    _hasSubmitted = false;
+    isLoading.value = false;
+    isAudioPlaying.value = false;
   }
 
   /// Plays the introductory audio and marks the controller as currently playing.
   Future<void> playIntroAudio() async {
     try {
       isAudioPlaying.value = true;
-      await audioPlayer.play(AssetSource("sounds/mark_intro2.mp3"));
+      feedbackMessage.value =
+          "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know.";
+      await audioPlayer.play(AssetSource("sounds/echo_intro.wav"));
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -78,7 +108,18 @@ class SpeakController extends GetxController {
   Future<void> playClosingAudio() async {
     try {
       isAudioPlaying.value = true;
-      await audioPlayer.play(AssetSource("sounds/mark_outro.mp3"));
+      await audioPlayer.play(AssetSource("sounds/echo_outro_2.wav"));
+    } catch (e) {
+      isAudioPlaying.value = false;
+      rethrow;
+    }
+  }
+
+  /// Plays fallback silence audio when no speech is detected.
+  Future<void> playSilenceAudio() async {
+    try {
+      isAudioPlaying.value = true;
+      await audioPlayer.play(AssetSource("sounds/echo_silence.wav"));
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -142,19 +183,37 @@ class SpeakController extends GetxController {
   /// Called when the user taps "stop" to end the current segment.
   Future<void> stopListening() async {
     isLoading.value = true;
-    _speechToText.stop();
+    await _speechToText.stop();
+
+    // Wait a short moment to allow any pending final results to be processed
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // If no speech was detected and _onSpeechResult wasn’t triggered,
+    // trigger the fallback silence audio.
+    if (transcript.value.trim().isEmpty && !_hasSubmitted) {
+      _hasSubmitted = true;
+      await playSilenceAudio();
+      feedbackMessage.value =
+          "Uhhh... you there? I didn’t hear ANYTHING, let’s try that again!";
+      isLoading.value = false;
+      transcript.value = "";
+    }
   }
 
   /// Updates the transcript as speech is recognized.
   Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
     transcript.value = result.recognizedWords;
+
     if (result.finalResult && !_hasSubmitted) {
       _hasSubmitted = true;
       print("Transcript: ${result.recognizedWords}");
       print("attemptNumber: $attemptNumber");
+
       if (attemptNumber == 4) {
         // On 4th attempt: Play closing audio, wait for it to finish, then go to next question.
         await playClosingAudio();
+        feedbackMessage.value =
+            "Hey that was AWESOME! I mean, look at you go, you’re really soaking this stuff up. Honestly, just keep going like this and we’re gonna make some SERIOUS progress.";
         await audioPlayer.onPlayerComplete.first;
         courseController.nextQuestion();
       } else {
@@ -196,19 +255,12 @@ class SpeakController extends GetxController {
         return;
       }
 
-      // Build terms list with statuses based on progress.
-      final List<Map<String, String>> termsData = [];
+      // Build terms list with scores based on progress.
+      final List<Map<String, dynamic>> termsData = [];
       for (var i = 0; i < terms.length; i++) {
-        final progress = termProgress[i];
-        String status;
-        if (progress >= 1.0) {
-          status = "mastered";
-        } else if (progress < 0.5) {
-          status = "needs_improvement";
-        } else {
-          status = "unattempted";
-        }
-        termsData.add({'term': terms[i], 'status': status});
+        final score = (termProgress[i] * 100)
+            .round(); // Convert back to 0–100 scale for api service call
+        termsData.add({'term': terms[i], 'score': score});
       }
 
       // Add the current user transcript to the conversation history.
@@ -230,32 +282,26 @@ class SpeakController extends GetxController {
         print('Review submitted successfully: $data');
 
         final List<dynamic> updated = data['updatedTerms'];
+
         for (int i = 0; i < updated.length; i++) {
-          final status = updated[i]['status'];
-          if (status == 'mastered') {
-            termProgress[i] = 1.0;
-          } else if (status == 'needs_improvement') {
-            double currentProgress = termProgress[i];
-            // Randomize if the current progress is not between 40% (0.4) and 60% (0.6).
-            if (currentProgress < 0.4 || currentProgress > 0.6) {
-              final random = Random();
-              termProgress[i] = 0.4 + random.nextDouble() * 0.2;
-            }
-          } else if (status == 'unattempted') {
-            termProgress[i] = 0.0;
-          }
+          final score = updated[i]['score'];
+          termProgress[i] = (score / 100).clamp(0.0, 1.0);
+          // 0-1 scale for progress bar
         }
 
         // Optionally delay to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
         await fetchReviewAudio();
-        feedbackMessage.value = data['feedbackMessage'];
+        final original = data['feedbackMessage'] as String;
+        final cleaned = original.replaceAll(RegExp(r'\[.*?\]'), '').trim();
+        feedbackMessage.value = cleaned;
+
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
 
-        // Check if all returned terms are "mastered".
-        bool allMastered =
-            updated.every((element) => element['status'] == 'mastered');
+        // Check if all returned terms are "100".
+        bool allMastered = updated.every((element) => element['score'] == 100);
+
         if (allMastered) {
           // Wait for the audio to finish playing, then trigger next question.
           await audioPlayer.onPlayerComplete.first;
