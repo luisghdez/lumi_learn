@@ -14,6 +14,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   // Initialize your controllers and dependencies
   Get.put(AuthController());
   Get.put(NavigationController());

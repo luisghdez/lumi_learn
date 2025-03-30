@@ -58,16 +58,22 @@ dependencies:
   speech_to_text: ^7.0.0
   path: ^1.9.0
   path_provider: ^2.0.15
+  flutter_native_splash: ^2.4.4
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "lib/photos/pp.png" # Replace with your exported PNG path
-  adaptive_icon_background: "#FFFFFF" # Optional: Background color for adaptive icons
-  adaptive_icon_foreground: "lib/photos/pp.png" # Optional: Foreground icon for adaptive icons
-  flutter_svg: ^2.0.17
-  google_fonts: ^6.2.1
-  audio_waveforms: ^1.2.0
+  image_path: "lib/photos/pp2.png"  # <-- Use your new icon here
+  remove_alpha_ios: true             # <-- Ensures the App Store icon has no transparency
+
+flutter_native_splash:
+  color: "#0A0A0A"                    # ← Your splash background color
+  image: assets/splash/moon_splash.png      # Replace with your logo image
+  android: true
+  ios: true
+  fullscreen: true
+
+
 
 dev_dependencies:
   flutter_test:
@@ -107,6 +113,7 @@ flutter:
     - assets/backgrounds/
     - assets/sounds/
     - assets/pfp/
+    - assets/splash/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
