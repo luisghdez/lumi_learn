@@ -5,21 +5,38 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 
-class SpeakScreen extends StatelessWidget {
-  SpeakScreen({
-    Key? key,
-    required this.question,
-  }) : super(key: key);
-
+class SpeakScreen extends StatefulWidget {
   final Question question;
+  const SpeakScreen({Key? key, required this.question}) : super(key: key);
+
+  @override
+  _SpeakScreenState createState() => _SpeakScreenState();
+}
+
+class _SpeakScreenState extends State<SpeakScreen> {
+  final SpeakController speakController = Get.find<SpeakController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controller with the question options and play intro audio.
+    speakController.setTerms(widget.question.options);
+    speakController.playIntroAudio();
+  }
+
+  @override
+  void dispose() {
+    // Reset all controller values when this screen is disposed.
+    speakController.resetValues();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final SpeakController speakController = Get.find<SpeakController>();
-    speakController.setTerms(question.options);
-    speakController.playIntroAudio();
+    // speakController.setTerms(question.options);
+    // speakController.playIntroAudio();
 
-    print("SpeakScreen: ${question.options}");
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -60,7 +77,7 @@ class SpeakScreen extends StatelessWidget {
                   message: speakController.feedbackMessage.value.isEmpty
                       ? "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know."
                       : speakController.feedbackMessage.value,
-                  speed: const Duration(milliseconds: 50),
+                  speed: const Duration(milliseconds: 35),
                   maxHeight: 100,
                   onFinished: () {
                     // Optionally, do something when typing finishes.
@@ -70,9 +87,9 @@ class SpeakScreen extends StatelessWidget {
 
             // Wrap each TermMasteryItem in an Obx so it rebuilds when the Rx changes
             Column(
-              children: List.generate(question.options.length, (index) {
+              children: List.generate(widget.question.options.length, (index) {
                 return Obx(() => TermMasteryItem(
-                      term: question.options[index],
+                      term: widget.question.options[index],
                       progress: speakController.termProgress[index],
                     ));
               }),

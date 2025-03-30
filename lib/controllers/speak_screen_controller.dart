@@ -61,13 +61,42 @@ class SpeakController extends GetxController {
   void onClose() {
     _speechToText.stop();
     audioPlayer.dispose();
+
     super.onClose();
+  }
+
+  void resetValues() {
+    // Stop any audio currently playing.
+    if (isAudioPlaying.value) {
+      audioPlayer.stop();
+    }
+
+    // Stop speech recognition.
+    _speechToText.stop();
+
+    // Reset all reactive variables.
+    terms.clear();
+    termProgress.clear();
+    feedbackMessage.value = '';
+    reviewAudioBytes.value = Uint8List(0);
+    transcript.value = '';
+    conversationHistory.clear();
+    sessionId.value = '';
+    updatedTerms.clear();
+
+    // Reset counters and flags.
+    attemptNumber = 1;
+    _hasSubmitted = false;
+    isLoading.value = false;
+    isAudioPlaying.value = false;
   }
 
   /// Plays the introductory audio and marks the controller as currently playing.
   Future<void> playIntroAudio() async {
     try {
       isAudioPlaying.value = true;
+      feedbackMessage.value =
+          "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know.";
       await audioPlayer.play(AssetSource("sounds/echo_intro.wav"));
     } catch (e) {
       isAudioPlaying.value = false;
@@ -263,7 +292,10 @@ class SpeakController extends GetxController {
         // Optionally delay to allow audio generation to finish.
         await Future.delayed(const Duration(seconds: 2));
         await fetchReviewAudio();
-        feedbackMessage.value = data['feedbackMessage'];
+        final original = data['feedbackMessage'] as String;
+        final cleaned = original.replaceAll(RegExp(r'\[.*?\]'), '').trim();
+        feedbackMessage.value = cleaned;
+
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
 
