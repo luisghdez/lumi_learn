@@ -70,5 +70,7 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app does not access your photo library. This is required due to third-party libraries.</string>
 	</dict>
 </plist>

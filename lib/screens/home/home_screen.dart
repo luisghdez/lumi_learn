@@ -20,40 +20,45 @@ class HomeScreen extends StatelessWidget {
         authController.firebaseUser.value?.displayName ?? 'User';
 
     return Scaffold(
-      body: Stack(
-        children: [
-          const Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: GalaxyHeader(),
-          ),
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: GalaxyHeader(),
+            ),
 
-          // 📜 Scrollable content (padding top to make space for header)
-          SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  HomeHeader(userName: userName), // 👈 Now it's scrollable
-                  const SizedBox(height: 24),
-                  const custom.SearchBar(),
-                  const SizedBox(height: 24),
-                  TopPicksHeader(
-                    onAddTap: () {
-                      Get.to(() => const CourseCreation());
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  CategoryList(),
-                ],
+            // 📜 Scrollable content (padding top to make space for header)
+            SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(
+                    left: 16, right: 16, top: 16, bottom: 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeHeader(userName: userName), // 👈 Now it's scrollable
+                    const SizedBox(height: 24),
+                    const custom.SearchBar(),
+                    const SizedBox(height: 24),
+                    TopPicksHeader(
+                      onAddTap: () {
+                        Get.to(() => const CourseCreation());
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    CategoryList(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
