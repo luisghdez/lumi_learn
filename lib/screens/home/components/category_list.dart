@@ -112,6 +112,6 @@ String getGalaxyForCourse(String courseId) {
 
   // Pick an index based on the number of images (5 in this case).
   // We add 1 because our images are named galaxy1.png to galaxy5.png.
-  final galaxyIndex = (numericHash % 5) + 1;
+  final galaxyIndex = (numericHash % 8) + 1;
   return 'assets/galaxies/galaxy$galaxyIndex.png';
 }
