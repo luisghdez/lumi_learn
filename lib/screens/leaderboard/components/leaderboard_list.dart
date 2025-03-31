@@ -5,26 +5,26 @@ import 'package:lumi_learn_app/screens/leaderboard/components/leaderboard_card.d
 
 class LeaderboardList extends StatelessWidget {
   final LeaderboardController controller = Get.find();
-  
-@override
-Widget build(BuildContext context) {
-  return Obx(() {
-    if (controller.isLoading.value) {
-      return const Center(child: CircularProgressIndicator());
-    }
 
-    final leaderboard = controller.leaderboard;
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-    return Column(
-      children: leaderboard
-          .asMap()
-          .entries
-          .map((entry) => LeaderboardCard(
-                position: entry.key + 1,
-                player: entry.value,
-              ))
-          .toList(),
-    );
-  });
-}
+      final leaderboard = controller.leaderboard;
+
+      return Column(
+        children: leaderboard
+            .asMap()
+            .entries
+            .map((entry) => LeaderboardCard(
+                  position: entry.key + 1,
+                  player: entry.value,
+                ))
+            .toList(),
+      );
+    });
+  }
 }

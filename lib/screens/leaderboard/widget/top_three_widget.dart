@@ -31,7 +31,7 @@ class TopThreeWidget extends StatelessWidget {
         child: Column(
           children: [
             const Text(
-              "Top Space Voyager",
+              "Top Space Voyagers",
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,

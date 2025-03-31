@@ -63,41 +63,41 @@ class LeaderboardPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
+                  // const SizedBox(height: 16),
 
                   // 🏆 Title Section (on top of galaxy)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Top Performers",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white.withOpacity(0.8),
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          const Text(
-                            "Leaderboard",
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              height: 0.9,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //   children: [
+                  //     Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         Text(
+                  //           "Top Performers",
+                  //           style: TextStyle(
+                  //             fontSize: 18,
+                  //             fontWeight: FontWeight.w400,
+                  //             color: Colors.white.withOpacity(0.8),
+                  //             letterSpacing: -0.5,
+                  //           ),
+                  //         ),
+                  //         SizedBox(height: 5),
+                  //         const Text(
+                  //           "Leaderboard",
+                  //           style: TextStyle(
+                  //             fontSize: 28,
+                  //             fontWeight: FontWeight.bold,
+                  //             color: Colors.white,
+                  //             height: 0.9,
+                  //             letterSpacing: -1,
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ],
+                  // ),
 
-                  const SizedBox(height: 40),
+                  // const SizedBox(height: 40),
 
                   // 👑 Top 3 players
                   TopThreeWidget(),
