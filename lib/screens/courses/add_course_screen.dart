@@ -118,23 +118,30 @@ class _CourseCreationState extends State<CourseCreation> {
                           const SizedBox(height: 4),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[800],
+                              color: Colors.grey[900],
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: greyBorder),
                             ),
                             child: TextField(
+                              maxLength: 20,
                               onChanged: (value) =>
                                   setState(() => courseTitle = value),
                               style: const TextStyle(
                                   fontSize: 12, color: Colors.white),
                               cursorColor: Colors.white,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 filled: true,
                                 fillColor: Colors.transparent,
                                 hintText: "Enter course title",
-                                hintStyle:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
+                                hintStyle: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
                                 border: InputBorder.none,
+                                counterText: "",
+                                suffix: Text(
+                                  "${courseTitle.length}/20",
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
@@ -154,7 +161,7 @@ class _CourseCreationState extends State<CourseCreation> {
                           const SizedBox(height: 4),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[800],
+                              color: Colors.grey[900],
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: greyBorder),
                             ),
@@ -215,7 +222,7 @@ class _CourseCreationState extends State<CourseCreation> {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 0, horizontal: 8),
                             decoration: BoxDecoration(
-                              color: Colors.grey[800],
+                              color: Colors.grey[900],
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Row(
@@ -333,7 +340,7 @@ class _CourseCreationState extends State<CourseCreation> {
                     maxHeight: 150, // Set max height, allows scrolling inside
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade900, // Background color
+                    color: Colors.grey[1000], // Background color
                     borderRadius: BorderRadius.circular(8), // Rounded corners
                     border: Border.all(
                         color: greyBorder), // Border applied to the container
@@ -450,8 +457,6 @@ class _CourseCreationState extends State<CourseCreation> {
                     ),
                   ),
 
-                // const SizedBox(height: 24),
-
                 /// CARD FOOTER (Create Button & Info)
                 if (totalItems > 0)
                   SizedBox(
@@ -536,7 +541,7 @@ class _CourseCreationState extends State<CourseCreation> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[700],
+        color: Colors.grey[800],
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: greyBorder),
       ),
@@ -591,7 +596,7 @@ class _CourseCreationState extends State<CourseCreation> {
             width: 1,
           ),
           borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[900],
+          color: Colors.grey[1000],
         ),
         child: Center(
           child: Column(
