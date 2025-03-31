@@ -71,6 +71,6 @@
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>This app does not access your photo library. This is required due to third-party libraries.</string>
+		<string>This app requires access to your photo library to create your courses.</string>
 	</dict>
 </plist>

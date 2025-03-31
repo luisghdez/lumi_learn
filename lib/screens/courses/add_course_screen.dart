@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
@@ -37,12 +38,47 @@ class _CourseCreationState extends State<CourseCreation> {
     );
 
     if (result != null && result.files.isNotEmpty) {
+      // Define max file size (5 MB)
+      const int maxFileSize = 10 * 1024 * 1024; // 5MB in bytes
+
+      // Filter out files that are too large
+      final validPlatformFiles = result.files.where((pf) {
+        if (pf.size > maxFileSize) {
+          Get.snackbar(
+              "File too large", "File ${pf.name} exceeds the 10MB limit.");
+          return false;
+        }
+        return true;
+      }).toList();
+
       setState(() {
-        final fileList = result.paths.map((path) => File(path!)).toList();
+        final fileList =
+            validPlatformFiles.map((pf) => File(pf.path!)).toList();
         if (pickImages) {
-          selectedImages.addAll(fileList);
+          // Limit to 10 images
+          final available = 10 - selectedImages.length;
+          if (available <= 0) {
+            Get.snackbar(
+                "Limit reached", "You can only upload up to 10 images.");
+            return;
+          }
+          selectedImages.addAll(fileList.take(available));
+          if (fileList.length > available) {
+            Get.snackbar("Limit reached",
+                "Only $available images were added. Maximum is 10.");
+          }
         } else {
-          selectedFiles.addAll(fileList);
+          // Limit to 2 files
+          final available = 2 - selectedFiles.length;
+          if (available <= 0) {
+            Get.snackbar("Limit reached", "You can only upload up to 2 files.");
+            return;
+          }
+          selectedFiles.addAll(fileList.take(available));
+          if (fileList.length > available) {
+            Get.snackbar("Limit reached",
+                "Only $available files were added. Maximum is 2.");
+          }
         }
       });
     }
@@ -90,6 +126,7 @@ class _CourseCreationState extends State<CourseCreation> {
                 ),
                 const SizedBox(height: 24),
 
+                // Course Details Section
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey.shade900,
@@ -107,7 +144,7 @@ class _CourseCreationState extends State<CourseCreation> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Course Title
+                      // Course Title with a max of 20 characters and counter
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -147,10 +184,9 @@ class _CourseCreationState extends State<CourseCreation> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 8),
 
-                      // Course Description
+                      // Course Description Section
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -193,11 +229,21 @@ class _CourseCreationState extends State<CourseCreation> {
                 const Divider(height: 40),
 
                 /// FILES SECTION
-                _buildSectionHeader(
-                  icon: Icons.upload_file,
-                  title: "Add Files",
-                  context: context,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildSectionHeader(
+                      icon: Icons.upload_file,
+                      title: "Add Files",
+                      context: context,
+                    ),
+                    Text(
+                      "${selectedFiles.length}/2",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
+
                 _buildDropZone(
                   onTap: () => handleFileChange(pickImages: false),
                   label: "documents",
@@ -237,10 +283,7 @@ class _CourseCreationState extends State<CourseCreation> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.close,
-                                    size: 16,
-                                  ),
+                                  icon: const Icon(Icons.close, size: 16),
                                   onPressed: () => removeFile(index, "file"),
                                 ),
                               ],
@@ -254,11 +297,21 @@ class _CourseCreationState extends State<CourseCreation> {
                 const Divider(height: 40),
 
                 /// IMAGES SECTION
-                _buildSectionHeader(
-                  icon: Icons.image,
-                  title: "Add Images",
-                  context: context,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildSectionHeader(
+                      icon: Icons.image,
+                      title: "Add Images",
+                      context: context,
+                    ),
+                    Text(
+                      "${selectedImages.length}/10",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
+
                 _buildDropZone(
                   onTap: () => handleFileChange(pickImages: true),
                   label: "images",
@@ -270,18 +323,15 @@ class _CourseCreationState extends State<CourseCreation> {
                     margin: const EdgeInsets.only(top: 8),
                     height: 72, // Ensures enough height for images
                     child: SingleChildScrollView(
-                      scrollDirection:
-                          Axis.horizontal, // Enable horizontal scrolling
+                      scrollDirection: Axis.horizontal,
                       child: Row(
                         children: List.generate(selectedImages.length, (index) {
                           final imageFile = selectedImages[index];
-
                           return Row(
                             children: [
                               Stack(
                                 clipBehavior: Clip.none,
                                 children: [
-                                  // Image preview
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(4),
                                     child: Image.file(
@@ -291,7 +341,6 @@ class _CourseCreationState extends State<CourseCreation> {
                                       fit: BoxFit.cover,
                                     ),
                                   ),
-                                  // Remove button
                                   Positioned(
                                     top: -8,
                                     right: -8,
@@ -335,45 +384,55 @@ class _CourseCreationState extends State<CourseCreation> {
                   context: context,
                 ),
                 const SizedBox(height: 6),
+                // Main text input with a limit of 2000 characters and a counter
                 Container(
                   constraints: const BoxConstraints(
-                    maxHeight: 150, // Set max height, allows scrolling inside
+                    maxHeight: 150,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey[1000], // Background color
-                    borderRadius: BorderRadius.circular(8), // Rounded corners
-                    border: Border.all(
-                        color: greyBorder), // Border applied to the container
+                    color: Colors.grey[1000],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: greyBorder),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10), // Padding inside the container
-                  child: SingleChildScrollView(
-                    physics:
-                        const AlwaysScrollableScrollPhysics(), // Allows scrolling when text exceeds max height
-                    child: TextField(
-                      minLines: 4,
-                      maxLines:
-                          null, // Allows unlimited input, but scrolls after max height is reached
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white), // White text color
-                      cursorColor: Colors.white, // White cursor
-                      decoration: const InputDecoration(
-                        filled: true,
-                        fillColor: Colors
-                            .transparent, // Keep it transparent since the Container has the background color
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 10, // Reduce top and bottom padding
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: TextField(
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(2000),
+                            ],
+                            minLines: 4,
+                            maxLines: null,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white),
+                            cursorColor: Colors.white,
+                            decoration: const InputDecoration(
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 10),
+                              hintText: "Enter course content here...",
+                              hintStyle:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                              border: InputBorder.none,
+                            ),
+                            onChanged: (value) => setState(() => text = value),
+                          ),
                         ),
-                        hintText: "Enter course content here...",
-                        hintStyle: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey), // Hint text styling
-                        border: InputBorder
-                            .none, // Removes default border from TextField
                       ),
-                      onChanged: (value) => setState(() => text = value),
-                    ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          "${text.length}/2000",
+                          style: const TextStyle(
+                              fontSize: 10, color: Colors.white70),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -386,16 +445,13 @@ class _CourseCreationState extends State<CourseCreation> {
                     decoration: BoxDecoration(
                       color: Colors.grey[900],
                       borderRadius: const BorderRadius.only(
-                        topLeft:
-                            Radius.circular(8), // Rounded bottom-left corner
-                        topRight:
-                            Radius.circular(8), // Rounded bottom-right corner
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
                       ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// Header row with total items badge
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -414,9 +470,7 @@ class _CourseCreationState extends State<CourseCreation> {
                                     .primaryColor
                                     .withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: greyBorder,
-                                ),
+                                border: Border.all(color: greyBorder),
                               ),
                               child: Text(
                                 "$totalItems item${totalItems != 1 ? "s" : ""}",
@@ -427,8 +481,6 @@ class _CourseCreationState extends State<CourseCreation> {
                           ],
                         ),
                         const SizedBox(height: 8),
-
-                        /// Badges for each type of content
                         Wrap(
                           spacing: 8,
                           runSpacing: 4,
@@ -474,7 +526,6 @@ class _CourseCreationState extends State<CourseCreation> {
                           "title": courseTitle,
                           "description": courseDescription,
                           "loading": true,
-                          // Additional fields as needed.
                         });
 
                         // Navigate immediately back to the HomeScreen.
@@ -490,38 +541,29 @@ class _CourseCreationState extends State<CourseCreation> {
                         )
                             .then((courseId) {
                           courseController.removePlaceholderCourse(tempId);
-                          // Once complete, update the placeholder course with real data.
                           courseController.updatePlaceholderCourse(tempId, {
                             "id": courseId,
                             "loading": false,
-                            // Update any additional fields from the backend if needed.
                           });
                         }).catchError((error) {
-                          // Remove the placeholder if there's an error.
                           courseController.removePlaceholderCourse(tempId);
-                          // Optionally, show an error notification.
                           Get.snackbar("Error", "Failed to create course");
                         });
                       },
-                      icon: const Icon(Icons.add,
-                          color: Colors.black), // Ensure icon is also black
+                      icon: const Icon(Icons.add, color: Colors.black),
                       label: const Text(
                         "Create Course",
-                        style:
-                            TextStyle(color: Colors.black), // Make text black
+                        style: TextStyle(color: Colors.black),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Colors.white, // White button background
-                        foregroundColor: Colors.black, // Black text and icon
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         textStyle: const TextStyle(fontSize: 16),
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(
-                                8), // Rounded bottom-left corner
-                            bottomRight: Radius.circular(
-                                8), // Rounded bottom-right corner
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8),
                           ),
                         ),
                       ),
@@ -536,7 +578,7 @@ class _CourseCreationState extends State<CourseCreation> {
     );
   }
 
-  /// Builds a small "badge" widget to mimic the React <Badge>.
+  /// Builds a small "badge" widget.
   Widget _buildBadge({required IconData icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -559,7 +601,7 @@ class _CourseCreationState extends State<CourseCreation> {
     );
   }
 
-  /// Builds a section header (icon + title) similar to the React code’s <h3>.
+  /// Builds a section header (icon + title).
   Widget _buildSectionHeader({
     required IconData icon,
     required String title,
@@ -578,7 +620,7 @@ class _CourseCreationState extends State<CourseCreation> {
     );
   }
 
-  /// Mimics the dashed-border drop zone in React for uploading files/images.
+  /// Mimics the dashed-border drop zone for uploading files/images.
   Widget _buildDropZone({
     required VoidCallback onTap,
     required String label,
@@ -609,12 +651,9 @@ class _CourseCreationState extends State<CourseCreation> {
                     const TextSpan(
                       text: "Click to upload ",
                       style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white), // Make this part bold
+                          fontWeight: FontWeight.bold, color: Colors.white),
                     ),
-                    TextSpan(
-                      text: label, // Keep the provided label as normal text
-                    ),
+                    TextSpan(text: label),
                   ],
                 ),
               ),
