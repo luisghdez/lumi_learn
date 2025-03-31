@@ -17,7 +17,7 @@ class LessonResultScreen extends StatefulWidget {
 }
 
 class _LessonResultScreenState extends State<LessonResultScreen> {
-  final String astronautImage = 'assets/astronaut/celebrating.png';
+  final String astronautImage = 'assets/astronaut/celebrate.png';
 
   bool _isTopStarFilled = false;
   bool _isBottomLeftStarFilled = false;
