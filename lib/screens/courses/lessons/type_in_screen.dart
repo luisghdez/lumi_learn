@@ -212,7 +212,7 @@ class _TypeInScreenState extends State<TypeInScreen> {
                 // Astronaut Image.
                 SizedBox(
                   child: Image.asset(
-                    'assets/astronaut/floating.png',
+                    'assets/astronaut/writing.png',
                     width: 100,
                     height: 140,
                   ),
