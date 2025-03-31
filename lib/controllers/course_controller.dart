@@ -645,7 +645,7 @@ class CourseController extends GetxController {
     // Start the sound with volume 0
     await _audioPlayer.setVolume(0.0);
     // Play the writing lesson music (ensure looping if desired)
-    await _audioPlayer.play(AssetSource('sounds/writing_lesson_music.wav'));
+    await _audioPlayer.play(AssetSource('sounds/writing_lesson_music.mp3'));
 
     // Gradually increase the volume to 1.0
     const int steps = 20;

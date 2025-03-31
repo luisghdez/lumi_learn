@@ -23,13 +23,21 @@ class TypeInScreen extends StatefulWidget {
 class _TypeInScreenState extends State<TypeInScreen> {
   final TextEditingController _textController = TextEditingController();
   bool _isCountdownCompleted = false;
+  final courseController = Get.find<CourseController>();
 
   @override
   void initState() {
     super.initState();
     // Play the writing lesson sound with a fade-in effect when the screen is active.
-    final courseController = Get.find<CourseController>();
     courseController.fadeInWriteLessonSound();
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    courseController.fadeOutWriteLessonSound();
+
+    super.dispose();
   }
 
   void _onCountdownComplete() {
@@ -160,12 +168,6 @@ class _TypeInScreenState extends State<TypeInScreen> {
         barrierDismissible: false,
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
   }
 
   @override
