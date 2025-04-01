@@ -60,7 +60,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 150),
+                  const SizedBox(height: 100),
 
                   // Email Field
                   _buildInputField(
@@ -172,7 +172,11 @@ class LoginScreen extends StatelessWidget {
                   Center(
                     child: TextButton(
                       onPressed: () {
-                        Get.to(() => SignupScreen());
+                        Get.offAll(
+                          () => SignupScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
                       },
                       style: ButtonStyle(
                         overlayColor: MaterialStateProperty.all(

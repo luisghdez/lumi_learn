@@ -66,7 +66,13 @@ class LaunchScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         // Navigate to the Onboarding Screen
-                        Get.to(() => OnboardingScreen());
+                        // Get.to(() => OnboardingScreen());
+                        // animate fade in here
+                        Get.to(
+                          () => OnboardingScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -85,6 +91,7 @@ class LaunchScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

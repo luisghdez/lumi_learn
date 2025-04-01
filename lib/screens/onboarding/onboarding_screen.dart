@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../auth/main_start.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   @override
@@ -64,14 +65,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _finishOnboarding() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => MainStartScreen(),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
+    Get.to(
+      () => SignupScreen(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 500),
     );
   }
 
