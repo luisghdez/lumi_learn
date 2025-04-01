@@ -226,19 +226,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         return FadeTransition(opacity: animation, child: child);
                       },
                       child: i < completedCount
-                          ? Container(
-                              key: ValueKey('circle-completed-$i'),
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              width: (i == completedCount - 1) ? 16 : 10,
-                              height: (i == completedCount - 1) ? 16 : 10,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                          ? GestureDetector(
+                              onTap: () {
+                                // This dot represents page:
+                                final pageIndex =
+                                    _currentPage - completedCount + i;
+                                if (pageIndex >= 0) {
+                                  _pageController.animateToPage(
+                                    pageIndex,
+                                    duration: const Duration(milliseconds: 350),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                key: ValueKey('circle-completed-$i'),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                width: (i == completedCount - 1) ? 16 : 10,
+                                height: (i == completedCount - 1) ? 16 : 10,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             )
-                          : const SizedBox
-                              .shrink(), // When dot is no longer needed
+                          : const SizedBox.shrink(),
                     ),
                 ],
               ),
@@ -273,21 +286,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       key: ValueKey('upcoming-dot-$i'),
                       duration: const Duration(milliseconds: 300),
                       transitionBuilder: (child, animation) {
-                        // Simple fade transition
                         return FadeTransition(opacity: animation, child: child);
                       },
                       child: i < upcomingCount
-                          ? Container(
-                              key: ValueKey('circle-upcoming-$i'),
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              width: (i == 0) ? 16 : 10,
-                              height: (i == 0) ? 16 : 10,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
-                                color: Colors.transparent,
+                          ? GestureDetector(
+                              onTap: () {
+                                // This dot represents the next pages
+                                final pageIndex = _currentPage + 1 + i;
+                                if (pageIndex < onboardingData.length) {
+                                  _pageController.animateToPage(
+                                    pageIndex,
+                                    duration: const Duration(milliseconds: 350),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                key: ValueKey('circle-upcoming-$i'),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                width: (i == 0) ? 16 : 10,
+                                height: (i == 0) ? 16 : 10,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                  color: Colors.transparent,
+                                ),
                               ),
                             )
                           : const SizedBox.shrink(),
