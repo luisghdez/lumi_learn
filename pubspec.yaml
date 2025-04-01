@@ -62,7 +62,7 @@ dependencies:
   url_launcher: ^6.0.9
   permission_handler: ^11.0.0
   share: ^2.0.4
-
+  sign_in_with_apple: ^6.1.4
 
 flutter_launcher_icons:
   android: true

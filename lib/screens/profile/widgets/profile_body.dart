@@ -91,7 +91,7 @@ class _ProfileBodyState extends State<ProfileBody> {
                                 Obx(() => Text(
                                       authController.firebaseUser.value
                                               ?.displayName ??
-                                          'error',
+                                          'User',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 24,

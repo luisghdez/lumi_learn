@@ -10,6 +10,7 @@ import 'package:lumi_learn_app/screens/settings/screens/whats_new_screen.dart';
 import 'package:lumi_learn_app/screens/settings/widgets/galaxybg.dart';
 import 'package:lumi_learn_app/screens/settings/screens/subscription_screen.dart';
 import 'package:lumi_learn_app/screens/settings/screens/more_settings_screen.dart';
+import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -195,8 +196,9 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
           ),
           TextButton(
             onPressed: () {
-              authController.signOut();
-              Navigator.pop(context);
+              authController.signOut(); // Call logout function
+              Navigator.pop(context); // Close dialog
+              Get.offAll(() => SignupScreen());
             },
             child: const Text("Logout", style: TextStyle(color: Colors.redAccent)),
           ),
