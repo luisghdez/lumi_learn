@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Import GetX
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   SettingsScreen({super.key});
@@ -10,8 +11,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final AuthController authController = Get.find<AuthController>(); // GetX Controller
-
+  final AuthController authController =
+      Get.find<AuthController>(); // GetX Controller
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               authController.signOut(); // Call logout function
               Navigator.pop(context); // Close dialog
+              Get.offAll(() => SignupScreen());
             },
             child: const Text(
               "Logout",

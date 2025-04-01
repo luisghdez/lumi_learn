@@ -159,8 +159,8 @@ class LoginScreen extends StatelessWidget {
                       const SizedBox(width: 20),
                       Expanded(
                         child: _buildSocialButton(
-                            "Apple", FontAwesomeIcons.apple, () {
-                          // Apple login logic
+                            "Apple", FontAwesomeIcons.apple, () async {
+                          await authController.signInWithApple();
                         }),
                       ),
                     ],
