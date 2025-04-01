@@ -9,51 +9,39 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
 
+  // These are the phrases we want to bold in the text.
+  final List<String> highlightPhrases = [
+    "twice as effective",
+    "Discover and conquer!",
+    "before",
+    "challenges your mind",
+  ];
+
   final List<Map<String, dynamic>> onboardingData = [
     {
-      "title": "Insights",
-      "description":
-          "Simply add a presentation, text or image and Lumi will create a personalized lesson plan!",
-      "background": "assets/worlds/purple1.png",
-      "astronaut": "",
-      "quote":
-          "\"Education is the most powerful weapon which you can use to change the world.\" — Nelson Mandela",
-      "astroSize": 0.0,
-      "astroAlignment": Alignment.center,
-      "astroOffset": Offset(0, 0),
+      "title": "Your Knowledge = Galaxies",
+      "description": "Each course you create becomes its own galaxy.",
+      "description2": "Every planet is a lesson or quiz. Discover and conquer!",
+      "image": "assets/onboarding/screenshot.png",
     },
     {
-      "title": "Galaxies",
-      "description":
-          "Each galaxy will consist of different materials to learn!",
-      "background": "assets/galaxies/galaxy1.png",
-      "astronaut": "assets/astronaut/astrocamera.png",
-      "quote": "",
-      "astroSize": 350.0,
-      "astroAlignment": Alignment.centerRight,
-      "astroOffset": Offset(0, -0.2), // Move higher
+      "title": "Prepare Before \n You Land",
+      "description": "Review key concepts before starting quizzes",
+      "description2": "",
+      "image": "assets/onboarding/flashcard_highlight2.png",
+      "isFullImage": true,
     },
     {
-      "title": "Planets",
-      "description":
-          "Each lesson will consist of multiple planets. In each planet, you will learn a different topic according to your content.",
-      "background": "assets/planets/planets.png",
-      "astronaut": "assets/astronaut/astromoon.png",
-      "quote": "",
-      "astroSize": 350.0,
-      "astroAlignment": Alignment.centerLeft,
-      "astroOffset": Offset(0.6, 0), // Move more left
+      "title": "Learn on Every Planet",
+      "description2": "Each planet challenges your mind in different ways.",
+      "image": "assets/onboarding/lessons.png",
     },
     {
-      "title": "Stars",
-      "description":
-          "Earn stars after every lesson. Compete with your friends and chase the stars!",
-      "background": "assets/stars/stars.png",
-      "astronaut": "assets/astronaut/astrostars.png",
-      "quote": "",
-      "astroSize": 350.0,
-      "astroAlignment": Alignment.centerLeft,
-      "astroOffset": Offset(0.1, -0.2), // Move higher
+      "title": "Talk to Lumi to review!",
+      "description": "Explaining aloud can make learning twice as effective.",
+      "description2":
+          "We use your mic for voice features. You'll be asked for permission next.",
+      "image": "assets/onboarding/speak.png",
     },
   ];
 
@@ -70,9 +58,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _finishOnboarding() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) =>
-            MainStartScreen(), // Navigate to LoginScreen
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) => MainStartScreen(),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -80,183 +67,243 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  /// Highlights any phrases found in [highlightPhrases].
+  /// Renders them in bold within the returned widget (Text.rich).
+  /// If no highlights are found, returns a normal Text widget.
+  Widget buildHighlightedText(String text) {
+    if (text.isEmpty) {
+      return const SizedBox();
+    }
+
+    List<TextSpan> spans = [];
+    int startIndex = 0;
+
+    while (true) {
+      // Find the earliest occurrence of any highlight phrase
+      int earliestMatchIndex = -1;
+      String? matchedPhrase;
+
+      // We'll track the earliest index among all highlight phrases.
+      for (String phrase in highlightPhrases) {
+        final index = text.indexOf(phrase, startIndex);
+        if (index != -1) {
+          if (earliestMatchIndex == -1 || index < earliestMatchIndex) {
+            earliestMatchIndex = index;
+            matchedPhrase = phrase;
+          }
+        }
+      }
+
+      // If no more matches, add the remaining text and break
+      if (earliestMatchIndex == -1 || matchedPhrase == null) {
+        spans.add(
+          TextSpan(
+            text: text.substring(startIndex),
+          ),
+        );
+        break;
+      }
+
+      // Add any text before this match as normal
+      if (earliestMatchIndex > startIndex) {
+        spans.add(
+          TextSpan(
+            text: text.substring(startIndex, earliestMatchIndex),
+          ),
+        );
+      }
+
+      // Add the matched phrase in bold
+      spans.add(
+        TextSpan(
+          text: matchedPhrase,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      );
+
+      // Move past the matched phrase
+      startIndex = earliestMatchIndex + matchedPhrase.length;
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return SafeArea(
+      top: true,
+      bottom:
+          false, // We'll manually handle bottom to avoid shifting the buttons
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            // Title
+            Text(
+              onboardingData[_currentPage]["title"],
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.white,
+                fontSize: 38,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -2,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Primary Description
+            SizedBox(
+              width: 0.7 * MediaQuery.of(context).size.width,
+              child: buildHighlightedText(
+                onboardingData[_currentPage]["description"] ?? "",
+              ),
+            ),
+
+            // For steps other than the first, show the image and secondary text
+            if (_currentPage != 1) ...[
+              const SizedBox(height: 12),
+              Image.asset(
+                onboardingData[_currentPage]["image"],
+                height: 400,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 0.7 * MediaQuery.of(context).size.width,
+                child: buildHighlightedText(
+                  onboardingData[_currentPage]["description2"] ?? "",
+                ),
+              ),
+            ],
+
+            // For the first step, the full-screen image
+            if (_currentPage == 1)
+              Image.asset(
+                onboardingData[_currentPage]["image"],
+                height: 600,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomButtons() {
+    return Positioned(
+      // Pin the buttons to the bottom, ignoring SafeArea so they're truly "fixed"
+      left: 0,
+      right: 0,
+      bottom: 40,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: [
+            // Left side: Completed steps (filled dots)
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: List.generate(
+                  _currentPage.clamp(0, 2),
+                  (index) {
+                    final isMostRecent = index == _currentPage.clamp(0, 2) - 1;
+                    final size = isMostRecent ? 16.0 : 10.0;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        width: size,
+                        height: size,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // Center: Next Button
+            ElevatedButton(
+              onPressed: _goToNextPage,
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.all(20),
+              ),
+              child: const SizedBox(
+                width: 50,
+                height: 50,
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.black,
+                  size: 24,
+                ),
+              ),
+            ),
+
+            // Right side: Upcoming steps (unfilled dots)
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: List.generate(
+                  (onboardingData.length - _currentPage - 1).clamp(0, 2),
+                  (index) {
+                    final isNextStep = index == 0;
+                    final size = isNextStep ? 16.0 : 10.0;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        width: size,
+                        height: size,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          color: Colors.transparent,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF000029),
       body: Stack(
         children: [
-          // Background Image with Fade Transition
-          AnimatedSwitcher(
-            duration: Duration(milliseconds: 300),
-            transitionBuilder: (child, animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+          // Background Image
+          Positioned.fill(
             child: Image.asset(
-              onboardingData[_currentPage]["background"]!,
-              key: ValueKey(_currentPage),
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
+              'assets/onboarding/bg_2.png',
+              fit: BoxFit.fitWidth,
             ),
           ),
-
-          // Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Skip Button
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: ElevatedButton(
-                      onPressed: _finishOnboarding,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Skip",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(width: 5),
-                          Icon(Icons.arrow_forward,
-                              color: Colors.white, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 60),
-
-                  // Title with Animation
-                  AnimatedSwitcher(
-                    duration: Duration(milliseconds: 10),
-                    child: Text(
-                      onboardingData[_currentPage]["title"]!,
-                      key: ValueKey(_currentPage),
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Description with Animation
-                  AnimatedSwitcher(
-                    duration: Duration(milliseconds: 10),
-                    child: Text(
-                      onboardingData[_currentPage]["description"]!,
-                      key: ValueKey(_currentPage),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        height: 1.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Quote (Only on Insights Page)
-                  if (onboardingData[_currentPage]["quote"]!.isNotEmpty) ...[
-                    Text(
-                      onboardingData[_currentPage]["quote"]!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // Astronaut Image with Alignment Adjustments
-                  if (onboardingData[_currentPage]["astronaut"]!.isNotEmpty)
-                    AnimatedSwitcher(
-                      duration: Duration(milliseconds: 10),
-                      child: Align(
-                        key: ValueKey(_currentPage),
-                        alignment: onboardingData[_currentPage]
-                            ["astroAlignment"],
-                        child: FractionalTranslation(
-                          translation: onboardingData[_currentPage]
-                              ["astroOffset"],
-                          child: Image.asset(
-                            onboardingData[_currentPage]["astronaut"]!,
-                            height: onboardingData[_currentPage]["astroSize"],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  // Dots Indicator & Next Button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Dots Indicator
-                      Row(
-                        children: List.generate(
-                          onboardingData.length,
-                          (dotIndex) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: AnimatedContainer(
-                              duration: Duration(milliseconds: 10),
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: _currentPage == dotIndex
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                border: Border.all(color: Colors.white),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Next Button
-                      ElevatedButton(
-                        onPressed: _goToNextPage,
-                        style: ElevatedButton.styleFrom(
-                          shape: CircleBorder(),
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.all(20),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-                ],
-              ),
-            ),
+          // Main scrollable content
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildContent(context),
           ),
+          // The pinned button row
+          _buildBottomButtons(),
         ],
       ),
     );
