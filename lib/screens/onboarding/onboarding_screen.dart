@@ -10,7 +10,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late PageController _pageController;
   int _currentPage = 0;
 
-  // These are the phrases we want to bold in the text.
+  // Bold phrases
   final List<String> highlightPhrases = [
     "twice as effective",
     "Discover and conquer!",
@@ -75,23 +75,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  /// Highlights any phrases found in [highlightPhrases].
-  /// Renders them in bold within the returned widget (Text.rich).
-  /// If no highlights are found, returns a normal Text widget.
+  /// Highlights any phrases found in [highlightPhrases] and renders them bold.
   Widget buildHighlightedText(String text) {
-    if (text.isEmpty) {
-      return const SizedBox();
-    }
+    if (text.isEmpty) return const SizedBox();
 
     List<TextSpan> spans = [];
     int startIndex = 0;
 
     while (true) {
-      // Find the earliest occurrence of any highlight phrase
+      // Find earliest occurrence of any highlight phrase
       int earliestMatchIndex = -1;
       String? matchedPhrase;
-
-      // We'll track the earliest index among all highlight phrases.
       for (String phrase in highlightPhrases) {
         final index = text.indexOf(phrase, startIndex);
         if (index != -1) {
@@ -102,7 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         }
       }
 
-      // If no more matches, add the remaining text and break
+      // No more matches, add remaining text and break
       if (earliestMatchIndex == -1 || matchedPhrase == null) {
         spans.add(
           TextSpan(text: text.substring(startIndex)),
@@ -151,7 +145,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return SafeArea(
       top: true,
-      bottom: false, // handle bottom separately for pinned buttons
+      bottom: false, // We'll handle the bottom with pinned buttons
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -166,7 +160,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 fontFamily: 'Poppins',
                 color: Colors.white,
                 fontSize: 38,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 letterSpacing: -2,
               ),
             ),
@@ -178,7 +172,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: buildHighlightedText(description),
             ),
 
-            // For steps other than the second, show the smaller image + secondary text
+            // For steps other than the second, show the smaller image + second text
             if (index != 1) ...[
               const SizedBox(height: 12),
               Image.asset(
@@ -192,7 +186,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ],
 
-            // For the second step (index == 1), show a bigger image
+            // For the second step (index == 1), bigger image
             if (index == 1)
               Image.asset(
                 image,
@@ -205,6 +199,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildBottomButtons() {
+    final completedCount = _currentPage.clamp(0, 2);
+    final upcomingCount =
+        (onboardingData.length - _currentPage - 1).clamp(0, 2);
+
     return Positioned(
       left: 0,
       right: 0,
@@ -213,28 +211,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
-            // Left side: Completed steps (filled dots)
+            // Left side: Completed steps (up to 2)
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: List.generate(
-                  _currentPage.clamp(0, 2),
-                  (index) {
-                    final isMostRecent = index == _currentPage.clamp(0, 2) - 1;
-                    final size = isMostRecent ? 16.0 : 10.0;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Container(
-                        width: size,
-                        height: size,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                children: [
+                  for (int i = 0; i < 2; i++)
+                    AnimatedSwitcher(
+                      // Each dot uses a distinct key
+                      key: ValueKey('completed-dot-$i'),
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) {
+                        // Simple fade transition
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      child: i < completedCount
+                          ? Container(
+                              key: ValueKey('circle-completed-$i'),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              width: (i == completedCount - 1) ? 16 : 10,
+                              height: (i == completedCount - 1) ? 16 : 10,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            )
+                          : const SizedBox
+                              .shrink(), // When dot is no longer needed
+                    ),
+                ],
               ),
             ),
 
@@ -257,29 +263,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Right side: Upcoming steps (unfilled dots)
+            // Right side: Upcoming steps (up to 2)
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
-                children: List.generate(
-                  (onboardingData.length - _currentPage - 1).clamp(0, 2),
-                  (index) {
-                    final isNextStep = index == 0;
-                    final size = isNextStep ? 16.0 : 10.0;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Container(
-                        width: size,
-                        height: size,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          color: Colors.transparent,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                children: [
+                  for (int i = 0; i < 2; i++)
+                    AnimatedSwitcher(
+                      key: ValueKey('upcoming-dot-$i'),
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) {
+                        // Simple fade transition
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      child: i < upcomingCount
+                          ? Container(
+                              key: ValueKey('circle-upcoming-$i'),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              width: (i == 0) ? 16 : 10,
+                              height: (i == 0) ? 16 : 10,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.white, width: 2),
+                                color: Colors.transparent,
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                ],
               ),
             ),
           ],
@@ -302,23 +315,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // PageView with smooth sliding
+          // PageView for smooth sliding
           PageView.builder(
             controller: _pageController,
             itemCount: onboardingData.length,
             onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
+              setState(() => _currentPage = index);
             },
-            // If you only want to allow the user to click "Next" instead of swiping manually,
-            // add: physics: NeverScrollableScrollPhysics(),
             itemBuilder: (context, index) {
               return _buildSinglePage(index);
             },
           ),
 
-          // Pinned button row at the bottom
+          // Pinned bottom buttons with fade-in/out circle transitions
           _buildBottomButtons(),
         ],
       ),
