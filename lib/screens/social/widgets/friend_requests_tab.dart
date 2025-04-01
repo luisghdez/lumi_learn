@@ -65,4 +65,3 @@ class FriendRequestsTab extends StatelessWidget {
     );
   }
 }
-''
