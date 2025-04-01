@@ -7,6 +7,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  late PageController _pageController;
   int _currentPage = 0;
 
   // These are the phrases we want to bold in the text.
@@ -45,11 +46,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
   void _goToNextPage() {
     if (_currentPage < onboardingData.length - 1) {
-      setState(() {
-        _currentPage++;
-      });
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
     } else {
       _finishOnboarding();
     }
@@ -97,9 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // If no more matches, add the remaining text and break
       if (earliestMatchIndex == -1 || matchedPhrase == null) {
         spans.add(
-          TextSpan(
-            text: text.substring(startIndex),
-          ),
+          TextSpan(text: text.substring(startIndex)),
         );
         break;
       }
@@ -135,11 +141,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildSinglePage(int index) {
+    final data = onboardingData[index];
+    final String title = data["title"] ?? "";
+    final String description = data["description"] ?? "";
+    final String description2 = data["description2"] ?? "";
+    final String image = data["image"] ?? "";
+    final bool isFullImage = data["isFullImage"] ?? false;
+
     return SafeArea(
       top: true,
-      bottom:
-          false, // We'll manually handle bottom to avoid shifting the buttons
+      bottom: false, // handle bottom separately for pinned buttons
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -148,13 +160,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 20),
             // Title
             Text(
-              onboardingData[_currentPage]["title"],
+              title,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontFamily: 'Poppins',
                 color: Colors.white,
                 fontSize: 38,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 letterSpacing: -2,
               ),
             ),
@@ -163,32 +175,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Primary Description
             SizedBox(
               width: 0.7 * MediaQuery.of(context).size.width,
-              child: buildHighlightedText(
-                onboardingData[_currentPage]["description"] ?? "",
-              ),
+              child: buildHighlightedText(description),
             ),
 
-            // For steps other than the first, show the image and secondary text
-            if (_currentPage != 1) ...[
+            // For steps other than the second, show the smaller image + secondary text
+            if (index != 1) ...[
               const SizedBox(height: 12),
               Image.asset(
-                onboardingData[_currentPage]["image"],
+                image,
                 height: 400,
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: 0.7 * MediaQuery.of(context).size.width,
-                child: buildHighlightedText(
-                  onboardingData[_currentPage]["description2"] ?? "",
-                ),
+                child: buildHighlightedText(description2),
               ),
             ],
 
-            // For the first step, the full-screen image
-            if (_currentPage == 1)
+            // For the second step (index == 1), show a bigger image
+            if (index == 1)
               Image.asset(
-                onboardingData[_currentPage]["image"],
-                height: 600,
+                image,
+                height: isFullImage ? 600 : 400,
               ),
           ],
         ),
@@ -198,7 +206,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildBottomButtons() {
     return Positioned(
-      // Pin the buttons to the bottom, ignoring SafeArea so they're truly "fixed"
       left: 0,
       right: 0,
       bottom: 40,
@@ -287,22 +294,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: const Color(0xFF000029),
       body: Stack(
         children: [
-          // Background Image
+          // Background
           Positioned.fill(
             child: Image.asset(
               'assets/onboarding/bg_2.png',
               fit: BoxFit.fitWidth,
             ),
           ),
-          // Main scrollable content
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildContent(context),
+
+          // PageView with smooth sliding
+          PageView.builder(
+            controller: _pageController,
+            itemCount: onboardingData.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            // If you only want to allow the user to click "Next" instead of swiping manually,
+            // add: physics: NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              return _buildSinglePage(index);
+            },
           ),
-          // The pinned button row
+
+          // Pinned button row at the bottom
           _buildBottomButtons(),
         ],
       ),
