@@ -11,7 +11,7 @@ class AuthController extends GetxController {
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxBool isLoading = false.obs; // Track loading state
 
-  final RxBool hasCompletedOnboarding = true.obs;
+  final RxBool hasCompletedOnboarding = false.obs;
   RxBool isAuthInitialized = false.obs;
 
   @override

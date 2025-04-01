@@ -57,7 +57,7 @@ class SignupScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 150),
+                  const SizedBox(height: 80),
 
                   // Name Field
                   _buildInputField("Your Name", Icons.person,
@@ -143,7 +143,11 @@ class SignupScreen extends StatelessWidget {
                   Center(
                     child: TextButton(
                       onPressed: () {
-                        Get.to(() => LoginScreen());
+                        Get.offAll(
+                          () => LoginScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
                       },
                       style: ButtonStyle(
                         overlayColor: MaterialStateProperty.all(

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../onboarding/onboarding_screen.dart'; // Import the onboarding screen
 
 class LaunchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF030026),
       body: Stack(
         children: [
           // Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/worlds/red1.png', // Path to the background image
-              fit: BoxFit.cover,
+              'assets/onboarding/bg_1.png', // Path to the background image
+              fit: BoxFit.fitWidth,
             ),
           ),
 
@@ -24,89 +26,72 @@ class LaunchScreen extends StatelessWidget {
                 children: [
                   // Title & Subtitle
                   const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(height: 100), // Space from top
+                      SizedBox(height: 20), // Space from top
                       Text(
-                        "Lumi",
+                        "Welcome to",
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 50,
-                          fontWeight: FontWeight.w300,
-                        ),
+                            color: Colors.white,
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -1),
                       ),
                       Text(
-                        "Learner",
+                        "Lumi Learn!",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 80,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1,
                         ),
                       ),
                       SizedBox(height: 10),
                       Text(
-                        "You will learn everything there is to learn",
+                        "Learn anything, with anything, anywhere.",
                         style: TextStyle(
-                          color: Colors.white70,
+                          color: Colors.white,
                           fontSize: 16,
                         ),
                       ),
                     ],
                   ),
 
-                  // Spacer to push astronaut and button to bottom
-                  Spacer(),
+                  const Spacer(),
 
-                  // Stack for astronaut and button
-                  Stack(
-                    clipBehavior: Clip.none, // Prevent clipping the astronaut
-                    alignment: Alignment
-                        .bottomRight, // Align astronaut at bottom right
-                    children: [
-                      // Astronaut Positioned Outside the Button
-                      Positioned(
-                        bottom: 10, // Adjust to make it hover over button
-                        right: 0, // Slightly out of bounds for better effect
-                        child: Image.asset(
-                          'assets/astronaut/astro1.png',
-                          height: 220, // Adjust size to match UI design
+                  // Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Navigate to the Onboarding Screen
+                        // Get.to(() => OnboardingScreen());
+                        // animate fade in here
+                        Get.to(
+                          () => OnboardingScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 26),
+                      ),
+                      child: const Text(
+                        "Lets Start Learning!",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-
-                      // Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Navigate to the Onboarding Screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OnboardingScreen(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 26),
-                          ),
-                          child: const Text(
-                            "Start Learning →",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-
-                  SizedBox(height: 20), // Space from bottom
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
