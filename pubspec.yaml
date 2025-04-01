@@ -59,7 +59,6 @@ dependencies:
   path: ^1.9.0
   path_provider: ^2.0.15
   flutter_native_splash: ^2.4.4
-  shared_preferences: ^2.2.1
   url_launcher: ^6.0.9
   permission_handler: ^11.0.0
   share: ^2.0.4

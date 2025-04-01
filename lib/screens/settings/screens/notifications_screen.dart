@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -17,28 +16,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool streakReminders = true;
   bool announcements = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPreferences();
-  }
-
-  Future<void> _loadPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      weeklyReminder = prefs.getBool('weeklyReminder') ?? true;
-      friendRequests = prefs.getBool('friendRequests') ?? true;
-      challenges = prefs.getBool('challenges') ?? false;
-      lessonUpdates = prefs.getBool('lessonUpdates') ?? true;
-      streakReminders = prefs.getBool('streakReminders') ?? true;
-      announcements = prefs.getBool('announcements') ?? true;
-    });
-  }
-
-  Future<void> _updatePreference(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setBool(key, value);
-  }
+  // You can call native notification code here if needed when toggles change.
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +32,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
         backgroundColor: Colors.black,
-        shadowColor: Colors.transparent,   
+        shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
@@ -68,7 +46,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             value: weeklyReminder,
             onChanged: (val) {
               setState(() => weeklyReminder = val);
-              _updatePreference('weeklyReminder', val);
             },
           ),
           _buildGlassTile(
@@ -77,7 +54,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             value: friendRequests,
             onChanged: (val) {
               setState(() => friendRequests = val);
-              _updatePreference('friendRequests', val);
             },
           ),
           _buildGlassTile(
@@ -86,7 +62,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             value: challenges,
             onChanged: (val) {
               setState(() => challenges = val);
-              _updatePreference('challenges', val);
             },
           ),
           _buildGlassTile(
@@ -95,7 +70,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             value: lessonUpdates,
             onChanged: (val) {
               setState(() => lessonUpdates = val);
-              _updatePreference('lessonUpdates', val);
             },
           ),
           _buildGlassTile(
@@ -104,7 +78,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             value: streakReminders,
             onChanged: (val) {
               setState(() => streakReminders = val);
-              _updatePreference('streakReminders', val);
             },
           ),
           _buildGlassTile(
@@ -113,7 +86,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             value: announcements,
             onChanged: (val) {
               setState(() => announcements = val);
-              _updatePreference('announcements', val);
             },
           ),
         ],
