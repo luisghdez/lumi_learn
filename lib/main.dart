@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:lumi_learn_app/services/friends_service.dart';
 
 import 'controllers/navigation_controller.dart';
 import 'screens/auth/auth_gate.dart'; // Your AuthGate widget
@@ -18,6 +19,8 @@ void main() async {
   // Initialize your controllers and dependencies
   Get.put(AuthController());
   Get.put(NavigationController());
+  Get.put(FriendsService());
+
   runApp(const MyApp());
 }
 

@@ -166,5 +166,60 @@ class AuthController extends GetxController {
       Get.snackbar("Error", "Failed to update profile picture: $e");
     }
   }
+
+  Future<void> deleteAccount({String? emailPassword}) async {
+    try {
+      final user = _auth.currentUser;
+
+      if (user == null) {
+        Get.snackbar("Error", "No user is currently signed in.");
+        return;
+      }
+
+      final providers = user.providerData.map((e) => e.providerId);
+
+      // For Google users
+      if (providers.contains('google.com')) {
+        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        if (googleUser == null) {
+          Get.snackbar("Cancelled", "Google sign-in was cancelled.");
+          return;
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+          accessToken: googleAuth.accessToken,
+        );
+
+        await user.reauthenticateWithCredential(credential);
+      }
+
+      // For Email/Password users
+      else if (providers.contains('password')) {
+        if (emailPassword == null) {
+          Get.snackbar("Error", "Password required to confirm account deletion.");
+          return;
+        }
+
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: emailPassword,
+        );
+
+        await user.reauthenticateWithCredential(credential);
+      }
+
+      // Delete user
+      await user.delete();
+      Get.offAll(() => AuthGate());
+      Get.snackbar("Account Deleted", "Your account has been deleted.");
+    } catch (e) {
+      print("Delete account error: $e");
+      Get.snackbar("Error", "Failed to delete account: ${e.toString()}");
+    }
+  }
+
+
   
 }

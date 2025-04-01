@@ -1,47 +1,90 @@
-
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
-import 'package:lumi_learn_app/services/friends_service.dart'; // Import the data file
-import 'package:flutter/foundation.dart';
+import 'package:lumi_learn_app/services/friends_service.dart';
 
-class FriendsController extends ChangeNotifier {
+class FriendsController extends GetxController {
   final FriendsService service;
 
-  List<Friend> friends = [];
-  bool isLoading = false;
+  // Reactive state variables
+  var friends = <Friend>[].obs;
+  var sentRequests = <Friend>[].obs;
+  var receivedRequests = <Friend>[].obs;
+
+  var isLoading = false.obs;
+  var error = RxnString();
 
   FriendsController({required this.service});
 
-  /// Load all friends
+  /// Load accepted friends
   Future<void> loadFriends() async {
-    isLoading = true;
-    notifyListeners();
+    _startLoading();
     try {
-      friends = await service.fetchFriends();
+      final result = await service.fetchFriends();
+      friends.value = result;
     } catch (e) {
-      // Handle error (e.g., show a message)
+      error.value = e.toString();
+      Get.snackbar("Error", error.value ?? "Something went wrong");
     } finally {
-      isLoading = false;
-      notifyListeners();
+      _stopLoading();
     }
   }
 
-  /// Search friends based on a query
+  /// Search users (name or email)
   Future<void> searchFriends(String query) async {
-    isLoading = true;
-    notifyListeners();
+    _startLoading();
     try {
-      friends = await service.searchUsers(query);
+      final result = await service.searchUsers(query);
+      friends.value = result;
     } catch (e) {
-      // Handle error
+      error.value = e.toString();
+      Get.snackbar("Search Failed", error.value ?? "An error occurred");
     } finally {
-      isLoading = false;
-      notifyListeners();
+      _stopLoading();
     }
   }
 
-  /// Send a friend request for a given friend ID
+  /// Send friend request
   Future<void> sendFriendRequest(String userId) async {
-    await service.sendFriendRequest(userId);
-    // Optionally update local state if needed
+    try {
+      await service.sendFriendRequest(userId);
+      Get.snackbar("Request Sent", "Friend request sent.");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to send request: ${e.toString()}");
+    }
+  }
+
+  /// Accept or decline a friend request
+  Future<void> respondToRequest(String requestId, bool accept) async {
+    try {
+      await service.respondToRequest(requestId, accept);
+      Get.snackbar("Request Updated", accept ? "Friend added." : "Request declined.");
+      await getRequests(); // Refresh list
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    }
+  }
+
+  /// Load pending requests (sent + received)
+  Future<void> getRequests() async {
+    _startLoading();
+    try {
+      final result = await service.getFriendRequests();
+      sentRequests.value = result['sent'] ?? [];
+      receivedRequests.value = result['received'] ?? [];
+    } catch (e) {
+      error.value = e.toString();
+      Get.snackbar("Error", error.value ?? "Something went wrong");
+    } finally {
+      _stopLoading();
+    }
+  }
+
+  void _startLoading() {
+    isLoading.value = true;
+    error.value = null;
+  }
+
+  void _stopLoading() {
+    isLoading.value = false;
   }
 }
