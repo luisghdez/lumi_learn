@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -8,6 +9,8 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  final AuthController authController = Get.find<AuthController>();
+
   late PageController _pageController;
   int _currentPage = 0;
 
@@ -65,6 +68,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _finishOnboarding() {
+    authController.hasCompletedOnboarding.value = true;
+
     Get.to(
       () => SignupScreen(),
       transition: Transition.fadeIn,

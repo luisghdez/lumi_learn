@@ -28,7 +28,7 @@ class AuthGate extends StatelessWidget {
       precacheImage(const AssetImage('assets/galaxies/galaxy22.png'), context);
 
       // Show onboarding screen if it hasn't been completed
-      if (!hasCompletedOnboarding) {
+      if (!hasCompletedOnboarding && user == null) {
         return LaunchScreen();
       }
 
