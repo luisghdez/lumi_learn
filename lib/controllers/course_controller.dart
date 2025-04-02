@@ -415,13 +415,24 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<void> saveCourse(String courseId, String courseTitle) async {
+  Future<bool> saveSharedCourse(String courseId, String courseTitle) async {
+    // Check if the course is already in the saved courses list.
+    if (courses.any((course) => course['id'] == courseId)) {
+      Get.snackbar(
+        "Already Saved",
+        "You've already saved this course!",
+        backgroundColor: const Color.fromARGB(141, 0, 0, 0),
+        colorText: Colors.white,
+      );
+      return false; // Duplicate found.
+    }
+
     try {
       // Get the user's authentication token.
       final String? token = await authController.getIdToken();
       if (token == null) {
         print("No user token found. Cannot save course.");
-        return;
+        return false;
       }
 
       // Call the API service to create a saved course.
@@ -435,20 +446,21 @@ class CourseController extends GetxController {
         final responseData = jsonDecode(response.body);
         final savedCourseId = responseData['savedCourseId'];
         print("Course saved successfully with id: $savedCourseId");
-        // Optionally, update your state or notify the user.
 
+        // Add the saved course at the top of the list.
         final newCourse = {
           'id': courseId,
           'title': courseTitle,
         };
         courses.insert(0, newCourse);
+        return true;
       } else {
         print("Failed to save course: ${response.statusCode} ${response.body}");
-        // Optionally, handle the error (e.g., show a snackbar).
+        return false;
       }
     } catch (e) {
       print("Error saving course: $e");
-      // Optionally, handle the error further (e.g., show a snackbar).
+      return false;
     }
   }
 

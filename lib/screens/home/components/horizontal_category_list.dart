@@ -42,8 +42,12 @@ class HorizontalCategoryList extends StatelessWidget {
                       onConfirm: () async {
                         // Prevent navigation if the course is still loading.
                         if (course['loading'] == true) return;
-                        await courseController.saveCourse(
+
+                        // Attempt to save the course.
+                        // If the course is already saved, saveCourse returns false and we exit early.
+                        bool saved = await courseController.saveSharedCourse(
                             course['id'], course['title']);
+                        if (!saved) return; // Duplicate found, do not continue.
 
                         // Set the selected course ID in the controller.
                         courseController.setSelectedCourseId(
@@ -54,6 +58,7 @@ class HorizontalCategoryList extends StatelessWidget {
                           transition: Transition.fadeIn,
                           duration: const Duration(milliseconds: 500),
                         );
+
                         await Future.wait([
                           Future.delayed(const Duration(milliseconds: 1000)),
                           precacheImage(
@@ -66,6 +71,7 @@ class HorizontalCategoryList extends StatelessWidget {
                           await Future.delayed(
                               const Duration(milliseconds: 100));
                         }
+
                         // Navigate to CourseOverviewScreen.
                         Get.offAll(
                           () => const CourseOverviewScreen(),
