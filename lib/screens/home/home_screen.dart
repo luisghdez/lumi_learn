@@ -26,11 +26,11 @@ class HomeScreen extends StatelessWidget {
         },
         child: Stack(
           children: [
-            const Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: GalaxyHeader(),
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/black_moons.png', // Path to the background image
+                fit: BoxFit.fitWidth,
+              ),
             ),
 
             // 📜 Scrollable content (padding top to make space for header)
