@@ -61,7 +61,7 @@ class HorizontalCategoryCard extends StatelessWidget {
               alignment: Alignment.bottomLeft,
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
