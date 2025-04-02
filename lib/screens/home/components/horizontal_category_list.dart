@@ -39,7 +39,7 @@ class HorizontalCategoryList extends StatelessWidget {
                     HorizontalCategoryCard(
                       title: course['title'] ?? 'Untitled',
                       imagePath: galaxyImagePath,
-                      onTap: () async {
+                      onConfirm: () async {
                         // Prevent navigation if the course is still loading.
                         if (course['loading'] == true) return;
                         // Set the selected course ID in the controller.
