@@ -15,8 +15,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
-    final String userName =
-        authController.firebaseUser.value?.displayName ?? 'User';
 
     return Scaffold(
       body: GestureDetector(

@@ -66,6 +66,20 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> getFeaturedCourses({
+    required String token,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses/featured');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
   Future<http.Response> getLessons({
     required String token,
     required String courseId,

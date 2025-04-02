@@ -9,8 +9,7 @@ import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
-import 'package:lumi_learn_app/screens/main/main_screen.dart';
-import 'package:lumi_learn_app/services/api_service.dart'; // Import the data file
+import 'package:lumi_learn_app/services/api_service.dart';
 
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
@@ -22,6 +21,7 @@ class CourseController extends GetxController {
   final activeQuestionIndex = 0.obs;
   var isLoading = false.obs;
   var courses = [].obs;
+  var featuredCourses = [].obs;
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   final questionsCount = 0.obs;
@@ -40,6 +40,7 @@ class CourseController extends GetxController {
     super.onInit();
     // Fetch courses when the controller is initialized
     fetchCourses();
+    fetchFeaturedCourses();
   }
 
   void setSearchQuery(String query) {
@@ -433,6 +434,39 @@ class CourseController extends GetxController {
         // Parse the JSON response and store the courses in our RxList
         final data = jsonDecode(response.body);
         courses.value = data['courses'];
+      } else {
+        print('Failed to fetch courses: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to fetch courses.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error fetching courses: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false; // Stop loading
+      isInitialized.value = true;
+    }
+  }
+
+  Future<void> fetchFeaturedCourses() async {
+    print('Fetching featured courses...');
+    isLoading.value = true; // Start loading
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        return;
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.getFeaturedCourses(token: token);
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response and store the courses in our RxList
+        final data = jsonDecode(response.body);
+        featuredCourses.value = data['courses'];
       } else {
         print('Failed to fetch courses: ${response.statusCode}');
         Get.snackbar("Error", "Failed to fetch courses.",
