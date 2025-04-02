@@ -9,8 +9,7 @@ import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
-import 'package:lumi_learn_app/screens/main/main_screen.dart';
-import 'package:lumi_learn_app/services/api_service.dart'; // Import the data file
+import 'package:lumi_learn_app/services/api_service.dart';
 
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
@@ -22,6 +21,7 @@ class CourseController extends GetxController {
   final activeQuestionIndex = 0.obs;
   var isLoading = false.obs;
   var courses = [].obs;
+  var featuredCourses = [].obs;
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   final questionsCount = 0.obs;
@@ -30,13 +30,21 @@ class CourseController extends GetxController {
   final RxList<Question> computedQuestions = <Question>[].obs;
   RxBool showGreenGlow = false.obs;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  int totalXP = 50; // 50 default
+  int totalXP = 15; // 50 default
+
+  // Add a reactive search string.
+  var searchQuery = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     // Fetch courses when the controller is initialized
     fetchCourses();
+    fetchFeaturedCourses();
+  }
+
+  void setSearchQuery(String query) {
+    searchQuery.value = query;
   }
 
   // Method to set the active planet
@@ -407,6 +415,55 @@ class CourseController extends GetxController {
     }
   }
 
+  Future<bool> saveSharedCourse(String courseId, String courseTitle) async {
+    // Check if the course is already in the saved courses list.
+    if (courses.any((course) => course['id'] == courseId)) {
+      Get.snackbar(
+        "Already Saved",
+        "You've already saved this course!",
+        backgroundColor: const Color.fromARGB(141, 0, 0, 0),
+        colorText: Colors.white,
+      );
+      return false; // Duplicate found.
+    }
+
+    try {
+      // Get the user's authentication token.
+      final String? token = await authController.getIdToken();
+      if (token == null) {
+        print("No user token found. Cannot save course.");
+        return false;
+      }
+
+      // Call the API service to create a saved course.
+      final apiService = ApiService();
+      final response = await apiService.createSavedCourse(
+        token: token,
+        courseId: courseId,
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        final savedCourseId = responseData['savedCourseId'];
+        print("Course saved successfully with id: $savedCourseId");
+
+        // Add the saved course at the top of the list.
+        final newCourse = {
+          'id': courseId,
+          'title': courseTitle,
+        };
+        courses.insert(0, newCourse);
+        return true;
+      } else {
+        print("Failed to save course: ${response.statusCode} ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error saving course: $e");
+      return false;
+    }
+  }
+
   // New method to fetch courses from the backend
   Future<void> fetchCourses() async {
     print('Fetching courses...');
@@ -441,6 +498,39 @@ class CourseController extends GetxController {
     }
   }
 
+  Future<void> fetchFeaturedCourses() async {
+    print('Fetching featured courses...');
+    isLoading.value = true; // Start loading
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        return;
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.getFeaturedCourses(token: token);
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response and store the courses in our RxList
+        final data = jsonDecode(response.body);
+        featuredCourses.value = data['courses'];
+      } else {
+        print('Failed to fetch courses: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to fetch courses.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error fetching courses: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false; // Stop loading
+      isInitialized.value = true;
+    }
+  }
+
   Future<void> setSelectedCourseId(String courseId, String courseTitle) async {
     lessons.value = []; // Clear the lessons list
     selectedCourseId.value = courseId;
@@ -459,6 +549,17 @@ class CourseController extends GetxController {
       final apiService = ApiService();
       final response =
           await apiService.getLessons(token: token, courseId: courseId);
+
+      final index = courses.indexWhere((course) => course['id'] == courseId);
+      if (index != -1) {
+        final clickedCourse = courses[index];
+        courses.removeAt(index);
+        courses.insert(0, clickedCourse);
+      }
+
+      lessons.value = []; // Clear the lessons list
+      selectedCourseId.value = courseId;
+      selectedCourseTitle.value = courseTitle;
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -495,20 +596,58 @@ class CourseController extends GetxController {
         xp: totalXP,
       );
 
-      lessons[activeLessonIndex.value]['completed'] = true;
-
       if (response.statusCode == 200) {
-        print('Lesson completed successfully: ${response.body}');
+        // Parse JSON
+        final responseData = jsonDecode(response.body);
+        print('Lesson completed successfully: $responseData');
+
+        authController.xpCount.value += totalXP;
+
+        // Mark this lesson as completed in local state
         lessons[activeLessonIndex.value]['completed'] = true;
+
+        // Extract streak info (if present)
+        final streakInfo = responseData['streakInfo'];
+        if (streakInfo != null) {
+          final newStreak = streakInfo['newStreak'];
+          final previousStreak = streakInfo['previousStreak'];
+          final streakExtended = streakInfo['streakExtended'];
+
+          authController.streakCount.value = newStreak;
+
+          // If the streak was incremented
+          if (streakExtended == true) {
+            // You can show a toast/snackbar, or store it in a variable to display on the next screen
+            print(
+                'Your streak has increased from $previousStreak to $newStreak!');
+
+            // For instance, show a snackbar
+            Get.snackbar(
+              "🔥 Streak Extended!",
+              "Your streak is now $newStreak days long!",
+              backgroundColor: const Color.fromARGB(255, 72, 44, 0),
+              colorText: Colors.white,
+              duration: const Duration(seconds: 3),
+            );
+          }
+        }
       } else {
         print('Failed to complete lesson: ${response.statusCode}');
-        Get.snackbar("Error", "Failed to complete lesson.",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          "Error",
+          "Failed to complete lesson.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       print('Error completing lesson: $e');
-      Get.snackbar("Error", "Something went wrong. Please try again.",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false; // Stop loading
     }
@@ -523,7 +662,7 @@ class CourseController extends GetxController {
       // Trigger the green glow:
       showGreenGlow.value = true;
       playCorrectAnswerSound();
-      totalXP += 12;
+      totalXP += 6;
 
       // Wait 300 milliseconds before moving on (adjust duration as needed)
       Future.delayed(const Duration(milliseconds: 500), () {

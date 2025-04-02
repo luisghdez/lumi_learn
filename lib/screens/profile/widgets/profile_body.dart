@@ -167,20 +167,22 @@ class _ProfileBodyState extends State<ProfileBody> {
 
                           const SizedBox(height: 20),
 
-                          const Row(
+                          Row(
                             children: [
                               Expanded(
                                 child: InfoStatCard(
                                     icon: Icons.rocket_launch,
                                     label: 'Day streak',
-                                    value: '6'),
+                                    value: authController.streakCount.value
+                                        .toString()),
                               ),
-                              SizedBox(width: 16),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: InfoStatCard(
                                     icon: Icons.star,
                                     label: 'Total Stars',
-                                    value: '1525'),
+                                    value: authController.xpCount.value
+                                        .toString()),
                               ),
                             ],
                           ),

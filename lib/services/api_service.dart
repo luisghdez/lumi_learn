@@ -8,8 +8,8 @@ import 'dart:io';
 import 'package:lumi_learn_app/models/leaderboard_model.dart';
 
 class ApiService {
-  // static const String _baseUrl = 'http://localhost:3000';
-  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  static const String _baseUrl = 'http://localhost:3000';
+  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,
@@ -56,6 +56,20 @@ class ApiService {
     required String token,
   }) async {
     final uri = Uri.parse('$_baseUrl/courses');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
+  Future<http.Response> getFeaturedCourses({
+    required String token,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses/featured');
     final response = await http.get(
       uri,
       headers: {
@@ -116,6 +130,24 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> createSavedCourse({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/saved-courses');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'courseId': courseId,
+      }),
+    );
+    return response;
+  }
+
   static Future<void> ensureUserExists(String? idToken,
       {String? email, String? name, String? profilePicture}) async {
     if (idToken == null) {
@@ -139,6 +171,27 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception("Failed to ensure user exists: ${response.body}");
     }
+  }
+
+  static Future<http.Response> getUserData({
+    required String token,
+    required String userId,
+  }) async {
+    final url = Uri.parse("$_baseUrl/users/$userId");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to get user data: ${response.body}");
+    }
+
+    return response;
   }
 
   /// POST /review

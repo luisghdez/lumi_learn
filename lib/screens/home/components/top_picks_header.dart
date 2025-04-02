@@ -17,19 +17,11 @@ class TopPicksHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Top picks',
+              'My Courses',
               style: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontWeight: FontWeight.w300,
                 color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Let\'s explore our lesson programs',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white70,
               ),
             ),
           ],
