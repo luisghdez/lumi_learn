@@ -51,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                         Get.to(() => const CourseCreation());
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
                     CategoryList(),
                   ],
                 ),

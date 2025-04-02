@@ -42,7 +42,8 @@ class CategoryList extends StatelessWidget {
               children: [
                 CategoryCard(
                   title: course['title'] ?? 'Untitled',
-                  subtitle: "Galaxy",
+                  completedLessons: course['completedLessons'] ?? 0,
+                  totalLessons: course['totalLessons'] ?? 0,
                   imagePath: galaxyImagePath,
                   onTap: () async {
                     // Prevent navigation if the course is still loading.

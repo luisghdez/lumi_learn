@@ -460,6 +460,17 @@ class CourseController extends GetxController {
       final response =
           await apiService.getLessons(token: token, courseId: courseId);
 
+      final index = courses.indexWhere((course) => course['id'] == courseId);
+      if (index != -1) {
+        final clickedCourse = courses[index];
+        courses.removeAt(index);
+        courses.insert(0, clickedCourse);
+      }
+
+      lessons.value = []; // Clear the lessons list
+      selectedCourseId.value = courseId;
+      selectedCourseTitle.value = courseTitle;
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
