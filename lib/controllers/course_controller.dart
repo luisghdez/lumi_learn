@@ -513,20 +513,58 @@ class CourseController extends GetxController {
         xp: totalXP,
       );
 
-      lessons[activeLessonIndex.value]['completed'] = true;
-
       if (response.statusCode == 200) {
-        print('Lesson completed successfully: ${response.body}');
+        // Parse JSON
+        final responseData = jsonDecode(response.body);
+        print('Lesson completed successfully: $responseData');
+
+        authController.xpCount.value += totalXP;
+
+        // Mark this lesson as completed in local state
         lessons[activeLessonIndex.value]['completed'] = true;
+
+        // Extract streak info (if present)
+        final streakInfo = responseData['streakInfo'];
+        if (streakInfo != null) {
+          final newStreak = streakInfo['newStreak'];
+          final previousStreak = streakInfo['previousStreak'];
+          final streakExtended = streakInfo['streakExtended'];
+
+          authController.streakCount.value = newStreak;
+
+          // If the streak was incremented
+          if (streakExtended == true) {
+            // You can show a toast/snackbar, or store it in a variable to display on the next screen
+            print(
+                'Your streak has increased from $previousStreak to $newStreak!');
+
+            // For instance, show a snackbar
+            Get.snackbar(
+              "🔥 Streak Extended!",
+              "Your streak is now $newStreak days long!",
+              backgroundColor: const Color.fromARGB(255, 72, 44, 0),
+              colorText: Colors.white,
+              duration: const Duration(seconds: 3),
+            );
+          }
+        }
       } else {
         print('Failed to complete lesson: ${response.statusCode}');
-        Get.snackbar("Error", "Failed to complete lesson.",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          "Error",
+          "Failed to complete lesson.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       print('Error completing lesson: $e');
-      Get.snackbar("Error", "Something went wrong. Please try again.",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false; // Stop loading
     }
