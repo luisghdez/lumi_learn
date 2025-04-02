@@ -8,7 +8,6 @@ import 'components/category_list.dart';
 import 'components/search_bar.dart' as custom;
 import 'components/top_picks_header.dart';
 import 'components/home_header.dart';
-import 'package:lumi_learn_app/screens/home/widget/galaxybg.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -28,77 +27,82 @@ class HomeScreen extends StatelessWidget {
           children: [
             Positioned.fill(
               child: Image.asset(
-                'assets/images/black_moons.png', // Path to the background image
-                fit: BoxFit.fitWidth,
+                'assets/images/black_moons.png',
+                fit: BoxFit.cover,
               ),
             ),
-
-            // 📜 Scrollable content (padding top to make space for header)
             SafeArea(
               top: false,
               bottom: false,
-              child: SingleChildScrollView(
-                // Remove the left/right padding here
-                padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 16, bottom: 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Add horizontal padding only around widgets that need it
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: HomeHeader(userName: userName),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 16,
+                      bottom: 40,
                     ),
-                    const SizedBox(height: 28),
-
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Featured Courses',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w300,
-                              color: Colors.white,
+                          // Add horizontal padding only around widgets that need it
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: HomeHeader(userName: userName),
+                          ),
+                          const SizedBox(height: 28),
+
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Featured Courses',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w300,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                          HorizontalCategoryList(),
+                          const SizedBox(height: 18),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: TopPicksHeader(
+                              onAddTap: () {
+                                Get.to(() => const CourseCreation());
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: custom.SearchBar(),
+                          ),
+                          const SizedBox(height: 8),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: CategoryList(),
+                          ),
+
+                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
-
-                    // No extra padding → horizontally scrollable list can be edge-to-edge
-                    HorizontalCategoryList(),
-
-                    const SizedBox(height: 18),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: TopPicksHeader(
-                        onAddTap: () {
-                          Get.to(() => const CourseCreation());
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // If the search bar needs horizontal padding, just wrap it
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: custom.SearchBar(),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // CategoryList needs horizontal padding as well
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: CategoryList(),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-            )
+            ),
           ],
         ),
       ),

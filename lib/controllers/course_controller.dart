@@ -32,11 +32,18 @@ class CourseController extends GetxController {
   final AudioPlayer _audioPlayer = AudioPlayer();
   int totalXP = 50; // 50 default
 
+  // Add a reactive search string.
+  var searchQuery = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
     // Fetch courses when the controller is initialized
     fetchCourses();
+  }
+
+  void setSearchQuery(String query) {
+    searchQuery.value = query;
   }
 
   // Method to set the active planet
