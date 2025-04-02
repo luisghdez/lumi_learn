@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/screens/social/components/pfp_viewer.dart';
 import 'package:lumi_learn_app/screens/social/components/info_stat_card.dart';
@@ -64,7 +66,7 @@ class FriendProfile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  friend.name,
+                  friend.name ?? 'Unknown',
                   style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -84,7 +86,7 @@ class FriendProfile extends StatelessWidget {
                   Center(
                     child: PfpViewer(
                       offsetUp: -90,
-                      backgroundImage: AssetImage(friend.avatarUrl),
+                      backgroundImage: AssetImage(friend.avatarUrl ?? 'assets/pfp/pfp1.png'),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -101,7 +103,7 @@ class FriendProfile extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          friend.name,
+                          friend.name ?? 'Unknown',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -152,8 +154,14 @@ class FriendProfile extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Add follow logic here
+                      onPressed: () async {
+                        try {
+                          final controller = Get.find<FriendsController>();
+                          await controller.sendFriendRequest(friend.id);
+                          Get.snackbar("Friend Request", "Request sent to ${friend.name ?? 'user'}.");
+                        } catch (e) {
+                          Get.snackbar("Error", "Failed to send friend request");
+                        }
                       },
                       icon: const Icon(Icons.person_add_alt,
                           size: 24, color: Color(0xFFB388FF)),

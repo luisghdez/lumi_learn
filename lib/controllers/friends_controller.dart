@@ -1,14 +1,16 @@
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
+import 'package:lumi_learn_app/models/userSearch_model.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
 
 class FriendsController extends GetxController {
   final FriendsService service;
 
   // Reactive state variables
-  var friends = <Friend>[].obs;
-  var sentRequests = <Friend>[].obs;
-  var receivedRequests = <Friend>[].obs;
+  var friends = <Friend>[].obs;                     // Accepted friends
+  var sentRequests = <Friend>[].obs;                // Sent requests
+  var receivedRequests = <Friend>[].obs;            // Received requests
+  var searchResults = <UserSearchResult>[].obs;     // 🔍 Search results
 
   var isLoading = false.obs;
   var error = RxnString();
@@ -29,12 +31,15 @@ class FriendsController extends GetxController {
     }
   }
 
-  /// Search users (name or email)
+  /// Search users (by name or email)
   Future<void> searchFriends(String query) async {
     _startLoading();
     try {
       final result = await service.searchUsers(query);
-      friends.value = result;
+      searchResults.value = result;
+      if (result.isEmpty) {
+        Get.snackbar("No Results", "No users found for '$query'");
+      }
     } catch (e) {
       error.value = e.toString();
       Get.snackbar("Search Failed", error.value ?? "An error occurred");
@@ -58,13 +63,13 @@ class FriendsController extends GetxController {
     try {
       await service.respondToRequest(requestId, accept);
       Get.snackbar("Request Updated", accept ? "Friend added." : "Request declined.");
-      await getRequests(); // Refresh list
+      await getRequests(); // Refresh request list
     } catch (e) {
       Get.snackbar("Error", e.toString());
     }
   }
 
-  /// Load pending requests (sent + received)
+  /// Load friend requests (sent and received)
   Future<void> getRequests() async {
     _startLoading();
     try {

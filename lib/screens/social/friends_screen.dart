@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
+import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_tile.dart';
-import 'package:lumi_learn_app/screens/social/components/search_bar.dart'
-    as Custom;
-import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart'; // Assuming this exists
+import 'package:lumi_learn_app/screens/social/components/search_bar.dart' as Custom;
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({Key? key}) : super(key: key);
@@ -18,8 +17,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
   final FriendsService _friendsService = FriendsService();
 
   List<Friend> _friends = [];
+  List<Friend> _filteredFriends = [];
   bool _isLoading = false;
-  String _searchQuery = '';
 
   @override
   void initState() {
@@ -31,32 +30,27 @@ class _FriendsScreenState extends State<FriendsScreen> {
     setState(() => _isLoading = true);
     try {
       final friends = await _friendsService.fetchFriends();
-      setState(() => _friends = friends);
+      setState(() {
+        _friends = friends;
+        _filteredFriends = friends;
+      });
     } catch (e) {
-      // Handle error if needed
+      // Optional: show snackbar or log
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _searchFriends(String query) async {
+  void _searchFriends(String query) {
+    final lowerQuery = query.toLowerCase();
+
     setState(() {
-      _isLoading = true;
-      _searchQuery = query;
+      _filteredFriends = _friends.where((friend) {
+        final name = friend.name?.toLowerCase() ?? '';
+        final email = friend.email?.toLowerCase();
+        return name.contains(lowerQuery) || email!.contains(lowerQuery);
+      }).toList();
     });
-    try {
-      if (query.isEmpty) {
-        final friends = await _friendsService.fetchFriends();
-        setState(() => _friends = friends);
-      } else {
-        final results = await _friendsService.searchUsers(query);
-        setState(() => _friends = results);
-      }
-    } catch (e) {
-      // Handle error if needed
-    } finally {
-      setState(() => _isLoading = false);
-    }
   }
 
   @override
@@ -65,7 +59,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 🌌 Background image (non-interactive)
+          // 🌌 Background
           Positioned.fill(
             child: IgnorePointer(
               child: Column(
@@ -133,26 +127,25 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
           // 📜 Scrollable content
           Positioned.fill(
-            top: 100, // 👈 Push down to avoid top bar
+            top: 100,
             child: SafeArea(
               child: CustomScrollView(
                 slivers: [
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 20),
-                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                  // 🔍 Search bar
+                  // 🔍 Search Bar
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Custom.SearchBar(
-                        onChanged: (query) => _searchFriends(query),
+                        onChanged: _searchFriends,
                       ),
                     ),
                   ),
+
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                  // 👥 Friends list or loading
+                  // 👥 Friends List
                   if (_isLoading)
                     const SliverFillRemaining(
                       child: Center(child: CircularProgressIndicator()),
@@ -161,7 +154,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          final friend = _friends[index];
+                          final friend = _filteredFriends[index];
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 6),
@@ -179,7 +172,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             ),
                           );
                         },
-                        childCount: _friends.length,
+                        childCount: _filteredFriends.length,
                       ),
                     ),
 

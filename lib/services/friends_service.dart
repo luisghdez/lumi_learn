@@ -4,11 +4,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:lumi_learn_app/models/userSearch_model.dart';
 
 class FriendsService {
   final String baseUrl = 'https://lumi-api-e2zy.onrender.com';
-// Access base URL directly
 
   /// Fetch accepted friends for current user
   Future<List<Friend>> fetchFriends() async {
@@ -32,7 +31,7 @@ class FriendsService {
   }
 
   /// Search users by name/email (GET /friend-requests/search?q=query)
-  Future<List<Friend>> searchUsers(String query) async {
+  Future<List<UserSearchResult>> searchUsers(String query) async {
     final token = await AuthController.instance.getIdToken();
     if (token == null) throw Exception("User not authenticated");
 
@@ -46,13 +45,13 @@ class FriendsService {
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body)['users'];
-      return data.map((json) => Friend.fromJson(json)).toList();
+      return data.map((json) => UserSearchResult.fromJson(json)).toList(); // ✅ fixed here
     } else {
       throw Exception("Search failed: ${response.body}");
     }
   }
 
-  /// Send friend request (POST /friend-requests)
+  /// Send friend request
   Future<void> sendFriendRequest(String recipientId) async {
     final token = await AuthController.instance.getIdToken();
     if (token == null) throw Exception("User not authenticated");
@@ -71,7 +70,7 @@ class FriendsService {
     }
   }
 
-  /// Accept or decline a friend request (PATCH /friend-requests/:id?accept=true/false)
+  /// Accept or decline a friend request
   Future<void> respondToRequest(String requestId, bool accept) async {
     final token = await AuthController.instance.getIdToken();
     if (token == null) throw Exception("User not authenticated");

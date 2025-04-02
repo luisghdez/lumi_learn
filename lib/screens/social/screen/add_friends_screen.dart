@@ -7,6 +7,7 @@ import 'package:lumi_learn_app/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
 import 'package:lumi_learn_app/screens/social/widgets/add_friends_tab.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_requests_tab.dart';
+import 'package:lumi_learn_app/models/userSearch_model.dart';
 
 class AddFriendsScreen extends StatefulWidget {
   const AddFriendsScreen({super.key});
@@ -17,22 +18,17 @@ class AddFriendsScreen extends StatefulWidget {
 
 class _AddFriendsScreenState extends State<AddFriendsScreen>
     with TickerProviderStateMixin {
-  final TextEditingController _emailController = TextEditingController();
-  bool _contactsPermissionGranted = false;
+  final TextEditingController _searchController = TextEditingController();
   late final TabController _tabController;
-  late final FriendsController _friendsController;
+
+  final RxBool _contactsPermissionGranted = false.obs;
+  final FriendsController _friendsController =
+      Get.put(FriendsController(service: Get.put(FriendsService())));
 
   @override
   void initState() {
     super.initState();
-
-    if (!Get.isRegistered<FriendsService>()) {
-      Get.put(FriendsService());
-    }
-
-    _friendsController = Get.put(FriendsController(service: Get.find()));
     _tabController = TabController(length: 2, vsync: this);
-
     _checkInitialPermission();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,62 +38,35 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
 
   Future<void> _checkInitialPermission() async {
     final status = await Permission.contacts.status;
-    setState(() {
-      _contactsPermissionGranted = status.isGranted;
-    });
+    _contactsPermissionGranted.value = status.isGranted;
   }
 
   Future<void> _checkContactsPermission() async {
     final status = await Permission.contacts.request();
-    setState(() {
-      _contactsPermissionGranted = status.isGranted;
-    });
+    _contactsPermissionGranted.value = status.isGranted;
 
-    if (status.isGranted) {
-      Get.snackbar("Permission Granted", "You can now access your contacts.");
-    } else {
-      Get.snackbar(
-        "Access Denied",
-        "Contacts permission is required to invite friends.",
-      );
-    }
+    Get.snackbar(
+      status.isGranted ? "Permission Granted" : "Access Denied",
+      status.isGranted
+          ? "You can now access your contacts."
+          : "Contacts permission is required to invite friends.",
+    );
   }
 
-  void _searchByEmail() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      Get.snackbar("Empty Field", "Please enter an email to search.");
+  /// Search users by name or email
+  void _performSearch() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      Get.snackbar("Empty Field", "Please enter a name or email.");
       return;
     }
 
-    await _friendsController.searchFriends(email);
+    await _friendsController.searchFriends(query);
+    final List<UserSearchResult> results = _friendsController.searchResults;
 
-    if (_friendsController.friends.isEmpty) {
-      Get.snackbar("No Results", "No users found with that email.");
-    } else {
-      Get.defaultDialog(
-        title: "User Found",
-        content: Column(
-          children: _friendsController.friends
-              .map((friend) => ListTile(
-                    title: Text(friend.name ?? "No name",
-                        style: const TextStyle(color: Colors.white)),
-                    subtitle: Text(friend.email ?? "",
-                        style: const TextStyle(color: Colors.white54)),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        _friendsController.sendFriendRequest(friend.id);
-                        Get.back();
-                        Get.snackbar("Request Sent",
-                            "Friend request sent to ${friend.name ?? "user"}.");
-                      },
-                      child: const Text("Add"),
-                    ),
-                  ))
-              .toList(),
-        ),
-        backgroundColor: Colors.black87,
-      );
+    if (results.isEmpty) {
+      Get.snackbar("No Results", "No users found with \"$query\".");
+      return;
     }
   }
 
@@ -109,6 +78,13 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
     } else {
       Get.snackbar("Not Logged In", "Sign in to share your profile.");
     }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -135,13 +111,13 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          AddFriendsTab(
-            emailController: _emailController,
-            onCheckContactsPermission: _checkContactsPermission,
-            onSearchByEmail: _searchByEmail,
-            onShareLink: _shareFollowLink,
-            contactsPermissionGranted: _contactsPermissionGranted,
-          ),
+          Obx(() => AddFriendsTab(
+                emailController: _searchController,
+                onCheckContactsPermission: _checkContactsPermission,
+                onShareLink: _shareFollowLink,
+                contactsPermissionGranted: _contactsPermissionGranted.value,
+                onSearch: _performSearch, // 👈 Hook up search logic
+              )),
           const FriendRequestsTab(),
         ],
       ),

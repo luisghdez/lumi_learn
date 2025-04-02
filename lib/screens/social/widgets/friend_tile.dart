@@ -18,11 +18,11 @@ class FriendTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
-        backgroundImage: AssetImage(friend.avatarUrl),
+        backgroundImage: AssetImage(friend.avatarUrl ?? 'assets/pfp/pfp1.png'),
         backgroundColor: Colors.transparent,
       ),
       title: Text(
-        friend.name,
+        friend.name ?? 'Unknown',
         style: const TextStyle(
           color: Colors.white,
           fontFamily: 'Inter',

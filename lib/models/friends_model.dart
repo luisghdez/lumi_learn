@@ -1,49 +1,46 @@
-// models/friends_model.dart
-
 class Friend {
   final String id;
-  final String name;
-  final String email;
-  final String avatarUrl;
-  final int points;
-
-  // Additional stats
-  final int dayStreak;
-  final int totalXP;
-  final int top3Finishes;
-  final int goldLeagueWeeks;
-  final String joinedDate;
-  final int friendCount;
+  final String? name;
+  final String? email;
+  final String? avatarUrl;
+  final int? points;
+  final int? dayStreak;
+  final int? totalXP;
+  final int? top3Finishes;
+  final int? goldLeagueWeeks;
+  final String? joinedDate;
+  final int? friendCount;
 
   Friend({
     required this.id,
-    required this.name,
-    required this.email,
-    required this.avatarUrl,
-    required this.points,
-    required this.dayStreak,
-    required this.totalXP,
-    required this.top3Finishes,
-    required this.goldLeagueWeeks,
-    required this.joinedDate,
-    required this.friendCount,
+    this.name,
+    this.email,
+    this.avatarUrl,
+    this.points,
+    this.dayStreak,
+    this.totalXP,
+    this.top3Finishes,
+    this.goldLeagueWeeks,
+    this.joinedDate,
+    this.friendCount,
   });
 
-  factory Friend.fromJson(Map<String, dynamic> json) {
-    return Friend(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      avatarUrl: json['avatarUrl'],
-      points: json['points'],
-      dayStreak: json['dayStreak'],
-      totalXP: json['totalXP'],
-      top3Finishes: json['top3Finishes'],
-      goldLeagueWeeks: json['goldLeagueWeeks'],
-      joinedDate: json['joinedDate'],
-      friendCount: json['friendCount'],
-    );
-  }
+factory Friend.fromJson(Map<String, dynamic> json) {
+  return Friend(
+    id: json['id'],
+    name: json['name'] ?? 'Unknown',
+    email: json['email'] ?? '',
+    avatarUrl: json['avatarUrl'] ?? 'assets/pfp/pfp1.png',
+    points: json['points'] ?? 0,
+    dayStreak: json['dayStreak'] ?? 0,
+    totalXP: json['totalXP'] ?? 0,
+    top3Finishes: json['top3Finishes'] ?? 0,
+    goldLeagueWeeks: json['goldLeagueWeeks'] ?? 0,
+    joinedDate: json['joinedDate'] ?? '',
+    friendCount: json['friendCount'] ?? 0,
+  );
+}
+
 
   Map<String, dynamic> toJson() => {
         'id': id,

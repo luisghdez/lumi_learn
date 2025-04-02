@@ -49,7 +49,7 @@ class GlassTileWithField extends StatelessWidget {
                       controller: controller,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: 'Enter email',
+                        hintText: 'Enter name or email',
                         hintStyle: const TextStyle(color: Colors.white30),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.02),
