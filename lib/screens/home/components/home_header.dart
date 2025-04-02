@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class HomeHeader extends StatelessWidget {
-  final String userName;
+  final int streakCount;
+  final int xpCount;
 
-  const HomeHeader({super.key, required this.userName});
+  const HomeHeader({
+    Key? key,
+    required this.streakCount,
+    required this.xpCount,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +40,9 @@ class HomeHeader extends StatelessWidget {
                   height: 22,
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  '2,045',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                Text(
+                  NumberFormat.decimalPattern().format(xpCount),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ],
             ),
@@ -51,8 +57,8 @@ class HomeHeader extends StatelessWidget {
                   height: 24,
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  '6',
+                Text(
+                  streakCount.toString(),
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ],

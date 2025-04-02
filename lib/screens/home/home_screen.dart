@@ -49,10 +49,15 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Add horizontal padding only around widgets that need it
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: HomeHeader(userName: userName),
-                          ),
+                          Obx(() => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: HomeHeader(
+                                  streakCount: authController.streakCount.value,
+                                  xpCount: authController.xpCount.value,
+                                ),
+                              )),
+
                           const SizedBox(height: 28),
 
                           const Padding(

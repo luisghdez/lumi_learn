@@ -141,6 +141,27 @@ class ApiService {
     }
   }
 
+  static Future<http.Response> getUserData({
+    required String token,
+    required String userId,
+  }) async {
+    final url = Uri.parse("$_baseUrl/users/$userId");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to get user data: ${response.body}");
+    }
+
+    return response;
+  }
+
   /// POST /review
   /// Process user explanation of terms and get guided AI feedback.
   Future<http.Response> submitReview({

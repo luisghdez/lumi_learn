@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
@@ -14,14 +16,48 @@ class AuthController extends GetxController {
   final RxBool hasCompletedOnboarding = false.obs;
   RxBool isAuthInitialized = false.obs;
 
+  RxMap<String, dynamic> userDoc = <String, dynamic>{}.obs;
+  RxInt streakCount = 0.obs;
+  RxInt xpCount = 0.obs;
+
   @override
   void onReady() {
     super.onReady();
-    _auth.authStateChanges().listen((User? user) {
+    _auth.authStateChanges().listen((User? user) async {
       firebaseUser.value = user;
-      // Set the flag to true after receiving the first auth event.
       isAuthInitialized.value = true;
+
+      // If the user is logged in, fetch the user doc from your API
+      if (user != null) {
+        await fetchUserData();
+      } else {
+        // Clear out userDoc when logged out
+        userDoc.value = {};
+      }
     });
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      final token = await getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return;
+      }
+
+      final userId = firebaseUser.value!.uid;
+      final response =
+          await ApiService.getUserData(token: token, userId: userId);
+      final data = jsonDecode(response.body);
+
+      // Store data in your reactive userDoc
+      userDoc.value = data;
+      // Assign streak and xp if they exist
+      streakCount.value = data['user']['streakCount'] ?? 0;
+      xpCount.value = data['user']['xpCount'] ?? 0;
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
   }
 
   Future<void> signUp(String email, String password, String name) async {

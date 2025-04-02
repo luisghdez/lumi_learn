@@ -30,7 +30,7 @@ class CourseController extends GetxController {
   final RxList<Question> computedQuestions = <Question>[].obs;
   RxBool showGreenGlow = false.obs;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  int totalXP = 50; // 50 default
+  int totalXP = 15; // 50 default
 
   // Add a reactive search string.
   var searchQuery = ''.obs;
@@ -541,7 +541,7 @@ class CourseController extends GetxController {
       // Trigger the green glow:
       showGreenGlow.value = true;
       playCorrectAnswerSound();
-      totalXP += 12;
+      totalXP += 6;
 
       // Wait 300 milliseconds before moving on (adjust duration as needed)
       Future.delayed(const Duration(milliseconds: 500), () {

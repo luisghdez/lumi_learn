@@ -34,11 +34,8 @@ class AuthGate extends StatelessWidget {
 
       // Show login/register screen if no user is logged in
       if (user == null) {
-        print("User is not logged in");
         return SignupScreen();
       }
-
-      print("User is logged in: ${user.displayName}");
 
       if (!Get.isRegistered<CourseController>()) {
         Get.put<CourseController>(CourseController(), permanent: true);
