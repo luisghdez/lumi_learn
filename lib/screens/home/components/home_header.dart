@@ -7,29 +7,58 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Welcome',
+        // Left side: Home label
+        const Text(
+          "Home",
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
-            color: Colors.white.withOpacity(0.8),
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          userName.length > 15 ? '${userName.substring(0, 15)}-' : userName,
-          style: const TextStyle(
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Colors.white,
             height: 0.9,
             letterSpacing: -1,
           ),
         ),
+
+        // Right side: icons and numbers
+        Row(
+          children: [
+            // Star Icon + Count
+            Row(
+              children: [
+                Image.asset(
+                  'assets/icons/star.png',
+                  width: 22,
+                  height: 22,
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  '2,045',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+            const SizedBox(width: 18),
+
+            // Meteor Icon + Count
+            Row(
+              children: [
+                Image.asset(
+                  'assets/icons/meteor.png',
+                  width: 24,
+                  height: 24,
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  '6',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+          ],
+        )
       ],
     );
   }
