@@ -27,7 +27,7 @@ class HorizontalCategoryList extends StatelessWidget {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(children: [
-            SizedBox(width: 12), // Add some padding to the left
+            const SizedBox(width: 12), // Add some padding to the left
             ...courses.map<Widget>((course) {
               // Use the course id to determine the galaxy image.
               String galaxyImagePath = getGalaxyForCourse(course['id']);
@@ -42,6 +42,9 @@ class HorizontalCategoryList extends StatelessWidget {
                       onConfirm: () async {
                         // Prevent navigation if the course is still loading.
                         if (course['loading'] == true) return;
+                        await courseController.saveCourse(
+                            course['id'], course['title']);
+
                         // Set the selected course ID in the controller.
                         courseController.setSelectedCourseId(
                             course['id'], course['title']);

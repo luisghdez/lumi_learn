@@ -112,7 +112,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                     alignment: Alignment.bottomLeft,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 20),
+                          horizontal: 12, vertical: 26),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -127,9 +127,9 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                             ),
                           ),
                           const Text(
-                            'Explore the curiosity of space',
+                            'Created By: Anonymous',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 12,
                               color: Color.fromARGB(255, 200, 200, 200),
                             ),
                           ),
@@ -164,7 +164,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             color: Colors.white,
                             letterSpacing: -1,
                           ),

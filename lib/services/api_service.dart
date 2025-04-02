@@ -130,6 +130,24 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> createSavedCourse({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/saved-courses');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'courseId': courseId,
+      }),
+    );
+    return response;
+  }
+
   static Future<void> ensureUserExists(String? idToken,
       {String? email, String? name, String? profilePicture}) async {
     if (idToken == null) {

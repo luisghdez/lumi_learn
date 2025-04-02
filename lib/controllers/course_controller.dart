@@ -415,6 +415,43 @@ class CourseController extends GetxController {
     }
   }
 
+  Future<void> saveCourse(String courseId, String courseTitle) async {
+    try {
+      // Get the user's authentication token.
+      final String? token = await authController.getIdToken();
+      if (token == null) {
+        print("No user token found. Cannot save course.");
+        return;
+      }
+
+      // Call the API service to create a saved course.
+      final apiService = ApiService();
+      final response = await apiService.createSavedCourse(
+        token: token,
+        courseId: courseId,
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        final savedCourseId = responseData['savedCourseId'];
+        print("Course saved successfully with id: $savedCourseId");
+        // Optionally, update your state or notify the user.
+
+        final newCourse = {
+          'id': courseId,
+          'title': courseTitle,
+        };
+        courses.insert(0, newCourse);
+      } else {
+        print("Failed to save course: ${response.statusCode} ${response.body}");
+        // Optionally, handle the error (e.g., show a snackbar).
+      }
+    } catch (e) {
+      print("Error saving course: $e");
+      // Optionally, handle the error further (e.g., show a snackbar).
+    }
+  }
+
   // New method to fetch courses from the backend
   Future<void> fetchCourses() async {
     print('Fetching courses...');
