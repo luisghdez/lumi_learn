@@ -1,67 +1,115 @@
 // services/friends_service.dart
 
-import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:lumi_learn_app/models/friends_model.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/services/api_service.dart';
 
 class FriendsService {
-  /// Simulate fetching friends (with points + extra stats)
+  final String baseUrl = 'https://lumi-api-e2zy.onrender.com';
+// Access base URL directly
+
+  /// Fetch accepted friends for current user
   Future<List<Friend>> fetchFriends() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      Friend(
-        id: '1',
-        name: 'Kathryn',
-        avatarUrl: 'assets/pfp/pfp2.png',
-        points: 150,
-        dayStreak: 3,
-        totalXP: 1771,
-        top3Finishes: 2,
-        goldLeagueWeeks: 1,
-        joinedDate: 'May 2023',
-        friendCount: 5,
-      ),
-      Friend(
-        id: '2',
-        name: 'Jacob',
-        avatarUrl:  'assets/pfp/pfp3.png',
-        points: 200,
-        dayStreak: 1,
-        totalXP: 2033,
-        top3Finishes: 3,
-        goldLeagueWeeks: 2,
-        joinedDate: 'April 2023',
-        friendCount: 2,
-      ),
-      Friend(
-        id: '3',
-        name: 'Jane',
-        avatarUrl: 'assets/pfp/pfp4.png',
-        points: 175,
-        dayStreak: 5,
-        totalXP: 1500,
-        top3Finishes: 1,
-        goldLeagueWeeks: 5,
-        joinedDate: 'March 2023',
-        friendCount: 10,
-      ),
-      // Add additional dummy friends as needed
-    ];
+    final token = await AuthController.instance.getIdToken();
+    if (token == null) throw Exception("User not authenticated");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/friends'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body)['friends'];
+      return data.map((json) => Friend.fromJson(json)).toList();
+    } else {
+      throw Exception("Failed to fetch friends: ${response.body}");
+    }
   }
 
-  /// Simulate searching for users based on a query string
+  /// Search users by name/email (GET /friend-requests/search?q=query)
   Future<List<Friend>> searchUsers(String query) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    // For simplicity, filter the dummy data from fetchFriends()
-    final allFriends = await fetchFriends();
-    return allFriends
-        .where((friend) => friend.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    final token = await AuthController.instance.getIdToken();
+    if (token == null) throw Exception("User not authenticated");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/friend-requests/search?q=$query'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body)['users'];
+      return data.map((json) => Friend.fromJson(json)).toList();
+    } else {
+      throw Exception("Search failed: ${response.body}");
+    }
   }
 
-  /// Simulate sending a friend request
-  Future<void> sendFriendRequest(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    // Simply simulate success; update local state as needed in your controller.
+  /// Send friend request (POST /friend-requests)
+  Future<void> sendFriendRequest(String recipientId) async {
+    final token = await AuthController.instance.getIdToken();
+    if (token == null) throw Exception("User not authenticated");
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/friend-requests'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'recipientId': recipientId}),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception("Friend request failed: ${response.body}");
+    }
+  }
+
+  /// Accept or decline a friend request (PATCH /friend-requests/:id?accept=true/false)
+  Future<void> respondToRequest(String requestId, bool accept) async {
+    final token = await AuthController.instance.getIdToken();
+    if (token == null) throw Exception("User not authenticated");
+
+    final response = await http.patch(
+      Uri.parse('$baseUrl/friend-requests/$requestId?accept=$accept'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to respond to request: ${response.body}");
+    }
+  }
+
+  /// Get friend requests (sent and received)
+  Future<Map<String, List<Friend>>> getFriendRequests() async {
+    final token = await AuthController.instance.getIdToken();
+    if (token == null) throw Exception("User not authenticated");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/friend-requests'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final sent = (data['sent'] as List).map((f) => Friend.fromJson(f)).toList();
+      final received = (data['received'] as List).map((f) => Friend.fromJson(f)).toList();
+
+      return {'sent': sent, 'received': received};
+    } else {
+      throw Exception("Failed to load friend requests: ${response.body}");
+    }
   }
 }

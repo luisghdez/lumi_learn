@@ -3,6 +3,7 @@
 class Friend {
   final String id;
   final String name;
+  final String email;
   final String avatarUrl;
   final int points;
 
@@ -17,6 +18,7 @@ class Friend {
   Friend({
     required this.id,
     required this.name,
+    required this.email,
     required this.avatarUrl,
     required this.points,
     required this.dayStreak,
@@ -31,6 +33,7 @@ class Friend {
     return Friend(
       id: json['id'],
       name: json['name'],
+      email: json['email'],
       avatarUrl: json['avatarUrl'],
       points: json['points'],
       dayStreak: json['dayStreak'],
@@ -45,6 +48,7 @@ class Friend {
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
+        'email': email,
         'avatarUrl': avatarUrl,
         'points': points,
         'dayStreak': dayStreak,

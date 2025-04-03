@@ -38,7 +38,7 @@ dependencies:
   provider: ^6.0.0 # add this line
   get: ^4.6.6
   flutter_launcher_icons: ^0.13.1
-  file_picker: ^4.2.0 # Add this line
+  file_picker: ^6.1.1 # Add this line
   audioplayers: ^6.4.0
   image_picker: ^0.8.7
 
@@ -52,13 +52,16 @@ dependencies:
   material_symbols_icons: ^4.2805.1
   font_awesome_flutter: ^10.8.0
   google_sign_in: ^6.2.2
-  mime: ^2.0.0
+  mime: ^1.0.4
   animated_text_kit: ^4.2.3
   record: ^5.2.1
   speech_to_text: ^7.0.0
   path: ^1.9.0
   path_provider: ^2.0.15
   flutter_native_splash: ^2.4.4
+  url_launcher: ^6.0.9
+  permission_handler: ^11.0.0
+  share: ^2.0.4
   sign_in_with_apple: ^6.1.4
   intl: ^0.20.2
 
