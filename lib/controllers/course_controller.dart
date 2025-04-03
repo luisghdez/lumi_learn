@@ -444,13 +444,11 @@ class CourseController extends GetxController {
 
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        final savedCourseId = responseData['savedCourseId'];
-        print("Course saved successfully with id: $savedCourseId");
-
         // Add the saved course at the top of the list.
         final newCourse = {
           'id': courseId,
           'title': courseTitle,
+          'totalLessons': responseData['lessonCount'] ?? 0,
         };
         courses.insert(0, newCourse);
         return true;
