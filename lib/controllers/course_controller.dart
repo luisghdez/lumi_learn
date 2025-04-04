@@ -831,7 +831,7 @@ class CourseController extends GetxController {
 
     // ❌ Show popup and block action
     showUpgradePopup(
-      title: "You’ve reached your free course limit",
+      title: "You’ve reached your free course limit!",
       subtitle: "Upgrade to Lumi Premium for unlimited courses.",
     );
 
@@ -840,6 +840,7 @@ class CourseController extends GetxController {
 
   void showUpgradePopup({required String title, String? subtitle}) {
     Get.dialog(
+      useSafeArea: false,
       UpgradePopup(title: title, subtitle: subtitle),
       barrierDismissible: true,
     );
