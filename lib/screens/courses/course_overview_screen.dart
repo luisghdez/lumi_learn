@@ -423,8 +423,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   // **Handling Lesson Taps**
   void _onLessonTap(int index, Planet planet) {
     final lessons = courseController.lessons;
-    final isPremium =
-        authController.isPremium.value; // <--- Check premium status
+    final isPremium = authController.isPremium.value;
+
+    // Count total lessons
+    final lessonCount = lessons.length;
 
     // Find the last completed lesson index
     int lastCompletedIndex = -1;
@@ -458,35 +460,41 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
         isDismissible: true,
       );
 
-      // Fade out the glow
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _highlightedPlanetIndex == index) {
-          setState(() {
-            _glowOpacity = 0.0;
-          });
+          setState(() => _glowOpacity = 0.0);
         }
       });
-      // Clear highlight
       Future.delayed(const Duration(milliseconds: 700), () {
         if (mounted && _highlightedPlanetIndex == index) {
-          setState(() {
-            _highlightedPlanetIndex = null;
-          });
+          setState(() => _highlightedPlanetIndex = null);
         }
       });
       return;
     }
 
-    // 2) If this is the 4th lesson (index = 3) and user is NOT premium, show upgrade popup
-    if (index == 3 && !isPremium) {
-      courseController.showUpgradePopup(
-        title: "Discover all lessons with premium!",
-        subtitle: "Upgrade to Lumi Premium for unlimited courses.",
-      );
-      return;
+    // 2) If user is NOT premium, block from:
+    //    - 3rd lesson (index=2) onward if course has <= 4 lessons
+    //    - 4th lesson (index=3) onward if course has > 4 lessons
+    if (!isPremium) {
+      if (lessonCount <= 4 && index >= 2) {
+        // Non-premium block for "small" course
+        courseController.showUpgradePopup(
+          title: "Discover all planets with premium!",
+          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
+        );
+        return;
+      } else if (lessonCount > 4 && index >= 3) {
+        // Non-premium block for "larger" course
+        courseController.showUpgradePopup(
+          title: "Discover all planets with premium!",
+          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
+        );
+        return;
+      }
     }
 
-    // 3) For unlocked & allowed lessons, open the bottom panel or re-open if switching lessons
+    // 3) For unlocked & allowed lessons, open the bottom panel (or re-open if switching lessons)
     if (_selectedLessonIndex == index && _isPanelVisible) {
       // If user taps the same planet while panel is open, ignore
       return;
