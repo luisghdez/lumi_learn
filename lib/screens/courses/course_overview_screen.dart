@@ -438,12 +438,30 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     }
     final nextLessonIndex = lastCompletedIndex + 1;
 
-    // If the planet is locked, animate a fade in/out glow
+    // If the planet is locked, animate a fade in/out glow AND show a snackbar
     if (index > nextLessonIndex) {
       setState(() {
         _highlightedPlanetIndex = index;
         _glowOpacity = 1.0; // Start with fully visible glow (fade in)
       });
+
+      Get.snackbar(
+        "Locked!",
+        "Complete previous lessons to start this lesson!",
+        snackPosition: SnackPosition.BOTTOM,
+        snackStyle: SnackStyle.FLOATING,
+        backgroundColor:
+            const Color.fromARGB(140, 0, 0, 0), // Match bottom panel color
+        colorText: Colors.white,
+        borderColor: Colors.white.withOpacity(0.2),
+        borderWidth: 1,
+        borderRadius: 30.0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
+        margin: const EdgeInsets.all(10.0),
+        duration: const Duration(seconds: 2),
+        isDismissible: true,
+      );
+
       // After 300ms, fade out the glow
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _highlightedPlanetIndex == index) {
@@ -470,6 +488,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
     // Otherwise, close any open panel first
     setState(() {
+      Get.closeAllSnackbars();
+
       _isPanelVisible = false;
       _highlightedPlanetIndex = null; // Clear any previous highlight
     });
@@ -489,6 +509,8 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
   // **Close the bottom panel when tapping outside, also remove highlight**
   void _handleTapDown(BuildContext context, TapDownDetails details) {
+    Get.closeAllSnackbars();
+
     setState(() {
       _highlightedPlanetIndex = null;
     });
