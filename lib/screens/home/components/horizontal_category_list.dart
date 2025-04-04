@@ -37,49 +37,47 @@ class HorizontalCategoryList extends StatelessWidget {
                 child: Stack(
                   children: [
                     HorizontalCategoryCard(
-                      title: course['title'] ?? 'Untitled',
-                      imagePath: galaxyImagePath,
-                      onConfirm: () async {
-                        // Prevent navigation if the course is still loading.
-                        if (course['loading'] == true) return;
+                        title: course['title'] ?? 'Untitled',
+                        imagePath: galaxyImagePath,
+                        onConfirm: () async {
+                          if (course['loading'] == true) return;
 
-                        // Attempt to save the course.
-                        // If the course is already saved, saveCourse returns false and we exit early.
-                        bool saved = await courseController.saveSharedCourse(
-                            course['id'], course['title']);
-                        if (!saved) return; // Duplicate found, do not continue.
+                          if (!courseController.checkCourseSlotAvailable()) {
+                            return;
+                          }
 
-                        // Set the selected course ID in the controller.
-                        courseController.setSelectedCourseId(
-                            course['id'], course['title']);
+                          bool saved = await courseController.saveSharedCourse(
+                              course['id'], course['title']);
+                          if (!saved) return;
 
-                        Get.to(
-                          () => LoadingScreen(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        );
+                          courseController.setSelectedCourseId(
+                              course['id'], course['title']);
 
-                        await Future.wait([
-                          Future.delayed(const Duration(milliseconds: 1000)),
-                          precacheImage(
-                            const AssetImage('assets/images/milky_way.png'),
-                            context,
-                          ),
-                        ]);
+                          Get.to(
+                            () => LoadingScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 500),
+                          );
 
-                        while (courseController.isLoading.value) {
-                          await Future.delayed(
-                              const Duration(milliseconds: 100));
-                        }
+                          await Future.wait([
+                            Future.delayed(const Duration(milliseconds: 1000)),
+                            precacheImage(
+                              const AssetImage('assets/images/milky_way.png'),
+                              context,
+                            ),
+                          ]);
 
-                        // Navigate to CourseOverviewScreen.
-                        Get.offAll(
-                          () => const CourseOverviewScreen(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        );
-                      },
-                    ),
+                          while (courseController.isLoading.value) {
+                            await Future.delayed(
+                                const Duration(milliseconds: 100));
+                          }
+
+                          Get.offAll(
+                            () => const CourseOverviewScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 500),
+                          );
+                        }),
                     if (course['loading'] == true)
                       Positioned.fill(
                         child: Container(

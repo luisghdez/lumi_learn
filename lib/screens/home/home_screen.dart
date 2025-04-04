@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
 
@@ -15,6 +16,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
+    final CourseController courseController = Get.find();
 
     return Scaffold(
       body: GestureDetector(
@@ -79,12 +81,18 @@ class HomeScreen extends StatelessWidget {
 
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: TopPicksHeader(
-                              onAddTap: () {
-                                Get.to(() => const CourseCreation());
-                              },
-                            ),
+                            child: Obx(() => TopPicksHeader(
+                                onAddTap: () {
+                                  if (courseController
+                                      .checkCourseSlotAvailable()) {
+                                    Get.to(() => const CourseCreation());
+                                  }
+                                },
+                                slotsUsed: authController.courseSlotsUsed.value,
+                                maxSlots: authController.maxCourseSlots.value,
+                                isPremium: authController.isPremium.value)),
                           ),
+
                           const SizedBox(height: 8),
 
                           const Padding(

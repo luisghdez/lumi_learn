@@ -77,7 +77,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
             /// Main card background & content
             Container(
               width: 170,
-              height: 230,
+              height: 240,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
@@ -149,7 +149,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                 duration: const Duration(milliseconds: 300),
                 child: Container(
                   width: 170,
-                  height: 230,
+                  height: 240,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     color: Colors.black.withOpacity(0.75),

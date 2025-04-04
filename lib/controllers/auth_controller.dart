@@ -19,6 +19,10 @@ class AuthController extends GetxController {
   RxMap<String, dynamic> userDoc = <String, dynamic>{}.obs;
   RxInt streakCount = 0.obs;
   RxInt xpCount = 0.obs;
+  RxInt courseSlotsUsed = 0.obs;
+  RxInt maxCourseSlots = 2.obs;
+
+  RxBool isPremium = false.obs;
 
   @override
   void onReady() {
@@ -50,11 +54,14 @@ class AuthController extends GetxController {
           await ApiService.getUserData(token: token, userId: userId);
       final data = jsonDecode(response.body);
 
-      // Store data in your reactive userDoc
       userDoc.value = data;
-      // Assign streak and xp if they exist
       streakCount.value = data['user']['streakCount'] ?? 0;
       xpCount.value = data['user']['xpCount'] ?? 0;
+      courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
+      maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
+      isPremium.value = data['user']['isPremium'] ?? false;
+
+      print('User data fetched successfully: ${data['user']['isPremium']}');
     } catch (e) {
       print('Error fetching user data: $e');
     }
