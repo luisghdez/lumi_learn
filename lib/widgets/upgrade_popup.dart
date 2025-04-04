@@ -167,11 +167,10 @@ class UpgradePopup extends StatelessWidget {
                             assetPath: 'assets/icons/xpstar.png',
                             textSpans: [
                               TextSpan(
-                                text:
-                                    'XP Boosts, profile cosmetics, achievements',
+                                text: 'XP Boosts, ',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              TextSpan(text: 'ever'),
+                              TextSpan(text: 'profile cosmetics, achievements'),
                             ],
                           ),
 
