@@ -1,9 +1,9 @@
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speech_bubble.dart';
 
 class SpeakScreen extends StatefulWidget {
   final Question question;
@@ -77,7 +77,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
                   message: speakController.feedbackMessage.value.isEmpty
                       ? "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know."
                       : speakController.feedbackMessage.value,
-                  speed: const Duration(milliseconds: 35),
+                  speed: const Duration(milliseconds: 70),
                   maxHeight: 100,
                   onFinished: () {
                     // Optionally, do something when typing finishes.
@@ -353,60 +353,6 @@ class TermMasteryItem extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class TypewriterSpeechBubbleMessage extends StatelessWidget {
-  final String message;
-  final TextStyle? textStyle;
-  final Duration speed;
-  final VoidCallback? onFinished;
-  final double maxHeight;
-
-  const TypewriterSpeechBubbleMessage({
-    Key? key,
-    required this.message,
-    this.textStyle,
-    this.speed = const Duration(milliseconds: 30),
-    this.onFinished,
-    this.maxHeight = 200,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          reverse: true,
-          child: AnimatedTextKit(
-            animatedTexts: [
-              TypewriterAnimatedText(
-                message,
-                textStyle: textStyle ??
-                    const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                speed: speed,
-                cursor: '',
-              ),
-            ],
-            totalRepeatCount: 1,
-            isRepeatingAnimation: false,
-            onFinished: onFinished,
-          ),
-        ),
       ),
     );
   }
