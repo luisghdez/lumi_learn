@@ -22,7 +22,7 @@ final List<Planet> planets = [
     hasRings: true,
     backgroundPaths: [
       'assets/backgrounds/fire1.png',
-      'assets/backgrounds/fire2.png',
+      // 'assets/backgrounds/fire2.png',
     ],
   ),
   Planet(
@@ -31,7 +31,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/red1.png',
-      'assets/backgrounds/red2.png',
+      // 'assets/backgrounds/red2.png',
     ],
   ),
   Planet(
@@ -40,7 +40,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/red1.png',
-      'assets/backgrounds/red2.png',
+      // 'assets/backgrounds/red2.png',
     ],
   ),
   Planet(
@@ -49,7 +49,7 @@ final List<Planet> planets = [
     hasRings: true,
     backgroundPaths: [
       'assets/backgrounds/cyan1.png',
-      'assets/backgrounds/cyan2.png',
+      // 'assets/backgrounds/cyan2.png',
     ],
   ),
   Planet(
@@ -58,7 +58,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/trees1.png',
-      'assets/backgrounds/trees3.png',
+      // 'assets/backgrounds/trees3.png',
     ],
   ),
   Planet(
@@ -67,7 +67,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/purple1.png',
-      'assets/backgrounds/purple1.png',
+      // 'assets/backgrounds/purple1.png',
     ],
   ),
   Planet(
@@ -76,7 +76,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/ship1.png',
-      'assets/backgrounds/ship2.png',
+      // 'assets/backgrounds/ship2.png',
     ],
   ),
   Planet(
@@ -85,7 +85,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/ice1.png',
-      'assets/backgrounds/ice2.png',
+      // 'assets/backgrounds/ice2.png',
     ],
   ),
   Planet(
@@ -94,7 +94,7 @@ final List<Planet> planets = [
     hasRings: false,
     backgroundPaths: [
       'assets/backgrounds/ocean1.png',
-      'assets/backgrounds/ocean2.png',
+      // 'assets/backgrounds/ocean2.png',
     ],
   ),
 ];
