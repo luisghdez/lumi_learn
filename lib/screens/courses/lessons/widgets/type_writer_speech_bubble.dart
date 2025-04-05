@@ -25,26 +25,25 @@ class TypewriterSpeechBubbleMessage extends StatefulWidget {
 class _TypewriterSpeechBubbleMessageState
     extends State<TypewriterSpeechBubbleMessage>
     with SingleTickerProviderStateMixin {
-  /// The text that has been typed so far
+  /// The text typed so far
   String typedSoFar = "";
 
   /// Index of the next character to add
   int charIndex = 0;
-
-  /// Timer for the manual typewriter effect
   Timer? _typingTimer;
 
-  /// Overlay entry to show our expanded message
+  /// Overlay entry to show the expanded message
   OverlayEntry? _overlayEntry;
 
   /// Animation controller for smooth scale-in/out
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
-  bool get isFinished => charIndex >= widget.message.length;
+  /// We now have two controllers:
+  final ScrollController _inlineScrollController = ScrollController();
+  final ScrollController _overlayScrollController = ScrollController();
 
-  /// ScrollController to enable auto-scroll
-  final ScrollController _scrollController = ScrollController();
+  bool get isFinished => charIndex >= widget.message.length;
 
   @override
   void initState() {
@@ -63,7 +62,6 @@ class _TypewriterSpeechBubbleMessageState
       reverseCurve: Curves.easeInBack,
     );
 
-    // Start typing character by character
     _startTyping();
   }
 
@@ -71,13 +69,13 @@ class _TypewriterSpeechBubbleMessageState
   void dispose() {
     _typingTimer?.cancel();
     _scaleController.dispose();
-    _scrollController.dispose();
+    _inlineScrollController.dispose();
+    _overlayScrollController.dispose();
     super.dispose();
   }
 
-  /// Manually type out the message one character at a time
   void _startTyping() {
-    _typingTimer?.cancel(); // cancel any previous timer
+    _typingTimer?.cancel();
     _typingTimer = Timer.periodic(widget.speed, (timer) {
       if (charIndex < widget.message.length) {
         setState(() {
@@ -85,20 +83,17 @@ class _TypewriterSpeechBubbleMessageState
           charIndex++;
         });
 
-        // Mark the overlay as needing a rebuild so it also sees the updated text
         _overlayEntry?.markNeedsBuild();
 
-        // After rebuilding, scroll to bottom so user sees the new text
+        // Auto-scroll both controllers
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController
-                .jumpTo(_scrollController.position.maxScrollExtent);
-            // If you prefer a smooth scroll instead:
-            // _scrollController.animateTo(
-            //   _scrollController.position.maxScrollExtent,
-            //   duration: const Duration(milliseconds: 100),
-            //   curve: Curves.easeOut,
-            // );
+          if (_inlineScrollController.hasClients) {
+            _inlineScrollController
+                .jumpTo(_inlineScrollController.position.maxScrollExtent);
+          }
+          if (_overlayScrollController.hasClients) {
+            _overlayScrollController
+                .jumpTo(_overlayScrollController.position.maxScrollExtent);
           }
         });
       } else {
@@ -108,7 +103,6 @@ class _TypewriterSpeechBubbleMessageState
     });
   }
 
-  /// Create an overlay entry with a dark background and centered “expanded bubble.”
   void _showOverlay() {
     if (_overlayEntry != null) return; // already visible
 
@@ -122,7 +116,6 @@ class _TypewriterSpeechBubbleMessageState
             color: const Color.fromARGB(193, 0, 0, 0), // dim background
             child: Stack(
               children: [
-                // Center the expanded bubble
                 Center(
                   child: FadeTransition(
                     opacity: _scaleAnimation,
@@ -143,7 +136,6 @@ class _TypewriterSpeechBubbleMessageState
     _scaleController.forward();
   }
 
-  /// Close the overlay with a smooth reverse animation
   void _removeOverlay() {
     if (_overlayEntry != null) {
       _scaleController.reverse().then((_) {
@@ -153,12 +145,11 @@ class _TypewriterSpeechBubbleMessageState
     }
   }
 
-  /// Expanded version of the message that appears in the overlay.
   Widget _buildExpandedMessage(BuildContext context) {
     return GestureDetector(
-      // Absorb taps so it doesn't dismiss if user taps inside bubble
-      onTap: () {},
+      onTap: () {}, // absorb taps so it doesn't dismiss if user taps inside
       child: Container(
+        width: double.infinity,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -167,11 +158,10 @@ class _TypewriterSpeechBubbleMessageState
           border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
         child: SingleChildScrollView(
-          controller: _scrollController,
-          // Notice we are NOT using `reverse: true`:
-          // This means text starts at the top, flows downward.
+          // Use the overlay controller here
+          controller: _overlayScrollController,
           child: Text(
-            typedSoFar, // same typed text
+            typedSoFar,
             style: widget.textStyle ??
                 const TextStyle(
                   color: Colors.white,
@@ -189,7 +179,6 @@ class _TypewriterSpeechBubbleMessageState
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // The main typed bubble
         Container(
           width: double.infinity,
           margin: const EdgeInsets.only(top: 16),
@@ -205,8 +194,8 @@ class _TypewriterSpeechBubbleMessageState
               minHeight: widget.maxHeight,
             ),
             child: SingleChildScrollView(
-              controller: _scrollController,
-              // We keep this the same so it also auto-scrolls in the normal bubble
+              // Use the inline controller here
+              controller: _inlineScrollController,
               child: Text(
                 typedSoFar,
                 style: widget.textStyle ??
@@ -219,7 +208,6 @@ class _TypewriterSpeechBubbleMessageState
             ),
           ),
         ),
-        // Small expand icon in bottom-right corner
         Positioned(
           bottom: 0,
           right: 0,
