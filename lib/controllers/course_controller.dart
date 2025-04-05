@@ -10,6 +10,7 @@ import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
@@ -348,13 +349,15 @@ class CourseController extends GetxController {
     required List<File> files,
     String content = '',
   }) async {
-    isLoading.value = true; // Start loading
+    isLoading.value = true;
 
     try {
+      checkCourseSlotAvailable();
+
       final token = await authController.getIdToken();
       if (token == null) {
         isLoading.value = false;
-        Get.back(); // Close loading overlay
+        Get.back();
         throw Exception("No user token found.");
       }
 
@@ -368,11 +371,9 @@ class CourseController extends GetxController {
       );
 
       if (response.statusCode == 201) {
-        // Parse the response JSON and extract the courseId
         final responseData = jsonDecode(response.body);
         final courseId = responseData['courseId'] as String;
 
-        // Create the new course object and update the courses list.
         final newCourse = {
           'id': courseId,
           'title': title,
@@ -381,9 +382,9 @@ class CourseController extends GetxController {
           'loading': false,
         };
 
-        // Insert the new course at the top of the courses list.
         courses.insert(0, newCourse);
-        // await fetchCourses();
+
+        authController.courseSlotsUsed.value++; // ✅ Increment on success
 
         Get.snackbar(
           "Success",
@@ -816,5 +817,32 @@ class CourseController extends GetxController {
     await _audioPlayer.stop();
     // Reset the volume back to full for subsequent sounds
     await _audioPlayer.setVolume(1.0);
+  }
+
+  /// Returns true if user has available course slots, false otherwise (and shows popup)
+  bool checkCourseSlotAvailable() {
+    final isPremium = authController.isPremium.value;
+    final used = authController.courseSlotsUsed.value;
+    final max = authController.maxCourseSlots.value;
+
+    if (isPremium || used < max) {
+      return true; // ✅ Proceed
+    }
+
+    // ❌ Show popup and block action
+    showUpgradePopup(
+      title: "You’ve reached your free course limit!",
+      subtitle: "Upgrade to Lumi Premium for unlimited courses.",
+    );
+
+    return false;
+  }
+
+  void showUpgradePopup({required String title, String? subtitle}) {
+    Get.dialog(
+      useSafeArea: false,
+      UpgradePopup(title: title, subtitle: subtitle),
+      barrierDismissible: true,
+    );
   }
 }

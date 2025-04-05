@@ -8,7 +8,6 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
-
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_panel.dart';
@@ -16,6 +15,7 @@ import 'package:lumi_learn_app/widgets/course_overview_header.dart';
 import 'package:lumi_learn_app/widgets/star_painter.dart';
 import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart'; // <--- Import your AuthController
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
 
 class CourseOverviewScreen extends StatefulWidget {
@@ -27,6 +27,9 @@ class CourseOverviewScreen extends StatefulWidget {
 
 class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final CourseController courseController = Get.find();
+  final AuthController authController =
+      Get.find(); // <--- Grab the AuthController here
+
   final ScrollController _scrollController = ScrollController();
 
   bool _isPanelVisible = false;
@@ -69,13 +72,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
       // Calculate the center of the next lesson planet.
       double planetCenterX = nextLessonIndex * 200.0 + planetSize / 2;
-
-      // Get the screen width.
       double screenWidth = MediaQuery.of(context).size.width;
 
       // Adjust the target offset so that the planet's center is aligned in the middle.
       double targetOffset = planetCenterX - screenWidth / 2;
-
       _scrollController.animateTo(
         targetOffset,
         duration: const Duration(milliseconds: 500),
@@ -89,21 +89,19 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     // Horizontal wave layout parameters (optional for the “orbit” effect)
-    final double amplitude = 180.0;
-    final double frequency = pi / 3;
+    const double amplitude = 180.0;
+    const double frequency = pi / 3;
 
     // Clear & recalculate lesson centers each build
     _lessonCenters.clear();
 
     return Obx(() {
-      final courseId =
-          courseController.selectedCourseId; // Get current course ID
+      final courseId = courseController.selectedCourseId;
       final lessons = courseController.lessons;
       final lessonCount = lessons.length;
       final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
-      int completedCount =
-          lessons.where((lesson) => lesson['completed'] == true).length;
-      double progress = lessonCount == 0 ? 0 : completedCount / lessonCount;
+      int completedCount = lessons.where((l) => l['completed'] == true).length;
+      double progress = (lessonCount == 0) ? 0 : completedCount / lessonCount;
 
       Planet? previousPlanet;
 
@@ -117,6 +115,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       // The next lesson is right after the last completed
       int nextLessonIndex = lastCompletedIndex + 1;
 
+      // Convert raw flashcards to Flashcard models
       final flashcards = courseController.flashcards
           .map((item) => Flashcard.fromMap(item))
           .toList();
@@ -146,7 +145,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       // 2) Lessons as “Planets”
                       ...List.generate(lessonCount, (index) {
                         final lesson = lessons[index];
-                        bool shouldBlur = index > nextLessonIndex;
+                        final bool shouldBlur = index > nextLessonIndex;
 
                         final lessonPlanetName = lesson['planetName'];
                         final lessonTitle =
@@ -168,7 +167,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         final planetTop = screenHeight / 2 - offsetY - 60;
                         const planetSize = 100.0;
 
-                        // Save the center of each “planet” for the rocket animation
+                        // Save the center of each planet for rocket animation
                         final lessonCenter = Offset(
                           planetLeft + planetSize / 2,
                           planetTop + planetSize / 2,
@@ -184,12 +183,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                             onTap: () => _onLessonTap(index, lessonPlanet),
                             child: SizedBox(
                               width: planetSize,
-                              // Wrap the entire content in a Stack to allow overlaying
-                              // the lock/blur layer and any highlight border.
                               child: Stack(
                                 children: [
                                   Column(
-                                    // mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Stack(
                                         clipBehavior: Clip.none,
@@ -240,6 +236,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                       ),
                                     ],
                                   ),
+                                  // Lock & blur for future lessons
                                   if (shouldBlur)
                                     Align(
                                       alignment: Alignment.center,
@@ -248,7 +245,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                         height: planetSize,
                                         child: Stack(
                                           children: [
-                                            // The blur overlay
+                                            // Blur overlay
                                             ClipOval(
                                               child: BackdropFilter(
                                                 filter: ImageFilter.blur(
@@ -268,8 +265,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                                 ),
                                               ),
                                             ),
-                                            // The lock icon
-                                            // 2) Fade lock icon color from gray to white
+                                            // Lock icon
                                             Center(
                                               child: Stack(
                                                 alignment: Alignment.center,
@@ -299,7 +295,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                                                 ],
                                               ),
                                             ),
-
                                             // Animated glowing border (fades in then out)
                                             if (_highlightedPlanetIndex ==
                                                 index)
@@ -406,17 +401,17 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     String lessonId, [
     Planet? previousPlanet,
   ]) {
-    // Combine course ID and lesson ID for a unique hash.
-    String combinedId = courseId + lessonId;
-    var bytes = utf8.encode(combinedId);
-    var hash = md5.convert(bytes).toString();
+    // Combine course ID + lesson ID for a unique hash
+    final combinedId = courseId + lessonId;
+    final bytes = utf8.encode(combinedId);
+    final hash = md5.convert(bytes).toString();
 
-    // Convert part of the hash to a number.
-    int numericHash = int.parse(hash.substring(0, 6), radix: 16);
+    // Convert part of the hash to a number, pick a planet from the list
+    final numericHash = int.parse(hash.substring(0, 6), radix: 16);
     int planetIndex = numericHash % planets.length;
     Planet chosenPlanet = planets[planetIndex];
 
-    // If the chosen planet is the same as the previous one, pick the next planet.
+    // If the chosen planet is the same as the previous one, pick the next
     if (previousPlanet != null &&
         chosenPlanet.imagePath == previousPlanet.imagePath) {
       planetIndex = (planetIndex + 1) % planets.length;
@@ -428,6 +423,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   // **Handling Lesson Taps**
   void _onLessonTap(int index, Planet planet) {
     final lessons = courseController.lessons;
+    final isPremium = authController.isPremium.value;
+
+    // Count total lessons
+    final lessonCount = lessons.length;
 
     // Find the last completed lesson index
     int lastCompletedIndex = -1;
@@ -438,43 +437,77 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     }
     final nextLessonIndex = lastCompletedIndex + 1;
 
-    // If the planet is locked, animate a fade in/out glow
+    // 1) If this lesson is locked (index > nextLessonIndex), show glow + snackbar
     if (index > nextLessonIndex) {
       setState(() {
         _highlightedPlanetIndex = index;
         _glowOpacity = 1.0; // Start with fully visible glow (fade in)
       });
-      // After 300ms, fade out the glow
+
+      Get.snackbar(
+        "Locked!",
+        "Complete previous lessons to start this lesson!",
+        snackPosition: SnackPosition.BOTTOM,
+        snackStyle: SnackStyle.FLOATING,
+        backgroundColor: const Color.fromARGB(140, 0, 0, 0),
+        colorText: Colors.white,
+        borderColor: Colors.white.withOpacity(0.2),
+        borderWidth: 1,
+        borderRadius: 30.0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 26),
+        margin: const EdgeInsets.all(10.0),
+        duration: const Duration(seconds: 2),
+        isDismissible: true,
+      );
+
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _highlightedPlanetIndex == index) {
-          setState(() {
-            _glowOpacity = 0.0;
-          });
+          setState(() => _glowOpacity = 0.0);
         }
       });
-      // Finally, clear the highlight after the full animation
       Future.delayed(const Duration(milliseconds: 700), () {
         if (mounted && _highlightedPlanetIndex == index) {
-          setState(() {
-            _highlightedPlanetIndex = null;
-          });
+          setState(() => _highlightedPlanetIndex = null);
         }
       });
       return;
     }
 
-    // For unlocked planets, if the same planet is tapped while the panel is visible, ignore
+    // 2) If user is NOT premium, block from:
+    //    - 3rd lesson (index=2) onward if course has <= 4 lessons
+    //    - 4th lesson (index=3) onward if course has > 4 lessons
+    if (!isPremium) {
+      if (lessonCount <= 4 && index >= 2) {
+        // Non-premium block for "small" course
+        courseController.showUpgradePopup(
+          title: "Discover all planets with premium!",
+          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
+        );
+        return;
+      } else if (lessonCount > 4 && index >= 3) {
+        // Non-premium block for "larger" course
+        courseController.showUpgradePopup(
+          title: "Discover all planets with premium!",
+          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
+        );
+        return;
+      }
+    }
+
+    // 3) For unlocked & allowed lessons, open the bottom panel (or re-open if switching lessons)
     if (_selectedLessonIndex == index && _isPanelVisible) {
+      // If user taps the same planet while panel is open, ignore
       return;
     }
 
-    // Otherwise, close any open panel first
+    // Close any open panel (also close any snackbars)
     setState(() {
+      Get.closeAllSnackbars();
       _isPanelVisible = false;
-      _highlightedPlanetIndex = null; // Clear any previous highlight
+      _highlightedPlanetIndex = null;
     });
 
-    // Delay to animate rocket away before re-opening with new data
+    // Delay to let rocket animate away
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() {
         _selectedLessonIndex = index;
@@ -482,6 +515,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
         _lessonDescription = lessons[index]['planetDescription'];
         _isPanelVisible = true;
       });
+      // Also update the CourseController’s active lesson & planet
       courseController.setActiveLessonIndex(index);
       courseController.setActivePlanet(planet);
     });
@@ -489,11 +523,15 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
   // **Close the bottom panel when tapping outside, also remove highlight**
   void _handleTapDown(BuildContext context, TapDownDetails details) {
+    // Close any snackbars
+    Get.closeAllSnackbars();
+
     setState(() {
       _highlightedPlanetIndex = null;
     });
 
     if (!_isPanelVisible) return;
+
     final tapPosition = details.globalPosition;
     if (_panelKey.currentContext != null) {
       final renderBox =
