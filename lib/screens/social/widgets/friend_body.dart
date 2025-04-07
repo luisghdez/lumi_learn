@@ -10,12 +10,14 @@ class FriendProfile extends StatelessWidget {
   final Friend friend;
 
   const FriendProfile({
-    Key? key,
+    super.key,
     required this.friend,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<FriendsController>();
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -98,8 +100,7 @@ class FriendProfile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white24, width: 0.8),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                     child: Column(
                       children: [
                         Text(
@@ -113,8 +114,7 @@ class FriendProfile extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'Joined ${friend.joinedDate}',
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 14),
+                          style: const TextStyle(color: Colors.grey, fontSize: 14),
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 16),
@@ -150,32 +150,54 @@ class FriendProfile extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Follow button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        try {
-                          final controller = Get.find<FriendsController>();
-                          await controller.sendFriendRequest(friend.id);
-                          Get.snackbar("Friend Request", "Request sent to ${friend.name ?? 'user'}.");
-                        } catch (e) {
-                          Get.snackbar("Error", "Failed to send friend request");
-                        }
-                      },
-                      icon: const Icon(Icons.person_add_alt,
-                          size: 24, color: Color(0xFFB388FF)),
-                      label: const Text('FOLLOW',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                  // ✅ Reactive friend request button
+                  Obx(() {
+                    final alreadyFriend = controller.isFriend(friend.id);
+                    final requestSent = controller.hasSentRequest(friend.id);
+
+                    final String buttonText = alreadyFriend
+                        ? 'Friends'
+                        : requestSent
+                            ? 'Sent'
+                            : 'Send Request';
+
+                    final Icon buttonIcon = alreadyFriend
+                        ? const Icon(Icons.check_circle, size: 24, color: Colors.greenAccent)
+                        : requestSent
+                            ? const Icon(Icons.hourglass_top, size: 24, color: Colors.orangeAccent)
+                            : const Icon(Icons.person_add_alt, size: 24, color: Color(0xFFB388FF));
+
+                    final bool isDisabled = alreadyFriend || requestSent;
+
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isDisabled
+                            ? null
+                            : () async {
+                                try {
+                                  await controller.sendFriendRequest(friend.id);
+                                  await controller.loadFriends(); // ✅ updates friend status
+                                  await controller.getRequests();  // ✅ updates request status
+                                } catch (e) {
+                                }
+                              },
+                        icon: buttonIcon,
+                        label: Text(
+                          buttonText,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
 
                   const SizedBox(height: 20),
 
@@ -199,7 +221,7 @@ class FriendProfile extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // XP Chart
-                  const XPChartBox(), // Optional: pass friend data if needed
+                  const XPChartBox(),
 
                   const SizedBox(height: 60),
                 ],

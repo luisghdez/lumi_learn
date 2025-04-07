@@ -25,22 +25,30 @@ class Friend {
     this.friendCount,
   });
 
-factory Friend.fromJson(Map<String, dynamic> json) {
-  return Friend(
-    id: json['id'],
-    name: json['name'] ?? 'Unknown',
-    email: json['email'] ?? '',
-    avatarUrl: json['avatarUrl'] ?? 'assets/pfp/pfp1.png',
-    points: json['points'] ?? 0,
-    dayStreak: json['dayStreak'] ?? 0,
-    totalXP: json['totalXP'] ?? 0,
-    top3Finishes: json['top3Finishes'] ?? 0,
-    goldLeagueWeeks: json['goldLeagueWeeks'] ?? 0,
-    joinedDate: json['joinedDate'] ?? '',
-    friendCount: json['friendCount'] ?? 0,
-  );
-}
+  factory Friend.fromJson(Map<String, dynamic> json) {
+    // ✅ If it's a sent/received request, parse the user inside "recipient" or "sender"
+    final bool isSentRequest = json.containsKey('recipient');
+    final bool isReceivedRequest = json.containsKey('sender');
+    final data = isSentRequest
+        ? json['recipient']
+        : isReceivedRequest
+            ? json['sender']
+            : json;
 
+    return Friend(
+      id: data['id'],
+      name: data['name'] ?? 'Unknown',
+      email: data['email'] ?? '',
+      avatarUrl: data['avatarUrl'] ?? 'assets/pfp/pfp1.png',
+      points: data['points'] ?? 0,
+      dayStreak: data['dayStreak'] ?? 0,
+      totalXP: data['totalXP'] ?? 0,
+      top3Finishes: data['top3Finishes'] ?? 0,
+      goldLeagueWeeks: data['goldLeagueWeeks'] ?? 0,
+      joinedDate: data['joinedDate'] ?? '',
+      friendCount: data['friendCount'] ?? 0,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

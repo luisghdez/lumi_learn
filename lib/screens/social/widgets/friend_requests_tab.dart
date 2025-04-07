@@ -10,7 +10,6 @@ class FriendRequestsTab extends StatelessWidget {
     return GetX<FriendsController>(
       builder: (controller) {
         final received = controller.receivedRequests;
-        final sent = controller.sentRequests;
 
         return RefreshIndicator(
           onRefresh: () async => controller.getRequests(),
@@ -37,21 +36,6 @@ class FriendRequestsTab extends StatelessWidget {
                             onPressed: () => controller.respondToRequest(req.id, false),
                           ),
                         ],
-                      ),
-                    )),
-
-              const SizedBox(height: 32),
-              _sectionTitle("Sent Requests"),
-              if (sent.isEmpty)
-                _emptyState("No outgoing requests.")
-              else
-                ...sent.map((req) => _requestCard(
-                      name: req.name ?? "Unknown",
-                      email: req.email ?? "",
-                      avatarUrl: req.avatarUrl,
-                      trailing: const Text(
-                        "Pending",
-                        style: TextStyle(color: Colors.white38, fontStyle: FontStyle.italic),
                       ),
                     )),
             ],

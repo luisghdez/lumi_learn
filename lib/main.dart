@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
@@ -20,6 +21,8 @@ void main() async {
   Get.put(AuthController());
   Get.put(NavigationController());
   Get.put(FriendsService());
+  Get.put(FriendsController(service: FriendsService()));
+
 
   runApp(const MyApp());
 }
