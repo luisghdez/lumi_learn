@@ -102,6 +102,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
               );
             }),
 
+            const SizedBox(height: 16),
+
             // The Record Button
             Center(
               child: Obx(

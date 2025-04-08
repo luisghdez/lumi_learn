@@ -1,49 +1,80 @@
+import 'dart:math'; // Need min and max
 import 'dart:ui';
 import 'package:flutter/material.dart';
-// Remove Get import if not used elsewhere, it's not needed for this specific widget anymore
-// import 'package:get/get.dart';
+
+// Assuming TermMasteryItem is defined elsewhere as provided before
+// import 'term_mastery_item.dart';
+
+// Helper class to hold info about a card to be displayed
+class _CardDisplayInfo {
+  final int index;
+  final double initialOffset; // Offset relative to active card at 0
+  final double scale;
+
+  _CardDisplayInfo({
+    required this.index,
+    required this.initialOffset,
+    required this.scale,
+  });
+}
 
 class TermsDeck extends StatelessWidget {
   final List<String> terms;
   final List<double> progressList;
   final int currentTermIndex;
-  final Duration animationDuration; // Allow customizing duration
+  final Duration animationDuration;
+
+  // --- Constants for calculation ---
+  static const double _containerHeight = 150.0;
+  static const double _estimatedCardHeight = 75.0; // Adjust if needed
+  static const double _verticalSeparation = 35.0; // Base separation
+
+  // Scales (can be const)
+  static const double _activeScale = 1.0;
+  static const double _adjacentScale = 0.8;
+  static const double _distantScale = 0.6;
+
+  // Initial relative offsets (active card is reference at 0)
+  static const double _activeInitialOffset = 0.0;
+  static const double _prevInitialOffset = -_verticalSeparation;
+  static const double _nextInitialOffset = _verticalSeparation;
+  static const double _farPrevInitialOffset = -2 * _verticalSeparation;
+  static const double _farNextInitialOffset = 1.8 * _verticalSeparation;
+  // --- End Constants ---
 
   const TermsDeck({
-    super.key, // Use super parameters
+    super.key,
     required this.terms,
     required this.progressList,
     required this.currentTermIndex,
-    this.animationDuration =
-        const Duration(milliseconds: 300), // Default duration
+    this.animationDuration = const Duration(milliseconds: 300),
   });
 
-  // Helper to build the animated card widget
+  // Builder remains the same, just takes the final calculated offset
   Widget _buildAnimatedCard({
     required int termIndex,
-    required double targetOffset,
-    required double targetScale,
-    required BuildContext context, // Pass context if needed by TermMasteryItem
+    required double finalTopOffset, // Renamed for clarity
+    required double scale,
+    required BuildContext context,
   }) {
-    // Ensure index is valid before building
+    // Check index validity (important!)
     if (termIndex < 0 || termIndex >= terms.length) {
-      return const SizedBox.shrink(); // Return empty if index is out of bounds
+      return const SizedBox.shrink();
     }
 
     return AnimatedPositioned(
-      key: ValueKey(termIndex), // Crucial for smooth animation tracking
+      key: ValueKey(termIndex),
       duration: animationDuration,
-      curve: Curves.easeInOut, // Smooth animation curve
-      top: targetOffset, // Animate the vertical position
+      curve: Curves.easeInOut,
+      top: finalTopOffset, // Use the final calculated offset
       left: 0,
       right: 0,
       child: AnimatedScale(
         duration: animationDuration,
         curve: Curves.easeInOut,
-        scale: targetScale, // Animate the scale
-        alignment: Alignment.topCenter,
+        scale: scale,
+        alignment: Alignment.center,
         child: TermMasteryItem(
-          // No need for Obx here if TermMasteryItem handles its own state
           term: terms[termIndex],
           progress: progressList[termIndex],
         ),
@@ -53,136 +84,123 @@ class TermsDeck extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define styles for different card states
-    const double activeScale = 1.0;
-    const double adjacentScale = 0.9; // Scale for immediate neighbors
-    const double distantScale = 0.8; // Scale for cards further away
+    final List<_CardDisplayInfo> cardsToDisplay = [];
+    final int lastIndex = terms.length - 1;
 
-    const double activeOffset = 0.0;
-    const double nextOffset = 35.0; // Offset for the card below active
-    const double previousOffset = -35.0; // Offset for the card above active
-    const double farNextOffset = 70.0; // Offset for the card 2 steps below
-    const double farPreviousOffset = -70.0; // Offset for the card 2 steps above
+    // --- Step 1: Determine which cards to display and their initial info ---
+    if (terms.isEmpty) {
+      return SizedBox(height: _containerHeight); // Handle empty list
+    }
 
-    List<Widget> cardWidgets = [];
+    // Always add active card info
+    cardsToDisplay.add(_CardDisplayInfo(
+        index: currentTermIndex,
+        initialOffset: _activeInitialOffset,
+        scale: _activeScale));
 
-    // Determine indices and styles based on currentTermIndex
-    final int prevIndex = currentTermIndex - 1;
-    final int nextIndex = currentTermIndex + 1;
-    final int prev2Index = currentTermIndex - 2;
-    final int next2Index = currentTermIndex + 2;
-
-    // --- Logic to determine which cards to show and their styles ---
-
-    // Always add the active card (will be visually on top)
-    final activeCard = _buildAnimatedCard(
-      termIndex: currentTermIndex,
-      targetOffset: activeOffset,
-      targetScale: activeScale,
-      context: context,
-    );
-
-    Widget? previousCard;
-    Widget? nextCard;
-    Widget? bottomCard; // For the card visually at the bottom
-
-    if (terms.length == 1) {
-      // Only the active card
-    } else if (terms.length == 2) {
+    if (terms.length == 2) {
       if (currentTermIndex == 0) {
-        // Active (0) and Next (1)
-        nextCard = _buildAnimatedCard(
-            termIndex: nextIndex,
-            targetOffset: nextOffset,
-            targetScale: adjacentScale,
-            context: context);
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: 1,
+            initialOffset: _nextInitialOffset,
+            scale: _adjacentScale));
       } else {
         // currentTermIndex == 1
-        // Active (1) and Previous (0)
-        previousCard = _buildAnimatedCard(
-            termIndex: prevIndex,
-            targetOffset: previousOffset,
-            targetScale: adjacentScale,
-            context: context);
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: 0,
+            initialOffset: _prevInitialOffset,
+            scale: _adjacentScale));
       }
-    } else {
-      // terms.length >= 3
+    } else if (terms.length >= 3) {
       if (currentTermIndex == 0) {
         // Active(0), Next(1), Far Next(2)
-        nextCard = _buildAnimatedCard(
-            termIndex: nextIndex,
-            targetOffset: nextOffset,
-            targetScale: adjacentScale,
-            context: context);
-        bottomCard = _buildAnimatedCard(
-            // Visually bottom-most
-            termIndex: next2Index,
-            targetOffset: farNextOffset,
-            targetScale: distantScale,
-            context: context);
-      } else if (currentTermIndex == terms.length - 1) {
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: 1,
+            initialOffset: _nextInitialOffset,
+            scale: _adjacentScale));
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: 2,
+            initialOffset: _farNextInitialOffset,
+            scale: _distantScale));
+      } else if (currentTermIndex == lastIndex) {
         // Active(last), Previous(last-1), Far Previous(last-2)
-        previousCard = _buildAnimatedCard(
-            termIndex: prevIndex,
-            targetOffset: previousOffset,
-            targetScale: adjacentScale,
-            context: context);
-        bottomCard = _buildAnimatedCard(
-            // Visually bottom-most
-            termIndex: prev2Index,
-            targetOffset: farPreviousOffset,
-            targetScale: distantScale,
-            context: context);
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: lastIndex - 1,
+            initialOffset: _prevInitialOffset,
+            scale: _adjacentScale));
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: lastIndex - 2,
+            initialOffset: _farPrevInitialOffset,
+            scale: _distantScale));
       } else {
-        // Active, Previous, Next
-        previousCard = _buildAnimatedCard(
-            termIndex: prevIndex,
-            targetOffset: previousOffset,
-            targetScale: adjacentScale,
-            context: context);
-        nextCard = _buildAnimatedCard(
-            termIndex: nextIndex,
-            targetOffset: nextOffset,
-            targetScale: adjacentScale,
-            context: context);
-        // In the middle case, decide which one is visually "bottom"
-        // Often, the 'next' card feels more natural at the bottom visually
-        // when both prev/next have the same scale. Let's try putting 'next'
-        // below 'previous' visually by adding it first to the stack.
-        // (We'll add them in visual order below)
+        // Middle case: Active, Previous, Next
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: currentTermIndex - 1,
+            initialOffset: _prevInitialOffset,
+            scale: _adjacentScale));
+        cardsToDisplay.add(_CardDisplayInfo(
+            index: currentTermIndex + 1,
+            initialOffset: _nextInitialOffset,
+            scale: _adjacentScale));
       }
     }
 
-    // Build the stack children list IN VISUAL ORDER (bottom first)
-    // Add the card that should appear furthest back / smallest first.
-    if (currentTermIndex == 0 && terms.length >= 3) {
-      // Order: Far Next (bottom), Next, Active (top)
-      if (bottomCard != null) cardWidgets.add(bottomCard);
-      if (nextCard != null) cardWidgets.add(nextCard);
-    } else if (currentTermIndex == terms.length - 1 && terms.length >= 3) {
-      // Order: Far Previous (bottom), Previous, Active (top)
-      if (bottomCard != null) cardWidgets.add(bottomCard);
-      if (previousCard != null) cardWidgets.add(previousCard);
-    } else if (terms.length >= 3) {
-      // Middle case: Active, Previous, Next. Let's put Next visually below Previous.
-      // Order: Next (bottom), Previous, Active (top)
-      if (nextCard != null) cardWidgets.add(nextCard);
-      if (previousCard != null) cardWidgets.add(previousCard);
-    } else if (terms.length == 2) {
-      // Only one other card besides active
-      if (nextCard != null) cardWidgets.add(nextCard); // If index 0 is active
-      if (previousCard != null)
-        cardWidgets.add(previousCard); // If index 1 is active
-    }
-    // Always add active card last so it's visually on top
-    cardWidgets.add(activeCard);
+    // --- Step 2: Calculate group bounds based on initial offsets ---
+    double groupMinY = double.infinity;
+    double groupMaxY = double.negativeInfinity;
 
+    if (cardsToDisplay.isEmpty) {
+      // Should not happen if terms is not empty, but safe to check
+      return SizedBox(height: _containerHeight);
+    }
+
+    for (final cardInfo in cardsToDisplay) {
+      // Check index validity again before accessing lists
+      if (cardInfo.index < 0 || cardInfo.index >= terms.length) continue;
+
+      final cardHeight = _estimatedCardHeight * cardInfo.scale;
+      final cardTop = cardInfo.initialOffset;
+      final cardBottom = cardTop + cardHeight;
+
+      groupMinY = min(groupMinY, cardTop);
+      groupMaxY = max(groupMaxY, cardBottom);
+    }
+
+    // Handle case where only one card exists, min/max might not have updated
+    if (groupMinY == double.infinity) groupMinY = 0;
+    if (groupMaxY == double.negativeInfinity) groupMaxY = _estimatedCardHeight;
+
+    // --- Step 3: Calculate the vertical shift needed ---
+    final double groupHeight = groupMaxY - groupMinY;
+    final double groupCenterY = groupMinY + (groupHeight / 2.0);
+    const double containerCenterY = _containerHeight / 2.0;
+    final double deltaY = containerCenterY - groupCenterY; // Shift needed
+
+    // --- Step 4: Build the widgets with final offsets ---
+    final List<Widget> cardWidgets = [];
+
+    // Create widgets for all cards using the calculated deltaY
+    // Sort them by scale for correct visual stacking (smallest first)
+    cardsToDisplay.sort((a, b) => a.scale.compareTo(b.scale));
+
+    for (final cardInfo in cardsToDisplay) {
+      // Check index validity one last time
+      if (cardInfo.index < 0 || cardInfo.index >= terms.length) continue;
+
+      final finalOffset = cardInfo.initialOffset + deltaY;
+      cardWidgets.add(_buildAnimatedCard(
+        termIndex: cardInfo.index,
+        finalTopOffset: finalOffset,
+        scale: cardInfo.scale,
+        context: context,
+      ));
+    }
+
+    // Return the SizedBox and Stack
     return SizedBox(
-      // Height remains constant
-      height: 150, // Adjust if TermMasteryItem base height changes
+      height: _containerHeight,
       child: Stack(
-        clipBehavior: Clip.none, // Allow cards to draw outside bounds slightly
-        alignment: Alignment.topCenter, // Align stack items centrally
+        clipBehavior: Clip.none, // MUST allow overflow for this to work
         children: cardWidgets,
       ),
     );
@@ -277,9 +295,7 @@ class TermMasteryItem extends StatelessWidget {
                                 ),
                                 if (isMastered) const SizedBox(width: 4),
                                 Text(
-                                  isMastered
-                                      ? 'Mastered' // Show text when mastered
-                                      : '${(progress * 100).toInt()}%',
+                                  '${(progress * 100).toInt()}%',
                                   style: TextStyle(
                                     fontSize: 12, // Consistent size maybe?
                                     color: isMastered
