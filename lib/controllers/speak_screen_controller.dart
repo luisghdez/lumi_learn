@@ -289,11 +289,16 @@ class SpeakController extends GetxController {
         final data = jsonDecode(response.body);
         sessionId.value = data['sessionId'];
 
-        // The API returns updated scores for the term:
-        final Map<String, dynamic> updatedTerm = data['updatedTerms'][0];
-        print("Updated term: $updatedTerm");
-        final int updatedScore = updatedTerm['score'];
-        termProgress[currentIndex] = (updatedScore / 100).clamp(0.0, 1.0);
+        updatedTerms.assignAll(data['updatedTerms']);
+        print('Review submitted successfully: $data');
+
+        final List<dynamic> updated = data['updatedTerms'];
+
+        for (int i = 0; i < updated.length; i++) {
+          final score = updated[i]['score'];
+          termProgress[i] = (score / 100).clamp(0.0, 1.0);
+          // 0-1 scale for progress bar
+        }
 
         // Optionally delay to let the audio be generated.
         await Future.delayed(const Duration(seconds: 2));
@@ -306,6 +311,8 @@ class SpeakController extends GetxController {
 
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
+
+        print("attempt number: $attemptNumber");
 
         // Transition: if the current term is mastered (score >= 100)
         // or the user has made 3 attempts (attemptNumber > 3), move on.
