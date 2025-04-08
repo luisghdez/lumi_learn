@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/widgets/terms_deck.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speech_bubble.dart';
 
 class SpeakScreen extends StatefulWidget {
@@ -19,8 +22,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize controller with the question options and play intro audio.
-    speakController.setTerms(widget.question.options);
+    // Initialize controller with the question's terms and play intro audio.
+    speakController.setTerms(widget.question.flashcards);
     speakController.playIntroAudio();
   }
 
@@ -34,8 +37,6 @@ class _SpeakScreenState extends State<SpeakScreen> {
   @override
   Widget build(BuildContext context) {
     final SpeakController speakController = Get.find<SpeakController>();
-    // speakController.setTerms(question.options);
-    // speakController.playIntroAudio();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -54,13 +55,14 @@ class _SpeakScreenState extends State<SpeakScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Just extra spacing
             SizedBox(height: MediaQuery.of(context).padding.top - 25),
 
             // Large Circle Contact Avatar
             Center(
               child: Container(
-                width: 200,
-                height: 200,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(0.1),
@@ -72,30 +74,33 @@ class _SpeakScreenState extends State<SpeakScreen> {
                 ),
               ),
             ),
-            Obx(() => TypewriterSpeechBubbleMessage(
-                  key: ValueKey(speakController.feedbackMessage.value),
-                  message: speakController.feedbackMessage.value.isEmpty
-                      ? "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know."
-                      : speakController.feedbackMessage.value,
-                  speed: const Duration(milliseconds: 70),
-                  maxHeight: 100,
-                  onFinished: () {
-                    // Optionally, do something when typing finishes.
-                  },
-                )),
+
+            // Typewriter speech bubble
+            Obx(
+              () => TypewriterSpeechBubbleMessage(
+                key: ValueKey(speakController.feedbackMessage.value),
+                message: speakController.feedbackMessage.value.isEmpty
+                    ? "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got a few terms. You hit record. You talk it out. That’s it!"
+                    : speakController.feedbackMessage.value,
+                speed: const Duration(milliseconds: 70),
+                maxHeight: 130,
+                onFinished: () {
+                  // Optionally do something after the bubble finishes typing
+                },
+              ),
+            ),
             const Spacer(),
 
-            // Wrap each TermMasteryItem in an Obx so it rebuilds when the Rx changes
-            Column(
-              children: List.generate(widget.question.options.length, (index) {
-                return Obx(() => TermMasteryItem(
-                      term: widget.question.options[index],
-                      progress: speakController.termProgress[index],
-                    ));
-              }),
-            ),
-
-            const SizedBox(height: 16),
+            // The deck of terms. We'll pass in currentTermIndex so the top card is the current term:
+            Obx(() {
+              return TermsDeck(
+                terms: speakController.terms
+                    .map((flashcard) => flashcard.term)
+                    .toList(),
+                progressList: speakController.termProgress,
+                currentTermIndex: speakController.currentTermIndex.value,
+              );
+            }),
 
             // The Record Button
             Center(
@@ -107,12 +112,13 @@ class _SpeakScreenState extends State<SpeakScreen> {
                     speakController.stopListening();
                   },
                   isLoading: speakController.isLoading.value,
-                  // disable if *either* audio is playing or isLoading
+                  // Disable if either audio is playing or isLoading
                   isDisabled: speakController.isAudioPlaying.value ||
                       speakController.isLoading.value,
                 ),
               ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -124,8 +130,6 @@ class RecordButton extends StatefulWidget {
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
   final bool isLoading;
-
-  /// If true, user cannot press
   final bool isDisabled;
 
   const RecordButton({
@@ -144,7 +148,6 @@ class _RecordButtonState extends State<RecordButton> {
   bool isRecording = false;
 
   void _toggleRecording() {
-    // If disabled, do nothing.
     if (widget.isDisabled) return;
 
     if (isRecording) {
@@ -226,133 +229,6 @@ class _RecordButtonState extends State<RecordButton> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class TermMasteryItem extends StatelessWidget {
-  final String term;
-  final double progress;
-
-  const TermMasteryItem({
-    Key? key,
-    required this.term,
-    required this.progress,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final isMastered = progress >= 1.0;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isMastered
-              ? const Color.fromARGB(99, 255, 217, 0)
-              : Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.05),
-            ),
-            child: Icon(
-              isMastered ? Icons.star_border : Icons.psychology,
-              color: isMastered
-                  ? const Color.fromARGB(255, 181, 154, 0)
-                  : Colors.white70,
-              size: 24,
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Term + Progress
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      term,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isMastered
-                            ? const Color(0x33FFD700)
-                            : Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isMastered ? Icons.check : null,
-                            size: isMastered ? 16 : 0,
-                            color: isMastered
-                                ? const Color.fromARGB(255, 181, 154, 0)
-                                : Colors.transparent,
-                          ),
-                          if (isMastered) const SizedBox(width: 4),
-                          Text(
-                            isMastered ? '' : '${(progress * 100).toInt()}%',
-                            style: TextStyle(
-                              color: isMastered
-                                  ? const Color(0xFFFFD700)
-                                  : const Color.fromARGB(129, 255, 255, 255),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    height: 5,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0, end: progress),
-                      duration: const Duration(milliseconds: 300),
-                      builder: (context, animatedProgress, child) {
-                        return LinearProgressIndicator(
-                          value: animatedProgress,
-                          backgroundColor:
-                              const Color.fromARGB(113, 158, 158, 158),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            isMastered
-                                ? const Color.fromARGB(255, 225, 191, 0)
-                                : Colors.white,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

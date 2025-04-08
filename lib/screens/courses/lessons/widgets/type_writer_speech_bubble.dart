@@ -191,7 +191,7 @@ class _TypewriterSpeechBubbleMessageState
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: widget.maxHeight,
-              minHeight: widget.maxHeight,
+              // minHeight: widget.maxHeight,
             ),
             child: SingleChildScrollView(
               // Use the inline controller here
@@ -209,8 +209,8 @@ class _TypewriterSpeechBubbleMessageState
           ),
         ),
         Positioned(
-          bottom: 0,
-          right: 0,
+          top: 12,
+          right: -4,
           child: IconButton(
             icon: const Icon(
               Icons.fullscreen,

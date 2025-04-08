@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -18,7 +17,8 @@ class SpeakController extends GetxController {
   final AuthController authController = Get.find();
   final CourseController courseController = Get.find();
 
-  RxList<String> terms = <String>[].obs;
+  RxList<Flashcard> terms = <Flashcard>[].obs;
+  // Progress for each term, on a 0–1 scale.
   final RxList<double> termProgress = <double>[].obs;
 
   final AudioPlayer audioPlayer = AudioPlayer();
@@ -39,10 +39,18 @@ class SpeakController extends GetxController {
   final RxBool speechEnabled = false.obs;
   final RxString transcript = ''.obs;
 
+  // New field for storing the definition of the current focus term.
+  final RxString focusDefinition = ''.obs;
+
+  // Attempt counter for the current term.
   int attemptNumber = 1;
   bool _hasSubmitted = false; // Flag to prevent duplicate submissions
+
   final RxList<Map<String, String>> conversationHistory =
       <Map<String, String>>[].obs;
+
+  // Current term index.
+  RxInt currentTermIndex = 0.obs;
 
   SpeakController();
 
@@ -61,20 +69,16 @@ class SpeakController extends GetxController {
   void onClose() {
     _speechToText.stop();
     audioPlayer.dispose();
-
     super.onClose();
   }
 
+  /// Resets all controller values, including current term and attempt number.
   void resetValues() {
-    // Stop any audio currently playing.
     if (isAudioPlaying.value) {
       audioPlayer.stop();
     }
-
-    // Stop speech recognition.
     _speechToText.stop();
 
-    // Reset all reactive variables.
     terms.clear();
     termProgress.clear();
     feedbackMessage.value = '';
@@ -84,8 +88,8 @@ class SpeakController extends GetxController {
     sessionId.value = '';
     updatedTerms.clear();
 
-    // Reset counters and flags.
     attemptNumber = 1;
+    currentTermIndex.value = 0;
     _hasSubmitted = false;
     isLoading.value = false;
     isAudioPlaying.value = false;
@@ -95,9 +99,9 @@ class SpeakController extends GetxController {
   Future<void> playIntroAudio() async {
     try {
       isAudioPlaying.value = true;
-      feedbackMessage.value =
-          "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got THREE terms. You hit record. You talk it out. That’s it. Go with your gut and let’s see what you know.";
-      await audioPlayer.play(AssetSource("sounds/echo_intro.wav"));
+      feedbackMessage.value = "Explain one term at a time!";
+      // Example: await audioPlayer.play(AssetSource("sounds/echo_intro.wav"));
+      isAudioPlaying.value = false;
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -153,14 +157,21 @@ class SpeakController extends GetxController {
       onResult: (_) {},
       listenFor: const Duration(seconds: 1),
     );
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
     await _speechToText.stop();
   }
 
-  /// Set or reset terms from outside.
-  void setTerms(List<String> newTerms) {
+  /// Sets terms from outside and resets term progress, current term index, and attempt number.
+  void setTerms(List<Flashcard> newTerms) {
     terms.value = newTerms;
     termProgress.assignAll(List<double>.filled(newTerms.length, 0.0));
+    currentTermIndex.value = 0;
+    attemptNumber = 1;
+  }
+
+  /// Sets the definition for the current focus term.
+  void setFocusDefinition(String definition) {
+    focusDefinition.value = definition;
   }
 
   /// Called when the user taps "start" to begin a new segment.
@@ -185,11 +196,9 @@ class SpeakController extends GetxController {
     isLoading.value = true;
     await _speechToText.stop();
 
-    // Wait a short moment to allow any pending final results to be processed
+    // Allow time for any final speech recognition result.
     await Future.delayed(const Duration(milliseconds: 300));
 
-    // If no speech was detected and _onSpeechResult wasn’t triggered,
-    // trigger the fallback silence audio.
     if (transcript.value.trim().isEmpty && !_hasSubmitted) {
       _hasSubmitted = true;
       await playSilenceAudio();
@@ -207,22 +216,15 @@ class SpeakController extends GetxController {
     if (result.finalResult && !_hasSubmitted) {
       _hasSubmitted = true;
       print("Transcript: ${result.recognizedWords}");
-      print("attemptNumber: $attemptNumber");
+      print("Attempt number for current term: $attemptNumber");
 
-      if (attemptNumber == 4) {
-        // On 4th attempt: Play closing audio, wait for it to finish, then go to next question.
-        await playClosingAudio();
-        feedbackMessage.value =
-            "Hey that was AWESOME! I mean, look at you go, you’re really soaking this stuff up. Honestly, just keep going like this and we’re gonna make some SERIOUS progress.";
-        await audioPlayer.onPlayerComplete.first;
-        courseController.nextQuestion();
-      } else {
-        // Otherwise, submit the transcript.
-        await submitReview(
-          transcript: transcript.value,
-          attemptNumber: attemptNumber,
-        );
-      }
+      // Submit the transcript for the current term.
+      await submitReview(
+        transcript: transcript.value,
+        attemptNumber: attemptNumber,
+      );
+
+      // Increment the attempt number for this term.
       attemptNumber++;
       transcript.value = "";
     }
@@ -242,7 +244,6 @@ class SpeakController extends GetxController {
     }
   }
 
-  /// Submits a review to the backend.
   Future<void> submitReview({
     required String transcript,
     required int attemptNumber,
@@ -255,21 +256,30 @@ class SpeakController extends GetxController {
         return;
       }
 
-      // Build terms list with scores based on progress.
+      final int currentIndex = currentTermIndex.value;
+      final int currentScore = (termProgress[currentIndex] * 100).round();
+
+      // Build the full terms data for the API call.
       final List<Map<String, dynamic>> termsData = [];
       for (var i = 0; i < terms.length; i++) {
-        final score = (termProgress[i] * 100)
-            .round(); // Convert back to 0–100 scale for api service call
-        termsData.add({'term': terms[i], 'score': score});
+        final score = (termProgress[i] * 100).round(); // convert to 0–100 scale
+        // Use terms[i].term to extract the string value.
+        termsData.add({'term': terms[i].term, 'score': score});
       }
 
-      // Add the current user transcript to the conversation history.
+      // Add the user transcript to the conversation history.
       conversationHistory.add({'role': 'user', 'message': transcript});
 
-      // Submit review including conversation history.
+      print("transcript: $transcript");
+      // Use the term property for logging
+      print("for term: ${terms[currentIndex].term}");
+
+      // Submit the review including focusTerm and focusDefinition.
       final response = await ApiService().submitReview(
         token: token,
         transcript: transcript,
+        focusTerm: terms[currentIndex].term,
+        focusDefinition: terms[currentIndex].definition,
         terms: termsData,
         attemptNumber: attemptNumber,
         conversationHistory: conversationHistory,
@@ -278,20 +288,18 @@ class SpeakController extends GetxController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         sessionId.value = data['sessionId'];
-        updatedTerms.assignAll(data['updatedTerms']);
-        print('Review submitted successfully: $data');
 
-        final List<dynamic> updated = data['updatedTerms'];
+        // The API returns updated scores for the term:
+        final Map<String, dynamic> updatedTerm = data['updatedTerms'][0];
+        print("Updated term: $updatedTerm");
+        final int updatedScore = updatedTerm['score'];
+        termProgress[currentIndex] = (updatedScore / 100).clamp(0.0, 1.0);
 
-        for (int i = 0; i < updated.length; i++) {
-          final score = updated[i]['score'];
-          termProgress[i] = (score / 100).clamp(0.0, 1.0);
-          // 0-1 scale for progress bar
-        }
-
-        // Optionally delay to allow audio generation to finish.
+        // Optionally delay to let the audio be generated.
         await Future.delayed(const Duration(seconds: 2));
         await fetchReviewAudio();
+
+        // Set feedback message as provided by the API.
         final original = data['feedbackMessage'] as String;
         final cleaned = original.replaceAll(RegExp(r'\[.*?\]'), '').trim();
         feedbackMessage.value = cleaned;
@@ -299,13 +307,21 @@ class SpeakController extends GetxController {
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
 
-        // Check if all returned terms are "100".
-        bool allMastered = updated.every((element) => element['score'] == 100);
-
-        if (allMastered) {
-          // Wait for the audio to finish playing, then trigger next question.
-          await audioPlayer.onPlayerComplete.first;
-          courseController.nextQuestion();
+        // Transition: if the current term is mastered (score >= 100)
+        // or the user has made 3 attempts (attemptNumber > 3), move on.
+        if (termProgress[currentIndex] >= 1.0 || attemptNumber > 3) {
+          if (currentIndex < terms.length - 1) {
+            currentTermIndex.value++;
+            attemptNumber = 1; // reset attempts for the new term
+            // Do not override feedbackMessage.value; keep the API's real message.
+          } else {
+            // This was the last term.
+            await playClosingAudio();
+            feedbackMessage.value =
+                "Awesome job! You've completed this session.";
+            await audioPlayer.onPlayerComplete.first;
+            courseController.nextQuestion();
+          }
         }
       } else {
         print('Failed to submit review: ${response.statusCode}');
