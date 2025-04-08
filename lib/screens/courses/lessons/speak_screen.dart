@@ -80,7 +80,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
               () => TypewriterSpeechBubbleMessage(
                 key: ValueKey(speakController.feedbackMessage.value),
                 message: speakController.feedbackMessage.value.isEmpty
-                    ? "Whew! okay, here we go. Think of this like a quick brain check-in. You’ve got a few terms. You hit record. You talk it out. That’s it!"
+                    ? "Okay... press record and teach me like I forgot EVERYTHING, because I did!"
                     : speakController.feedbackMessage.value,
                 speed: const Duration(milliseconds: 70),
                 maxHeight: 130,

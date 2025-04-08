@@ -99,8 +99,9 @@ class SpeakController extends GetxController {
   Future<void> playIntroAudio() async {
     try {
       isAudioPlaying.value = true;
-      feedbackMessage.value = "Explain one term at a time!";
-      // Example: await audioPlayer.play(AssetSource("sounds/echo_intro.wav"));
+      feedbackMessage.value =
+          "Okay... press record and teach me like I forgot EVERYTHING, because I did!";
+      await audioPlayer.play(AssetSource("sounds/echo_intro_4.wav"));
       isAudioPlaying.value = false;
     } catch (e) {
       isAudioPlaying.value = false;
