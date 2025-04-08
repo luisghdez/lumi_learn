@@ -1,6 +1,7 @@
 import 'dart:math'; // Need min and max
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 // Assuming TermMasteryItem is defined elsewhere as provided before
 // import 'term_mastery_item.dart';
@@ -70,15 +71,14 @@ class TermsDeck extends StatelessWidget {
       left: 0,
       right: 0,
       child: AnimatedScale(
-        duration: animationDuration,
-        curve: Curves.easeInOut,
-        scale: scale,
-        alignment: Alignment.center,
-        child: TermMasteryItem(
-          term: terms[termIndex],
-          progress: progressList[termIndex],
-        ),
-      ),
+          duration: animationDuration,
+          curve: Curves.easeInOut,
+          scale: scale,
+          alignment: Alignment.center,
+          child: Obx(() => TermMasteryItem(
+                term: terms[termIndex],
+                progress: progressList[termIndex],
+              ))),
     );
   }
 
