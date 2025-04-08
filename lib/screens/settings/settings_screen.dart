@@ -1,78 +1,124 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Import GetX
+import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/screens/settings/screens/notifications_screen.dart';
+import 'package:lumi_learn_app/screens/settings/screens/help_support_screen.dart';
+import 'package:lumi_learn_app/screens/settings/screens/feedback_screen.dart';
+import 'package:lumi_learn_app/screens/settings/screens/whats_new_screen.dart';
+import 'package:lumi_learn_app/screens/settings/widgets/galaxybg.dart';
+import 'package:lumi_learn_app/screens/settings/screens/subscription_screen.dart';
+import 'package:lumi_learn_app/screens/settings/screens/more_settings_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  SettingsScreen({super.key});
+  const SettingsScreen({super.key});
 
   @override
-  _SettingsScreenState createState() => _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  final AuthController authController =
-      Get.find<AuthController>(); // GetX Controller
+class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStateMixin {
+  final AuthController authController = Get.find<AuthController>();
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white, fontSize: 18),
-        ),
-        backgroundColor: Colors.black,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Settings Options
-            _buildSettingsOption(
-              icon: Icons.tune,
-              title: 'App preferences',
-              onTap: () {},
-            ),
-            _buildSettingsOption(
-              icon: Icons.notifications_outlined,
-              title: 'App notifications',
-              onTap: () {},
-            ),
-            _buildSettingsOption(
-              icon: Icons.help_outline,
-              title: 'Help and Support',
-              onTap: () {},
-            ),
-            _buildSettingsOption(
-              icon: Icons.feedback_outlined,
-              title: 'Give a feedback',
-              onTap: () {},
-            ),
+      body: Stack(
+        children: [
+          const Positioned(top: 0, left: 0, right: 0, child: GalaxyHeader()),
 
-            const SizedBox(height: 2),
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Settings",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 100),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(top: 10, bottom: 100),
+                      itemCount: _tiles.length,
+                      itemBuilder: (context, index) {
+                        return FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: _controller,
+                            curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut),
+                          ),
+                          child: _glassOptionTile(
+                            icon: _tiles[index]['icon'] as IconData,
+                            title: _tiles[index]['title'] as String,
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              Get.to(_tiles[index]['screen'] as Widget);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-            // Logout Button with Confirmation Dialog
-            GestureDetector(
-              onTap: () => _confirmLogout(context),
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 100,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                _confirmLogout(context);
+              },
               child: Container(
-                width: screenWidth,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.2),
-                      blurRadius: 8,
-                      spreadRadius: 1,
+                      color: Colors.white.withOpacity(0.3),
+                      blurRadius: 25,
+                      spreadRadius: 0.5,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -81,76 +127,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'Logout',
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // Reusable settings option method with subtle grey background
-  Widget _buildSettingsOption({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
+  Widget _glassOptionTile({required IconData icon, required String title, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 15),
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            )
+          ],
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
-          ],
+              const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 16),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Logout confirmation dialog
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.black, // Match dark theme
-        title: const Text(
-          "Logout",
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          "Are you sure you want to log out?",
-          style: TextStyle(color: Colors.grey),
-        ),
+        backgroundColor: Colors.black,
+        title: const Text("Logout", style: TextStyle(color: Colors.white)),
+        content: const Text("Are you sure you want to log out?", style: TextStyle(color: Colors.grey)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Cancel
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.white),
-            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white)),
           ),
           TextButton(
             onPressed: () {
@@ -158,13 +200,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context); // Close dialog
               Get.offAll(() => SignupScreen());
             },
-            child: const Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text("Logout", style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
     );
   }
 }
+
+final List<Map<String, dynamic>> _tiles = [
+  {
+    'icon': Icons.notifications_active_outlined,
+    'title': 'App notifications',
+    'screen': const NotificationsScreen(),
+  },
+  {
+    'icon': Icons.help_outline,
+    'title': 'Help and Support',
+    'screen': const HelpSupportScreen(),
+  },
+  {
+    'icon': Icons.feedback_outlined,
+    'title': 'Give a feedback',
+    'screen': const FeedbackScreen(),
+  },
+  {
+    'icon': Icons.auto_awesome_rounded,
+    'title': "What's New",
+    'screen': const WhatsNewScreen(),
+  },
+  {
+    'icon': Icons.workspace_premium_outlined,
+    'title': "Subscription",
+    'screen': const SubscriptionScreen(),
+  },
+  {
+    'icon': Icons.settings_suggest_outlined,
+    'title': "More Settings",
+    'screen': const MoreSettingsScreen(),
+  },
+];
