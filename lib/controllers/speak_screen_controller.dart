@@ -221,11 +221,8 @@ class SpeakController extends GetxController {
       // Submit the transcript for the current term.
       await submitReview(
         transcript: transcript.value,
-        attemptNumber: attemptNumber,
       );
 
-      // Increment the attempt number for this term.
-      attemptNumber++;
       transcript.value = "";
     }
   }
@@ -246,7 +243,6 @@ class SpeakController extends GetxController {
 
   Future<void> submitReview({
     required String transcript,
-    required int attemptNumber,
   }) async {
     try {
       final token = await authController.getIdToken();
@@ -312,7 +308,7 @@ class SpeakController extends GetxController {
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
 
-        print("attempt number: $attemptNumber");
+        attemptNumber++;
 
         // Transition: if the current term is mastered (score >= 100)
         // or the user has made 3 attempts (attemptNumber > 3), move on.
