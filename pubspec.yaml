@@ -105,7 +105,6 @@ flutter:
     # - assets/planets/red1.png
     # - assets/planets/ring1.png
     - assets/astronaut/
-    - assets/bg/
     - assets/planets/
     - assets/galaxies/
     - assets/stars/
