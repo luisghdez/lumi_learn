@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/terms_deck.dart';
@@ -18,6 +19,7 @@ class SpeakScreen extends StatefulWidget {
 
 class _SpeakScreenState extends State<SpeakScreen> {
   final SpeakController speakController = Get.find<SpeakController>();
+  final CourseController courseController = Get.find<CourseController>();
 
   @override
   void initState() {
@@ -56,7 +58,29 @@ class _SpeakScreenState extends State<SpeakScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Just extra spacing
-            SizedBox(height: MediaQuery.of(context).padding.top - 25),
+            SizedBox(height: MediaQuery.of(context).padding.top - 50),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () =>
+                      showSkipConfirmationDialog(context, courseController),
+                  child: const Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                    child: Text(
+                      "Skip",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
             // Large Circle Contact Avatar
             Center(
@@ -234,4 +258,87 @@ class _RecordButtonState extends State<RecordButton> {
       ),
     );
   }
+}
+
+void showSkipConfirmationDialog(
+    BuildContext context, CourseController courseController) {
+  Get.dialog(
+    Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 12, 12, 12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: greyBorder, width: 1),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // const SizedBox(height: 16),
+            SizedBox(
+              width: 0.75 * Get.width,
+              child: const Text(
+                "Don't leave Lumi hanging!",
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  fontSize: 20,
+                  decoration: TextDecoration.none,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Image.asset(
+              'assets/astronaut/phone_sad.png',
+              height: 220,
+            ),
+            const Text(
+              "Studies show that teaching others can boost your understanding and memory by up to 90%",
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.white54,
+                fontSize: 14,
+                decoration: TextDecoration.none,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 14),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back(); // Close dialog
+                      courseController.nextQuestion(); // Skip
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Skip Anyway',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    ),
+    barrierDismissible: true,
+  );
 }
