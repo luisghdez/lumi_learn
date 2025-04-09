@@ -27,7 +27,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Positioned.fill(
               child: Image.asset(
-                'assets/images/black_moons.png',
+                'assets/images/black_moons_lighter.png',
                 fit: BoxFit.cover,
               ),
             ),
@@ -76,6 +76,8 @@ class HomeScreen extends StatelessWidget {
                               ],
                             ),
                           ),
+                          const SizedBox(height: 12),
+
                           HorizontalCategoryList(),
                           const SizedBox(height: 18),
 

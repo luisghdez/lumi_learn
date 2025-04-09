@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/constants.dart';
 
 class HorizontalCategoryCard extends StatefulWidget {
   final String title;
@@ -79,6 +80,10 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
               width: 170,
               height: 240,
               decoration: BoxDecoration(
+                border: Border.all(
+                  color: greyBorder,
+                  width: 1,
+                ),
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
                   image: AssetImage(widget.imagePath),
@@ -122,7 +127,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                             textAlign: TextAlign.left,
                             style: const TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),

@@ -199,6 +199,8 @@ class ApiService {
   Future<http.Response> submitReview({
     required String token,
     required String transcript,
+    required String focusTerm,
+    required String focusDefinition,
     required List<Map<String, dynamic>> terms,
     required int attemptNumber,
     List<Map<String, String>>? conversationHistory,
@@ -206,6 +208,8 @@ class ApiService {
     final uri = Uri.parse('$_baseUrl/review');
     final body = jsonEncode({
       'transcript': transcript,
+      'focusTerm': focusTerm,
+      'focusDefinition': focusDefinition,
       'terms': terms,
       'attemptNumber': attemptNumber,
       'conversationHistory': conversationHistory ?? [],
