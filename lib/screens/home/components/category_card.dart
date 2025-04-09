@@ -29,15 +29,15 @@ class CategoryCard extends StatelessWidget {
       child: Container(
         height: 140,
         decoration: BoxDecoration(
+          border: Border.all(
+            color: greyBorder,
+            width: 1,
+          ),
           borderRadius: BorderRadius.circular(16),
           image: DecorationImage(
             image: AssetImage(imagePath),
             fit: BoxFit.cover,
           ),
-          // border: Border.all(
-          //   color: greyBorder,
-          //   width: 1,
-          // ),
         ),
         child: Stack(
           children: [

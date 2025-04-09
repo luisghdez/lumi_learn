@@ -120,6 +120,21 @@ class SpeakController extends GetxController {
     }
   }
 
+  /// Plays the alternative closing audio.
+  Future<void> playClosingAudio2() async {
+    try {
+      isAudioPlaying.value = true;
+      // Replace "sounds/echo_outro_2_alt.wav" with your alternative asset's path.
+      await audioPlayer.play(AssetSource("sounds/echo_outro_3.wav"));
+      // Optionally, wait for the audio to complete.
+      await audioPlayer.onPlayerComplete.first;
+      isAudioPlaying.value = false;
+    } catch (e) {
+      isAudioPlaying.value = false;
+      rethrow;
+    }
+  }
+
   /// Plays fallback silence audio when no speech is detected.
   Future<void> playSilenceAudio() async {
     try {
@@ -311,19 +326,26 @@ class SpeakController extends GetxController {
 
         attemptNumber++;
 
-        // Transition: if the current term is mastered (score >= 100)
-        // or the user has made 3 attempts (attemptNumber > 3), move on.
-        if (termProgress[currentIndex] >= 1.0 || attemptNumber > 3) {
+        if (termProgress[currentIndex] >= 1.0 || attemptNumber > 1) {
           if (currentIndex < terms.length - 1) {
             currentTermIndex.value++;
-            attemptNumber = 1; // reset attempts for the new term
-            // Do not override feedbackMessage.value; keep the API's real message.
+            attemptNumber = 1;
           } else {
-            // This was the last term.
-            await playClosingAudio();
-            feedbackMessage.value =
-                "Awesome job! You've completed this session.";
+            bool allPerfect = termProgress.every((score) => score == 1.0);
+
+            if (allPerfect) {
+              // All terms are perfect – play the first closing audio.
+              await playClosingAudio();
+              feedbackMessage.value =
+                  "Hey that was AWESOME! I mean, look at you go, you’re really soaking this stuff up. Honestly, just keep going like this and we’re gonna make some SERIOUS progress.";
+            } else {
+              // Not all terms are perfect – play the alternative closing audio.
+              await playClosingAudio2();
+              feedbackMessage.value =
+                  "Sooo close! You nailed most of it, but a few slipped by. Flashcards are your secret weapon—go give ’em a spin!";
+            }
             await audioPlayer.onPlayerComplete.first;
+            // After the closing audio finishes, proceed to the next question.
             courseController.nextQuestion();
           }
         }
