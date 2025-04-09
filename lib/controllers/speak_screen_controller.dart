@@ -326,7 +326,7 @@ class SpeakController extends GetxController {
 
         attemptNumber++;
 
-        if (termProgress[currentIndex] >= 1.0 || attemptNumber > 1) {
+        if (termProgress[currentIndex] >= 1.0 || attemptNumber > 3) {
           if (currentIndex < terms.length - 1) {
             currentTermIndex.value++;
             attemptNumber = 1;
