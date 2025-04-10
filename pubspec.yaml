@@ -64,6 +64,7 @@ dependencies:
   share: ^2.0.4
   sign_in_with_apple: ^6.1.4
   intl: ^0.20.2
+  purchases_flutter: ^8.7.2
 
 flutter_launcher_icons:
   android: true

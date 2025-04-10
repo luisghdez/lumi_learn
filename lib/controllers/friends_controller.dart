@@ -8,12 +8,12 @@ class FriendsController extends GetxController {
   final FriendsService service;
 
   // Reactive state variables
-  var friends = <Friend>[].obs;                     // Accepted friends
-  var sentRequests = <Friend>[].obs;                // Sent requests
-  var receivedRequests = <Friend>[].obs;            // Received requests
-  var searchResults = <UserSearchResult>[].obs;     // 🔍 Search results
+  var friends = <Friend>[].obs; // Accepted friends
+  var sentRequests = <Friend>[].obs; // Sent requests
+  var receivedRequests = <Friend>[].obs; // Received requests
+  var searchResults = <UserSearchResult>[].obs; // 🔍 Search results
 
-  var sentRequestIds = <String>{}.obs;              // ✅ for fast checks
+  var sentRequestIds = <String>{}.obs; // ✅ for fast checks
 
   var isLoading = false.obs;
   var error = RxnString();
@@ -68,7 +68,8 @@ class FriendsController extends GetxController {
       receivedRequests.removeWhere((req) => req.id == requestId);
 
       await service.respondToRequest(requestId, accept);
-      Get.snackbar("Request Updated", accept ? "Friend added." : "Request declined.");
+      Get.snackbar(
+          "Request Updated", accept ? "Friend added." : "Request declined.");
 
       if (accept) {
         await loadFriends(); // refresh friends if added

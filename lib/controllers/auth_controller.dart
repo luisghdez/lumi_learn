@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthController extends GetxController {
@@ -31,8 +32,11 @@ class AuthController extends GetxController {
       firebaseUser.value = user;
       isAuthInitialized.value = true;
 
-      // If the user is logged in, fetch the user doc from your API
       if (user != null) {
+        // Link RevenueCat to Firebase user UID
+        await Purchases.logIn(user.uid);
+        await updateProStatus();
+
         await fetchUserData();
       } else {
         // Clear out userDoc when logged out
@@ -41,11 +45,23 @@ class AuthController extends GetxController {
     });
   }
 
+  Future<bool> checkIfUserIsPro() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.all['Pro']?.isActive ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> updateProStatus() async {
+    isPremium.value = await checkIfUserIsPro();
+  }
+
   Future<void> fetchUserData() async {
     try {
       final token = await getIdToken();
       if (token == null) {
-        print('No user token found.');
         return;
       }
 
@@ -59,7 +75,6 @@ class AuthController extends GetxController {
       xpCount.value = data['user']['xpCount'] ?? 0;
       courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
       maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
-      isPremium.value = data['user']['isPremium'] ?? false;
 
       print('User data fetched successfully: ${data['user']['isPremium']}');
     } catch (e) {
@@ -323,7 +338,8 @@ class AuthController extends GetxController {
       // For Email/Password users
       else if (providers.contains('password')) {
         if (emailPassword == null) {
-          Get.snackbar("Error", "Password required to confirm account deletion.");
+          Get.snackbar(
+              "Error", "Password required to confirm account deletion.");
           return;
         }
 
@@ -344,7 +360,4 @@ class AuthController extends GetxController {
       Get.snackbar("Error", "Failed to delete account: ${e.toString()}");
     }
   }
-
-
-  
 }

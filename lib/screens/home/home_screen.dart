@@ -55,6 +55,7 @@ class HomeScreen extends StatelessWidget {
                                 child: HomeHeader(
                                   streakCount: authController.streakCount.value,
                                   xpCount: authController.xpCount.value,
+                                  isPremium: authController.isPremium.value,
                                 ),
                               )),
 

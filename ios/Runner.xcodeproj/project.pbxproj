@@ -17,6 +17,7 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		CAC9A4C22DA72A4E006D9421 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAC9A4C12DA72A4E006D9421 /* StoreKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 		CA47E38D2D9B823A00FBB703 /* RunnerProfile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerProfile.entitlements; sourceTree = "<group>"; };
 		CA47E38E2D9B849A00FBB703 /* RunnerDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerDebug.entitlements; sourceTree = "<group>"; };
 		CA47E38F2D9B876500FBB703 /* RunnerRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerRelease.entitlements; sourceTree = "<group>"; };
+		CAC9A4C12DA72A4E006D9421 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +80,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6FF9C13BAA5BB9E708D91BD0 /* Pods_Runner.framework in Frameworks */,
+				CAC9A4C22DA72A4E006D9421 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +170,7 @@
 		D64857062AB376FE26DE8DAE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CAC9A4C12DA72A4E006D9421 /* StoreKit.framework */,
 				2D091A8109BA62E3B24E57CD /* Pods_Runner.framework */,
 				58174D78203E36D72497D006 /* Pods_RunnerTests.framework */,
 			);
