@@ -55,6 +55,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Determine if subscribe button should be disabled.
+    final bool isButtonDisabled =
+        authController.isPremium.value || _selectedIndex == -1;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -94,17 +98,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: authController.isPremium.value
-                      ? Colors.grey[800]
-                      : Colors.white,
+                  backgroundColor:
+                      isButtonDisabled ? Colors.grey[800] : Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   minimumSize: const Size.fromHeight(56),
                 ),
-                onPressed: authController.isPremium.value
-                    ? null // Button disabled if already subscribed
+                onPressed: isButtonDisabled
+                    ? null
                     : () {
                         // Show the upgrade popup dialog
                         showDialog(
@@ -117,9 +120,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       ? "Lumi PRO Active"
                       : "Subscribe Now",
                   style: TextStyle(
-                    color: authController.isPremium.value
-                        ? Colors.white38
-                        : Colors.black,
+                    color: isButtonDisabled ? Colors.white38 : Colors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -139,7 +140,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         authController.isPremium.value && index == 0; // Monthly is index 0
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        // Only allow plan selection if not already premium
+        if (!authController.isPremium.value) {
+          setState(() => _selectedIndex = index);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(18),
@@ -162,7 +168,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           children: [
             Row(
               children: [
-                // Replacing radio button with badge if active
                 Expanded(
                   child: Text(
                     plan['title'],
@@ -172,7 +177,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         fontWeight: FontWeight.w600),
                   ),
                 ),
-
                 isActive
                     ? Container(
                         padding: const EdgeInsets.symmetric(
@@ -195,7 +199,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               fontWeight: FontWeight.bold),
                         ),
                       )
-                    : const SizedBox(width: 16),
+                    : const SizedBox(
+                        width: 16,
+                      ),
+                const SizedBox(width: 8),
                 Text(
                   plan['price'],
                   style: const TextStyle(color: Colors.white70, fontSize: 14),

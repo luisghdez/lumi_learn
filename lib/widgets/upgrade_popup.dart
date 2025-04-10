@@ -10,7 +10,7 @@ class UpgradePopup extends StatelessWidget {
 
   const UpgradePopup({
     Key? key,
-    this.title = "Upgrade to Pro",
+    this.title = "",
     this.subtitle,
   }) : super(key: key);
 
