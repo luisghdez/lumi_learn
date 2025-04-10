@@ -77,8 +77,6 @@ class AuthController extends GetxController {
       courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
       maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
       friendCount.value = data['user']['friendCount'] ?? 0;
-
-      print('User data fetched successfully: ${data['user']['isPremium']}');
     } catch (e) {
       print('Error fetching user data: $e');
     }
