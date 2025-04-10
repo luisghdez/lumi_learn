@@ -19,14 +19,16 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStateMixin {
+class _SettingsScreenState extends State<SettingsScreen>
+    with TickerProviderStateMixin {
   final AuthController authController = Get.find<AuthController>();
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
     _controller.forward();
   }
 
@@ -44,17 +46,18 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
       body: Stack(
         children: [
           const Positioned(top: 0, left: 0, right: 0, child: GalaxyHeader()),
-
           SafeArea(
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Row(
                     children: [
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                        child: const Icon(Icons.arrow_back_ios_new,
+                            color: Colors.white, size: 18),
                       ),
                       const SizedBox(width: 12),
                       const Text(
@@ -80,7 +83,8 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
                         return FadeTransition(
                           opacity: CurvedAnimation(
                             parent: _controller,
-                            curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut),
+                            curve: Interval(index * 0.1, 1.0,
+                                curve: Curves.easeOut),
                           ),
                           child: _glassOptionTile(
                             icon: _tiles[index]['icon'] as IconData,
@@ -98,7 +102,6 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
               ],
             ),
           ),
-
           Positioned(
             left: 20,
             right: 20,
@@ -141,7 +144,10 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
     );
   }
 
-  Widget _glassOptionTile({required IconData icon, required String title, required VoidCallback onTap}) {
+  Widget _glassOptionTile(
+      {required IconData icon,
+      required String title,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -174,7 +180,8 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
                   ),
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white38, size: 16),
+              const Icon(Icons.arrow_forward_ios,
+                  color: Colors.white38, size: 16),
             ],
           ),
         ),
@@ -188,7 +195,8 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
         title: const Text("Logout", style: TextStyle(color: Colors.white)),
-        content: const Text("Are you sure you want to log out?", style: TextStyle(color: Colors.grey)),
+        content: const Text("Are you sure you want to log out?",
+            style: TextStyle(color: Colors.grey)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -200,7 +208,8 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
               Navigator.pop(context); // Close dialog
               Get.offAll(() => SignupScreen());
             },
-            child: const Text("Logout", style: TextStyle(color: Colors.redAccent)),
+            child:
+                const Text("Logout", style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),

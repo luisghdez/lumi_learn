@@ -7,9 +7,8 @@ import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/models/userSearch_model.dart';
 
 class FriendsService {
-  final String baseUrl = 'https://lumi-api-e2zy.onrender.com';
   // final String baseUrl = 'http://localhost:3000';
-
+  final String baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   /// Fetch accepted friends for current user
   Future<List<Friend>> fetchFriends() async {
@@ -47,7 +46,9 @@ class FriendsService {
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body)['users'];
-      return data.map((json) => UserSearchResult.fromJson(json)).toList(); // ✅ fixed here
+      return data
+          .map((json) => UserSearchResult.fromJson(json))
+          .toList(); // ✅ fixed here
     } else {
       throw Exception("Search failed: ${response.body}");
     }
@@ -72,25 +73,24 @@ class FriendsService {
     }
   }
 
-/// Accept or decline a friend request
-Future<void> respondToRequest(String requestId, bool accept) async {
-  final token = await AuthController.instance.getIdToken();
-  if (token == null) throw Exception("User not authenticated");
+  /// Accept or decline a friend request
+  Future<void> respondToRequest(String requestId, bool accept) async {
+    final token = await AuthController.instance.getIdToken();
+    if (token == null) throw Exception("User not authenticated");
 
-  final response = await http.patch(
-    Uri.parse('$baseUrl/friend-requests/$requestId?accept=$accept'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode({}), // ✅ fix: send empty body so Fastify doesn't throw
-  );
+    final response = await http.patch(
+      Uri.parse('$baseUrl/friend-requests/$requestId?accept=$accept'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({}), // ✅ fix: send empty body so Fastify doesn't throw
+    );
 
-  if (response.statusCode != 200) {
-    throw Exception("Failed to respond to request: ${response.body}");
+    if (response.statusCode != 200) {
+      throw Exception("Failed to respond to request: ${response.body}");
+    }
   }
-}
-
 
   /// Get friend requests (sent and received)
   Future<Map<String, List<Friend>>> getFriendRequests() async {
@@ -107,8 +107,10 @@ Future<void> respondToRequest(String requestId, bool accept) async {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
-      final sent = (data['sent'] as List).map((f) => Friend.fromJson(f)).toList();
-      final received = (data['received'] as List).map((f) => Friend.fromJson(f)).toList();
+      final sent =
+          (data['sent'] as List).map((f) => Friend.fromJson(f)).toList();
+      final received =
+          (data['received'] as List).map((f) => Friend.fromJson(f)).toList();
 
       return {'sent': sent, 'received': received};
     } else {

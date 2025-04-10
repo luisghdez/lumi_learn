@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class UpgradePopup extends StatelessWidget {
   final String title;
@@ -7,12 +10,14 @@ class UpgradePopup extends StatelessWidget {
 
   const UpgradePopup({
     Key? key,
-    this.title = "Upgrade to Premium",
+    this.title = "",
     this.subtitle,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final AuthController authController = Get.find();
+
     return Dialog(
       insetPadding: EdgeInsets.zero, // Full-screen edge
       backgroundColor: Colors.transparent,
@@ -21,7 +26,7 @@ class UpgradePopup extends StatelessWidget {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/onboarding/bg_2.png',
+              'assets/images/black_moons_lighter.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -79,16 +84,18 @@ class UpgradePopup extends StatelessWidget {
                                     children: [
                                       const TextSpan(text: "Upgrade to\n"),
                                       TextSpan(
-                                        text: "Lumi Premium\n",
+                                        text: "Lumi PRO\n",
                                         style: TextStyle(
                                           foreground: Paint()
                                             ..shader = const LinearGradient(
                                               colors: [
                                                 Color(0xFF0004FF),
+                                                Color.fromARGB(
+                                                    255, 124, 207, 255),
                                                 Color(0xFFA600FF),
                                               ],
                                             ).createShader(
-                                              Rect.fromLTWH(
+                                              const Rect.fromLTWH(
                                                 0.0,
                                                 0.0,
                                                 300.0,
@@ -198,13 +205,47 @@ class UpgradePopup extends StatelessWidget {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        onPressed: () {
-                          // Trigger subscription flow
-                          Get.back();
-                          // Get.to(() => const UpgradeScreen());
+                        onPressed: () async {
+                          try {
+                            final offerings = await Purchases.getOfferings();
+
+                            final current = offerings.current;
+
+                            if (current != null &&
+                                current.availablePackages.isNotEmpty) {
+                              final package = current.availablePackages.first;
+                              await Purchases.purchasePackage(package);
+
+                              // After purchasing, update entitlement status via AuthController
+                              authController.isPremium.value = true;
+                              Get.back(); // Close paywall
+                              Get.dialog(const LumiProSuccessDialog());
+                            } else {
+                              Get.snackbar("Oops",
+                                  "No subscription packages available.");
+                            }
+                          } on PlatformException catch (error) {
+                            // Check for a specific error code.
+                            if (error.code == "purchaseCancelled") {
+                              // Optionally handle user cancellation gracefully.
+                              //  no snackbar for cancelled
+                            } else if (error.code == "network_error") {
+                              // Network error: adjust the code to what RevenueCat returns.
+                              Get.snackbar("Network Error",
+                                  "Please check your internet connection and try again.");
+                            } else {
+                              // Fallback for other PlatformExceptions.
+                              Get.snackbar("Error",
+                                  "Something went wrong: ${error.message}");
+                            }
+                          } catch (e) {
+                            // A catch-all in case of other types of errors.
+                            Get.snackbar(
+                                "Error", "An unexpected error occurred.");
+                          }
                         },
                         child: const Text(
-                          "Try for \$4.99/month",
+                          "Try for \$7.99/month",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -223,7 +264,7 @@ class UpgradePopup extends StatelessWidget {
                         ),
                       ),
                       // Some space so it's not flush to the screen edge
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 42),
                     ],
                   ),
                 ),
@@ -255,8 +296,8 @@ class BenefitItem extends StatelessWidget {
         children: [
           Image.asset(
             assetPath,
-            width: 60,
-            height: 60,
+            width: 55,
+            height: 55,
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -271,6 +312,103 @@ class BenefitItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class LumiProSuccessDialog extends StatelessWidget {
+  const LumiProSuccessDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Container(
+        width: 320,
+        height: 560,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          image: const DecorationImage(
+            image: AssetImage(
+                'assets/images/lumi_pro_success_dialog.png'), // use your image path
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              bottom: 50,
+              left: 20,
+              right: 20,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Welcome to",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black87,
+                          blurRadius: 8,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return const LinearGradient(
+                        colors: [
+                          Color(0xFF0004FF),
+                          Color.fromARGB(255, 124, 207, 255),
+                          Color.fromARGB(255, 174, 124, 255),
+                        ],
+                      ).createShader(bounds);
+                    },
+                    child: const Text(
+                      "LUMI PRO",
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.2,
+                        letterSpacing: -1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  ElevatedButton(
+                    onPressed: () => Get.back(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      "Start Exploring!",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
