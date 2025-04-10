@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/models/userSearch_model.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
 
 class FriendsController extends GetxController {
   static FriendsController instance = Get.find();
-  final FriendsService service;
+
+  final authController = Get.find<AuthController>();
 
   // Reactive state variables
   var friends = <Friend>[].obs; // Accepted friends
@@ -18,27 +20,45 @@ class FriendsController extends GetxController {
   var isLoading = false.obs;
   var error = RxnString();
 
-  FriendsController({required this.service});
+  final service = FriendsService();
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Fetch the friends when the controller is initialized
+    loadFriends();
+  }
 
   /// Load accepted friends
   Future<void> loadFriends() async {
-    _startLoading();
     try {
-      final result = await service.fetchFriends();
-      friends.value = List<Friend>.from(result); // ✅ ensure new list
+      final token = await authController.getIdToken();
+      if (token == null) {
+        isLoading.value = false;
+        Get.back();
+        throw Exception("No user token found.");
+      }
+
+      final result = await service.fetchFriends(token: token);
+      friends.value = List<Friend>.from(result);
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar("Error", error.value ?? "Something went wrong");
     } finally {
       _stopLoading();
     }
   }
 
-  /// Search users (by name or email)
-  Future<void> searchFriends(String query) async {
-    _startLoading();
+  /// Search users (by name or email) search just in state from already loaded friends
+  Future<void> searchUsers(String query) async {
     try {
-      final result = await service.searchUsers(query);
+      final token = await authController.getIdToken();
+      if (token == null) {
+        isLoading.value = false;
+        Get.back();
+        throw Exception("No user token found.");
+      }
+
+      final result = await service.searchUsers(query: query, token: token);
       searchResults.value = List<UserSearchResult>.from(result);
       if (result.isEmpty) {
         Get.snackbar("No Results", "No users found for '$query'");
@@ -54,7 +74,14 @@ class FriendsController extends GetxController {
   /// Send friend request
   Future<void> sendFriendRequest(String userId) async {
     try {
-      await service.sendFriendRequest(userId);
+      final token = await authController.getIdToken();
+      if (token == null) {
+        isLoading.value = false;
+        Get.back();
+        throw Exception("No user token found.");
+      }
+
+      await service.sendFriendRequest(recipientId: userId, token: token);
       await getRequests(); // ⬅️ This already updates sentRequests and IDs
       Get.snackbar("Request Sent", "Friend request sent.");
     } catch (e) {
@@ -66,8 +93,17 @@ class FriendsController extends GetxController {
   Future<void> respondToRequest(String requestId, bool accept) async {
     try {
       receivedRequests.removeWhere((req) => req.id == requestId);
-
-      await service.respondToRequest(requestId, accept);
+      final token = await authController.getIdToken();
+      if (token == null) {
+        isLoading.value = false;
+        Get.back();
+        throw Exception("No user token found.");
+      }
+      await service.respondToRequest(
+        requestId: requestId,
+        accept: accept,
+        token: token,
+      );
       Get.snackbar(
           "Request Updated", accept ? "Friend added." : "Request declined.");
 
@@ -86,7 +122,13 @@ class FriendsController extends GetxController {
   Future<void> getRequests() async {
     _startLoading();
     try {
-      final result = await service.getFriendRequests();
+      final token = await authController.getIdToken();
+      if (token == null) {
+        isLoading.value = false;
+        Get.back();
+        throw Exception("No user token found.");
+      }
+      final result = await service.getFriendRequests(token: token);
 
       // ✅ Ensure new list references
       sentRequests.value = List<Friend>.from(result['sent'] ?? []);

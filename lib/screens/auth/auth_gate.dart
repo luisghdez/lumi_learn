@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
@@ -51,6 +52,8 @@ class AuthGate extends StatelessWidget {
           permanent: true,
         );
       }
+
+      Get.put(FriendsController());
 
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 
