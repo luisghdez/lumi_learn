@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 
 class HorizontalCategoryCard extends StatefulWidget {
   final String title;
   final String imagePath;
-  final VoidCallback onConfirm; // Called when user taps "Yes!"
+  final VoidCallback onConfirm;
+  final double height;
 
   const HorizontalCategoryCard({
     Key? key,
     required this.title,
     required this.imagePath,
     required this.onConfirm,
+    required this.height,
   }) : super(key: key);
 
   @override
@@ -22,12 +23,13 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   bool _overlayVisible = false;
   late FocusNode _focusNode;
 
+  static const double _aspectRatio = 170 / 240;
+
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
     _focusNode.addListener(() {
-      // When the card loses focus, hide the overlay.
       if (!_focusNode.hasFocus) {
         setState(() {
           _overlayVisible = false;
@@ -43,7 +45,6 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   }
 
   void _handleCardTap() {
-    // Request focus for the card and show the overlay.
     _focusNode.requestFocus();
     setState(() {
       _overlayVisible = true;
@@ -51,7 +52,6 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   }
 
   void _handleCancel() {
-    // Hide overlay and remove focus.
     setState(() {
       _overlayVisible = false;
     });
@@ -63,162 +63,163 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
       _overlayVisible = false;
     });
     _focusNode.unfocus();
-    // Proceed with the original onConfirm logic.
     widget.onConfirm();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      focusNode: _focusNode,
-      child: GestureDetector(
-        onTap: _handleCardTap,
-        child: Stack(
-          children: [
-            /// Main card background & content
-            Container(
-              width: 170,
-              height: 240,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: greyBorder,
-                  width: 1,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                image: DecorationImage(
-                  image: AssetImage(widget.imagePath),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  // Dark gradient at the bottom
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(16),
-                        ),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.9),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Title text
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 26),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            widget.title,
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const Text(
-                            'Created By: Anonymous',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color.fromARGB(255, 200, 200, 200),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    final double cardHeight = widget.height;
+    final double cardWidth = cardHeight * _aspectRatio;
+    final double gradientHeight = cardHeight * (80 / 240);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
 
-            /// Overlay on top of the card with fade in/out animation
-            IgnorePointer(
-              ignoring: !_overlayVisible,
-              child: AnimatedOpacity(
-                opacity: _overlayVisible ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  width: 170,
-                  height: 240,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.black.withOpacity(0.75),
+    return SizedBox(
+      width: cardWidth,
+      height: cardHeight,
+      child: Focus(
+        focusNode: _focusNode,
+        child: GestureDetector(
+          onTap: _handleCardTap,
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: greyBorder,
+                    width: 1,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          'Do you want to \nsave and start\nthis course?',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                            letterSpacing: -1,
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(
+                    image: AssetImage(widget.imagePath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: gradientHeight,
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(16),
+                          ),
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.9),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // "Yes!" button stretched across the width
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 32,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              widget.title,
+                              textAlign: TextAlign.left,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: isTablet ? 22 : 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
                               ),
                             ),
-                            onPressed: _handleConfirm,
-                            child: const Text(
-                              'Yes!',
-                              style: TextStyle(fontSize: 14),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Created By: Anonymous',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 12,
+                                color: const Color.fromARGB(255, 200, 200, 200),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                      // "Cancel" button
-                      SizedBox(
-                        height: 32,
-                        child: TextButton(
-                          onPressed: _handleCancel,
-                          child: const Text(
-                            'Cancel',
+                    ),
+                  ],
+                ),
+              ),
+              IgnorePointer(
+                ignoring: !_overlayVisible,
+                child: AnimatedOpacity(
+                  opacity: _overlayVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.black.withOpacity(0.75),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            'Do you want to \nsave and start\nthis course?',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              height: 0.9,
+                              fontSize: isTablet ? 22 : 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              letterSpacing: -1,
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 32,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              onPressed: _handleConfirm,
+                              child: const Text(
+                                'Yes!',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 32,
+                          child: TextButton(
+                            onPressed: _handleCancel,
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                height: 0.9,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

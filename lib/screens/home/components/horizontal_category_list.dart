@@ -8,99 +8,108 @@ import 'package:lumi_learn_app/screens/home/components/horizontal_category_card.
 import 'package:crypto/crypto.dart';
 
 class HorizontalCategoryList extends StatelessWidget {
-  HorizontalCategoryList({Key? key}) : super(key: key);
+  final double initialPadding;
+
+  HorizontalCategoryList({
+    Key? key,
+    required this.initialPadding,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final CourseController courseController = Get.find<CourseController>();
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 240.0;
+
     return Obx(() {
       final courses = courseController.featuredCourses;
       if (courses.isEmpty) {
-        return const SizedBox(
-          height: 200,
+        return SizedBox(
+          height: responsiveHeight,
         );
       }
 
       return SizedBox(
-        height: 240, // Adjust the height if needed
-        child: SingleChildScrollView(
+        height: responsiveHeight,
+        child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          child: Row(children: [
-            const SizedBox(width: 12), // Add some padding to the left
-            ...courses.map<Widget>((course) {
-              // Use the course id to determine the galaxy image.
-              String galaxyImagePath = getGalaxyForCourse(course['id']);
+          padding: EdgeInsets.symmetric(horizontal: initialPadding - 6),
+          physics: const BouncingScrollPhysics(),
+          itemCount: courses.length,
+          itemBuilder: (context, index) {
+            final course = courses[index];
+            String galaxyImagePath = getGalaxyForCourse(course['id']);
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Stack(
-                  children: [
-                    HorizontalCategoryCard(
-                        title: course['title'] ?? 'Untitled',
-                        imagePath: galaxyImagePath,
-                        onConfirm: () async {
-                          if (course['loading'] == true) return;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6.0),
+              child: Stack(
+                children: [
+                  HorizontalCategoryCard(
+                    height: responsiveHeight,
+                    title: course['title'] ?? 'Untitled',
+                    imagePath: galaxyImagePath,
+                    onConfirm: () async {
+                      if (course['loading'] == true) return;
 
-                          if (!courseController.checkCourseSlotAvailable()) {
-                            return;
-                          }
+                      if (!courseController.checkCourseSlotAvailable()) {
+                        return;
+                      }
 
-                          bool saved = await courseController.saveSharedCourse(
-                              course['id'], course['title']);
-                          if (!saved) return;
+                      bool saved = await courseController.saveSharedCourse(
+                          course['id'], course['title']);
+                      if (!saved) return;
 
-                          courseController.setSelectedCourseId(
-                              course['id'], course['title']);
+                      courseController.setSelectedCourseId(
+                          course['id'], course['title']);
 
-                          Get.to(
-                            () => LoadingScreen(),
-                            transition: Transition.fadeIn,
-                            duration: const Duration(milliseconds: 500),
-                          );
+                      Get.to(
+                        () => LoadingScreen(),
+                        transition: Transition.fadeIn,
+                        duration: const Duration(milliseconds: 500),
+                      );
 
-                          await Future.wait([
-                            Future.delayed(const Duration(milliseconds: 1000)),
-                            precacheImage(
-                              const AssetImage('assets/images/milky_way.png'),
-                              context,
-                            ),
-                          ]);
+                      await Future.wait([
+                        Future.delayed(const Duration(milliseconds: 1000)),
+                        precacheImage(
+                          const AssetImage('assets/images/milky_way.png'),
+                          context,
+                        ),
+                      ]);
 
-                          while (courseController.isLoading.value) {
-                            await Future.delayed(
-                                const Duration(milliseconds: 100));
-                          }
+                      while (courseController.isLoading.value) {
+                        await Future.delayed(const Duration(milliseconds: 100));
+                      }
 
-                          Get.offAll(
-                            () => const CourseOverviewScreen(),
-                            transition: Transition.fadeIn,
-                            duration: const Duration(milliseconds: 500),
-                          );
-                        }),
-                    if (course['loading'] == true)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: FractionallySizedBox(
-                              heightFactor: 0.9,
-                              child: Image.asset(
-                                'assets/astronaut/minute.png',
-                                fit: BoxFit.contain,
-                              ),
+                      Get.offAll(
+                        () => const CourseOverviewScreen(),
+                        transition: Transition.fadeIn,
+                        duration: const Duration(milliseconds: 500),
+                      );
+                    },
+                  ),
+                  if (course['loading'] == true)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: FractionallySizedBox(
+                            heightFactor: 0.9,
+                            child: Image.asset(
+                              'assets/astronaut/minute.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
                       ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ]),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       );
     });
@@ -108,14 +117,9 @@ class HorizontalCategoryList extends StatelessWidget {
 }
 
 String getGalaxyForCourse(String courseId) {
-  // Convert the course ID to a hash.
   final bytes = utf8.encode(courseId);
   final hash = md5.convert(bytes).toString();
-
-  // Use the first 6 characters of the hash to create a numeric value.
   final numericHash = int.parse(hash.substring(0, 6), radix: 16);
-
-  // Pick an index based on the number of images (assuming 8 images in this case).
   final galaxyIndex = (numericHash % 8) + 1;
   return 'assets/galaxies/galaxy$galaxyIndex.png';
 }

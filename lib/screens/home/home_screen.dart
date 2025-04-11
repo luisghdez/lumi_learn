@@ -13,10 +13,22 @@ import 'components/home_header.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
+  static const double _tabletBreakpoint = 800.0;
+
+  double _getHorizontalPadding(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return screenWidth > _tabletBreakpoint ? 32.0 : 16.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
     final CourseController courseController = Get.find();
+
+    final double horizontalPadding = _getHorizontalPadding(context);
+    final double topScrollViewPadding =
+        MediaQuery.of(context).padding.top + horizontalPadding;
+    const double bottomScrollViewPadding = 40.0;
 
     return Scaffold(
       body: GestureDetector(
@@ -38,52 +50,50 @@ class HomeScreen extends StatelessWidget {
                 builder: (context, constraints) {
                   return SingleChildScrollView(
                     padding: EdgeInsets.only(
-                      top: MediaQuery.of(context).padding.top + 16,
-                      bottom: 40,
+                      top: topScrollViewPadding,
+                      bottom: bottomScrollViewPadding,
                     ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
+                        minHeight: constraints.maxHeight -
+                            topScrollViewPadding -
+                            bottomScrollViewPadding,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Add horizontal padding only around widgets that need it
-                          Obx(() => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: HomeHeader(
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: Obx(() => HomeHeader(
                                   streakCount: authController.streakCount.value,
                                   xpCount: authController.xpCount.value,
                                   isPremium: authController.isPremium.value,
-                                ),
-                              )),
-
+                                )),
+                          ),
                           const SizedBox(height: 28),
-
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Featured Courses',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w300,
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: Text(
+                              'Featured Courses',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    // fontSize: 20,
                                     color: Colors.white,
+                                    fontWeight: FontWeight.w300,
                                   ),
-                                ),
-                              ],
                             ),
                           ),
                           const SizedBox(height: 12),
-
-                          HorizontalCategoryList(),
+                          HorizontalCategoryList(
+                              initialPadding: horizontalPadding),
                           const SizedBox(height: 18),
-
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
                             child: Obx(() => TopPicksHeader(
                                 onAddTap: () {
                                   if (courseController
@@ -95,21 +105,18 @@ class HomeScreen extends StatelessWidget {
                                 maxSlots: authController.maxCourseSlots.value,
                                 isPremium: authController.isPremium.value)),
                           ),
-
                           const SizedBox(height: 8),
-
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: custom.SearchBar(),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: const custom.SearchBar(),
                           ),
                           const SizedBox(height: 8),
-
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
                             child: CategoryList(),
                           ),
-
-                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
