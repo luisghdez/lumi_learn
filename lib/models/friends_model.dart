@@ -3,6 +3,8 @@ class Friend {
   final String? name;
   final String? email;
   final String? avatarUrl;
+  final List<String>?
+      userIds; // New field to capture user IDs in friend requests
   final int? points;
   final int? dayStreak;
   final int? totalXP;
@@ -16,6 +18,7 @@ class Friend {
     this.name,
     this.email,
     this.avatarUrl,
+    this.userIds,
     this.points,
     this.dayStreak,
     this.totalXP,
@@ -26,7 +29,7 @@ class Friend {
   });
 
   factory Friend.fromJson(Map<String, dynamic> json) {
-    // ✅ If it's a sent/received request, parse the user inside "recipient" or "sender"
+    // If it's a friend request with nested user data, the backend might wrap it in keys like "sender" or "recipient"
     final bool isSentRequest = json.containsKey('recipient');
     final bool isReceivedRequest = json.containsKey('sender');
     final data = isSentRequest
@@ -35,11 +38,18 @@ class Friend {
             ? json['sender']
             : json;
 
+    // Extract the userIds directly from the top-level JSON (if available)
+    List<String>? userIds;
+    if (json.containsKey('userIds')) {
+      userIds = List<String>.from(json['userIds']);
+    }
+
     return Friend(
       id: data['id'],
       name: data['name'] ?? 'Unknown',
       email: data['email'] ?? '',
       avatarUrl: data['avatarUrl'] ?? 'assets/pfp/pfp1.png',
+      userIds: userIds,
       points: data['points'] ?? 0,
       dayStreak: data['dayStreak'] ?? 0,
       totalXP: data['totalXP'] ?? 0,
@@ -55,6 +65,7 @@ class Friend {
         'name': name,
         'email': email,
         'avatarUrl': avatarUrl,
+        'userIds': userIds,
         'points': points,
         'dayStreak': dayStreak,
         'totalXP': totalXP,

@@ -123,27 +123,32 @@ class FriendProfile extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // ✅ Reactive friend request button
                   Obx(() {
                     final alreadyFriend = controller.isFriend(friend.id);
-                    final requestSent = controller.hasSentRequest(friend.id);
+                    // Read our state variable from the controller
+                    final String requestStatus =
+                        controller.friendRequestStatus.value;
 
+                    // Set the button text: if already a friend, 'Friends'; if a request is pending, 'Pending'; else 'Send Request'
                     final String buttonText = alreadyFriend
                         ? 'Friends'
-                        : requestSent
-                            ? 'Sent'
+                        : requestStatus != 'none'
+                            ? 'Pending'
                             : 'Send Request';
 
+                    // Set the button icon based on the state.
                     final Icon buttonIcon = alreadyFriend
                         ? const Icon(Icons.check_circle,
                             size: 24, color: Colors.greenAccent)
-                        : requestSent
+                        : requestStatus != 'none'
                             ? const Icon(Icons.hourglass_top,
                                 size: 24, color: Colors.orangeAccent)
                             : const Icon(Icons.person_add_alt,
                                 size: 24, color: Color(0xFFB388FF));
 
-                    final bool isDisabled = alreadyFriend || requestSent;
+                    // Disable the button if already friends or if there's a pending request.
+                    final bool isDisabled =
+                        alreadyFriend || requestStatus != 'none';
 
                     return SizedBox(
                       width: double.infinity,
@@ -153,10 +158,7 @@ class FriendProfile extends StatelessWidget {
                             : () async {
                                 try {
                                   await controller.sendFriendRequest(friend.id);
-                                  await controller
-                                      .loadFriends(); // Updates friend status
-                                  await controller
-                                      .getRequests(); // Updates request status
+                                  // Optionally refresh the request status after sending.
                                 } catch (e) {
                                   // Optionally handle errors here.
                                 }
@@ -164,8 +166,12 @@ class FriendProfile extends StatelessWidget {
                         icon: buttonIcon,
                         label: Text(
                           buttonText,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, color: Colors.white),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: alreadyFriend || requestStatus != 'none'
+                                ? Colors.white
+                                : Colors.black,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,

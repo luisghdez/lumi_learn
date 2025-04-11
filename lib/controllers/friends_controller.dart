@@ -20,12 +20,16 @@ class FriendsController extends GetxController {
   var searchResults = <UserSearchResult>[].obs; // 🔍 Search results
 
   var sentRequestIds = <String>{}.obs; // ✅ for fast checks
+  var recievedRequestsIds = <String>{}.obs;
 
   // Add a reactive variable for the active friend.
   var activeFriend = Rxn<FriendProfileModel>();
 
   var isLoading = false.obs;
   var error = RxnString();
+
+  var friendRequestStatus =
+      'none'.obs; // Possible values: 'none', 'sent', 'received'
 
   final service = FriendsService();
   final apiService = ApiService();
@@ -35,6 +39,7 @@ class FriendsController extends GetxController {
     super.onInit();
     // Fetch the friends when the controller is initialized
     loadFriends();
+    getRequests();
   }
 
   /// Load accepted friends
@@ -79,7 +84,6 @@ class FriendsController extends GetxController {
     }
   }
 
-  /// Send friend request
   Future<void> sendFriendRequest(String userId) async {
     try {
       final token = await authController.getIdToken();
@@ -90,7 +94,11 @@ class FriendsController extends GetxController {
       }
 
       await service.sendFriendRequest(recipientId: userId, token: token);
-      await getRequests(); // ⬅️ This already updates sentRequests and IDs
+
+      // Immediately update the reactive set so the UI reflects that a request has been sent.
+      sentRequestIds.add(userId);
+      friendRequestStatus.value = 'sent';
+
       Get.snackbar("Request Sent", "Friend request sent.");
     } catch (e) {
       Get.snackbar("Error", "Failed to send request: ${e.toString()}");
@@ -126,7 +134,6 @@ class FriendsController extends GetxController {
     }
   }
 
-  /// Load friend requests (sent and received)
   Future<void> getRequests() async {
     _startLoading();
     try {
@@ -138,16 +145,31 @@ class FriendsController extends GetxController {
       }
       final result = await service.getFriendRequests(token: token);
 
-      // ✅ Ensure new list references
+      // Ensure new list references
       sentRequests.value = List<Friend>.from(result['sent'] ?? []);
       receivedRequests.value = List<Friend>.from(result['received'] ?? []);
 
-      // ✅ Update set of IDs for fast lookup
-      sentRequestIds.value = sentRequests.map((f) => f.id).toSet();
+      // Update set of IDs for fast lookup using the userIds from each friend request.
+      // For sent requests: accumulate all userIds from each Friend instance.
+      sentRequestIds.value = sentRequests.fold<Set<String>>({}, (acc, f) {
+        if (f.userIds != null) {
+          acc.addAll(f.userIds!);
+        }
+        return acc;
+      });
 
-      // ✅ Optional: manually trigger refresh if still not reactive
-      sentRequests.refresh();
-      sentRequestIds.refresh();
+      // For received requests: accumulate all userIds similarly.
+      recievedRequestsIds.value =
+          receivedRequests.fold<Set<String>>({}, (acc, f) {
+        if (f.userIds != null) {
+          acc.addAll(f.userIds!);
+        }
+        return acc;
+      });
+
+      // Print out the resulting sets for verification.
+      print("Sent Request User IDs: ${sentRequestIds.toList()}");
+      print("Received Request User IDs: ${recievedRequestsIds.toList()}");
     } catch (e) {
       error.value = e.toString();
       Get.snackbar("Error", error.value ?? "Something went wrong");
@@ -159,6 +181,23 @@ class FriendsController extends GetxController {
   Future<void> setActiveFriend(String friendId) async {
     _startLoading();
     try {
+      // Ensure the friend requests lists are up-to-date (including userIds)
+      await getRequests();
+
+      // Check if friendId exists in the userIds extracted for sent and received requests
+      final bool inSent = sentRequestIds.contains(friendId);
+      final bool inReceived = recievedRequestsIds.contains(friendId);
+
+      // Update the state based on which request list contains the friendId.
+      // Given the new logic, it should never be both.
+      if (inSent) {
+        friendRequestStatus.value = 'sent';
+      } else if (inReceived) {
+        friendRequestStatus.value = 'received';
+      } else {
+        friendRequestStatus.value = 'none';
+      }
+
       final token = await authController.getIdToken();
       if (token == null) {
         isLoading.value = false;
@@ -173,7 +212,7 @@ class FriendsController extends GetxController {
       // Parse the JSON from the response.
       final Map<String, dynamic> data = jsonDecode(response.body);
 
-      // Convert the JSON data to a Friend object.
+      // Convert the JSON data to a FriendProfileModel.
       activeFriend.value = FriendProfileModel.fromJson(data['user']);
     } catch (e) {
       error.value = e.toString();
@@ -194,9 +233,5 @@ class FriendsController extends GetxController {
 
   bool isFriend(String userId) {
     return friends.any((f) => f.id == userId);
-  }
-
-  bool hasSentRequest(String userId) {
-    return sentRequestIds.contains(userId);
   }
 }
