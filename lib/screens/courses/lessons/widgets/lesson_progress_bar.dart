@@ -4,10 +4,14 @@ import 'package:lumi_learn_app/constants.dart';
 
 class LessonProgressBar extends StatelessWidget {
   final double progress;
+  final double height;
+  final double borderRadius;
 
   const LessonProgressBar({
     Key? key,
     required this.progress,
+    this.height = 5.0,
+    this.borderRadius = 10.0,
   }) : super(key: key);
 
   void _showQuitConfirmationDialog(BuildContext context) {
@@ -28,7 +32,7 @@ class LessonProgressBar extends StatelessWidget {
             children: [
               Image.asset(
                 'assets/astronaut/crying.png',
-                height: 130, // Adjust size to match UI design
+                height: 130,
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -47,14 +51,11 @@ class LessonProgressBar extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               Column(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Get.back(); // simply dismiss the dialog
-                      },
+                      onPressed: () => Get.back(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -73,15 +74,14 @@ class LessonProgressBar extends StatelessWidget {
                   ),
                   TextButton(
                     style: TextButton.styleFrom(
-                      // backgroundColor: Colors.green.shade700,
                       foregroundColor: Colors.red.shade600,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                     onPressed: () {
-                      Get.back(); // dismiss the dialog
-                      Get.back(); // dismiss lesson
+                      Get.back(); // close dialog
+                      Get.back(); // exit lesson
                     },
                     child: const Text('Quit', style: TextStyle(fontSize: 16)),
                   ),
@@ -104,16 +104,14 @@ class LessonProgressBar extends StatelessWidget {
           padding: const EdgeInsets.all(4.0),
           constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
           iconSize: 30,
-          onPressed: () {
-            _showQuitConfirmationDialog(context);
-          },
+          onPressed: () => _showQuitConfirmationDialog(context),
         ),
         const SizedBox(width: 6),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(borderRadius),
             child: Container(
-              height: 5,
+              height: height,
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0, end: progress),
                 duration: const Duration(milliseconds: 300),
@@ -122,7 +120,7 @@ class LessonProgressBar extends StatelessWidget {
                     value: animatedProgress,
                     backgroundColor: const Color.fromARGB(113, 158, 158, 158),
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color.fromARGB(255, 255, 255, 255),
+                      Colors.white,
                     ),
                   );
                 },

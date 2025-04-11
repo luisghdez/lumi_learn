@@ -17,6 +17,8 @@ class LessonScreenMain extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = MediaQuery.of(context).size.width >= 768;
+
     return Obx(() {
       final currentIndex = courseController.activeQuestionIndex.value;
       final questions = courseController.computedQuestions;
@@ -170,14 +172,14 @@ class LessonScreenMain extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Progress bar overlay at the top.
               Positioned(
-                top: MediaQuery.of(context).padding.top,
-                left: 16,
-                right: 16,
+                top: MediaQuery.of(context).padding.top + (isTablet ? 16 : 0),
+                left: isTablet ? 32 : 16,
+                right: isTablet ? 48 : 16,
                 child: LessonProgressBar(
                   progress: progress,
+                  height: isTablet ? 10 : 5,
+                  borderRadius: isTablet ? 12 : 6,
                 ),
               ),
             ],
