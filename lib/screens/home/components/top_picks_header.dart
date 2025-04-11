@@ -6,6 +6,7 @@ class TopPicksHeader extends StatelessWidget {
   final int slotsUsed;
   final int maxSlots;
   final bool isPremium;
+  final TextStyle titleStyle;
 
   const TopPicksHeader({
     Key? key,
@@ -13,22 +14,24 @@ class TopPicksHeader extends StatelessWidget {
     required this.slotsUsed,
     required this.maxSlots,
     required this.isPremium,
+    required this.titleStyle,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Get the text theme once for cleaner access
+    final textTheme = Theme.of(context).textTheme;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'My Courses',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w300,
-                color: Colors.white,
-              ),
+              style: titleStyle,
             ),
             const SizedBox(width: 8),
             Container(
@@ -39,8 +42,7 @@ class TopPicksHeader extends StatelessWidget {
               ),
               child: Text(
                 isPremium ? '$slotsUsed/∞' : '$slotsUsed/$maxSlots',
-                style: const TextStyle(
-                  fontSize: 12,
+                style: textTheme.labelMedium?.copyWith(
                   color: Colors.white54,
                 ),
               ),
@@ -49,6 +51,7 @@ class TopPicksHeader extends StatelessWidget {
         ),
         InkWell(
           onTap: onAddTap,
+          borderRadius: BorderRadius.circular(18),
           child: Container(
             width: 36,
             height: 36,

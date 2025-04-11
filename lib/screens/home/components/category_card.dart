@@ -19,6 +19,11 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
+
+    final double cardHeight = isTablet ? 180.0 : 140.0;
+
     final double progress =
         totalLessons > 0 ? completedLessons / totalLessons : 0.0;
 
@@ -27,7 +32,7 @@ class CategoryCard extends StatelessWidget {
       highlightColor: Colors.transparent,
       onTap: onTap,
       child: Container(
-        height: 140,
+        height: cardHeight,
         decoration: BoxDecoration(
           border: Border.all(
             color: greyBorder,
@@ -41,11 +46,10 @@ class CategoryCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Gradient for readability
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: 80,
+                height: cardHeight * 0.57,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(
                     bottom: Radius.circular(16),
@@ -61,7 +65,6 @@ class CategoryCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Title + Progress
             Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
@@ -71,11 +74,10 @@ class CategoryCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: isTablet ? 24 : 18,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
@@ -109,8 +111,8 @@ class CategoryCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               "$completedLessons/$totalLessons Lessons",
-                              style: const TextStyle(
-                                fontSize: 14,
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
                                 color: Colors.white,
                               ),
                             ),

@@ -30,6 +30,20 @@ class HomeScreen extends StatelessWidget {
         MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= _tabletBreakpoint;
+
+    final TextStyle sectionTitleStyle = isTablet
+        ? Theme.of(context).textTheme.titleLarge!.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w300,
+            )
+        : const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+            color: Colors.white,
+          );
+
     return Scaffold(
       body: GestureDetector(
         onTap: () {
@@ -77,14 +91,7 @@ class HomeScreen extends StatelessWidget {
                                 horizontal: horizontalPadding),
                             child: Text(
                               'Featured Courses',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    // fontSize: 20,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w300,
-                                  ),
+                              style: sectionTitleStyle,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -94,7 +101,8 @@ class HomeScreen extends StatelessWidget {
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
-                            child: Obx(() => TopPicksHeader(
+                            child: Obx(
+                              () => TopPicksHeader(
                                 onAddTap: () {
                                   if (courseController
                                       .checkCourseSlotAvailable()) {
@@ -103,7 +111,10 @@ class HomeScreen extends StatelessWidget {
                                 },
                                 slotsUsed: authController.courseSlotsUsed.value,
                                 maxSlots: authController.maxCourseSlots.value,
-                                isPremium: authController.isPremium.value)),
+                                isPremium: authController.isPremium.value,
+                                titleStyle: sectionTitleStyle,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Padding(
