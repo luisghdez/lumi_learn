@@ -38,84 +38,105 @@ class MultipleChoiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 768;
+    final double horizontalPadding = isTablet ? 48.0 : 16.0;
+    final double maxContentWidth = isTablet ? 800.0 : double.infinity;
+    final double astronautSize = isTablet ? 250 : 140;
+
     return SafeArea(
       top: false,
       child: Column(
         children: [
           // Top section: background, gradient, question card, astronaut
-          Container(
+          SizedBox(
             height: MediaQuery.of(context).size.height * 0.35,
             width: double.infinity,
-            child: Stack(
-              children: [
-                // Background image
-                Positioned.fill(
-                  child: Image.asset(
-                    backgroundImage,
-                    fit: BoxFit.cover,
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(backgroundImage),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.center,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Color.fromARGB(255, 12, 12, 12),
+                    ],
                   ),
                 ),
-                // Gradient overlay
-                Positioned.fill(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.center,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Color.fromARGB(255, 12, 12, 12),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: horizontalPadding,
+                    right: horizontalPadding,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxContentWidth),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          // Question card
+                          Flexible(
+                            flex: 3,
+                            child: QuestionCard(
+                              questionText: question.questionText,
+                              isTablet: isTablet,
+                            ),
+                          ),
+
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Image.asset(
+                              'assets/astronaut/pointing.png',
+                              width: astronautSize,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
-                // Question card
-                Positioned(
-                  left: 16,
-                  top: MediaQuery.of(context).padding.top + 60,
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.75,
-                    child: QuestionCard(questionText: question.questionText),
-                  ),
-                ),
-                // Astronaut image
-                Positioned(
-                  bottom: 0,
-                  right: 1,
-                  child: Image.asset(
-                    'assets/astronaut/pointing.png',
-                    width: 140,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
+
           // Bottom section: options and next button
           Expanded(
             child: Container(
               color: const Color.fromARGB(255, 12, 12, 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: OptionsList(
-                      options: question.options,
-                      selectedOption: _selectedOption,
-                    ),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: OptionsList(
+                          options: question.options,
+                          selectedOption: _selectedOption,
+                          isTablet: isTablet,
+                        ),
+                      ),
+                      ValueListenableBuilder<int>(
+                        valueListenable: _selectedOption,
+                        builder: (context, value, child) {
+                          return NextButton(
+                            onPressed: value != -1
+                                ? () => _submitAnswer(context)
+                                : null,
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  // Wrap the NextButton with a ValueListenableBuilder
-                  ValueListenableBuilder<int>(
-                    valueListenable: _selectedOption,
-                    builder: (context, value, child) {
-                      return NextButton(
-                        onPressed:
-                            value != -1 ? () => _submitAnswer(context) : null,
-                      );
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
