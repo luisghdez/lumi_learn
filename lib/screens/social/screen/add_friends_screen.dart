@@ -4,7 +4,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/services/friends_service.dart';
 import 'package:lumi_learn_app/screens/social/widgets/add_friends_tab.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_requests_tab.dart';
 import 'package:lumi_learn_app/models/userSearch_model.dart';
@@ -22,8 +21,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
   late final TabController _tabController;
 
   final RxBool _contactsPermissionGranted = false.obs;
-  final FriendsController _friendsController =
-      Get.put(FriendsController(service: Get.put(FriendsService())));
+  final FriendsController _friendsController = Get.find<FriendsController>();
 
   @override
   void initState() {
@@ -61,7 +59,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
       return;
     }
 
-    await _friendsController.searchFriends(query);
+    await _friendsController.searchUsers(query);
     final List<UserSearchResult> results = _friendsController.searchResults;
 
     if (results.isEmpty) {

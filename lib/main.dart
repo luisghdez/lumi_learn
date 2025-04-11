@@ -32,8 +32,6 @@ void main() async {
   // Initialize controllers and services
   Get.put(AuthController());
   Get.put(NavigationController());
-  Get.put(FriendsService());
-  Get.put(FriendsController(service: FriendsService()));
 
   runApp(const MyApp());
 }

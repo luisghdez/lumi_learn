@@ -16,7 +16,7 @@ class PfpViewer extends StatelessWidget {
       offset: Offset(0, -offsetUp),
       child: Image(
         image: backgroundImage,
-        height: 250,
+        height: 350,
       ),
     );
   }

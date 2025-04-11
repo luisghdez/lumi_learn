@@ -22,6 +22,7 @@ class AuthController extends GetxController {
   RxInt xpCount = 0.obs;
   RxInt courseSlotsUsed = 0.obs;
   RxInt maxCourseSlots = 2.obs;
+  RxInt friendCount = 0.obs;
 
   RxBool isPremium = false.obs;
 
@@ -75,8 +76,7 @@ class AuthController extends GetxController {
       xpCount.value = data['user']['xpCount'] ?? 0;
       courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
       maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
-
-      print('User data fetched successfully: ${data['user']['isPremium']}');
+      friendCount.value = data['user']['friendCount'] ?? 0;
     } catch (e) {
       print('Error fetching user data: $e');
     }

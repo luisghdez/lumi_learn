@@ -11,7 +11,6 @@ import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
 
-
 class ProfileBody extends StatefulWidget {
   final bool isEditingPfp;
   final Function(bool) onEditModeChange;
@@ -113,12 +112,13 @@ class _ProfileBodyState extends State<ProfileBody> {
                                   children: [
                                     GestureDetector(
                                       onTap: () {
-                                        widget.navController
-                                            .updateIndex(0); // Go to HomeScreen
+                                        // widget.navController
+                                        //     .updateIndex(0); // Go to HomeScreen
                                       },
-                                      child: const InfoStatCard(
+                                      child: InfoStatCard(
                                         label: 'Courses',
-                                        value: '5',
+                                        value: authController.courseSlotsUsed
+                                            .toString(),
                                         background: false,
                                       ),
                                     ),
@@ -133,9 +133,10 @@ class _ProfileBodyState extends State<ProfileBody> {
                                       onTap: () {
                                         Get.to(() => const FriendsScreen());
                                       },
-                                      child: const InfoStatCard(
+                                      child: InfoStatCard(
                                         label: 'Friends',
-                                        value: '3',
+                                        value: authController.friendCount
+                                            .toString(),
                                         background: false,
                                       ),
                                     ),
@@ -147,29 +148,32 @@ class _ProfileBodyState extends State<ProfileBody> {
 
                           const SizedBox(height: 20),
 
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const AddFriendsScreen()),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.person_add_alt,
-                                      size: 24, color: Color(0xFFB388FF)),
-                                  label: const Text(
-                                    'ADD FRIENDS',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: Colors.black,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                  ),
-                                ),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const AddFriendsScreen()),
+                                );
+                              },
+                              icon: const Icon(Icons.person_add_alt,
+                                  size: 24, color: Color(0xFFB388FF)),
+                              label: const Text(
+                                'ADD FRIENDS',
+                                style: TextStyle(fontWeight: FontWeight.w600),
                               ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
 
                           const SizedBox(height: 20),
 

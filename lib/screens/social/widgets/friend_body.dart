@@ -1,97 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/models/friends_model.dart';
+import 'package:lumi_learn_app/screens/profile/components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/social/components/pfp_viewer.dart';
-import 'package:lumi_learn_app/screens/social/components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/social/components/xp_chart_box.dart';
 
 class FriendProfile extends StatelessWidget {
-  final Friend friend;
-
-  const FriendProfile({
-    super.key,
-    required this.friend,
-  });
+  const FriendProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<FriendsController>();
+    final FriendsController controller = Get.find<FriendsController>();
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // 🌌 Galaxy header background
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.4,
-              child: Stack(
-                children: [
-                  Image.asset(
-                    'assets/galaxies/galaxy2.png',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [Colors.black, Colors.transparent],
+    return Obx(() {
+      final friend = controller.activeFriend.value;
+      if (friend == null) {
+        // While waiting for the active friend to load, show a loading indicator.
+        return const Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            // 🌌 Galaxy header background
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Stack(
+                  children: [
+                    Image.asset(
+                      'assets/galaxies/galaxy2.png',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black, Colors.transparent],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // 🧑‍🚀 Friend name title overlay
-          Positioned(
-            left: 20,
-            top: 82,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Friend",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  friend.name ?? 'Unknown',
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 👇 Scrollable body content
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+            // 👇 Scrollable body content
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
               child: Column(
                 children: [
-                  Center(
+                  const Center(
                     child: PfpViewer(
-                      offsetUp: -90,
-                      backgroundImage: AssetImage(friend.avatarUrl ?? 'assets/pfp/pfp1.png'),
+                      offsetUp: -120,
+                      backgroundImage: AssetImage('assets/pfp/pfp1.png'),
                     ),
                   ),
-                  const SizedBox(height: 20),
 
                   // Info box
                   Container(
@@ -100,41 +75,39 @@ class FriendProfile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white24, width: 0.8),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding:
+                        const EdgeInsets.only(top: 16, left: 16, right: 16),
                     child: Column(
                       children: [
                         Text(
-                          friend.name ?? 'Unknown',
+                          friend.name,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: -1,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Joined ${friend.joinedDate}',
-                          style: const TextStyle(color: Colors.grey, fontSize: 14),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Divider(color: Colors.white24, thickness: 1),
+                          friend.email,
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 14),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             InfoStatCard(
-                              icon: Icons.rocket_launch,
-                              label: 'Streak',
-                              value: '${friend.dayStreak} days',
+                              label: 'Courses',
+                              value: '${friend.courseSlotsUsed}',
                               background: false,
                             ),
-                            const VerticalDivider(
-                              color: Colors.white24,
-                              thickness: 1,
-                              width: 20,
-                              indent: 10,
-                              endIndent: 10,
+                            const SizedBox(
+                              height: 60,
+                              child: VerticalDivider(
+                                color: greyBorder,
+                                thickness: 1,
+                              ),
                             ),
                             InfoStatCard(
                               icon: Icons.people,
@@ -150,24 +123,32 @@ class FriendProfile extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // ✅ Reactive friend request button
                   Obx(() {
                     final alreadyFriend = controller.isFriend(friend.id);
-                    final requestSent = controller.hasSentRequest(friend.id);
+                    // Read our state variable from the controller
+                    final String requestStatus =
+                        controller.friendRequestStatus.value;
 
+                    // Set the button text: if already a friend, 'Friends'; if a request is pending, 'Pending'; else 'Send Request'
                     final String buttonText = alreadyFriend
                         ? 'Friends'
-                        : requestSent
-                            ? 'Sent'
+                        : requestStatus != 'none'
+                            ? 'Pending'
                             : 'Send Request';
 
+                    // Set the button icon based on the state.
                     final Icon buttonIcon = alreadyFriend
-                        ? const Icon(Icons.check_circle, size: 24, color: Colors.greenAccent)
-                        : requestSent
-                            ? const Icon(Icons.hourglass_top, size: 24, color: Colors.orangeAccent)
-                            : const Icon(Icons.person_add_alt, size: 24, color: Color(0xFFB388FF));
+                        ? const Icon(Icons.check_circle,
+                            size: 24, color: Colors.greenAccent)
+                        : requestStatus != 'none'
+                            ? const Icon(Icons.hourglass_top,
+                                size: 24, color: Colors.orangeAccent)
+                            : const Icon(Icons.person_add_alt,
+                                size: 24, color: Color(0xFFB388FF));
 
-                    final bool isDisabled = alreadyFriend || requestSent;
+                    // Disable the button if already friends or if there's a pending request.
+                    final bool isDisabled =
+                        alreadyFriend || requestStatus != 'none';
 
                     return SizedBox(
                       width: double.infinity,
@@ -177,15 +158,20 @@ class FriendProfile extends StatelessWidget {
                             : () async {
                                 try {
                                   await controller.sendFriendRequest(friend.id);
-                                  await controller.loadFriends(); // ✅ updates friend status
-                                  await controller.getRequests();  // ✅ updates request status
+                                  // Optionally refresh the request status after sending.
                                 } catch (e) {
+                                  // Optionally handle errors here.
                                 }
                               },
                         icon: buttonIcon,
                         label: Text(
                           buttonText,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: alreadyFriend || requestStatus != 'none'
+                                ? Colors.white
+                                : Colors.black,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -204,16 +190,18 @@ class FriendProfile extends StatelessWidget {
                   // Stats row
                   Row(
                     children: [
-                      InfoStatCard(
-                        icon: Icons.star,
-                        label: 'Total XP',
-                        value: '${friend.totalXP}',
+                      Expanded(
+                        child: InfoStatCard(
+                            icon: Icons.rocket_launch,
+                            label: 'Day streak',
+                            value: friend.streakCount.toString()),
                       ),
                       const SizedBox(width: 16),
-                      InfoStatCard(
-                        icon: Icons.emoji_events,
-                        label: 'Top 3s',
-                        value: '${friend.top3Finishes}',
+                      Expanded(
+                        child: InfoStatCard(
+                            icon: Icons.star,
+                            label: 'Total Stars',
+                            value: friend.xpCount.toString()),
                       ),
                     ],
                   ),
@@ -227,9 +215,9 @@ class FriendProfile extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }

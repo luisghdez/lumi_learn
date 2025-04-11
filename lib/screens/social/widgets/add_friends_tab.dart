@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
-import 'package:lumi_learn_app/models/userSearch_model.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'glass_tile.dart';
 import 'glass_tile_with_field.dart';
@@ -63,7 +62,10 @@ class AddFriendsTab extends StatelessWidget {
           if (controller.searchResults.isNotEmpty) ...[
             const Text(
               "Search Results",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 8),
             ...controller.searchResults.map((user) {
@@ -74,8 +76,10 @@ class AddFriendsTab extends StatelessWidget {
                       : const AssetImage('assets/pfp/pfp1.png'),
                   backgroundColor: Colors.transparent,
                 ),
-                title: Text(user.name ?? "No Name", style: const TextStyle(color: Colors.white)),
-                subtitle: Text(user.email ?? "", style: const TextStyle(color: Colors.white60)),
+                title: Text(user.name ?? "No Name",
+                    style: const TextStyle(color: Colors.white)),
+                subtitle: Text(user.email ?? "",
+                    style: const TextStyle(color: Colors.white60)),
                 onTap: () {
                   final fakeFriend = Friend(
                     id: user.id,
@@ -91,11 +95,11 @@ class AddFriendsTab extends StatelessWidget {
                     friendCount: 0,
                   );
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => FriendProfile(friend: fakeFriend),
-                    ),
+                  controller.setActiveFriend(user.id);
+
+                  Get.to(
+                    const FriendProfile(),
+                    transition: Transition.fadeIn,
                   );
                 },
               );
