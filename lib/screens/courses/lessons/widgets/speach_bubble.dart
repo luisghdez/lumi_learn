@@ -3,27 +3,38 @@ import 'package:flutter/material.dart';
 class SpeechBubble extends StatelessWidget {
   final String text;
   final Color bubbleColor;
-  final TextStyle textStyle;
+  final TextStyle? textStyle;
+  final bool isTablet;
 
   const SpeechBubble({
     Key? key,
     required this.text,
     this.bubbleColor = Colors.white,
-    // align text in center of bubble
-    this.textStyle = const TextStyle(color: Colors.black),
+    this.textStyle,
+    this.isTablet = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final double fontSize = isTablet ? 20.0 : 14.0;
+    final double horizontalPadding = isTablet ? 24.0 : 16.0;
+    final double verticalPadding = isTablet ? 20.0 : 16.0;
+
     return CustomPaint(
       painter: _SpeechBubblePainter(color: bubbleColor),
       child: Container(
-        // Extra height on the left to avoid clipping the bubble tail
         margin: const EdgeInsets.only(left: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
+        ),
         child: Text(
           text,
-          style: textStyle,
+          style: textStyle ??
+              TextStyle(
+                color: Colors.black,
+                fontSize: fontSize,
+              ),
           textAlign: TextAlign.center,
         ),
       ),
@@ -41,9 +52,8 @@ class _SpeechBubblePainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
-    // Draw a rounded rectangle for the main bubble
     final bubbleRect = RRect.fromLTRBR(
-      10, // left inset (space for the tail)
+      10,
       0,
       size.width,
       size.height,
@@ -52,9 +62,7 @@ class _SpeechBubblePainter extends CustomPainter {
 
     canvas.drawRRect(bubbleRect, paintBubble);
 
-    // Draw a little triangular “tail” on the left side
     final tailPath = Path();
-    // near middle-left
     tailPath.moveTo(10, size.height * 0.5 - 8);
     tailPath.lineTo(0, size.height * 0.5);
     tailPath.lineTo(10, size.height * 0.5 + 8);

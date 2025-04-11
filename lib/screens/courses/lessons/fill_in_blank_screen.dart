@@ -37,12 +37,22 @@ class FillInBlankScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 768;
+    final double horizontalPadding = isTablet ? 48.0 : 16.0;
+    final double fontSize = isTablet ? 20.0 : 16.0;
+    final double optionVerticalPadding = isTablet ? 20.0 : 18.0;
+    final double optionHorizontalPadding = isTablet ? 36.0 : 30.0;
+    final double astronautSize = isTablet ? 270.0 : 170.0;
+    final double astronautHeight = isTablet ? 200.0 : 140.0;
+    final double bubbleWidth = isTablet ? 380.0 : 220.0;
+
     return AppScaffold(
       body: Column(
         children: [
-          // Fixed-size header container
+          // Header section
           Container(
-            height: 200,
+            height: isTablet ? 300 : 200,
             decoration: const BoxDecoration(
               border: Border(
                 bottom: BorderSide(
@@ -51,82 +61,118 @@ class FillInBlankScreen extends StatelessWidget {
                 ),
               ),
             ),
-            child: Stack(
-              children: [
-                // Speech Bubble
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: SizedBox(
-                    width: 220,
-                    child: SpeechBubble(text: question.questionText),
-                  ),
-                ),
-                // Astronaut Image
-                Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Image.asset(
-                    'assets/astronaut/thinking.png',
-                    width: 170,
-                    height: 140,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 30),
-          // Options Bubbles
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: ValueListenableBuilder<int>(
-                  valueListenable: _selectedOption,
-                  builder: (context, selected, _) {
-                    return Wrap(
-                      spacing: 4.0,
-                      runSpacing: 8.0,
-                      alignment: WrapAlignment.center,
-                      children: List.generate(question.options.length, (index) {
-                        final option = question.options[index];
-                        final isSelected = selected == index;
-                        return GestureDetector(
-                          onTap: () => _selectedOption.value = index,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 18, horizontal: 30),
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color.fromARGB(255, 255, 255, 255)
-                                    : greyBorder,
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              option,
-                              style: TextStyle(
-                                color:
-                                    isSelected ? Colors.white : Colors.white70,
-                                fontSize: 16,
-                              ),
+            child: isTablet
+                ? Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Image.asset(
+                          'assets/astronaut/thinking.png',
+                          width: astronautSize,
+                          height: astronautHeight,
+                        ),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: SpeechBubble(
+                              text: question.questionText,
+                              isTablet: true,
                             ),
                           ),
-                        );
-                      }),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Image.asset(
+                          'assets/astronaut/thinking.png',
+                          width: astronautSize,
+                          height: astronautHeight,
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: SizedBox(
+                          width: bubbleWidth,
+                          child: SpeechBubble(
+                            text: question.questionText,
+                            isTablet: false,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+
+          const SizedBox(height: 30),
+
+          // Options section
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: ValueListenableBuilder<int>(
+                valueListenable: _selectedOption,
+                builder: (context, selected, _) {
+                  return Wrap(
+                    spacing: 8.0,
+                    runSpacing: 12.0,
+                    alignment: WrapAlignment.center,
+                    children: List.generate(question.options.length, (index) {
+                      final option = question.options[index];
+                      final isSelected = selected == index;
+
+                      return GestureDetector(
+                        onTap: () => _selectedOption.value = index,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: optionVerticalPadding,
+                            horizontal: optionHorizontalPadding,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: isSelected ? Colors.white : greyBorder,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            option,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontSize: fontSize,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  );
+                },
               ),
             ),
           ),
-          // Wrap the NextButton with ValueListenableBuilder
+
+          const SizedBox(height: 16),
+
+          // Next button
           ValueListenableBuilder<int>(
             valueListenable: _selectedOption,
             builder: (context, selected, _) {
-              return NextButton(
-                onPressed: selected != -1 ? () => _submitAnswer(context) : null,
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: isTablet ? 24.0 : 16.0,
+                ),
+                child: NextButton(
+                  onPressed:
+                      selected != -1 ? () => _submitAnswer(context) : null,
+                ),
               );
             },
           ),
