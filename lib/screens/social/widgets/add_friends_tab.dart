@@ -95,11 +95,11 @@ class AddFriendsTab extends StatelessWidget {
                     friendCount: 0,
                   );
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => FriendProfile(friend: fakeFriend),
-                    ),
+                  controller.setActiveFriend(user.id);
+
+                  Get.to(
+                    const FriendProfile(),
+                    transition: Transition.fadeIn,
                   );
                 },
               );

@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/models/friend_profile_model.dart';
 import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/models/userSearch_model.dart';
+import 'package:lumi_learn_app/services/api_service.dart';
 import 'package:lumi_learn_app/services/friends_service.dart';
 
 class FriendsController extends GetxController {
@@ -17,10 +21,14 @@ class FriendsController extends GetxController {
 
   var sentRequestIds = <String>{}.obs; // ✅ for fast checks
 
+  // Add a reactive variable for the active friend.
+  var activeFriend = Rxn<FriendProfileModel>();
+
   var isLoading = false.obs;
   var error = RxnString();
 
   final service = FriendsService();
+  final apiService = ApiService();
 
   @override
   void onInit() {
@@ -143,6 +151,33 @@ class FriendsController extends GetxController {
     } catch (e) {
       error.value = e.toString();
       Get.snackbar("Error", error.value ?? "Something went wrong");
+    } finally {
+      _stopLoading();
+    }
+  }
+
+  Future<void> setActiveFriend(String friendId) async {
+    _startLoading();
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        isLoading.value = false;
+        Get.back();
+        throw Exception("No user token found.");
+      }
+
+      // Call the ApiService with named parameters.
+      final response =
+          await ApiService.getUserData(token: token, userId: friendId);
+
+      // Parse the JSON from the response.
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      // Convert the JSON data to a Friend object.
+      activeFriend.value = FriendProfileModel.fromJson(data['user']);
+    } catch (e) {
+      error.value = e.toString();
+      Get.snackbar("Error", error.value ?? "Could not set active friend");
     } finally {
       _stopLoading();
     }

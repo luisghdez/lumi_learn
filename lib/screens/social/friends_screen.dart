@@ -158,12 +158,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   child: FriendTile(
                                     friend: friend,
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              FriendProfile(friend: friend),
-                                        ),
+                                      // Set the active friend in the controller.
+                                      friendsController
+                                          .setActiveFriend(friend.id);
+                                      // Navigate to the friend's profile screen.
+                                      Get.to(
+                                        const FriendProfile(),
+                                        transition: Transition.fadeIn,
                                       );
                                     },
                                   ),
