@@ -53,9 +53,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           child: Padding(
             padding: EdgeInsets.all(padding),
             child: Center(
-              child: FlashcardWidget(
-                key: ValueKey(currentFlashcard),
-                flashcard: currentFlashcard,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: FlashcardWidget(
+                  key: ValueKey(currentFlashcard),
+                  flashcard: currentFlashcard,
+                ),
               ),
             ),
           ),
