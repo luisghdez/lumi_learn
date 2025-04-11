@@ -1,22 +1,18 @@
-// services/friends_service.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:lumi_learn_app/models/friends_model.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/models/userSearch_model.dart';
 
 class FriendsService {
   // final String baseUrl = 'http://localhost:3000';
-  final String baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   /// Fetch accepted friends for current user
-  Future<List<Friend>> fetchFriends() async {
-    final token = await AuthController.instance.getIdToken();
-    if (token == null) throw Exception("User not authenticated");
-
+  Future<List<Friend>> fetchFriends({
+    required String token,
+  }) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/friends'),
+      Uri.parse('$_baseUrl/friends'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -32,12 +28,12 @@ class FriendsService {
   }
 
   /// Search users by name/email (GET /friend-requests/search?q=query)
-  Future<List<UserSearchResult>> searchUsers(String query) async {
-    final token = await AuthController.instance.getIdToken();
-    if (token == null) throw Exception("User not authenticated");
-
+  Future<List<UserSearchResult>> searchUsers({
+    required String token,
+    required String query,
+  }) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/friend-requests/search?q=$query'),
+      Uri.parse('$_baseUrl/friend-requests/search?q=$query'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -46,21 +42,19 @@ class FriendsService {
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body)['users'];
-      return data
-          .map((json) => UserSearchResult.fromJson(json))
-          .toList(); // ✅ fixed here
+      return data.map((json) => UserSearchResult.fromJson(json)).toList();
     } else {
       throw Exception("Search failed: ${response.body}");
     }
   }
 
   /// Send friend request
-  Future<void> sendFriendRequest(String recipientId) async {
-    final token = await AuthController.instance.getIdToken();
-    if (token == null) throw Exception("User not authenticated");
-
+  Future<void> sendFriendRequest({
+    required String token,
+    required String recipientId,
+  }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/friend-requests'),
+      Uri.parse('$_baseUrl/friend-requests'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -74,17 +68,18 @@ class FriendsService {
   }
 
   /// Accept or decline a friend request
-  Future<void> respondToRequest(String requestId, bool accept) async {
-    final token = await AuthController.instance.getIdToken();
-    if (token == null) throw Exception("User not authenticated");
-
+  Future<void> respondToRequest({
+    required String token,
+    required String requestId,
+    required bool accept,
+  }) async {
     final response = await http.patch(
-      Uri.parse('$baseUrl/friend-requests/$requestId?accept=$accept'),
+      Uri.parse('$_baseUrl/friend-requests/$requestId?accept=$accept'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({}), // ✅ fix: send empty body so Fastify doesn't throw
+      body: jsonEncode({}), // Empty body so Fastify doesn't throw
     );
 
     if (response.statusCode != 200) {
@@ -93,12 +88,11 @@ class FriendsService {
   }
 
   /// Get friend requests (sent and received)
-  Future<Map<String, List<Friend>>> getFriendRequests() async {
-    final token = await AuthController.instance.getIdToken();
-    if (token == null) throw Exception("User not authenticated");
-
+  Future<Map<String, List<Friend>>> getFriendRequests({
+    required String token,
+  }) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/friend-requests'),
+      Uri.parse('$_baseUrl/friend-requests'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

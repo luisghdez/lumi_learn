@@ -166,10 +166,6 @@ class FriendsController extends GetxController {
         }
         return acc;
       });
-
-      // Print out the resulting sets for verification.
-      print("Sent Request User IDs: ${sentRequestIds.toList()}");
-      print("Received Request User IDs: ${recievedRequestsIds.toList()}");
     } catch (e) {
       error.value = e.toString();
       Get.snackbar("Error", error.value ?? "Something went wrong");
