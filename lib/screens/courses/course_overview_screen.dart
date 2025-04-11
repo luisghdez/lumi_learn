@@ -88,6 +88,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 768;
+
     // Horizontal wave layout parameters (optional for the “orbit” effect)
     const double amplitude = 180.0;
     const double frequency = pi / 3;
@@ -370,7 +373,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
               // 5) Top Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 32 : 16,
+                  vertical: isTablet ? 32 : 0,
+                ),
                 child: CourseOverviewHeader(
                   onBack: () => Get.offAll(
                     () => MainScreen(),
@@ -379,7 +385,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   ),
                   courseTitle: "${courseController.selectedCourseTitle}",
                   progress: progress,
-                  // go to flashcard screen
                   onViewFlashcards: () {
                     Get.to(
                       () => FlashcardScreen(flashcards: flashcards),
