@@ -4,7 +4,7 @@ import 'package:lumi_learn_app/models/friends_model.dart';
 import 'package:lumi_learn_app/models/userSearch_model.dart';
 
 class FriendsService {
-  // final String baseUrl = 'http://localhost:3000';
+  // final String _baseUrl = 'http://localhost:3000';
   static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   /// Fetch accepted friends for current user

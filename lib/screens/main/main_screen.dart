@@ -38,9 +38,9 @@ class MainScreen extends StatelessWidget {
                 index: navigationController.currentIndex.value,
                 children: [
                   HomeScreen(),
-                  LeaderboardPage(),
+                  // LeaderboardPage(),
                   const ProfileScreen(),
-                  const FriendsScreen(),
+                  // const FriendsScreen(),
                 ],
               ),
             ),

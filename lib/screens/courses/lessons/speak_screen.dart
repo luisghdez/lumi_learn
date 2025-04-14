@@ -39,6 +39,14 @@ class _SpeakScreenState extends State<SpeakScreen> {
   @override
   Widget build(BuildContext context) {
     final SpeakController speakController = Get.find<SpeakController>();
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 768;
+    final double topPadding = isTablet
+        ? MediaQuery.of(context).padding.top + 50
+        : MediaQuery.of(context).padding.top - 50;
+
+    final double textSize = isTablet ? 18.0 : 14.0;
+    final double astronautSize = isTablet ? 320.0 : 250.0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -54,98 +62,105 @@ class _SpeakScreenState extends State<SpeakScreen> {
       ),
       child: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Just extra spacing
-            SizedBox(height: MediaQuery.of(context).padding.top - 50),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () =>
-                      showSkipConfirmationDialog(context, courseController),
-                  child: const Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-                    child: Text(
-                      "Skip",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
+                SizedBox(height: topPadding),
+
+                // Skip button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () =>
+                          showSkipConfirmationDialog(context, courseController),
+                      child: Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                        child: Text(
+                          "Skip",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: textSize,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Astronaut Image
+                Center(
+                  child: Container(
+                    width: astronautSize,
+                    height: astronautSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                      border: Border.all(color: Colors.white30, width: 2),
+                      image: const DecorationImage(
+                        image: AssetImage('assets/astronaut/thinking.png'),
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
 
-            // Large Circle Contact Avatar
-            Center(
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
-                  border: Border.all(color: Colors.white30, width: 2),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/astronaut/thinking.png'),
-                    fit: BoxFit.cover,
+                // Speech bubble
+                Obx(
+                  () => TypewriterSpeechBubbleMessage(
+                    key: ValueKey(speakController.feedbackMessage.value),
+                    message: speakController.feedbackMessage.value.isEmpty
+                        ? "Okay... press record and teach me like I forgot EVERYTHING, because I did!"
+                        : speakController.feedbackMessage.value,
+                    speed: const Duration(milliseconds: 70),
+                    maxHeight: isTablet ? 160 : 130,
+                    textStyle: TextStyle(
+                      color: Colors.white,
+                      fontSize: isTablet ? 18 : 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    onFinished: () {},
                   ),
                 ),
-              ),
-            ),
 
-            // Typewriter speech bubble
-            Obx(
-              () => TypewriterSpeechBubbleMessage(
-                key: ValueKey(speakController.feedbackMessage.value),
-                message: speakController.feedbackMessage.value.isEmpty
-                    ? "Okay... press record and teach me like I forgot EVERYTHING, because I did!"
-                    : speakController.feedbackMessage.value,
-                speed: const Duration(milliseconds: 70),
-                maxHeight: 130,
-                onFinished: () {
-                  // Optionally do something after the bubble finishes typing
-                },
-              ),
-            ),
-            const Spacer(),
+                const Spacer(),
 
-            // The deck of terms. We'll pass in currentTermIndex so the top card is the current term:
-            Obx(() {
-              return TermsDeck(
-                terms: speakController.terms
-                    .map((flashcard) => flashcard.term)
-                    .toList(),
-                progressList: speakController.termProgress,
-                currentTermIndex: speakController.currentTermIndex.value,
-              );
-            }),
+                // Terms deck
+                Obx(() {
+                  return TermsDeck(
+                    terms: speakController.terms.map((fc) => fc.term).toList(),
+                    progressList: speakController.termProgress,
+                    currentTermIndex: speakController.currentTermIndex.value,
+                  );
+                }),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // The Record Button
-            Center(
-              child: Obx(
-                () => RecordButton(
-                  onStartRecording: speakController.startListening,
-                  onStopRecording: () {
-                    speakController.isLoading.value = true;
-                    speakController.stopListening();
-                  },
-                  isLoading: speakController.isLoading.value,
-                  // Disable if either audio is playing or isLoading
-                  isDisabled: speakController.isAudioPlaying.value ||
-                      speakController.isLoading.value,
+                // Record button
+                Center(
+                  child: Obx(
+                    () => RecordButton(
+                      onStartRecording: speakController.startListening,
+                      onStopRecording: () {
+                        speakController.isLoading.value = true;
+                        speakController.stopListening();
+                      },
+                      isLoading: speakController.isLoading.value,
+                      isDisabled: speakController.isAudioPlaying.value ||
+                          speakController.isLoading.value,
+                    ),
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 16),
+              ],
             ),
-            const SizedBox(height: 16),
-          ],
+          ),
         ),
       ),
     );
@@ -265,22 +280,21 @@ void showSkipConfirmationDialog(
   Get.dialog(
     Align(
       alignment: Alignment.bottomCenter,
-      child: Container(
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 12, 12, 12),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: greyBorder, width: 1),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // const SizedBox(height: 16),
-            SizedBox(
-              width: 0.75 * Get.width,
-              child: const Text(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 700),
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 12, 12, 12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: greyBorder, width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
                 "Don't leave Lumi hanging!",
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
@@ -290,52 +304,49 @@ void showSkipConfirmationDialog(
                 ),
                 textAlign: TextAlign.center,
               ),
-            ),
-            Image.asset(
-              'assets/astronaut/phone_sad.png',
-              height: 220,
-            ),
-            const Text(
-              "Studies show that teaching others can boost your understanding and memory by up to 90%",
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.white54,
-                fontSize: 14,
-                decoration: TextDecoration.none,
+              const SizedBox(height: 16),
+              Image.asset(
+                'assets/astronaut/phone_sad.png',
+                height: 220,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 14),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back(); // Close dialog
-                      courseController.nextQuestion(); // Skip
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+              const SizedBox(height: 16),
+              const Text(
+                "Studies show that teaching others can boost your understanding and memory by up to 90%",
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white54,
+                  fontSize: 14,
+                  decoration: TextDecoration.none,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back(); // Close dialog
+                    courseController.nextQuestion(); // Skip
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    child: const Text(
-                      'Skip Anyway',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
+                  ),
+                  child: const Text(
+                    'Skip Anyway',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-          ],
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     ),

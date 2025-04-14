@@ -148,26 +148,29 @@ class _TypewriterSpeechBubbleMessageState
   Widget _buildExpandedMessage(BuildContext context) {
     return GestureDetector(
       onTap: () {}, // absorb taps so it doesn't dismiss if user taps inside
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF191D2D),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: SingleChildScrollView(
-          // Use the overlay controller here
-          controller: _overlayScrollController,
-          child: Text(
-            typedSoFar,
-            style: widget.textStyle ??
-                const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF191D2D),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: SingleChildScrollView(
+              controller: _overlayScrollController,
+              child: Text(
+                typedSoFar,
+                style: widget.textStyle ??
+                    const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ),
           ),
         ),
       ),
