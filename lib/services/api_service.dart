@@ -246,4 +246,17 @@ class ApiService {
 
     return response;
   }
+
+  static Future<void> deleteUserData(String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete user data: ${response.body}');
+    }
+  }
 }
