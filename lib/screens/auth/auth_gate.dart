@@ -48,12 +48,17 @@ class AuthGate extends StatelessWidget {
 
       if (!Get.isRegistered<SpeakController>()) {
         Get.put<SpeakController>(
-          SpeakController(), // no terms yet, we'll set them later
+          SpeakController(),
           permanent: true,
         );
       }
 
-      Get.put(FriendsController());
+      if (!Get.isRegistered<FriendsController>()) {
+        Get.put<FriendsController>(
+          FriendsController(),
+          permanent: true,
+        );
+      }
 
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 

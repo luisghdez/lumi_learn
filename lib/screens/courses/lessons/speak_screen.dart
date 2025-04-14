@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -40,13 +41,18 @@ class _SpeakScreenState extends State<SpeakScreen> {
   Widget build(BuildContext context) {
     final SpeakController speakController = Get.find<SpeakController>();
     final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     final bool isTablet = screenWidth >= 768;
-    final double topPadding = isTablet
+    final double rawTopPadding = isTablet
         ? MediaQuery.of(context).padding.top + 50
         : MediaQuery.of(context).padding.top - 50;
+    final double topPadding = max(rawTopPadding, 16);
 
     final double textSize = isTablet ? 18.0 : 14.0;
-    final double astronautSize = isTablet ? 320.0 : 250.0;
+    final double astronautSize = min(screenHeight * 0.25, 320.0);
+    final double bubbleMaxHeight =
+        isTablet ? screenHeight * 0.20 : screenHeight * 0.1;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -62,105 +68,110 @@ class _SpeakScreenState extends State<SpeakScreen> {
       ),
       child: SafeArea(
         bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: topPadding),
-
-                // Skip button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+        child: Stack(
+          children: [
+            // Main content
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          showSkipConfirmationDialog(context, courseController),
-                      child: Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-                        child: Text(
-                          "Skip",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: textSize,
+                    SizedBox(height: topPadding + 16),
+
+                    // Astronaut Image
+                    Center(
+                      child: Container(
+                        width: astronautSize,
+                        height: astronautSize,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.1),
+                          border: Border.all(color: Colors.white30, width: 2),
+                          image: const DecorationImage(
+                            image: AssetImage('assets/astronaut/thinking.png'),
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
 
-                // Astronaut Image
-                Center(
-                  child: Container(
-                    width: astronautSize,
-                    height: astronautSize,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                      border: Border.all(color: Colors.white30, width: 2),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/astronaut/thinking.png'),
-                        fit: BoxFit.cover,
+                    // Speech bubble
+                    Obx(
+                      () => TypewriterSpeechBubbleMessage(
+                        key: ValueKey(speakController.feedbackMessage.value),
+                        message: speakController.feedbackMessage.value.isEmpty
+                            ? "Okay... press record and teach me like I forgot EVERYTHING, because I did!"
+                            : speakController.feedbackMessage.value,
+                        speed: const Duration(milliseconds: 70),
+                        maxHeight: bubbleMaxHeight,
+                        textStyle: TextStyle(
+                          color: Colors.white,
+                          fontSize: isTablet ? 18 : 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        onFinished: () {},
                       ),
                     ),
-                  ),
-                ),
 
-                // Speech bubble
-                Obx(
-                  () => TypewriterSpeechBubbleMessage(
-                    key: ValueKey(speakController.feedbackMessage.value),
-                    message: speakController.feedbackMessage.value.isEmpty
-                        ? "Okay... press record and teach me like I forgot EVERYTHING, because I did!"
-                        : speakController.feedbackMessage.value,
-                    speed: const Duration(milliseconds: 70),
-                    maxHeight: isTablet ? 160 : 130,
-                    textStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: isTablet ? 18 : 16,
-                      fontWeight: FontWeight.w500,
+                    const Spacer(),
+
+                    // Terms deck
+                    Obx(() {
+                      return TermsDeck(
+                        terms:
+                            speakController.terms.map((fc) => fc.term).toList(),
+                        progressList: speakController.termProgress,
+                        currentTermIndex:
+                            speakController.currentTermIndex.value,
+                      );
+                    }),
+
+                    const SizedBox(height: 16),
+
+                    // Record button
+                    Center(
+                      child: Obx(
+                        () => RecordButton(
+                          onStartRecording: speakController.startListening,
+                          onStopRecording: () {
+                            speakController.isLoading.value = true;
+                            speakController.stopListening();
+                          },
+                          isLoading: speakController.isLoading.value,
+                          isDisabled: speakController.isAudioPlaying.value ||
+                              speakController.isLoading.value,
+                        ),
+                      ),
                     ),
-                    onFinished: () {},
-                  ),
+
+                    const SizedBox(height: 16),
+                  ],
                 ),
-
-                const Spacer(),
-
-                // Terms deck
-                Obx(() {
-                  return TermsDeck(
-                    terms: speakController.terms.map((fc) => fc.term).toList(),
-                    progressList: speakController.termProgress,
-                    currentTermIndex: speakController.currentTermIndex.value,
-                  );
-                }),
-
-                const SizedBox(height: 16),
-
-                // Record button
-                Center(
-                  child: Obx(
-                    () => RecordButton(
-                      onStartRecording: speakController.startListening,
-                      onStopRecording: () {
-                        speakController.isLoading.value = true;
-                        speakController.stopListening();
-                      },
-                      isLoading: speakController.isLoading.value,
-                      isDisabled: speakController.isAudioPlaying.value ||
-                          speakController.isLoading.value,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-              ],
+              ),
             ),
-          ),
+            // Skip button in its own positioned widget so it doesn't affect the main layout
+            Positioned(
+              top: topPadding,
+              right: 16,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    showSkipConfirmationDialog(context, courseController),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                  child: Text(
+                    "Skip",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: textSize,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
