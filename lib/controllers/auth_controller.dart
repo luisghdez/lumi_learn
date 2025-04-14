@@ -307,52 +307,27 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> deleteAccount({String? emailPassword}) async {
+  Future<void> deleteAccount() async {
     try {
       final user = _auth.currentUser;
+      // 1) Re-auth the user (already in your code).
 
-      if (user == null) {
-        Get.snackbar("Error", "No user is currently signed in.");
+      // 2) Call your server to remove user data
+      final token = await getIdToken();
+      if (token == null) {
+        print('No user token found.');
         return;
       }
 
-      final providers = user.providerData.map((e) => e.providerId);
+      await ApiService.deleteUserData(token); // hypothetical endpoint
 
-      // For Google users
-      if (providers.contains('google.com')) {
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-        if (googleUser == null) {
-          Get.snackbar("Cancelled", "Google sign-in was cancelled.");
-          return;
-        }
+      // 3) Optionally log out from RevenueCat
+      await Purchases.logOut();
 
-        final googleAuth = await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          idToken: googleAuth.idToken,
-          accessToken: googleAuth.accessToken,
-        );
+      // 4) Finally delete the user in Firebase
+      await user?.delete();
 
-        await user.reauthenticateWithCredential(credential);
-      }
-
-      // For Email/Password users
-      else if (providers.contains('password')) {
-        if (emailPassword == null) {
-          Get.snackbar(
-              "Error", "Password required to confirm account deletion.");
-          return;
-        }
-
-        final credential = EmailAuthProvider.credential(
-          email: user.email!,
-          password: emailPassword,
-        );
-
-        await user.reauthenticateWithCredential(credential);
-      }
-
-      // Delete user
-      await user.delete();
+      // Navigate user away
       Get.offAll(() => AuthGate());
       Get.snackbar("Account Deleted", "Your account has been deleted.");
     } catch (e) {

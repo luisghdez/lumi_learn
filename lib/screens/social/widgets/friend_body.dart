@@ -206,12 +206,12 @@ class FriendProfile extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  // const SizedBox(height: 20),
 
-                  // XP Chart
-                  const XPChartBox(),
+                  // // XP Chart
+                  // const XPChartBox(),
 
-                  const SizedBox(height: 60),
+                  // const SizedBox(height: 60),
                 ],
               ),
             ),
