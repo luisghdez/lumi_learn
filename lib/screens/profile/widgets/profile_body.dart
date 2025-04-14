@@ -45,20 +45,28 @@ class _ProfileBodyState extends State<ProfileBody> {
     }
   }
 
+  bool hasNotch(BuildContext context) {
+    final double topInset = MediaQuery.of(context).padding.top;
+    // You can tweak this threshold.
+    // iPhones with a notch are typically 44px or more.
+    return topInset > 20;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 768;
-    final double topPadding = isTablet ? 50.0 : 0.0;
+    final bool deviceHasNotch = hasNotch(context);
 
+    final double topPadding = isTablet ? 50.0 : (deviceHasNotch ? 0.0 : 20.0);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 700),
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 40),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
               child: Column(
                 children: [
                   Center(
@@ -196,9 +204,9 @@ class _ProfileBodyState extends State<ProfileBody> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
-                              const XPChartBox(),
-                              const SizedBox(height: 60),
+                              // const SizedBox(height: 20),
+                              // const XPChartBox(),
+                              // const SizedBox(height: 60),
                             ],
                           ),
                         ),
