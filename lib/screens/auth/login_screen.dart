@@ -8,70 +8,107 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 class LoginScreen extends StatelessWidget {
   LoginScreen({Key? key}) : super(key: key);
 
-  // Initialize controllers for text fields
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Retrieve AuthController
   final AuthController authController = Get.find<AuthController>();
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/galaxies/galaxy22.png'),
-            fit: BoxFit.cover,
-            alignment: Alignment.centerLeft,
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 60),
+@override
+Widget build(BuildContext context) {
+  final size = MediaQuery.of(context).size;
+  final isTablet = size.width >= 768;
 
-                  // Title
-                  RichText(
-                    text: TextSpan(
-                      text: "Welcome\n",
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        height: 1.1,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: "Back",
-                          style: GoogleFonts.poppins(
-                            fontSize: 63,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+
+final isSmallPhone = size.height < 700 || size.width < 375;
+
+final double horizontalPadding = isTablet
+    ? size.width * 0.2
+    : isSmallPhone
+        ? 20
+        : size.width * 0.06;
+
+final double titleFontSize = isTablet
+    ? 44
+    : isSmallPhone
+        ? 28
+        : 40;
+
+final double subTitleFontSize = isTablet
+    ? 64
+    : isSmallPhone
+        ? 42
+        : 58;
+
+final double topPadding = isTablet
+    ? size.height * 0.08
+    : isSmallPhone
+        ? 30
+        : size.height * 0.06;
+
+final double betweenTitleAndFields = isTablet
+    ? size.height * 0.1
+    : isSmallPhone
+        ? 24
+        : size.height * 0.08;
+
+final double spacingSmall = isSmallPhone ? 6 : 14;
+final double spacingMedium = isSmallPhone ? 12 : 24;
+final double spacingLarge = isSmallPhone ? 20 : 32;
+
+
+
+return Scaffold(
+  body: Container(
+    width: double.infinity,
+    height: double.infinity,
+    decoration: const BoxDecoration(
+      image: DecorationImage(
+        image: AssetImage('assets/galaxies/galaxy22.png'),
+        fit: BoxFit.cover,
+        alignment: Alignment.centerLeft,
+      ),
+    ),
+    child: SingleChildScrollView(
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: topPadding),
+
+              // Title
+              RichText(
+                text: TextSpan(
+                  text: "Let's\n",
+                  style: TextStyle(
+                    fontSize: titleFontSize.toDouble(),
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                    height: 1.1,
                   ),
+                  children: [
+                    TextSpan(
+                      text: "Start",
+                      style: GoogleFonts.poppins(
+                        fontSize: subTitleFontSize.toDouble(),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                  const SizedBox(height: 100),
+              SizedBox(height: betweenTitleAndFields),
 
-                  // Email Field
                   _buildInputField(
                     "Email Address",
                     Icons.email,
                     controller: emailController,
                   ),
+                  SizedBox(height: spacingMedium),
 
-                  const SizedBox(height: 20),
-
-                  // Password Field
                   _buildInputField(
                     "Password",
                     Icons.lock,
@@ -79,14 +116,12 @@ class LoginScreen extends StatelessWidget {
                     controller: passwordController,
                   ),
 
-                  const SizedBox(height: 10),
+                  SizedBox(height: spacingSmall),
 
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        // Forgot Password Logic
-                      },
+                      onPressed: () {},
                       style: ButtonStyle(
                         overlayColor: MaterialStateProperty.all(
                           Colors.transparent,
@@ -103,20 +138,18 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: spacingMedium),
 
-                  // Login Button
                   _buildPrimaryButton("Log In", () {
-                    // Call the login method from AuthController
                     authController.login(
                       emailController.text.trim(),
                       passwordController.text.trim(),
                     );
                   }),
 
-                  const SizedBox(height: 30),
+                  SizedBox(height: spacingLarge),
 
-                  // Divider with Text
+                  // Divider
                   Row(
                     children: [
                       Expanded(
@@ -145,9 +178,8 @@ class LoginScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 30),
+                  SizedBox(height: spacingLarge),
 
-                  // Social Login Buttons
                   Row(
                     children: [
                       Expanded(
@@ -166,9 +198,8 @@ class LoginScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 30),
+                  SizedBox(height: spacingLarge),
 
-                  // Register Link
                   Center(
                     child: TextButton(
                       onPressed: () {
@@ -206,9 +237,7 @@ class LoginScreen extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Obx(() => ElevatedButton(
-            onPressed: authController.isLoading.value
-                ? null
-                : onPressed, // Disable button when loading
+            onPressed: authController.isLoading.value ? null : onPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -222,7 +251,7 @@ class LoginScreen extends StatelessWidget {
                     child: CircularProgressIndicator(
                       color: Colors.black,
                     ),
-                  ) // Show loading indicator
+                  )
                 : Text(
                     text,
                     style: GoogleFonts.poppins(

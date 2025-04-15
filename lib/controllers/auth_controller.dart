@@ -292,20 +292,59 @@ class AuthController extends GetxController {
     return await user.getIdToken();
   }
 
-  Future<void> updateProfilePicture(String imageUrl) async {
+  Future<void> updateProfilePicture(int avatarId) async {
     try {
-      User? user = _auth.currentUser;
-      if (user != null) {
-        await user.updatePhotoURL(imageUrl);
-        await user.reload();
-        firebaseUser.value = _auth.currentUser; // Refresh user instance
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-        Get.snackbar("Success", "Profile picture updated successfully!");
+      await user.updatePhotoURL(avatarId.toString());
+      await user.reload();
+      firebaseUser.value = _auth.currentUser;
+
+      final token = await getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return;
       }
+
+      // await ApiService.updateUserProfile(
+      //   token,
+      //   profilePicture: avatarId.toString(),
+      // );
+
+      Get.snackbar("Success", "Profile picture updated!");
     } catch (e) {
       Get.snackbar("Error", "Failed to update profile picture: $e");
     }
   }
+
+
+
+
+    Future<void> updateDisplayName(String newName) async {
+      try {
+        final user = _auth.currentUser;
+        if (user == null) return;
+
+        await user.updateDisplayName(newName);
+        await user.reload();
+        firebaseUser.value = _auth.currentUser;
+
+        final token = await getIdToken();
+        if (token == null) {
+          print('No user token found.');
+          return;
+        }
+
+        // await ApiService.updateUserProfile(token, name: newName);
+
+        Get.snackbar("Success", "Display name updated!");
+      } catch (e) {
+        Get.snackbar("Error", "Failed to update display name: $e");
+      }
+    }
+
+
 
   Future<void> deleteAccount() async {
     try {

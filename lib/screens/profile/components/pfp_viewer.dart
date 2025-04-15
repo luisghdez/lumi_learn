@@ -5,6 +5,8 @@ class PfpViewer extends StatefulWidget {
   final bool isEditing;
   final Function(bool)? onEditModeChange;
   final Function(int)? onAvatarChanged;
+  final int selectedIndex; //pfp id 
+
 
   const PfpViewer({
     super.key,
@@ -12,6 +14,7 @@ class PfpViewer extends StatefulWidget {
     this.isEditing = false,
     this.onEditModeChange,
     this.onAvatarChanged,
+    this.selectedIndex = 0,
   });
 
   @override
@@ -26,21 +29,31 @@ class _PfpViewerState extends State<PfpViewer> {
     'assets/pfp/pfp4.png',
   ];
 
-  int currentIndex = 0;
+    late int currentIndex;
 
-  void _next() {
-    setState(() {
-      currentIndex = (currentIndex + 1) % avatars.length;
-      widget.onAvatarChanged?.call(currentIndex);
-    });
-  }
+    void _next() {
+      setState(() {
+        currentIndex = (currentIndex + 1) % avatars.length;
+        widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
+      });
+    }
 
-  void _prev() {
-    setState(() {
-      currentIndex = (currentIndex - 1 + avatars.length) % avatars.length;
-      widget.onAvatarChanged?.call(currentIndex);
-    });
-  }
+    void _prev() {
+      setState(() {
+        currentIndex = (currentIndex - 1 + avatars.length) % avatars.length;
+        widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
+      });
+    }
+
+
+
+    @override
+    void initState() {
+      super.initState();
+      currentIndex = widget.selectedIndex.clamp(0, avatars.length - 1);
+    }
+
+
 
   @override
   Widget build(BuildContext context) {
