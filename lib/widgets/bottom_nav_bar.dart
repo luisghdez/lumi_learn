@@ -48,17 +48,18 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                   ),
                 ],
               ),
+
+              
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: SizedBox(
-                  height: 65, // Controlled height to avoid overflow
-                  child: BottomNavigationBar(
-                    currentIndex: currentIndex,
-                    backgroundColor: Colors.grey[900],
-                    onTap: (index) {
-                      navigationController.updateIndex(index); // Updated index
-                    },
-                    items: const [
+                  child: IntrinsicHeight(
+                    child: BottomNavigationBar(
+                      currentIndex: currentIndex,
+                      backgroundColor: Colors.grey[900],
+                      onTap: (index) {
+                        navigationController.updateIndex(index);
+                      },
+                      items: const [
                       BottomNavigationBarItem(
                         icon: Icon(Icons.home),
                         label: Constants.home,
