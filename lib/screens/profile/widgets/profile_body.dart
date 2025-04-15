@@ -27,8 +27,6 @@ class ProfileBody extends StatefulWidget {
   State<ProfileBody> createState() => _ProfileBodyState();
 }
 
-
-
 class _ProfileBodyState extends State<ProfileBody> {
   bool showTooltip = false;
 
@@ -37,6 +35,14 @@ class _ProfileBodyState extends State<ProfileBody> {
 
   int selectedAvatarId = 1;
 
+  @override
+  void initState() {
+    super.initState();
+    final authController = Get.find<AuthController>();
+    // Initialize selectedAvatarId once from the auth controller's photoURL.
+    selectedAvatarId =
+        int.tryParse(authController.firebaseUser.value?.photoURL ?? "0") ?? 1;
+  }
 
   void toggleEditMode(bool enable) {
     widget.onEditModeChange(enable);
@@ -87,19 +93,20 @@ class _ProfileBodyState extends State<ProfileBody> {
                         BoxConstraints(minHeight: constraints.maxHeight),
                     child: Column(
                       children: [
-                          Center(
-                            child: PfpViewer(
-                              offsetUp: -120,
-                              isEditing: widget.isEditingPfp,
-                              selectedIndex: selectedAvatarId - 1, // convert 1-based to 0-based
-                              onEditModeChange: toggleEditMode,
-                              onAvatarChanged: (int newId) {
-                                setState(() {
-                                  selectedAvatarId = newId;
-                                });
-                              },
-                            ),
+                        Center(
+                          child: PfpViewer(
+                            offsetUp: -120,
+                            isEditing: widget.isEditingPfp,
+                            selectedIndex: selectedAvatarId -
+                                1, // convert 1-based to 0-based
+                            onEditModeChange: toggleEditMode,
+                            onAvatarChanged: (int newId) {
+                              setState(() {
+                                selectedAvatarId = newId;
+                              });
+                            },
                           ),
+                        ),
                         AnimatedPadding(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeOut,
@@ -386,10 +393,12 @@ class _ProfileBodyState extends State<ProfileBody> {
                     onPressed: () async {
                       toggleEditMode(false);
                       final currentPfpId = int.tryParse(
-                        authController.firebaseUser.value?.photoURL ?? '',
-                      ) ?? 1;
+                            authController.firebaseUser.value?.photoURL ?? '',
+                          ) ??
+                          1;
                       if (selectedAvatarId != currentPfpId) {
-                        await authController.updateProfilePicture(selectedAvatarId);
+                        await authController
+                            .updateProfilePicture(selectedAvatarId);
                       }
                     },
                     child: const Text(
