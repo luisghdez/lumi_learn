@@ -74,11 +74,16 @@ class _MatchTermsState extends State<MatchTerms> {
 
   bool allMatched() => matchedDefinitions.every((def) => def != null);
 
+  bool hasNotch(BuildContext context) {
+    return MediaQuery.of(context).padding.top > 20;
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 768;
-    final double topPadding = isTablet ? 70.0 : 0.0;
+    final bool deviceHasNotch = hasNotch(context);
+    final double topPadding = isTablet ? 70.0 : (deviceHasNotch ? 0.0 : 50.0);
     final double textSize = isTablet ? 28.0 : 18.0;
     final double defTextSize = isTablet ? 22.0 : 12.0;
     final double popupTextSize = isTablet ? 30.0 : 20.0;
