@@ -23,25 +23,43 @@ class WhatsNewDetailScreen extends StatelessWidget {
         child: _glassCard(
           child: ListView(
             children: const [
-              SizedBox(height: 8),
-              _SectionHeader(text: 'We’ve made big changes to help you learn faster:'),
               SizedBox(height: 12),
-              BulletPoint(text: '🧠 Faster AI learner engine'),
-              BulletPoint(text: '✨ Sleek, intuitive UI updates'),
-              BulletPoint(text: '🐛 Bug fixes & performance boosts'),
-              BulletPoint(text: '🌒 Dark mode refinements'),
-              BulletPoint(text: '📚 New learning modules'),
-              SizedBox(height: 24),
+              Text(
+                '👋 Welcome to Lumi Learn!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12),
+              Text(
+                'We’re your new study partner — helping you learn faster, easier, and wherever you go. Whether it’s mastering a subject, prepping for a test, or organizing lessons your way, Lumi’s got your back. ✨',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20),
+              _SectionHeader(text: 'Here’s what’s in version 1.0.0:'),
+              SizedBox(height: 14),
+              BulletPoint(text: '🧠 Smarter AI-powered learner engine'),
+              BulletPoint(text: '📱 Intuitive UI that feels smooth'),
+              BulletPoint(text: '📚 Build lessons with PDFs, images, or key terms'),
+              SizedBox(height: 28),
               Divider(
                 thickness: 0.6,
                 color: Colors.white24,
                 indent: 20,
                 endIndent: 20,
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 20),
               Center(
                 child: Text(
-                  'Thanks for evolving with Lumi Learn 💡',
+                  'Thanks for being here. Let’s master your world, one lesson at a time 💡',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white60,
@@ -93,10 +111,14 @@ class BulletPoint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("• ", style: TextStyle(color: Colors.white, fontSize: 16)),
           Expanded(
-            child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14)),
+            child: Text(
+              text,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+            ),
           ),
         ],
       ),
