@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/screens/home/home_screen.dart';
 import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
 import '../components/xp_chart_box.dart';
@@ -10,11 +11,14 @@ import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
+import 'package:lumi_learn_app/screens/main/main_screen.dart';
+
 
 class ProfileBody extends StatefulWidget {
   final bool isEditingPfp;
   final Function(bool) onEditModeChange;
   final NavigationController navController;
+
 
   const ProfileBody({
     super.key,
@@ -72,6 +76,8 @@ class _ProfileBodyState extends State<ProfileBody> {
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 768;
     final bool deviceHasNotch = hasNotch(context);
+
+    
 
     final double topPadding = isTablet ? 50.0 : (deviceHasNotch ? 0.0 : 20.0);
     return Center(
@@ -204,7 +210,9 @@ class _ProfileBodyState extends State<ProfileBody> {
                                                         .spaceEvenly,
                                                 children: [
                                                   GestureDetector(
-                                                    onTap: () {},
+                                                    onTap: () {
+                                                      widget.navController.updateIndex(0);
+                                                      Get.offAll(() => MainScreen());},
                                                     child: InfoStatCard(
                                                       label: 'Courses',
                                                       value: authController

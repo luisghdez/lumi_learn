@@ -30,14 +30,14 @@ class AddFriendsTab extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          GlassTile(
-            title: "Choose from Contacts",
-            subtitle: contactsPermissionGranted
-                ? "Permission granted. Tap to pick from contacts."
-                : "Grant access to find friends from your contacts.",
-            onTap: onCheckContactsPermission,
-            icon: Icons.contacts,
-          ),
+          // GlassTile(
+          //   title: "Choose from Contacts",
+          //   subtitle: contactsPermissionGranted
+          //       ? "Permission granted. Tap to pick from contacts."
+          //       : "Grant access to find friends from your contacts.",
+          //   onTap: onCheckContactsPermission,
+          //   icon: Icons.contacts,
+          // ),
           const SizedBox(height: 16),
           GlassTileWithField(
             title: "Search by Name or Email",
@@ -46,12 +46,12 @@ class AddFriendsTab extends StatelessWidget {
             onPressed: onSearch, // ✅ uses callback from screen
           ),
           const SizedBox(height: 16),
-          GlassTile(
-            title: "Share Follow Link",
-            subtitle: "Invite others to follow you on Lumi Learn.",
-            onTap: onShareLink,
-            icon: Icons.share,
-          ),
+          // GlassTile(
+          //   title: "Share Follow Link",
+          //   subtitle: "Invite others to follow you on Lumi Learn.",
+          //   onTap: onShareLink,
+          //   icon: Icons.share,
+          // ),
           const SizedBox(height: 20),
           if (controller.isLoading.value) ...[
             const Center(child: CircularProgressIndicator()),
