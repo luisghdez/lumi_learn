@@ -30,7 +30,7 @@ class HomeHeader extends StatelessWidget {
                         colors: [
                           Color(0xFF0004FF),
                           Color.fromARGB(255, 124, 207, 255),
-                          Color.fromARGB(255, 71, 0, 186),
+                          Color.fromARGB(255, 174, 124, 255),
                         ],
                       ).createShader(bounds);
                     },

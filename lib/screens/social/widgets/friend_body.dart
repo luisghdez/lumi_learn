@@ -37,7 +37,7 @@ class FriendProfile extends StatelessWidget {
                 child: Stack(
                   children: [
                     Image.asset(
-                      'assets/galaxies/galaxy2.png',
+                      'assets/galaxies/galaxyDefault.png',
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
