@@ -363,7 +363,7 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<String> createCourse({
+  Future<Map<String, dynamic>> createCourse({
     required String title,
     required String description,
     required List<File> files,
@@ -393,18 +393,20 @@ class CourseController extends GetxController {
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         final courseId = responseData['courseId'] as String;
+        final lessonCount = responseData['lessonCount'];
 
         final newCourse = {
           'id': courseId,
           'title': title,
           'description': description,
           'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
+          'totalLessons': lessonCount,
           'loading': false,
         };
 
         courses.insert(0, newCourse);
 
-        authController.courseSlotsUsed.value++; // ✅ Increment on success
+        authController.courseSlotsUsed.value++;
 
         Get.snackbar(
           "Success",
@@ -413,7 +415,7 @@ class CourseController extends GetxController {
           colorText: Colors.white,
         );
 
-        return courseId;
+        return {'courseId': courseId, 'lessonCount': lessonCount};
       } else {
         Get.snackbar(
           "Error",

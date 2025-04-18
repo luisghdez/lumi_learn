@@ -539,10 +539,11 @@ class _CourseCreationState extends State<CourseCreation> {
                           files: [...selectedFiles, ...selectedImages],
                           content: text,
                         )
-                            .then((courseId) {
+                            .then((result) {
                           courseController.removePlaceholderCourse(tempId);
                           courseController.updatePlaceholderCourse(tempId, {
-                            "id": courseId,
+                            "id": result['courseId'],
+                            'totalLessons': result['lessonCount'],
                             "loading": false,
                           });
                         }).catchError((error) {
