@@ -487,6 +487,8 @@ class CourseController extends GetxController {
           'totalLessons': responseData['lessonCount'] ?? 0,
         };
         courses.insert(0, newCourse);
+        authController.courseSlotsUsed.value++;
+
         return true;
       } else {
         print("Failed to save course: ${response.statusCode} ${response.body}");
