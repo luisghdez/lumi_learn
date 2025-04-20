@@ -34,9 +34,11 @@ class _CourseCreationState extends State<CourseCreation> {
   Future<void> handleFileChange({bool pickImages = false}) async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
-      type: pickImages ? FileType.image : FileType.any,
+      // image branch stays the same
+      type: pickImages ? FileType.image : FileType.custom,
+      // only apply extensions when NOT picking images
+      allowedExtensions: pickImages ? null : ['pdf', 'pptx', 'doc', 'xlsx'],
     );
-
     if (result != null && result.files.isNotEmpty) {
       // Define max file size (5 MB)
       const int maxFileSize = 10 * 1024 * 1024; // 5MB in bytes
@@ -45,7 +47,7 @@ class _CourseCreationState extends State<CourseCreation> {
       final validPlatformFiles = result.files.where((pf) {
         if (pf.size > maxFileSize) {
           Get.snackbar(
-              "File too large", "File ${pf.name} exceeds the 10MB limit.");
+              "File too large", "File ${pf.name} exceeds the 5MB limit.");
           return false;
         }
         return true;
@@ -69,15 +71,16 @@ class _CourseCreationState extends State<CourseCreation> {
           }
         } else {
           // Limit to 2 files
-          final available = 2 - selectedFiles.length;
+          final available = 10 - selectedFiles.length;
           if (available <= 0) {
-            Get.snackbar("Limit reached", "You can only upload up to 2 files.");
+            Get.snackbar(
+                "Limit reached", "You can only upload up to 10 files.");
             return;
           }
           selectedFiles.addAll(fileList.take(available));
           if (fileList.length > available) {
             Get.snackbar("Limit reached",
-                "Only $available files were added. Maximum is 2.");
+                "Only $available files were added. Maximum is 10.");
           }
         }
       });
@@ -259,7 +262,7 @@ class _CourseCreationState extends State<CourseCreation> {
                       context: context,
                     ),
                     Text(
-                      "${selectedFiles.length}/2",
+                      "${selectedFiles.length}/10",
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -268,7 +271,7 @@ class _CourseCreationState extends State<CourseCreation> {
                 _buildDropZone(
                   onTap: () => handleFileChange(pickImages: false),
                   label: "documents",
-                  subLabel: "PDF, DOC, PPT, XLS, etc.",
+                  subLabel: "PDF, PPTX, DOC, XLSX",
                 ),
                 if (selectedFiles.isNotEmpty)
                   Container(
@@ -336,7 +339,7 @@ class _CourseCreationState extends State<CourseCreation> {
                 _buildDropZone(
                   onTap: () => handleFileChange(pickImages: true),
                   label: "images",
-                  subLabel: "PNG, JPG, GIF, etc.",
+                  subLabel: "PNG, JPG, JPEG",
                 ),
                 if (selectedImages.isNotEmpty)
                   Container(
@@ -424,7 +427,7 @@ class _CourseCreationState extends State<CourseCreation> {
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: TextField(
                             inputFormatters: [
-                              LengthLimitingTextInputFormatter(2000),
+                              LengthLimitingTextInputFormatter(10000),
                             ],
                             minLines: 4,
                             maxLines: null,
@@ -448,7 +451,7 @@ class _CourseCreationState extends State<CourseCreation> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          "${text.length}/2000",
+                          "${text.length}/10,000",
                           style: const TextStyle(
                               fontSize: 10, color: Colors.white70),
                         ),
