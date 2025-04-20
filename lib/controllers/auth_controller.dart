@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
@@ -279,6 +281,16 @@ class AuthController extends GetxController {
   // Logout Method
   Future<void> signOut() async {
     await _auth.signOut();
+    await Purchases.logOut();
+
+    if (Get.isRegistered<CourseController>()) {
+      Get.delete<CourseController>(force: true);
+    }
+
+    if (Get.isRegistered<FriendsController>()) {
+      Get.delete<FriendsController>(force: true);
+    }
+    _clearUserState();
   }
 
   Future<String?> getIdToken() async {
@@ -357,8 +369,28 @@ class AuthController extends GetxController {
       Get.offAll(() => AuthGate());
       Get.snackbar("Account Deleted", "Your account has been deleted.");
     } catch (e) {
-      print("Delete account error: $e");
       Get.snackbar("Error", "Failed to delete account: ${e.toString()}");
     }
+  }
+
+  void _clearUserState() {
+    // Firebase user
+    firebaseUser.value = null;
+
+    // Your user data
+    userDoc.clear();
+
+    // Reset all the counts / flags
+    hasCompletedOnboarding.value = false;
+    streakCount.value = 0;
+    xpCount.value = 0;
+    courseSlotsUsed.value = 0;
+    maxCourseSlots.value = 2; // or whatever your default is
+    friendCount.value = 0;
+    isPremium.value = false;
+
+    // If you want to reset loading / init flags:
+    isAuthInitialized.value = false;
+    isLoading.value = false;
   }
 }
