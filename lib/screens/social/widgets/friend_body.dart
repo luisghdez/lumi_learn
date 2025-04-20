@@ -9,14 +9,20 @@ import 'package:lumi_learn_app/screens/social/components/xp_chart_box.dart';
 class FriendProfile extends StatelessWidget {
   const FriendProfile({super.key});
 
+  bool hasNotch(BuildContext context) {
+    final double topInset = MediaQuery.of(context).padding.top;
+    return topInset > 20;
+  }
+
   @override
   Widget build(BuildContext context) {
     final FriendsController controller = Get.find<FriendsController>();
+    final bool deviceHasNotch = hasNotch(context);
+    final double topPadding = deviceHasNotch ? 0.0 : 20.0;
 
     return Obx(() {
       final friend = controller.activeFriend.value;
       if (friend == null) {
-        // While waiting for the active friend to load, show a loading indicator.
         return const Scaffold(
           backgroundColor: Colors.black,
           body: Center(child: CircularProgressIndicator()),
@@ -125,18 +131,13 @@ class FriendProfile extends StatelessWidget {
 
                   Obx(() {
                     final alreadyFriend = controller.isFriend(friend.id);
-                    // Read our state variable from the controller
                     final String requestStatus =
                         controller.friendRequestStatus.value;
-
-                    // Set the button text: if already a friend, 'Friends'; if a request is pending, 'Pending'; else 'Send Request'
                     final String buttonText = alreadyFriend
                         ? 'Friends'
                         : requestStatus != 'none'
                             ? 'Pending'
                             : 'Send Request';
-
-                    // Set the button icon based on the state.
                     final Icon buttonIcon = alreadyFriend
                         ? const Icon(Icons.check_circle,
                             size: 24, color: Colors.greenAccent)
@@ -145,8 +146,6 @@ class FriendProfile extends StatelessWidget {
                                 size: 24, color: Colors.orangeAccent)
                             : const Icon(Icons.person_add_alt,
                                 size: 24, color: Color(0xFFB388FF));
-
-                    // Disable the button if already friends or if there's a pending request.
                     final bool isDisabled =
                         alreadyFriend || requestStatus != 'none';
 
@@ -158,10 +157,7 @@ class FriendProfile extends StatelessWidget {
                             : () async {
                                 try {
                                   await controller.sendFriendRequest(friend.id);
-                                  // Optionally refresh the request status after sending.
-                                } catch (e) {
-                                  // Optionally handle errors here.
-                                }
+                                } catch (e) {}
                               },
                         icon: buttonIcon,
                         label: Text(
@@ -187,7 +183,6 @@ class FriendProfile extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Stats row
                   Row(
                     children: [
                       Expanded(
@@ -205,14 +200,25 @@ class FriendProfile extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  // const SizedBox(height: 20),
-
-                  // // XP Chart
-                  // const XPChartBox(),
-
-                  // const SizedBox(height: 60),
                 ],
+              ),
+            ),
+
+            // Back button with notch handling
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(top: topPadding, left: 16),
+                  child: GestureDetector(
+                    onTap: () => Get.back(),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
