@@ -41,8 +41,8 @@ class FillInBlankScreen extends StatelessWidget {
     final bool isTablet = screenWidth >= 768;
     final double horizontalPadding = isTablet ? 48.0 : 16.0;
     final double fontSize = isTablet ? 20.0 : 16.0;
-    final double optionVerticalPadding = isTablet ? 20.0 : 18.0;
-    final double optionHorizontalPadding = isTablet ? 36.0 : 30.0;
+    final double optionVerticalPadding = isTablet ? 20.0 : 14.0;
+    final double optionHorizontalPadding = isTablet ? 36.0 : 16.0;
     final double astronautSize = isTablet ? 270.0 : 170.0;
     final double astronautHeight = isTablet ? 200.0 : 140.0;
     final double bubbleWidth = isTablet ? 380.0 : 220.0;

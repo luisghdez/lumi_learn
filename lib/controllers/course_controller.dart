@@ -221,16 +221,23 @@ class CourseController extends GetxController {
     final multipleChoiceJson = lesson['multipleChoice'];
     if (multipleChoiceJson != null && multipleChoiceJson is List) {
       for (final mcItem in multipleChoiceJson) {
+        final correctAnswer = mcItem['correctAnswer']?.toString() ?? '';
+
         final options = (mcItem['options'] as List<dynamic>?)
                 ?.map((opt) => opt.toString())
                 .toList() ??
             [];
-        questions.add(Question(
-          questionText: mcItem['questionText'] ?? '',
-          options: options,
-          correctAnswer: mcItem['correctAnswer'],
-          lessonType: LessonType.multipleChoice,
-        ));
+        // shuffle options
+        options.shuffle();
+        // Ensure the correct answer is in the options list
+        if (options.contains(correctAnswer)) {
+          questions.add(Question(
+            questionText: mcItem['questionText'] ?? '',
+            options: options,
+            correctAnswer: correctAnswer,
+            lessonType: LessonType.multipleChoice,
+          ));
+        }
       }
     }
 
@@ -238,16 +245,22 @@ class CourseController extends GetxController {
     final fillInTheBlankJson = lesson['fillInTheBlank'];
     if (fillInTheBlankJson != null && fillInTheBlankJson is List) {
       for (final fibItem in fillInTheBlankJson) {
+        final correctAnswer = fibItem['correctAnswer']?.toString() ?? '';
+
         final options = (fibItem['options'] as List<dynamic>?)
                 ?.map((opt) => opt.toString())
                 .toList() ??
             [];
-        questions.add(Question(
-          questionText: fibItem['questionText'] ?? '',
-          options: options,
-          correctAnswer: fibItem['correctAnswer'],
-          lessonType: LessonType.fillInTheBlank,
-        ));
+        // shuffle options
+        options.shuffle();
+        if (options.contains(correctAnswer)) {
+          questions.add(Question(
+            questionText: fibItem['questionText'] ?? '',
+            options: options,
+            correctAnswer: correctAnswer,
+            lessonType: LessonType.fillInTheBlank,
+          ));
+        }
       }
     }
 
