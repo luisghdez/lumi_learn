@@ -29,13 +29,13 @@ class HomeHeader extends StatelessWidget {
                       return const LinearGradient(
                         colors: [
                           Color(0xFF0004FF),
-                          Color.fromARGB(255, 124, 207, 255),
-                          Color.fromARGB(255, 71, 0, 186),
+                          // Color.fromARGB(255, 124, 207, 255),
+                          Color.fromARGB(255, 174, 124, 255),
                         ],
                       ).createShader(bounds);
                     },
                     child: const Text(
-                      "Lumi PRO",
+                      "Lumi Pro",
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,

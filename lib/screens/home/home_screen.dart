@@ -106,7 +106,8 @@ class HomeScreen extends StatelessWidget {
                                 onAddTap: () {
                                   if (courseController
                                       .checkCourseSlotAvailable()) {
-                                    Get.to(() => const CourseCreation());
+                                    Get.to(() => const CourseCreation(),
+                                        transition: Transition.fadeIn);
                                   }
                                 },
                                 slotsUsed: authController.courseSlotsUsed.value,

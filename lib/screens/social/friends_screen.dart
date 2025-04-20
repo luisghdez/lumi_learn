@@ -70,7 +70,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     children: [
                       // 🌌 Galaxy Image.
                       Image.asset(
-                        'assets/galaxies/galaxy2.png',
+                        'assets/galaxies/galaxyDefault.png',
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: double.infinity,

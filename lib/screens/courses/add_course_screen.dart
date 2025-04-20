@@ -107,15 +107,36 @@ class _CourseCreationState extends State<CourseCreation> {
             child: Column(
               children: [
                 /// CARD HEADER
-                Text(
-                  "Create New Course",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                SizedBox(
+                  height: 56, // adjust to taste
+                  child: Stack(
+                    children: [
+                      // 1) centered title
+                      Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Create New Course",
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                        ),
                       ),
-                  textAlign: TextAlign.center,
+                      // 2) back button on the left
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white),
+                          onPressed: () => Get.back(),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 4),
+
                 Text(
                   "Combine files, images, and text to create your course",
                   style: Theme.of(context)
@@ -539,10 +560,11 @@ class _CourseCreationState extends State<CourseCreation> {
                           files: [...selectedFiles, ...selectedImages],
                           content: text,
                         )
-                            .then((courseId) {
+                            .then((result) {
                           courseController.removePlaceholderCourse(tempId);
                           courseController.updatePlaceholderCourse(tempId, {
-                            "id": courseId,
+                            "id": result['courseId'],
+                            'totalLessons': result['lessonCount'],
                             "loading": false,
                           });
                         }).catchError((error) {

@@ -116,6 +116,6 @@ String getGalaxyForCourse(String courseId) {
   final bytes = utf8.encode(courseId);
   final hash = md5.convert(bytes).toString();
   final numericHash = int.parse(hash.substring(0, 6), radix: 16);
-  final galaxyIndex = (numericHash % 8) + 1;
+  final galaxyIndex = (numericHash % 18) + 1; // 1-10 for 10 images
   return 'assets/galaxies/galaxy$galaxyIndex.png';
 }

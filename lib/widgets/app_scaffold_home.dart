@@ -20,14 +20,25 @@ class AppScaffoldHome extends StatelessWidget {
       backgroundColor: Colors.black,
 
       // Wrap the body in Padding
-      body: SafeArea(
-        bottom: false,
-        child: Padding(
-          // not bottom padding
-          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
-          // padding: const EdgeInsets.all(16.0), // or whatever spacing
-          child: body,
-        ),
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/black_moons_lighter.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              // not bottom padding
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
+              // padding: const EdgeInsets.all(16.0), // or whatever spacing
+              child: body,
+            ),
+          ),
+        ],
       ),
     );
   }
