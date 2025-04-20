@@ -184,7 +184,7 @@ class _CourseCreationState extends State<CourseCreation> {
                               border: Border.all(color: greyBorder),
                             ),
                             child: TextField(
-                              maxLength: 20,
+                              maxLength: 30,
                               onChanged: (value) =>
                                   setState(() => courseTitle = value),
                               style: const TextStyle(
@@ -199,7 +199,7 @@ class _CourseCreationState extends State<CourseCreation> {
                                 border: InputBorder.none,
                                 counterText: "",
                                 suffix: Text(
-                                  "${courseTitle.length}/20",
+                                  "${courseTitle.length}/30",
                                   style: const TextStyle(
                                       fontSize: 12, color: Colors.white),
                                 ),

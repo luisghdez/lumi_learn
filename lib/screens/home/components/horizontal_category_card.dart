@@ -23,7 +23,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   bool _overlayVisible = false;
   late FocusNode _focusNode;
 
-  static const double _aspectRatio = 170 / 240;
+  static const double _aspectRatio = 170 / 260;
 
   @override
   void initState() {
@@ -70,7 +70,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   Widget build(BuildContext context) {
     final double cardHeight = widget.height;
     final double cardWidth = cardHeight * _aspectRatio;
-    final double gradientHeight = cardHeight * (80 / 240);
+    final double gradientHeight = cardHeight * (100 / 240);
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 600;
 
@@ -128,7 +128,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                             Text(
                               widget.title,
                               textAlign: TextAlign.left,
-                              maxLines: 2,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: isTablet ? 22 : 18,

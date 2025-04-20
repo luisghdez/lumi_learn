@@ -20,7 +20,7 @@ class HorizontalCategoryList extends StatelessWidget {
     final CourseController courseController = Get.find<CourseController>();
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 240.0;
+    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 260.0;
 
     return Obx(() {
       final courses = courseController.featuredCourses;
@@ -120,6 +120,6 @@ String getGalaxyForCourse(String courseId) {
   final bytes = utf8.encode(courseId);
   final hash = md5.convert(bytes).toString();
   final numericHash = int.parse(hash.substring(0, 6), radix: 16);
-  final galaxyIndex = (numericHash % 8) + 1;
+  final galaxyIndex = (numericHash % 17) + 1; // 1-17 for 17 images
   return 'assets/galaxies/galaxy$galaxyIndex.png';
 }
