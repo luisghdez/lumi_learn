@@ -67,10 +67,11 @@ class FriendProfile extends StatelessWidget {
               padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
               child: Column(
                 children: [
-                  const Center(
+                  Center(
                     child: PfpViewer(
                       offsetUp: -120,
-                      backgroundImage: AssetImage('assets/pfp/pfp1.png'),
+                      backgroundImage: AssetImage(
+                          'assets/pfp/pfp${friend.profilePicture}.png'),
                     ),
                   ),
 
