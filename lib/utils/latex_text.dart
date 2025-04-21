@@ -2,45 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// 0.  Auto‑wrap LaTeX that the model forgot to wrap in $$ … $$
+/// SmartText widget and helpers – LaTeX aware
+///
+/// 0. Auto-wrap math-like text in $$…$$ if the model forgot to.
+/// 1. Sanitize LaTeX inside math blocks:
+///    • Correct missing backslash on “imes” → \times
+///    • 3+ underscores (____) → \text{____}
+///    • Escape stray underscores → \_
+/// 2. Split sanitized math into InlineSpans and render with Math.tex.
 /// ─────────────────────────────────────────────────────────────────────────────
+
+/// 0. Detect math-like content and wrap in $$…$$ if needed.
 String autoWrapPossibleMath(String src) {
   if (src.contains('\$\$')) return src; // already wrapped
 
   final mathLike = RegExp(
-    r'(\\(int|frac|sqrt|sum|prod|lim|log|sin|cos|tan|pi|theta|alpha|beta|times))' // commands
-    r'|(\^)' // exponent ^
-    r'|(_\{[^}]+\}|_[A-Za-z0-9])', // subscripts
-  ).hasMatch(src);
+          r'(\\(int|frac|sqrt|sum|prod|lim|log|sin|cos|tan|pi|theta|alpha|beta))' // LaTeX commands
+          r'|(\^)' // exponent marker
+          r'|(_\{[^}]+\}|_[A-Za-z0-9])' // subscripts like _{...} or _x
+          r'|([+\-=*/])' // arithmetic operators
+          r'|\bimes\b' // unescaped "imes"
+          )
+      .hasMatch(src);
 
   return mathLike ? '\$\$$src\$\$' : src;
 }
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// 1.  Sanitise LaTeX in each $$ … $$ block
-///
-/// • Fix typo  \imes  →  \times
-/// • 3+ underscores  →  \text{____}
-/// • stray single _   →  \_   (unless followed by {, alnum or \)
-/// ─────────────────────────────────────────────────────────────────────────────
+/// 1. Sanitize and correct LaTeX inside each $$…$$ block.
 String sanitizeLatex(String src) {
   return src.replaceAllMapped(
     RegExp(r'\$\$(.*?)\$\$', dotAll: true),
     (m) {
       var inner = m.group(1)!;
 
-      // 0)  open‑ai typo:  \imes  →  \times
-      inner = inner.replaceAllMapped(
-        RegExp(r'(?<=\s)imes(?=\s)'),
-        (_) => r'\times',
-      );
-      // 1) blanks
+      // a) Fix missing backslash on "imes" → \times
+      inner = inner.replaceAll(RegExp(r'\bimes\b'), r'\times');
+
+      // b) Blanks: 3+ underscores → \text{____}
       inner = inner.replaceAllMapped(
         RegExp(r'(?<!\\)_{3,}'),
         (mm) => r'\text{' + mm.group(0)! + '}',
       );
 
-      // 2) stray single underscore
+      // c) Escape stray single underscores → \_
       inner = inner.replaceAllMapped(
         RegExp(r'(?<!\\)_(?!\{|[A-Za-z0-9]|\\)'),
         (_) => r'\_',
@@ -51,15 +55,12 @@ String sanitizeLatex(String src) {
   );
 }
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// 2.  Split on $$ … $$, sanitise, and build inline spans
-/// ─────────────────────────────────────────────────────────────────────────────
+/// 2. Split on $$…$$, sanitize, and build inline spans for RichText.
 List<InlineSpan> buildLatexSpans(
   String text, {
   required TextStyle style,
 }) {
   final sanitized = sanitizeLatex(text);
-
   final spans = <InlineSpan>[];
   final regex = RegExp(r'\$\$\s*([\s\S]+?)\s*\$\$');
   var start = 0;
@@ -75,8 +76,7 @@ List<InlineSpan> buildLatexSpans(
       alignment: PlaceholderAlignment.middle,
       child: Math.tex(
         match.group(1)!,
-        textStyle:
-            style.copyWith(fontSize: style.fontSize! + 2), // optional bump
+        textStyle: style.copyWith(fontSize: style.fontSize! + 2),
       ),
     ));
     start = match.end;
@@ -92,9 +92,8 @@ List<InlineSpan> buildLatexSpans(
   return spans;
 }
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// 3.  SmartText widget – LaTeX aware
-/// ─────────────────────────────────────────────────────────────────────────────
+/// 3. SmartText widget – chooses Text or RichText+
+///    Math.tex based on presence of $$ delimiters.
 class SmartText extends StatelessWidget {
   final String data;
   final TextStyle style;
@@ -109,9 +108,9 @@ class SmartText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // wrap if needed, then sanitize
     final prepared = autoWrapPossibleMath(data);
 
-    // No math? → plain Text.
     if (!prepared.contains('\$\$')) {
       return Text(prepared, style: style, textAlign: align);
     }
