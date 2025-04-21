@@ -17,12 +17,16 @@ String autoWrapPossibleMath(String src) {
   if (src.contains('\$\$')) return src; // already wrapped
 
   final mathLike = RegExp(
-          r'(\\(int|frac|sqrt|sum|prod|lim|log|sin|cos|tan|pi|theta|alpha|beta))' // LaTeX commands
-          r'|(\^)' // exponent marker
-          r'|(_\{[^}]+\}|_[A-Za-z0-9])' // subscripts like _{...} or _x
-          r'|([+\-=*/])' // arithmetic operators
-          r'|\bimes\b' // unescaped "imes"
-          )
+          // explicit LaTeX commands
+          r'(\\(?:int|frac|sqrt|sum|prod|lim|log|sin|cos|tan|pi|theta|alpha|beta|times))'
+          // exponent marker
+          r'|(\^)'
+          // subscripts like _{...} or _x
+          r'|(_\{[^}]+\}|_[A-Za-z0-9])'
+          // only treat sequences like "3 + 4" or "5500-1400" as math
+          r'|(\d+\s*[\^*/=+\-]\s*\d+)'
+          // your “imes” fallback
+          r'|\bimes\b')
       .hasMatch(src);
 
   return mathLike ? '\$\$$src\$\$' : src;
