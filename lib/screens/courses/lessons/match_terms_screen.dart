@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
-import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
-import 'package:lumi_learn_app/widgets/app_scaffold.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 
 class MatchTerms extends StatefulWidget {
   final Question question;
@@ -173,14 +172,14 @@ class _MatchTermsState extends State<MatchTerms> {
             child: DragTarget<Flashcard>(
               builder: (context, candidateData, rejectedData) {
                 return Center(
-                  child: Text(
+                  child: SmartText(
                     term,
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: textSize,
                       fontWeight: FontWeight.w200,
                       color: Colors.white,
                     ),
+                    align: TextAlign.center,
                   ),
                 );
               },
@@ -287,13 +286,13 @@ class _MatchTermsState extends State<MatchTerms> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Center(
-                child: Text(
+                child: SmartText(
                   definition,
-                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: textSize,
                     color: const Color.fromARGB(174, 0, 0, 0),
                   ),
+                  align: TextAlign.center,
                 ),
               ),
             ),
@@ -321,13 +320,13 @@ class _MatchTermsState extends State<MatchTerms> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    SmartText(
                       definition,
-                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: popupTextSize,
                         color: const Color.fromARGB(174, 0, 0, 0),
                       ),
+                      align: TextAlign.center,
                     ),
                   ],
                 ),
@@ -358,13 +357,13 @@ class _MatchTermsState extends State<MatchTerms> {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Center(
-              child: Text(
+              child: SmartText(
                 flashcard.definition,
-                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: textSize,
                   color: const Color.fromARGB(174, 0, 0, 0),
                 ),
+                align: TextAlign.center,
               ),
             ),
           ),

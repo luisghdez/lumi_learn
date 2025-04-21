@@ -175,7 +175,8 @@ class FriendsController extends GetxController {
   }
 
   Future<void> setActiveFriend(String friendId) async {
-    _startLoading();
+    activeFriend.value = null;
+
     try {
       // Ensure the friend requests lists are up-to-date (including userIds)
       await getRequests();

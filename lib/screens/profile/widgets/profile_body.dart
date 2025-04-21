@@ -222,8 +222,17 @@ class _ProfileBodyState extends State<ProfileBody> {
                                                   ),
                                                   GestureDetector(
                                                     onTap: () {
-                                                      Get.to(() =>
-                                                          const FriendsScreen());
+                                                      Get.to(
+                                                        () =>
+                                                            const FriendsScreen(),
+                                                        transition:
+                                                            Transition.fadeIn,
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    250),
+                                                        curve: Curves.easeInOut,
+                                                      );
                                                     },
                                                     child: InfoStatCard(
                                                       label: 'Friends',
@@ -279,9 +288,10 @@ class _ProfileBodyState extends State<ProfileBody> {
                                         onPressed: () {
                                           Get.to(
                                             () => const AddFriendsScreen(),
-                                            transition: Transition.rightToLeft,
+                                            transition: Transition.fadeIn,
                                             duration: const Duration(
-                                                milliseconds: 300),
+                                                milliseconds: 250),
+                                            curve: Curves.easeInOut,
                                           );
                                         },
                                         icon: const Icon(Icons.person_add_alt,

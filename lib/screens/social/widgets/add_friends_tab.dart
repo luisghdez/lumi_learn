@@ -30,15 +30,15 @@ class AddFriendsTab extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          GlassTile(
-            title: "Choose from Contacts",
-            subtitle: contactsPermissionGranted
-                ? "Permission granted. Tap to pick from contacts."
-                : "Grant access to find friends from your contacts.",
-            onTap: onCheckContactsPermission,
-            icon: Icons.contacts,
-          ),
-          const SizedBox(height: 16),
+          // GlassTile(
+          //   title: "Choose from Contacts",
+          //   subtitle: contactsPermissionGranted
+          //       ? "Permission granted. Tap to pick from contacts."
+          //       : "Grant access to find friends from your contacts.",
+          //   onTap: onCheckContactsPermission,
+          //   icon: Icons.contacts,
+          // ),
+          // const SizedBox(height: 16),
           GlassTileWithField(
             title: "Search by Name or Email",
             subtitle: "Find users using their name or email address.",
@@ -46,17 +46,13 @@ class AddFriendsTab extends StatelessWidget {
             onPressed: onSearch, // ✅ uses callback from screen
           ),
           const SizedBox(height: 16),
-          GlassTile(
-            title: "Share Follow Link",
-            subtitle: "Invite others to follow you on Lumi Learn.",
-            onTap: onShareLink,
-            icon: Icons.share,
-          ),
-          const SizedBox(height: 20),
-          if (controller.isLoading.value) ...[
-            const Center(child: CircularProgressIndicator()),
-            const SizedBox(height: 20),
-          ],
+          // GlassTile(
+          //   title: "Share Follow Link",
+          //   subtitle: "Invite others to follow you on Lumi Learn.",
+          //   onTap: onShareLink,
+          //   icon: Icons.share,
+          // ),
+          // const SizedBox(height: 20),
 
           // 👥 Show search results
           if (controller.searchResults.isNotEmpty) ...[
@@ -80,30 +76,26 @@ class AddFriendsTab extends StatelessWidget {
                     style: const TextStyle(color: Colors.white)),
                 subtitle: Text(user.email ?? "",
                     style: const TextStyle(color: Colors.white60)),
-                onTap: () {
-                  final fakeFriend = Friend(
-                    id: user.id,
-                    name: user.name ?? 'Unknown',
-                    email: user.email ?? '',
-                    avatarUrl: user.avatarUrl ?? 'assets/pfp/pfp1.png',
-                    points: 0,
-                    dayStreak: 0,
-                    totalXP: 0,
-                    top3Finishes: 0,
-                    goldLeagueWeeks: 0,
-                    joinedDate: 'N/A',
-                    friendCount: 0,
+                onTap: () async {
+                  Get.dialog(
+                    const Center(child: CircularProgressIndicator()),
+                    barrierDismissible: false,
                   );
 
-                  controller.setActiveFriend(user.id);
-
-                  Get.to(
-                    const FriendProfile(),
-                    transition: Transition.fadeIn,
-                  );
+                  try {
+                    await controller.setActiveFriend(user.id);
+                    Get.back();
+                    Get.to(
+                      () => const FriendProfile(),
+                      transition: Transition.fadeIn,
+                    );
+                  } catch (e) {
+                    Get.back();
+                    Get.snackbar("Error", "Could not load profile: $e");
+                  }
                 },
               );
-            }).toList(),
+            }),
           ],
         ],
       );

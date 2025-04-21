@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 
 class OptionsList extends StatelessWidget {
   final List<String> options;
@@ -63,12 +64,11 @@ class OptionsList extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        optionText,
+                      child: SmartText(
+                        options[index],
                         style: TextStyle(
-                          color: const Color.fromARGB(221, 244, 244, 244),
-                          fontSize: fontSize,
-                        ),
+                            fontSize: fontSize,
+                            color: const Color.fromARGB(221, 244, 244, 244)),
                       ),
                     ),
                   ],

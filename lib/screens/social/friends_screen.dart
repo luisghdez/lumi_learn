@@ -156,18 +156,28 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 6),
                                   child: FriendTile(
-                                    friend: friend,
-                                    onTap: () {
-                                      // Set the active friend in the controller.
-                                      friendsController
-                                          .setActiveFriend(friend.id);
-                                      // Navigate to the friend's profile screen.
-                                      Get.to(
-                                        const FriendProfile(),
-                                        transition: Transition.fadeIn,
-                                      );
-                                    },
-                                  ),
+                                      friend: friend,
+                                      onTap: () async {
+                                        Get.dialog(
+                                            const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                            barrierDismissible: false);
+
+                                        try {
+                                          await friendsController
+                                              .setActiveFriend(friend.id);
+                                          Get.back();
+                                          Get.to(
+                                            () => const FriendProfile(),
+                                            transition: Transition.fadeIn,
+                                          );
+                                        } catch (e) {
+                                          Get.back();
+                                          Get.snackbar("Error",
+                                              "Could not load profile: $e");
+                                        }
+                                      }),
                                 );
                               },
                             );

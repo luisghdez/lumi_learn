@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 
 class QuestionCard extends StatelessWidget {
   final String questionText;
@@ -18,13 +19,10 @@ class QuestionCard extends StatelessWidget {
         color: Colors.black.withOpacity(0.7),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
+      child: SmartText(
         questionText,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: isTablet ? 20 : 14,
-        ),
-        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.white, fontSize: isTablet ? 20 : 14),
+        align: TextAlign.center,
       ),
     );
   }

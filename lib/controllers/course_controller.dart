@@ -10,6 +10,7 @@ import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 
 class CourseController extends GetxController {
@@ -221,16 +222,23 @@ class CourseController extends GetxController {
     final multipleChoiceJson = lesson['multipleChoice'];
     if (multipleChoiceJson != null && multipleChoiceJson is List) {
       for (final mcItem in multipleChoiceJson) {
+        final correctAnswer = mcItem['correctAnswer']?.toString() ?? '';
+
         final options = (mcItem['options'] as List<dynamic>?)
                 ?.map((opt) => opt.toString())
                 .toList() ??
             [];
-        questions.add(Question(
-          questionText: mcItem['questionText'] ?? '',
-          options: options,
-          correctAnswer: mcItem['correctAnswer'],
-          lessonType: LessonType.multipleChoice,
-        ));
+        // shuffle options
+        options.shuffle();
+        // Ensure the correct answer is in the options list
+        if (options.contains(correctAnswer)) {
+          questions.add(Question(
+            questionText: mcItem['questionText'] ?? '',
+            options: options,
+            correctAnswer: correctAnswer,
+            lessonType: LessonType.multipleChoice,
+          ));
+        }
       }
     }
 
@@ -238,16 +246,22 @@ class CourseController extends GetxController {
     final fillInTheBlankJson = lesson['fillInTheBlank'];
     if (fillInTheBlankJson != null && fillInTheBlankJson is List) {
       for (final fibItem in fillInTheBlankJson) {
+        final correctAnswer = fibItem['correctAnswer']?.toString() ?? '';
+
         final options = (fibItem['options'] as List<dynamic>?)
                 ?.map((opt) => opt.toString())
                 .toList() ??
             [];
-        questions.add(Question(
-          questionText: fibItem['questionText'] ?? '',
-          options: options,
-          correctAnswer: fibItem['correctAnswer'],
-          lessonType: LessonType.fillInTheBlank,
-        ));
+        // shuffle options
+        options.shuffle();
+        if (options.contains(correctAnswer)) {
+          questions.add(Question(
+            questionText: fibItem['questionText'] ?? '',
+            options: options,
+            correctAnswer: correctAnswer,
+            lessonType: LessonType.fillInTheBlank,
+          ));
+        }
       }
     }
 
@@ -474,6 +488,8 @@ class CourseController extends GetxController {
           'totalLessons': responseData['lessonCount'] ?? 0,
         };
         courses.insert(0, newCourse);
+        authController.courseSlotsUsed.value++;
+
         return true;
       } else {
         print("Failed to save course: ${response.statusCode} ${response.body}");
@@ -732,14 +748,14 @@ class CourseController extends GetxController {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  question.correctAnswer ?? 'No correct answer provided',
+                SmartText(
+                  question.correctAnswer ??
+                      'No correct answer provided', // whatever field you store
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.normal,
-                    decoration: TextDecoration.none,
-                  ),
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal,
+                      decoration: TextDecoration.none),
                 ),
                 const SizedBox(height: 10),
                 Align(

@@ -5,6 +5,7 @@ import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
 class FillInBlankScreen extends StatelessWidget {
@@ -41,8 +42,8 @@ class FillInBlankScreen extends StatelessWidget {
     final bool isTablet = screenWidth >= 768;
     final double horizontalPadding = isTablet ? 48.0 : 16.0;
     final double fontSize = isTablet ? 20.0 : 16.0;
-    final double optionVerticalPadding = isTablet ? 20.0 : 18.0;
-    final double optionHorizontalPadding = isTablet ? 36.0 : 30.0;
+    final double optionVerticalPadding = isTablet ? 20.0 : 14.0;
+    final double optionHorizontalPadding = isTablet ? 36.0 : 16.0;
     final double astronautSize = isTablet ? 270.0 : 170.0;
     final double astronautHeight = isTablet ? 200.0 : 140.0;
     final double bubbleWidth = isTablet ? 380.0 : 220.0;
@@ -141,13 +142,14 @@ class FillInBlankScreen extends StatelessWidget {
                               width: 1,
                             ),
                           ),
-                          child: Text(
+                          child: SmartText(
                             option,
                             style: TextStyle(
                               color: isSelected ? Colors.white : Colors.white70,
                               fontSize: fontSize,
                               fontWeight: FontWeight.w500,
                             ),
+                            align: TextAlign.start, // or center, as needed
                           ),
                         ),
                       );

@@ -70,6 +70,7 @@ class ApiService {
   Future<http.Response> getFeaturedCourses({
     required String token,
   }) async {
+    print("getting featured courses");
     final uri = Uri.parse('$_baseUrl/courses/featured');
     final response = await http.get(
       uri,
@@ -245,6 +246,35 @@ class ApiService {
     );
 
     return response;
+  }
+
+  // update user profile picture
+  static Future<void> updateUserProfilePicture(
+      String token, int avatarId) async {
+    final uri = Uri.parse('$_baseUrl/users/me');
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        // Fastify controller expects `profilePicture` as a string
+        'profilePicture': avatarId.toString(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // OK
+      return;
+    }
+
+    // Try to parse error message from body
+    String message = 'Unknown error';
+    try {
+      final Map<String, dynamic> payload = jsonDecode(response.body);
+      message = payload['error'] ?? payload['message'] ?? message;
+    } catch (_) {/* ignore parse errors */}
   }
 
   static Future<void> deleteUserData(String token) async {

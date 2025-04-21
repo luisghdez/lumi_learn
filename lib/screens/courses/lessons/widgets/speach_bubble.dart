@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 
 class SpeechBubble extends StatelessWidget {
   final String text;
@@ -20,6 +21,12 @@ class SpeechBubble extends StatelessWidget {
     final double horizontalPadding = isTablet ? 24.0 : 16.0;
     final double verticalPadding = isTablet ? 20.0 : 16.0;
 
+    final effectiveStyle = textStyle ??
+        TextStyle(
+          color: Colors.black,
+          fontSize: fontSize,
+        );
+
     return CustomPaint(
       painter: _SpeechBubblePainter(color: bubbleColor),
       child: Container(
@@ -28,14 +35,10 @@ class SpeechBubble extends StatelessWidget {
           horizontal: horizontalPadding,
           vertical: verticalPadding,
         ),
-        child: Text(
+        child: SmartText(
           text,
-          style: textStyle ??
-              TextStyle(
-                color: Colors.black,
-                fontSize: fontSize,
-              ),
-          textAlign: TextAlign.center,
+          style: effectiveStyle,
+          align: TextAlign.center,
         ),
       ),
     );
