@@ -90,6 +90,8 @@ class BottomPanel extends StatelessWidget {
                               ),
                               Text(
                                 selectedLessonDescription ?? '',
+                                maxLines: 5,
+                                overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 12,

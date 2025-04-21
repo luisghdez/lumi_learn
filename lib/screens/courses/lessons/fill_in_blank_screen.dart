@@ -5,6 +5,7 @@ import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/next_button.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/speach_bubble.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold.dart';
 
 class FillInBlankScreen extends StatelessWidget {
@@ -141,13 +142,14 @@ class FillInBlankScreen extends StatelessWidget {
                               width: 1,
                             ),
                           ),
-                          child: Text(
+                          child: SmartText(
                             option,
                             style: TextStyle(
                               color: isSelected ? Colors.white : Colors.white70,
                               fontSize: fontSize,
                               fontWeight: FontWeight.w500,
                             ),
+                            align: TextAlign.start, // or center, as needed
                           ),
                         ),
                       );

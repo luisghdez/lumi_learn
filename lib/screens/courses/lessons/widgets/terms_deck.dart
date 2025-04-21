@@ -2,6 +2,7 @@ import 'dart:math'; // Need min and max
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 
 // Assuming TermMasteryItem is defined elsewhere as provided before
 // import 'term_mastery_item.dart';
@@ -266,7 +267,7 @@ class TermMasteryItem extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
+                          SmartText(
                             term,
                             style: const TextStyle(
                               color: Colors.white,

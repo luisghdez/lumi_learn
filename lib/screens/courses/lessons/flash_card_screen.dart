@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 
 class FlashcardScreen extends StatefulWidget {
   final List<Flashcard> flashcards;
@@ -22,30 +23,25 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   final CourseController courseController = Get.find<CourseController>();
 
   int currentIndex = 0;
-  bool isListView = false; // Flag to toggle between view modes
+  bool isListView = false;
 
   void _moveToPreviousCard() {
-    setState(() {
-      if (currentIndex > 0) {
-        currentIndex--;
-      }
-    });
+    if (currentIndex > 0) {
+      setState(() => currentIndex--);
+    }
   }
 
   void _moveToNextCard() {
-    setState(() {
-      if (currentIndex < widget.flashcards.length - 1) {
-        currentIndex++;
-      }
-    });
+    if (currentIndex < widget.flashcards.length - 1) {
+      setState(() => currentIndex++);
+    }
   }
 
-  /// Builds the one-by-one flashcard view.
+  /// One‑by‑one flashcard view
   Widget _buildFlashcardView() {
-    final currentFlashcard = widget.flashcards[currentIndex];
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= 768;
-    final double padding = isTablet ? 32.0 : 16.0;
+    final current = widget.flashcards[currentIndex];
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final padding = isTablet ? 32.0 : 16.0;
 
     return Column(
       children: [
@@ -55,22 +51,21 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
-                child: FlashcardWidget(
-                  key: ValueKey(currentFlashcard),
-                  flashcard: currentFlashcard,
-                ),
+                child:
+                    FlashcardWidget(key: ValueKey(current), flashcard: current),
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             'Tap the card to flip',
             style: TextStyle(
-                fontSize: isTablet ? 20 : 16,
-                fontWeight: FontWeight.w200,
-                color: Colors.white),
+              fontSize: isTablet ? 20 : 16,
+              fontWeight: FontWeight.w200,
+              color: Colors.white,
+            ),
           ),
         ),
         Row(
@@ -81,13 +76,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               icon: const Icon(Icons.navigate_before),
               color: Colors.white,
             ),
-            // Display current flashcard count
             Text(
               '${currentIndex + 1}/${widget.flashcards.length}',
               style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isTablet ? 20 : 16,
-                  fontWeight: FontWeight.w200),
+                color: Colors.white,
+                fontSize: isTablet ? 20 : 16,
+                fontWeight: FontWeight.w200,
+              ),
             ),
             IconButton(
               onPressed: _moveToNextCard,
@@ -101,20 +96,18 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     );
   }
 
-  /// Builds the list view of flashcards.
+  /// Scrollable list view
   Widget _buildListView() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= 768;
-
-    final double termFontSize = isTablet ? 22 : 18;
-    final double definitionFontSize = isTablet ? 18 : 14;
-    final double padding = isTablet ? 32.0 : 16.0;
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final termSize = isTablet ? 22.0 : 18.0;
+    final defSize = isTablet ? 18.0 : 14.0;
+    final padding = isTablet ? 32.0 : 16.0;
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       itemCount: widget.flashcards.length,
       itemBuilder: (context, index) {
-        final flashcard = widget.flashcards[index];
+        final f = widget.flashcards[index];
         return Theme(
           data: Theme.of(context).copyWith(
             splashFactory: NoSplash.splashFactory,
@@ -124,70 +117,59 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             onTap: () {
               setState(() {
                 currentIndex = index;
-                isListView = false; // Switch back to flashcard view.
+                isListView = false;
               });
             },
-            contentPadding: EdgeInsets.symmetric(
-              vertical: 12.0,
-              horizontal: padding,
-            ),
-            title: Text(
-              flashcard.term,
+            contentPadding:
+                EdgeInsets.symmetric(vertical: 12, horizontal: padding),
+            title: SmartText(
+              f.term,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: termFontSize,
+                fontSize: termSize,
                 fontWeight: FontWeight.w400,
               ),
             ),
-            subtitle: Text(
-              flashcard.definition,
+            subtitle: SmartText(
+              f.definition,
               style: TextStyle(
                 color: Colors.white70,
-                fontSize: definitionFontSize,
+                fontSize: defSize,
               ),
             ),
           ),
         );
       },
-      separatorBuilder: (context, index) => const Divider(
-        color: greyBorder,
-        thickness: 1,
-      ),
+      separatorBuilder: (_, __) =>
+          const Divider(color: greyBorder, thickness: 1),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= 768;
-    final double iconSize = isTablet ? 28.0 : 20.0;
-    final double appBarPadding = isTablet ? 32.0 : 0.0;
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final iconSize = isTablet ? 28.0 : 20.0;
+    final appBarPad = isTablet ? 32.0 : 0.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: PreferredSize(
-        preferredSize:
-            Size.fromHeight(kToolbarHeight + appBarPadding + appBarPadding),
+        preferredSize: Size.fromHeight(kToolbarHeight + appBarPad * 2),
         child: Padding(
-          padding: EdgeInsets.all(appBarPadding),
+          padding: EdgeInsets.all(appBarPad),
           child: AppBar(
-            surfaceTintColor: Colors.transparent,
             backgroundColor: const Color(0xFF0A0A0A),
             elevation: 0,
             leading: IconButton(
               iconSize: iconSize,
               icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () => Get.back(),
+              onPressed: Get.back,
             ),
             actions: [
               IconButton(
                 iconSize: iconSize,
                 icon: Icon(isListView ? Icons.view_carousel : Icons.view_list),
-                onPressed: () {
-                  setState(() {
-                    isListView = !isListView;
-                  });
-                },
+                onPressed: () => setState(() => isListView = !isListView),
               ),
             ],
           ),
@@ -198,34 +180,23 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         bottom: false,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
           child: isListView
-              ? Container(
-                  key: const ValueKey('listView'),
-                  child: _buildListView(),
-                )
+              ? Container(key: const ValueKey('list'), child: _buildListView())
               : Container(
-                  key: const ValueKey('flashcardView'),
-                  child: _buildFlashcardView(),
-                ),
+                  key: const ValueKey('cards'), child: _buildFlashcardView()),
         ),
       ),
     );
   }
 }
 
+/// ─────────────────────────────────────────────────────────────────────────────
+/// Individual flip card widget
+/// ─────────────────────────────────────────────────────────────────────────────
 class FlashcardWidget extends StatefulWidget {
   final Flashcard flashcard;
 
-  const FlashcardWidget({
-    Key? key,
-    required this.flashcard,
-  }) : super(key: key);
+  const FlashcardWidget({Key? key, required this.flashcard}) : super(key: key);
 
   @override
   _FlashcardWidgetState createState() => _FlashcardWidgetState();
@@ -233,64 +204,76 @@ class FlashcardWidget extends StatefulWidget {
 
 class _FlashcardWidgetState extends State<FlashcardWidget>
     with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 500));
+  late final Animation<double> _anim =
+      Tween<double>(begin: 0, end: pi).animate(_controller);
+
   bool isFront = true;
-  late AnimationController _controller;
-  late Animation<double> _animation;
 
   @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _animation = Tween<double>(begin: 0, end: pi).animate(_controller);
-  }
-
-  @override
-  void didUpdateWidget(covariant FlashcardWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // When the flashcard changes, reset the animation and show the front (term)
-    if (oldWidget.flashcard != widget.flashcard) {
+  void didUpdateWidget(covariant FlashcardWidget old) {
+    super.didUpdateWidget(old);
+    if (old.flashcard != widget.flashcard) {
       _controller.reset();
-      setState(() {
-        isFront = true;
-      });
+      isFront = true;
     }
   }
 
-  void _flipCard() {
+  void _flip() {
     if (isFront) {
       _controller.forward();
     } else {
       _controller.reverse();
     }
-    setState(() {
-      isFront = !isFront;
-    });
+    setState(() => isFront = !isFront);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final frontSize = isTablet ? 32.0 : 24.0;
+    final backSize = isTablet ? 26.0 : 20.0;
+
     return GestureDetector(
-      onTap: _flipCard,
+      onTap: _flip,
       child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          final angle = _animation.value;
+        animation: _anim,
+        builder: (_, __) {
+          final angle = _anim.value;
           final transform = Matrix4.identity()
             ..setEntry(3, 2, 0.001)
             ..rotateY(angle);
 
           return Transform(
-            transform: transform,
             alignment: Alignment.center,
+            transform: transform,
             child: angle <= pi / 2
-                ? _buildFrontSide()
+                ? _card(
+                    SmartText(
+                      widget.flashcard.term,
+                      style: TextStyle(
+                        fontSize: frontSize,
+                        fontWeight: FontWeight.w200,
+                        color: Colors.white,
+                      ),
+                      align: TextAlign.center,
+                    ),
+                  )
                 : Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.rotationY(pi),
-                    child: _buildBackSide(),
+                    child: _card(
+                      SmartText(
+                        widget.flashcard.definition,
+                        style: TextStyle(
+                          fontSize: backSize,
+                          fontWeight: FontWeight.w300,
+                          color: Colors.white,
+                        ),
+                        align: TextAlign.center,
+                      ),
+                    ),
                   ),
           );
         },
@@ -298,66 +281,23 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     );
   }
 
-  Widget _buildFrontSide() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= 768;
-    final double fontSize = isTablet ? 32 : 24;
-
-    return _buildCard(
-      child: Text(
-        widget.flashcard.term,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w200,
-          color: Colors.white,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  Widget _buildBackSide() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= 768;
-    final double fontSize = isTablet ? 26 : 20;
-
-    return _buildCard(
-      child: Text(
-        widget.flashcard.definition,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w300,
-          color: Colors.white,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  Widget _buildCard({required Widget child}) {
-    final screenHeight = MediaQuery.of(context).size.height;
+  Widget _card(Widget child) {
+    final height = MediaQuery.of(context).size.height * 0.6;
 
     return Container(
-      height: screenHeight * 0.6, // 50% of the screen height
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-      ),
+      height: height,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(30)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: Stack(
           children: [
-            // Backdrop blur filter
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-              child: Container(),
-            ),
-            // Semi-transparent black overlay
+            BackdropFilter(filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5)),
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(color: greyBorder, width: 1),
               ),
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24),
               child: Center(child: child),
             ),
           ],

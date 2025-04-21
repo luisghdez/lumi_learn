@@ -10,6 +10,7 @@ import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
 import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 
 class CourseController extends GetxController {
@@ -747,14 +748,14 @@ class CourseController extends GetxController {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  question.correctAnswer ?? 'No correct answer provided',
+                SmartText(
+                  question.correctAnswer ??
+                      'No correct answer provided', // whatever field you store
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.normal,
-                    decoration: TextDecoration.none,
-                  ),
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal,
+                      decoration: TextDecoration.none),
                 ),
                 const SizedBox(height: 10),
                 Align(
