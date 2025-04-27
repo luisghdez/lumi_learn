@@ -7,7 +7,8 @@ import 'package:lumi_learn_app/controllers/class_controller.dart';
 import '../components/home_header.dart';
 import '../widgets/teacher/teacherTab.dart';
 import '../widgets/teacher/ClassroomModal.dart';
-import 'package:lumi_learn_app/screens/classrooms/components/search_bar.dart' as custom;
+import 'package:lumi_learn_app/screens/classrooms/components/search_bar.dart'
+    as custom;
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/classroomsCard.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/emptyState.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/recentSubmissionCard.dart';
@@ -29,10 +30,12 @@ class TeacherView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double horizontalPadding = _getHorizontalPadding(context);
-    final double topScrollViewPadding = MediaQuery.of(context).padding.top + horizontalPadding;
+    final double topScrollViewPadding =
+        MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
 
-    final bool isTablet = MediaQuery.of(context).size.width >= _tabletBreakpoint;
+    final bool isTablet =
+        MediaQuery.of(context).size.width >= _tabletBreakpoint;
 
     final TextStyle sectionTitleStyle = isTablet
         ? Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -62,69 +65,84 @@ class TeacherView extends StatelessWidget {
             builder: (context, constraints) {
               final double calculatedMinHeight = math.max(
                 0.0,
-                constraints.maxHeight - topScrollViewPadding - bottomScrollViewPadding,
+                constraints.maxHeight -
+                    topScrollViewPadding -
+                    bottomScrollViewPadding,
               );
 
-              return SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  top: topScrollViewPadding,
-                  bottom: bottomScrollViewPadding,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: calculatedMinHeight),
-                  child: Obx(() => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Home Header
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: HomeHeader(
-                              streakCount: authController.streakCount.value,
-                              xpCount: authController.xpCount.value,
-                              isPremium: authController.isPremium.value,
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-
-                          // Tabs
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: TeacherTabs(
-                              selectedIndex: selectedTabIndex.value,
-                              onTabSelected: (index) {
-                                selectedTabIndex.value = index;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Section Title
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: Text(
-                              selectedTabIndex.value == 0 ? 'My Classrooms' : 'Recent Submissions',
-                              style: sectionTitleStyle,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Search Bar
-                          if (selectedTabIndex.value == 0)
+              return RefreshIndicator(
+                color: Colors.white, // progress circle color
+                backgroundColor: Colors.black54, // behind the circle
+                onRefresh: classController.loadAllTeacherData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    top: topScrollViewPadding,
+                    bottom: bottomScrollViewPadding,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: calculatedMinHeight),
+                    child: Obx(() => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Home Header
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                              child: const custom.SearchBar(),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: HomeHeader(
+                                streakCount: authController.streakCount.value,
+                                xpCount: authController.xpCount.value,
+                                isPremium: authController.isPremium.value,
+                              ),
                             ),
-                          const SizedBox(height: 12),
+                            const SizedBox(height: 28),
 
-                          // Content Area
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: selectedTabIndex.value == 0
-                                ? _buildClassrooms()
-                                : _buildRecentSubmissions(),
-                          ),
-                        ],
-                      )),
+                            // Tabs
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: TeacherTabs(
+                                selectedIndex: selectedTabIndex.value,
+                                onTabSelected: (index) {
+                                  selectedTabIndex.value = index;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Section Title
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: Text(
+                                selectedTabIndex.value == 0
+                                    ? 'My Classrooms'
+                                    : 'Recent Submissions',
+                                style: sectionTitleStyle,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Search Bar
+                            if (selectedTabIndex.value == 0)
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: horizontalPadding),
+                                child: const custom.SearchBar(),
+                              ),
+                            const SizedBox(height: 12),
+
+                            // Content Area
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: selectedTabIndex.value == 0
+                                  ? _buildClassrooms()
+                                  : _buildRecentSubmissions(),
+                            ),
+                          ],
+                        )),
+                  ),
                 ),
               );
             },
@@ -215,9 +233,8 @@ class TeacherView extends StatelessWidget {
     return Column(
       children: classController.recentSubmissions.map((submission) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child:
-            RecentSubmissionCard(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: RecentSubmissionCard(
               submissionTitle: submission.submissionTitle,
               studentName: submission.studentName,
               className: submission.className,
@@ -226,8 +243,7 @@ class TeacherView extends StatelessWidget {
               onTap: () {
                 // Optional tap logic
               },
-            )
-        );
+            ));
       }).toList(),
     );
   }

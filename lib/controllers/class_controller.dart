@@ -91,10 +91,10 @@ class ClassController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadAllTeacherData();
+    loadAllTeacherData();
   }
 
-  Future<void> _loadAllTeacherData() async {
+  Future<void> loadAllTeacherData() async {
     await _loadClassrooms();
     await _loadRecentSubmissions();
   }
