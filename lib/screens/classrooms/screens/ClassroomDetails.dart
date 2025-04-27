@@ -7,11 +7,8 @@ import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/active_courses
 
 class ClassroomDetailsPage extends StatelessWidget {
   final Classroom classroomData;
-
-  ClassroomDetailsPage({
-    Key? key,
-    required this.classroomData,
-  }) : super(key: key);
+  ClassroomDetailsPage({Key? key, required this.classroomData})
+      : super(key: key);
 
   final ClassController classController = Get.find();
   final RxBool showStudents = false.obs;
@@ -23,16 +20,16 @@ class ClassroomDetailsPage extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // background
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/black_moons_lighter.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/black_moons_lighter.png',
+                fit: BoxFit.cover),
           ),
+
           SafeArea(
             child: Column(
               children: [
-                // Back button
+                // back button
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -45,33 +42,39 @@ class ClassroomDetailsPage extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // ───── Scrollable (now inside RefreshIndicator) ─────
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Your existing classroom header/card
-                        ClassroomCardBox(classroomData: classroomData),
-                        const SizedBox(height: 24),
+                  child: RefreshIndicator(
+                    color: Colors.white,
+                    backgroundColor: Colors.black54,
+                    onRefresh: classController.loadAllTeacherData,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClassroomCardBox(classroomData: classroomData),
+                          const SizedBox(height: 24),
 
-                        // 🆕 Student Progress List
-                        StudentProgressList(
-                          classId: classroomData.id, // ← pass classId
-                          showStudents: showStudents,
-                          classController: classController,
-                        ),
+                          // student progress list
+                          StudentProgressList(
+                            classId: classroomData.id,
+                            showStudents: showStudents,
+                            classController: classController,
+                          ),
+                          const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
-
-                        // 🆕 Active Class Courses List
-                        ActiveCoursesList(
-                          classId: classroomData.id, // ← pass classId
-                          showCourses: showCourses,
-                          classController: classController,
-                        ),
-                      ],
+                          // active courses list
+                          ActiveCoursesList(
+                            classId: classroomData.id,
+                            showCourses: showCourses,
+                            classController: classController,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
