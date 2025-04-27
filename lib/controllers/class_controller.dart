@@ -126,23 +126,6 @@ class ClassController extends GetxController {
     }).toList();
 
     classrooms.assignAll(list);
-
-    // recalc newSubmissions…
-    // for (var cls in classrooms) {
-    //   final count = recentSubmissions.where((s) => s.classId == cls.id).length;
-    //   cls = Classroom(
-    //     id: cls.id,
-    //     title: cls.title,
-    //     subtitle: cls.subtitle,
-    //     studentsCount: cls.studentsCount,
-    //     coursesCount: cls.coursesCount,
-    //     newSubmissions: count,
-    //     sideColor: cls.sideColor,
-    //     inviteCode: cls.inviteCode,
-    //     ownerName: cls.ownerName,
-    //   );
-    // }
-    // classrooms.refresh();
   }
 
   Future<void> _loadRecentSubmissions() async {

@@ -42,6 +42,7 @@ class _CreateClassroomModalState extends State<CreateClassroomModal> {
       title: title,
       identifier: identifier,
       sideColor: selectedColor,
+      joinCode: '',
     );
 
     Get.back();

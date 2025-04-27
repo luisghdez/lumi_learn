@@ -44,7 +44,7 @@ class RecentSubmissionCard extends StatelessWidget {
               horizontal: isTabletOrBigger ? 24 : 20,
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center, // 🛠 center everything vertically
               children: [
                 // Colored side bar
                 Container(
@@ -79,21 +79,31 @@ class RecentSubmissionCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        timeAgo,
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: timeFontSize,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 16,
+                            color: Colors.white38,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            timeAgo,
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: timeFontSize,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
 
-                // Checkmark
+                // Checkmark now centered 🛠
                 Icon(
                   Icons.check_circle_rounded,
-                  color: Colors.white,
+                  color: Colors.greenAccent,
                   size: isTabletOrBigger ? 28 : 24,
                 ),
               ],

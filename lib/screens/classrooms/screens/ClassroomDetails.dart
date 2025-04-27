@@ -4,6 +4,8 @@ import 'package:lumi_learn_app/controllers/class_controller.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/class_course_card.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/student_progress_list.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/active_courses_list.dart';
+import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+
 
 class ClassroomDetailsPage extends StatelessWidget {
   final Classroom classroomData;
@@ -16,6 +18,9 @@ class ClassroomDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -29,14 +34,15 @@ class ClassroomDetailsPage extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // back button
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTabletOrBigger ? 16 : 8,
+                    vertical: isTabletOrBigger ? 12 : 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: Icon(Icons.arrow_back, color: Colors.white, size: isTabletOrBigger ? 32 : 28),
                         onPressed: () => Get.back(),
                       ),
                     ],
@@ -52,7 +58,8 @@ class ClassroomDetailsPage extends StatelessWidget {
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                          horizontal: 20,
+                        vertical: 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
