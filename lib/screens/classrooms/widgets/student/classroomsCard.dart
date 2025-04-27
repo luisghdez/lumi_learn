@@ -1,12 +1,34 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart'; 
+import 'package:lumi_learn_app/controllers/class_controller.dart';
 import 'package:lumi_learn_app/screens/classrooms/screens/ClassroomDetails.dart';
 
 class StudentClassroomCard extends StatelessWidget {
   final Classroom classroomData;
   final VoidCallback onTap;
+
+  String _formatDueDate(DateTime dueDate) {
+  final now = DateTime.now();
+  final difference = dueDate.difference(now);
+
+  if (difference.inDays == 0) {
+    // Same day
+    return "Today, ${_formatTime(dueDate)}";
+  } else if (difference.inDays == 1) {
+    return "Tomorrow, ${_formatTime(dueDate)}";
+  } else {
+    return "${dueDate.month}/${dueDate.day}, ${_formatTime(dueDate)}";
+  }
+}
+
+String _formatTime(DateTime dateTime) {
+  final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+  final minute = dateTime.minute.toString().padLeft(2, '0');
+  final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+  return "$hour:$minute $period";
+}
+
 
   const StudentClassroomCard({
     Key? key,
@@ -68,7 +90,8 @@ class StudentClassroomCard extends StatelessWidget {
                   const SizedBox(width: 16),
                   _InfoIconText(
                     icon: Icons.book,
-                    text: "${classroomData.coursesCount}/4 courses", // Static for now, you can change
+                    text:
+                        "${classroomData.coursesCount} courses", // Static for now, you can change
                     fontSize: infoFontSize,
                   ),
                 ],
@@ -100,7 +123,12 @@ class StudentClassroomCard extends StatelessWidget {
                       ),
                       Container(
                         height: 8,
-                        width: (classroomData.studentsCount / 100) * MediaQuery.of(context).size.width * 0.6, // Example: 25% width
+                        width: (classroomData.totalCourses > 0
+                                ? (classroomData.completedCourses /
+                                    classroomData.totalCourses)
+                                : 0) *
+                            MediaQuery.of(context).size.width *
+                            0.6, // 60% of screen width
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(4),
@@ -109,11 +137,13 @@ class StudentClassroomCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Align(
+                  Align(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      "25%", // Static for now, ideally dynamic later
-                      style: TextStyle(color: Colors.white, fontSize: 12),
+                      classroomData.totalCourses > 0
+                          ? "${((classroomData.completedCourses / classroomData.totalCourses) * 100).toStringAsFixed(0)}%"
+                          : "0%",
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
                 ],
@@ -122,16 +152,18 @@ class StudentClassroomCard extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Next lesson
-              const Row(
-                children: [
-                  Icon(Icons.access_time, color: Colors.white54, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "Next Lesson Due Today, 2:30pm",
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time, color: Colors.white54, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        classroomData.nextDueAt != null
+                            ? "Next Lesson Due ${_formatDueDate(classroomData.nextDueAt!)}"
+                            : "No upcoming lessons",
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                    ],
                   ),
-                ],
-              ),
 
               const SizedBox(height: 16),
 

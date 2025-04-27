@@ -16,6 +16,12 @@ class Classroom {
   final String inviteCode;
   final String ownerName;
 
+  // 🆕 Add these:
+  final int completedCourses;
+  final int totalCourses;
+  final DateTime? nextDueAt;
+
+
   Classroom({
     required this.id,
     required this.title,
@@ -26,7 +32,37 @@ class Classroom {
     required this.sideColor,
     required this.inviteCode,
     required this.ownerName,
+    required this.completedCourses, // 🆕
+    required this.totalCourses, // 🆕
+    this.nextDueAt, // 🆕
   });
+}
+
+
+class UpcomingAssignment {
+  final String classId;
+  final String className;
+  final String courseId;
+  final String courseTitle;
+  final DateTime dueAt;
+
+  UpcomingAssignment({
+    required this.classId,
+    required this.className,
+    required this.courseId,
+    required this.courseTitle,
+    required this.dueAt,
+  });
+
+  factory UpcomingAssignment.fromJson(Map<String, dynamic> json) {
+    return UpcomingAssignment(
+      classId: json['classId'],
+      className: json['className'],
+      courseId: json['courseId'],
+      courseTitle: json['courseTitle'],
+      dueAt: DateTime.parse(json['dueAt']),
+    );
+  }
 }
 
 class Submission {
@@ -102,6 +138,8 @@ class ClassController extends GetxController {
   var recentSubmissions = <Submission>[].obs;
   var studentProgress = <String, List<StudentProgress>>{}.obs;
   var classCourses = <String, List<ClassCourse>>{}.obs;
+  var upcomingAssignments = <UpcomingAssignment>[].obs; // MOVE IT HERE!
+
   RxMap<String, List<Course>> classroomCourses = <String, List<Course>>{}.obs;
 
   @override
@@ -113,6 +151,26 @@ class ClassController extends GetxController {
   Future<void> loadAllTeacherData() async {
     await _loadClassrooms();
     await _loadRecentSubmissions();
+  }
+
+    Future<void> loadUpcomingAssignments() async {   // MOVE THIS INSIDE TOO
+    final token = await _auth.getIdToken();
+    if (token == null) {
+      Get.snackbar('Error', 'Not authenticated');
+      return;
+    }
+
+    final res = await _api.getUpcomingAssignments(token: token);
+    print('Raw upcoming assignments response: ${res.body}');
+    if (res.statusCode != 200) {
+      Get.snackbar('Error', 'Failed to load upcoming assignments');
+      return;
+    }
+
+    final List data = jsonDecode(res.body);
+    upcomingAssignments.assignAll(
+      data.map((item) => UpcomingAssignment.fromJson(item)).toList(),
+    );
   }
 
   Future<void> _loadClassrooms() async {
@@ -138,6 +196,8 @@ class ClassController extends GetxController {
         sideColor: _colorFromHex(colorHex),
         inviteCode: item['inviteCode'],
         ownerName: item['ownerName'] ?? 'Unknown',
+        completedCourses: item['completedCourses'] ?? 0,
+        totalCourses: item['totalCourses'] ?? 0,
       );
     }).toList();
 
@@ -329,8 +389,87 @@ class ClassController extends GetxController {
       sideColor: _colorFromHex(returnedHex),
       inviteCode: data['inviteCode'] as String,
       ownerName: data['ownerName'] ?? 'Unknown',
+      completedCourses: 0,
+      totalCourses: 0
     );
 
     classrooms.insert(0, room);
   }
+
+
+  Future<void> loadStudentClasses() async {
+  final token = await _auth.getIdToken();
+  if (token == null) {
+    Get.snackbar('Error', 'Not authenticated');
+    return;
+  }
+
+  final res = await _api.getStudentClasses(token: token);
+  if (res.statusCode != 200) {
+    Get.snackbar('Error', 'Failed to load student classes');
+    return;
+  }
+
+  final List data = jsonDecode(res.body);
+
+  final list = data.map((item) {
+    final colorHex = item['colorCode'] as String? ?? '#4A90E2'; // Optional: if you plan to return color
+    return Classroom(
+      id: item['id'],
+      title: item['name'],
+      subtitle: item['identifier'],
+      studentsCount: item['studentCount'],
+      coursesCount: item['courseCount'],
+      newSubmissions: 0,
+      sideColor: _colorFromHex(colorHex),
+      inviteCode: '', // Students don't create classes, so no invite code for them
+      ownerName: '', // Optional: if backend sends owner name you can use it
+      completedCourses: item['completedCourses'] ?? 0,
+      totalCourses: item['totalCourses'] ?? 0,
+    );
+  }).toList();
+
+  classrooms.assignAll(list);
+}
+
+  var memberClasses = <Classroom>[].obs;
+
+  Future<void> joinClass(String code) async {
+    final token = await _auth.getIdToken();
+    if (token == null) {
+      Get.snackbar('Error', 'Not authenticated');
+      return;
+    }
+
+    final res = await _api.joinClass(token: token, code: code);
+    if (res.statusCode != 200) {
+      final msg = jsonDecode(res.body)['error'] ?? 'Join failed';
+      Get.snackbar('Error', msg, backgroundColor: Colors.red);
+      return;
+    }
+
+    // parse the one-class payload
+    final data = jsonDecode(res.body);
+    final newClass = Classroom(
+      id: data['id'],
+      title: data['name'],
+      subtitle: data['identifier'],
+      studentsCount: data['studentCount'],
+      coursesCount: data['courseCount'],
+      newSubmissions: 0,
+      sideColor: _colorFromHex(data['colorCode'] ?? '#4A90E2'),
+      inviteCode: data['inviteCode'] ?? '',
+      ownerName: data['ownerName'] ?? '',
+      completedCourses: data['completedCourses'] ?? 0,
+      totalCourses: data['totalCourses'] ?? 0,
+      nextDueAt: data['nextDueAt'] != null
+          ? DateTime.parse(data['nextDueAt'])
+          : null,
+      
+    );
+
+    // insert at the top of the list (triggers Obx)
+    memberClasses.insert(0, newClass);
+  }
+
 }

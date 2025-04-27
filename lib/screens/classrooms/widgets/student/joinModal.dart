@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/controllers/class_controller.dart';
 
 class JoinClassroomModal extends StatefulWidget {
   const JoinClassroomModal({Key? key}) : super(key: key);
@@ -11,8 +12,9 @@ class JoinClassroomModal extends StatefulWidget {
 
 class _JoinClassroomModalState extends State<JoinClassroomModal> {
   final TextEditingController codeController = TextEditingController();
+  final ClassController classController = Get.find<ClassController>();
 
-  void _submit() {
+  Future<void> _submit() async {
     final String code = codeController.text.trim();
 
     if (code.isEmpty) {
@@ -25,6 +27,9 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
       return;
     }
 
+    await classController.joinClass(code);
+
+    // 🚀 Here you'd handle actually joining a classroom (API call, DB check, etc.)
     Get.back(); // Close modal
 
     Get.snackbar(
@@ -38,45 +43,45 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isLargeScreen = screenWidth > 800; // More aggressive for iPad 13 inch
+    final bool isTabletOrBigger = screenWidth > 600;
 
     return Center(
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: AlertDialog(
-            backgroundColor: Colors.white.withOpacity(0.07),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+            backgroundColor: Colors.white.withOpacity(0.05),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             contentPadding: EdgeInsets.symmetric(
-              horizontal: isLargeScreen ? 48 : 32,
-              vertical: isLargeScreen ? 48 : 32,
+              horizontal: isTabletOrBigger ? 32 : 24,
+              vertical: isTabletOrBigger ? 32 : 24,
             ),
             content: SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: isLargeScreen ? 600 : double.infinity),
+                constraints: BoxConstraints(
+                    maxWidth: isTabletOrBigger ? 500 : double.infinity),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "Join a Classroom",
-                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: isLargeScreen ? 32 : 26,
+                        fontSize: isTabletOrBigger ? 26 : 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // Code Input
                     _buildTextField(
                       controller: codeController,
                       hintText: "Enter Classroom Code",
-                      isLargeScreen: isLargeScreen,
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 32),
 
                     // Join button
                     SizedBox(
@@ -86,10 +91,10 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
                           padding: EdgeInsets.symmetric(
-                            vertical: isLargeScreen ? 24 : 20,
+                            vertical: isTabletOrBigger ? 20 : 16,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         onPressed: _submit,
@@ -97,7 +102,7 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
                           "Join Classroom",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: isLargeScreen ? 20 : 18,
+                            fontSize: isTabletOrBigger ? 18 : 16,
                           ),
                         ),
                       ),
@@ -115,8 +120,10 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
-    required bool isLargeScreen,
   }) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
+
     return TextField(
       controller: controller,
       style: const TextStyle(color: Colors.white),
@@ -124,17 +131,17 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
         hintText: hintText,
         hintStyle: const TextStyle(color: Colors.white54),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+        fillColor: Colors.white.withOpacity(0.08),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: isLargeScreen ? 24 : 20,
+          horizontal: 16,
+          vertical: isTabletOrBigger ? 20 : 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Colors.white24),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Colors.white24),
         ),
       ),

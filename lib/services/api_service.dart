@@ -350,4 +350,45 @@ class ApiService {
       }),
     );
   }
+
+
+  Future<http.Response> getStudentClasses({required String token}) {
+  final uri = Uri.parse('$_baseUrl/student/classes');
+  return http.get(
+    uri,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+}
+
+
+  Future<http.Response> joinClass({
+    required String token,
+    required String code,
+  }) {
+    final uri = Uri.parse('$_baseUrl/class/join');
+    return http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'code': code}),
+    );
+  }
+
+
+  Future<http.Response> getUpcomingAssignments({required String token}) {
+  final uri = Uri.parse('$_baseUrl/assignments/upcoming');
+  return http.get(
+    uri,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+}
+
 }

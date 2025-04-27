@@ -51,15 +51,11 @@ class StudentController extends GetxController {
     _loadDummyUpcomingEvents();
   }
 
-  void _loadStudentClassrooms() {
-    // Example: enroll the student into the first two classrooms
-    if (classController.classrooms.length >= 2) {
-      classrooms.addAll([
-        classController.classrooms[0],
-        classController.classrooms[1],
-      ]);
-    }
-  }
+void _loadStudentClassrooms() async {
+  await classController.loadStudentClasses();
+  classrooms.assignAll(classController.classrooms);
+}
+
 
   void _loadDummyUpcomingEvents() {
     upcomingEvents.addAll([
@@ -94,3 +90,7 @@ class StudentController extends GetxController {
     ]);
   }
 }
+
+
+
+

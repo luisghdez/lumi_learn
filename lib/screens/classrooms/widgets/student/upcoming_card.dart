@@ -1,22 +1,17 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
 class UpcomingCard extends StatelessWidget {
   final String eventTitle;
   final String className;
-  final String dueDateText; // Example: "Due Apr 27"
-  final String daysLeftText; // Example: "3 days left"
+  final DateTime dueAt; // 🆕 Real DateTime
   final Color sideColor;
-  final VoidCallback onTap;
 
   const UpcomingCard({
     Key? key,
     required this.eventTitle,
     required this.className,
-    required this.dueDateText,
-    required this.daysLeftText,
+    required this.dueAt, // 🆕
     required this.sideColor,
-    required this.onTap,
   }) : super(key: key);
 
   @override
@@ -27,8 +22,12 @@ class UpcomingCard extends StatelessWidget {
     final double badgeFontSize = isTablet ? 14 : 12;
     final double daysLeftFontSize = isTablet ? 14 : 12;
 
+    final now = DateTime.now();
+    final int daysLeft = dueAt.difference(now).inDays;
+    final String dueDateText = _formatDueDate(dueAt);
+    final String daysLeftText = _formatDaysLeft(daysLeft);
+
     return GestureDetector(
-      onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
@@ -53,8 +52,8 @@ class UpcomingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
-                // Event Title
+
+                // Class Name
                 Text(
                   className,
                   style: TextStyle(
@@ -64,8 +63,8 @@ class UpcomingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                
-                // Event Subtitle
+
+                // Event Title
                 Text(
                   eventTitle,
                   style: TextStyle(
@@ -75,7 +74,7 @@ class UpcomingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Due Date and Days Left Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,5 +109,28 @@ class UpcomingCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDueDate(DateTime dueDate) {
+    // Example: "Due Apr 27"
+    return "Due ${_monthName(dueDate.month)} ${dueDate.day}";
+  }
+
+  String _formatDaysLeft(int daysLeft) {
+    if (daysLeft == 0) {
+      return "Today";
+    } else if (daysLeft == 1) {
+      return "Tomorrow";
+    } else {
+      return "$daysLeft days left";
+    }
+  }
+
+  String _monthName(int monthNumber) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[monthNumber - 1];
   }
 }

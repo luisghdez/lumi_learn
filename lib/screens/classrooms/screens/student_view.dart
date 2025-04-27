@@ -35,6 +35,9 @@ final StudentController studentController = Get.put(StudentController());
     final double horizontalPadding = _getHorizontalPadding(context);
     final double topScrollViewPadding = MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
+    if (classController.upcomingAssignments.isEmpty) {
+    classController.loadUpcomingAssignments();
+  }
 
     final bool isTablet = MediaQuery.of(context).size.width >= _tabletBreakpoint;
 
@@ -204,36 +207,33 @@ Widget _buildClassrooms() {
   }
 }
 
-  Widget _buildUpcoming() {
-    final bool hasUpcoming = studentController.upcomingEvents.isNotEmpty;
+Widget _buildUpcoming() {
+  final bool hasUpcoming = classController.upcomingAssignments.isNotEmpty;
 
-    if (!hasUpcoming) {
-      return Container(
-        height: 300,
-        alignment: Alignment.center,
-        child: const Text(
-          "No Upcoming Events",
-          style: TextStyle(color: Colors.white, fontSize: 18),
-        ),
-      );
-    }
-
-    return Column(
-      children: studentController.upcomingEvents.map((event) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: UpcomingCard(
-            eventTitle: event.eventTitle,
-            className: event.className,
-            dueDateText: event.dueDateText,
-            daysLeftText: event.daysLeftText,
-            sideColor: event.sideColor,
-            onTap: () {
-              // Optional tap logic
-            },
-          ),
-        );
-      }).toList(),
+  if (!hasUpcoming) {
+    return Container(
+      height: 300,
+      alignment: Alignment.center,
+      child: const Text(
+        "No Upcoming Events",
+        style: TextStyle(color: Colors.white, fontSize: 18),
+      ),
     );
   }
+
+  return Column(
+    children: classController.upcomingAssignments.map((assignment) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: UpcomingCard(
+          eventTitle: assignment.courseTitle,    // From backend
+          className: assignment.className,        // From backend
+          dueAt: assignment.dueAt,                // From backend
+          sideColor: Colors.blueAccent,           // 🎨 Static or dynamic color
+        ),
+      );
+    }).toList(),
+  );
+}
+
 }
