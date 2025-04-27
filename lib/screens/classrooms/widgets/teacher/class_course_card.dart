@@ -176,8 +176,10 @@ class ClassroomCardBox extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             onPressed: () {
-                              Get.to(() => const CourseCreation(),
-                                  transition: Transition.fadeIn);
+                              Get.to(
+                                () => CourseCreation(classId: classroomData.id),
+                                transition: Transition.fadeIn,
+                              );
                             },
                             icon: const Icon(Icons.add, color: Colors.white),
                             label: const Text(

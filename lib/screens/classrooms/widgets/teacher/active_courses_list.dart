@@ -126,13 +126,6 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
-                '${course.avgProgress}%',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ],
           ),
         ),

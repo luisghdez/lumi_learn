@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
@@ -10,7 +11,8 @@ import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
 class CourseCreation extends StatefulWidget {
-  const CourseCreation({Key? key}) : super(key: key);
+  final String? classId;
+  const CourseCreation({Key? key, this.classId}) : super(key: key);
 
   @override
   State<CourseCreation> createState() => _CourseCreationState();
@@ -22,6 +24,24 @@ class _CourseCreationState extends State<CourseCreation> {
   String text = "";
   String courseTitle = "";
   String courseDescription = "";
+  DateTime? _dueDate;
+
+  Future<void> _pickDueDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(Duration(days: 1)),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+    );
+    if (date == null) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (time == null) return;
+    setState(() => _dueDate =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute));
+  }
 
   /// Compute total items based on selected files, images, and whether text is non-empty.
   int get totalItems =>
@@ -462,6 +482,17 @@ class _CourseCreationState extends State<CourseCreation> {
 
                 const Divider(height: 40),
 
+                if (widget.classId != null) ...[
+                  _buildSectionHeader(
+                    icon: Icons.calendar_month,
+                    title: "Due Date",
+                    context: context,
+                  ),
+                  // const SizedBox(height: 24),
+                  _buildDueDateDropZone(),
+                  const Divider(height: 40),
+                ],
+
                 /// SUMMARY OF SELECTED ITEMS
                 if (totalItems > 0)
                   Container(
@@ -561,6 +592,8 @@ class _CourseCreationState extends State<CourseCreation> {
                           title: courseTitle,
                           description: courseDescription,
                           files: [...selectedFiles, ...selectedImages],
+                          dueDate: _dueDate,
+                          classId: widget.classId,
                           content: text,
                         )
                             .then((result) {
@@ -685,6 +718,54 @@ class _CourseCreationState extends State<CourseCreation> {
               Text(
                 subLabel,
                 style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Add this function for the Due Date Drop Zone
+  Widget _buildDueDateDropZone() {
+    return GestureDetector(
+      onTap: _pickDueDate, // Correct way to call the function
+      child: Container(
+        height: 98,
+        margin: const EdgeInsets.only(top: 8),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: greyBorder,
+            style: BorderStyle.solid,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[1000],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  children: [
+                    TextSpan(
+                      text: _dueDate == null ? "Click to set " : "Due Date: ",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    TextSpan(
+                      text: _dueDate == null
+                          ? "due date"
+                          : DateFormat.yMd().add_jm().format(_dueDate!),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                "Set a due date for this course",
+                style: TextStyle(fontSize: 10, color: Colors.grey),
               ),
             ],
           ),

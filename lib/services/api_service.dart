@@ -8,9 +8,8 @@ import 'dart:io';
 import 'package:lumi_learn_app/models/leaderboard_model.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:3000';
-  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
-  // change before push
+  // static const String _baseUrl = 'http://localhost:3000';
+  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,
@@ -18,6 +17,8 @@ class ApiService {
     required String description,
     required List<File> files,
     required String content,
+    String? classId,
+    DateTime? dueDate,
   }) async {
     final uri = Uri.parse('$_baseUrl/courses');
     var request = http.MultipartRequest('POST', uri);
@@ -29,6 +30,17 @@ class ApiService {
     request.fields['title'] = title;
     request.fields['description'] = description;
     request.fields['content'] = content;
+
+    if (classId != null) {
+      request.fields['classId'] = classId;
+    }
+    if (dueDate != null) {
+      // send in ISO 8601 or whatever your backend expects
+      request.fields['dueDate'] = dueDate.toIso8601String();
+    }
+
+    print("due date : ${request.fields['dueDate']}");
+    print("classId : ${request.fields['classId']}");
 
     // Add files with automatic MIME detection
     for (File file in files) {
@@ -313,10 +325,10 @@ class ApiService {
           headers: {'Authorization': 'Bearer $token'});
 
 // GET /class/:id/progress
-  Future<http.Response> getClassProgress(
-          {required String token, required String classId}) =>
-      http.get(Uri.parse('$_baseUrl/class/$classId/progress'),
-          headers: {'Authorization': 'Bearer $token'});
+  // Future<http.Response> getClassProgress(
+  //         {required String token, required String classId}) =>
+  //     http.get(Uri.parse('$_baseUrl/class/$classId/progress'),
+  //         headers: {'Authorization': 'Bearer $token'});
 
   Future<http.Response> createClassroom({
     required String token,

@@ -211,33 +211,51 @@ class ClassController extends GetxController {
     final token = await _auth.getIdToken();
     if (token == null) return;
 
+    // 1) Get the raw list of courses
     final coursesRes =
         await _api.getClassCourses(token: token, classId: classId);
-    if (coursesRes.statusCode != 200) return;
-    final courses = jsonDecode(coursesRes.body);
+    if (coursesRes.statusCode != 200) {
+      return;
+    }
+    final List<dynamic> courses = jsonDecode(coursesRes.body);
 
-    final progRes = await _api.getClassProgress(token: token, classId: classId);
-    if (progRes.statusCode != 200) return;
-    final rows = jsonDecode(progRes.body);
-
-    final bucket = <String, List<int>>{};
-    for (var row in rows) {
-      final cid = row['courseId'] as String;
-      final pct = row['completion'] as int;
-      bucket.putIfAbsent(cid, () => []).add(pct);
+    // 2) Instead of the broken progress endpoint, fetch students (each has a 'progress' list)
+    final stuRes = await _api.getClassStudents(token: token, classId: classId);
+    List<dynamic> students = [];
+    if (stuRes.statusCode == 200) {
+      students = jsonDecode(stuRes.body);
     }
 
-    classCourses[classId] = courses.map<ClassCourse>((c) {
+    // 3) Build a bucket: courseId → [ pct1, pct2, pct3… ]
+    final bucket = <String, List<int>>{};
+    for (final stu in students) {
+      final progList = stu['progress'] as List<dynamic>;
+      for (final p in progList) {
+        final cid = p['courseId'] as String;
+        final total = p['totalLessons'] as int;
+        final done = p['completedLessons'] as int;
+        final pct = total > 0 ? (done * 100 ~/ total) : 0;
+        bucket.putIfAbsent(cid, () => []).add(pct);
+      }
+    }
+
+    // 4) Map your courses → ClassCourse, averaging each bucket
+    final List<ClassCourse> mapped = courses.map<ClassCourse>((c) {
       final cid = c['id'] as String;
       final title = c['title'] as String;
       final arr = bucket[cid] ?? [];
-      final avg = arr.isEmpty ? 0 : (arr.reduce((a, b) => a + b) ~/ arr.length);
+      final avg = arr.isEmpty ? 0 : arr.reduce((a, b) => a + b) ~/ arr.length;
+
       return ClassCourse(
         courseName: title,
         avgProgress: avg,
         color: Colors.greenAccent,
       );
     }).toList();
+
+    // 5) Push it into your observable map & trigger UI update
+    classCourses[classId] = mapped;
+    classCourses.refresh();
   }
 
   Color _colorFromHex(String hex) {
