@@ -13,8 +13,8 @@ class Classroom {
   final int coursesCount;
   final int newSubmissions;
   final Color sideColor;
-  final String inviteCode; // new
-  final String ownerName; // new
+  final String inviteCode;
+  final String ownerName;
 
   Classroom({
     required this.id,
@@ -31,11 +31,11 @@ class Classroom {
 
 class Submission {
   final String classId;
-  final String submissionTitle; // e.g. lessonId or formatted name
-  final String studentName; // userId or you can map to real name
-  final String className; // ← new
-  final String timeAgo; // completedAt string (or formatted)
-  final Color sideColor; // ← new
+  final String submissionTitle;
+  final String studentName;
+  final String className;
+  final String timeAgo;
+  final Color sideColor;
 
   Submission({
     required this.classId,
@@ -56,7 +56,7 @@ class StudentProgress {
 
 class CourseProgress {
   final String courseName;
-  final int progress; // 0–100
+  final int progress;
   final Color color;
 
   CourseProgress({
@@ -68,7 +68,7 @@ class CourseProgress {
 
 class ClassCourse {
   final String courseName;
-  final int avgProgress; // 0–100
+  final int avgProgress;
   final Color color;
 
   ClassCourse({
@@ -77,25 +77,20 @@ class ClassCourse {
     required this.color,
   });
 }
-// ────────────────────────────────────────────────────────────────────────┘
 
-// ✅ Define Course model for classroomCourses
 class Course {
   final String title;
   final String imagePath;
   final int completedLessons;
   final int totalLessons;
-  final DateTime scheduledDate; // 🆕 Add this!
-
-
+  final DateTime scheduledDate;
 
   Course({
     required this.title,
     required this.imagePath,
     required this.completedLessons,
     required this.totalLessons,
-    required this.scheduledDate, // 🆕
-
+    required this.scheduledDate,
   });
 }
 
@@ -107,8 +102,6 @@ class ClassController extends GetxController {
   var recentSubmissions = <Submission>[].obs;
   var studentProgress = <String, List<StudentProgress>>{}.obs;
   var classCourses = <String, List<ClassCourse>>{}.obs;
-
-  // 🆕 Added classroomCourses properly
   RxMap<String, List<Course>> classroomCourses = <String, List<Course>>{}.obs;
 
   @override
@@ -141,7 +134,7 @@ class ClassController extends GetxController {
         subtitle: item['identifier'],
         studentsCount: item['studentCount'],
         coursesCount: item['courseCount'],
-        newSubmissions: 0, // updated below
+        newSubmissions: 0,
         sideColor: _colorFromHex(colorHex),
         inviteCode: item['inviteCode'],
         ownerName: item['ownerName'] ?? 'Unknown',
@@ -160,20 +153,17 @@ class ClassController extends GetxController {
 
     final List data = jsonDecode(res.body);
     recentSubmissions.assignAll(data.map((item) {
-      // parse the hex color code
       final rawColor = item['classColor'] as String? ?? '#4A90E2';
       final sideColor = _colorFromHex(rawColor);
-
-      // format the lessonId into a nicer title if needed
       final submissionTitle = item['lessonId'];
 
       return Submission(
         classId: item['classId'],
         submissionTitle: submissionTitle,
-        studentName: item['userId'], // or map ID→name separately
-        className: item['className'], // now available
-        timeAgo: item['completedAt'], // or turn into “2h ago”
-        sideColor: sideColor, // class color
+        studentName: item['userId'],
+        className: item['className'],
+        timeAgo: item['completedAt'],
+        sideColor: sideColor,
       );
     }).toList());
   }
@@ -217,22 +207,17 @@ class ClassController extends GetxController {
     final token = await _auth.getIdToken();
     if (token == null) return;
 
-    // 1) Get the raw list of courses
     final coursesRes =
         await _api.getClassCourses(token: token, classId: classId);
-    if (coursesRes.statusCode != 200) {
-      return;
-    }
+    if (coursesRes.statusCode != 200) return;
     final List<dynamic> courses = jsonDecode(coursesRes.body);
 
-    // 2) Instead of the broken progress endpoint, fetch students (each has a 'progress' list)
     final stuRes = await _api.getClassStudents(token: token, classId: classId);
     List<dynamic> students = [];
     if (stuRes.statusCode == 200) {
       students = jsonDecode(stuRes.body);
     }
 
-    // 3) Build a bucket: courseId → [ pct1, pct2, pct3… ]
     final bucket = <String, List<int>>{};
     for (final stu in students) {
       final progList = stu['progress'] as List<dynamic>;
@@ -245,7 +230,6 @@ class ClassController extends GetxController {
       }
     }
 
-    // 4) Map your courses → ClassCourse, averaging each bucket
     final List<ClassCourse> mapped = courses.map<ClassCourse>((c) {
       final cid = c['id'] as String;
       final title = c['title'] as String;
@@ -259,7 +243,6 @@ class ClassController extends GetxController {
       );
     }).toList();
 
-    // 5) Push it into your observable map & trigger UI update
     classCourses[classId] = mapped;
     classCourses.refresh();
   }
@@ -293,9 +276,7 @@ class ClassController extends GetxController {
           imagePath: 'assets/galaxies/galaxy10.png',
           completedLessons: 1,
           totalLessons: 3,
-          scheduledDate: DateTime.now().add(Duration(days: 1)), // tomorrow
-
-
+          scheduledDate: DateTime.now().add(Duration(days: 1)),
         ),
       ],
       'Introduction to Programming': [
@@ -304,16 +285,16 @@ class ClassController extends GetxController {
           imagePath: 'assets/galaxies/galaxy10.png',
           completedLessons: 4,
           totalLessons: 6,
-          scheduledDate: DateTime.now().add(Duration(days: 1)), // tomorrow
-
+          scheduledDate: DateTime.now().add(Duration(days: 1)),
         ),
       ],
     });
+  }
 
   Future<void> createClassroom({
     required String title,
     required String identifier,
-    required Color sideColor, // still pass in the selected Color
+    required Color sideColor,
   }) async {
     final token = await _auth.getIdToken();
     if (token == null) {
@@ -321,7 +302,6 @@ class ClassController extends GetxController {
       return;
     }
 
-    // 1) Send to your API
     final res = await _api.createClassroom(
       token: token,
       name: title,
@@ -336,11 +316,9 @@ class ClassController extends GetxController {
       return;
     }
 
-    // 2) Parse the response
     final data = jsonDecode(res.body);
     final returnedHex = data['colorCode'] as String? ?? '#4A90E2';
 
-    // 3) Build your Classroom model, converting the hex string back to a Color
     final room = Classroom(
       id: data['id'] as String,
       title: data['name'] as String,
@@ -348,12 +326,11 @@ class ClassController extends GetxController {
       studentsCount: 0,
       coursesCount: 0,
       newSubmissions: 0,
-      sideColor: _colorFromHex(returnedHex), // <-- FIXED
+      sideColor: _colorFromHex(returnedHex),
       inviteCode: data['inviteCode'] as String,
       ownerName: data['ownerName'] ?? 'Unknown',
     );
 
-    // 4) Insert into your list
     classrooms.insert(0, room);
   }
 }

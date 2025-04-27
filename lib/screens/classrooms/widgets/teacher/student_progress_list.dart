@@ -110,7 +110,7 @@ class _StudentProgressListState extends State<StudentProgressList> {
     });
   }
 
-  Widget _buildStudentItem(BuildContext context, StudentProgress progress) {
+  Widget _buildStudentItem(StudentProgress progress) {
     final RxBool isExpanded = false.obs;
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTabletOrBigger = screenWidth > 600;
