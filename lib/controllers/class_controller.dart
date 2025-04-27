@@ -79,6 +79,26 @@ class ClassCourse {
 }
 // ────────────────────────────────────────────────────────────────────────┘
 
+// ✅ Define Course model for classroomCourses
+class Course {
+  final String title;
+  final String imagePath;
+  final int completedLessons;
+  final int totalLessons;
+  final DateTime scheduledDate; // 🆕 Add this!
+
+
+
+  Course({
+    required this.title,
+    required this.imagePath,
+    required this.completedLessons,
+    required this.totalLessons,
+    required this.scheduledDate, // 🆕
+
+  });
+}
+
 class ClassController extends GetxController {
   final ApiService _api = ApiService();
   final AuthController _auth = Get.find<AuthController>();
@@ -87,6 +107,9 @@ class ClassController extends GetxController {
   var recentSubmissions = <Submission>[].obs;
   var studentProgress = <String, List<StudentProgress>>{}.obs;
   var classCourses = <String, List<ClassCourse>>{}.obs;
+
+  // 🆕 Added classroomCourses properly
+  RxMap<String, List<Course>> classroomCourses = <String, List<Course>>{}.obs;
 
   @override
   void onInit() {
@@ -245,6 +268,47 @@ class ClassController extends GetxController {
     final clean = hex.replaceAll('#', '');
     return Color(int.parse('FF$clean', radix: 16));
   }
+
+  void _loadDummyClassroomCourses() {
+    classroomCourses.addAll({
+      'Physics 101': [
+        Course(
+          title: 'Calculus Lesson',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 3,
+          totalLessons: 5,
+          scheduledDate: DateTime.now(),
+        ),
+        Course(
+          title: 'Physics Basics',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 2,
+          totalLessons: 4,
+          scheduledDate: DateTime.now(),
+        ),
+      ],
+      'Chemistry Advanced': [
+        Course(
+          title: 'Organic Chemistry',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 1,
+          totalLessons: 3,
+          scheduledDate: DateTime.now().add(Duration(days: 1)), // tomorrow
+
+
+        ),
+      ],
+      'Introduction to Programming': [
+        Course(
+          title: 'Intro to Python',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 4,
+          totalLessons: 6,
+          scheduledDate: DateTime.now().add(Duration(days: 1)), // tomorrow
+
+        ),
+      ],
+    });
 
   Future<void> createClassroom({
     required String title,

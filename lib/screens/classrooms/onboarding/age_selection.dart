@@ -41,14 +41,27 @@ class AgeSelectionScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  Text(
-                    "How old are you?",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: titleFontSize,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.none,
-                        ),
+                  Row(
+                    children: [
+                      // 🔙 Back Button
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          Get.back();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Title
+                      Text(
+                        "How old are you?",
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontSize: titleFontSize,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.none,
+                            ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 32),
                   Expanded(
