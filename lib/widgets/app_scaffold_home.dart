@@ -18,11 +18,9 @@ class AppScaffoldHome extends StatelessWidget {
       appBar: appBar,
       floatingActionButton: floatingActionButton,
       backgroundColor: Colors.black,
-
-      // Wrap the body in Padding
       body: Stack(
         children: [
-          // Background image
+          // Background image stretched fully
           Positioned.fill(
             child: Image.asset(
               'assets/images/black_moons_lighter.png',
@@ -32,10 +30,17 @@ class AppScaffoldHome extends StatelessWidget {
           SafeArea(
             bottom: false,
             child: Padding(
-              // not bottom padding
               padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
-              // padding: const EdgeInsets.all(16.0), // or whatever spacing
-              child: body,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: body,
+                  );
+                },
+              ),
             ),
           ),
         ],

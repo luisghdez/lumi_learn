@@ -25,84 +25,98 @@ class _StudentProgressListState extends State<StudentProgressList> {
   @override
   void initState() {
     super.initState();
-    // Kick off the API call
     widget.classController.loadStudentProgress(widget.classId);
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Obx(() {
-      // Grab the list for this class, or empty if still loading
       final List<StudentProgress> students =
           widget.classController.studentProgress[widget.classId] ?? [];
 
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              border: Border.all(color: Colors.white24),
-              borderRadius: BorderRadius.circular(14),
+      return Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+            constraints: BoxConstraints(
+              minWidth: 300,
+              maxWidth: MediaQuery.of(context).size.width > 1000
+                  ? 1000
+                  : 800,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title and toggle
-                GestureDetector(
-                  onTap: () => widget.showStudents.toggle(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Student Progress",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                border: Border.all(color: Colors.white24),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title and toggle
+                    GestureDetector(
+                      onTap: () => widget.showStudents.toggle(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Student Progress",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth > 600 ? 20 : 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(
+                              widget.showStudents.value
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    if (widget.showStudents.value) ...[
+                      const Divider(color: Colors.white24, thickness: 1),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: custom.SearchBar(),
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (students.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            "No students yet or loading…",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          height: 400,
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: students.length,
+                            itemBuilder: (context, index) {
+                              return _buildStudentItem(students[index], screenWidth);
+                            },
                           ),
                         ),
-                        Icon(
-                          widget.showStudents.value
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
-
-                if (widget.showStudents.value) ...[
-                  const Divider(color: Colors.white24, thickness: 1),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: custom.SearchBar(),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // If still loading or no students:
-                  if (students.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "No students yet or loading…",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    )
-                  else
-                    // List each student
-                    ...students
-                        .map((progress) => _buildStudentItem(progress))
-                        .toList(),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -110,18 +124,15 @@ class _StudentProgressListState extends State<StudentProgressList> {
     });
   }
 
-  Widget _buildStudentItem(StudentProgress progress) {
+  Widget _buildStudentItem(StudentProgress progress, double screenWidth) {
     final RxBool isExpanded = false.obs;
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isTabletOrBigger = screenWidth > 600;
 
     return Obx(() => Column(
           children: [
             GestureDetector(
               onTap: () => isExpanded.toggle(),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 width: double.infinity,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -129,9 +140,9 @@ class _StudentProgressListState extends State<StudentProgressList> {
                     Flexible(
                       child: Text(
                         progress.studentName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: screenWidth > 600 ? 18 : 16,
                           fontWeight: FontWeight.bold,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -149,8 +160,7 @@ class _StudentProgressListState extends State<StudentProgressList> {
             ),
             if (isExpanded.value)
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: progress.courseProgress.map((course) {
@@ -159,10 +169,20 @@ class _StudentProgressListState extends State<StudentProgressList> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(course.courseName,
-                              style: const TextStyle(color: Colors.white70)),
-                          Text('${course.progress}%',
-                              style: const TextStyle(color: Colors.white)),
+                          Flexible(
+                            child: Text(
+                              course.courseName,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${course.progress}%',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ],
                       ),
                     );
@@ -172,8 +192,8 @@ class _StudentProgressListState extends State<StudentProgressList> {
             const Divider(
               color: Colors.white24,
               thickness: 1,
-              indent: 16,
-              endIndent: 16,
+              indent: 8,
+              endIndent: 8,
             ),
           ],
         ));

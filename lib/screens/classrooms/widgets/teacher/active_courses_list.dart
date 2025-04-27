@@ -25,81 +25,108 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
   @override
   void initState() {
     super.initState();
-    // Kick off API call to load courses & progress for this class
     widget.classController.loadClassCourses(widget.classId);
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Obx(() {
-      // grab the list for this class, or empty if still loading
       final courses = widget.classController.classCourses[widget.classId] ?? [];
 
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              border: Border.all(color: Colors.white24),
-              borderRadius: BorderRadius.circular(14),
+      return Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+            constraints: BoxConstraints(
+              minWidth: 300,
+              maxWidth: MediaQuery.of(context).size.width > 1000
+                  ? 1000
+                  : 800,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title & expand toggle
-                GestureDetector(
-                  onTap: () => widget.showCourses.toggle(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Active Class Courses",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                border: Border.all(color: Colors.white24),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () => widget.showCourses.toggle(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Active Class Courses",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth > 600 ? 20 : 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(
+                              widget.showCourses.value
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    if (widget.showCourses.value) ...[
+                      const Divider(color: Colors.white24, thickness: 1),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: custom.SearchBar(),
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (courses.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Text(
+                              "No courses assigned yet…",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: screenWidth > 600 ? 16 : 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          height: 400,
+                          child: ListView.separated(
+                            padding: EdgeInsets.zero,
+                            itemCount: courses.length,
+                            separatorBuilder: (_, __) => const Divider(
+                              color: Colors.white24,
+                              thickness: 1,
+                              indent: 8,
+                              endIndent: 8,
+                            ),
+                            itemBuilder: (context, index) {
+                              return _buildCourseItem(courses[index], screenWidth);
+                            },
                           ),
                         ),
-                        Icon(
-                          widget.showCourses.value
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
-
-                if (widget.showCourses.value) ...[
-                  const Divider(color: Colors.white24, thickness: 1),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: custom.SearchBar(),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // If no courses yet or loading
-                  if (courses.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "No courses assigned yet…",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    )
-                  else
-                    // list each course + avgProgress
-                    ...courses.map(_buildCourseItem).toList(),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -107,35 +134,24 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
     });
   }
 
-  Widget _buildCourseItem(ClassCourse course) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          width: double.infinity,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  course.courseName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+  Widget _buildCourseItem(ClassCourse course, double screenWidth) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Text(
+              course.courseName,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: screenWidth > 600 ? 18 : 16,
               ),
-            ],
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        const Divider(
-          color: Colors.white24,
-          thickness: 1,
-          indent: 16,
-          endIndent: 16,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

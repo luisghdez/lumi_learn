@@ -25,7 +25,6 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
       return;
     }
 
-    // 🚀 Here you'd handle actually joining a classroom (API call, DB check, etc.)
     Get.back(); // Close modal
 
     Get.snackbar(
@@ -39,43 +38,45 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isTabletOrBigger = screenWidth > 600;
+    final bool isLargeScreen = screenWidth > 800; // More aggressive for iPad 13 inch
 
     return Center(
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
           child: AlertDialog(
-            backgroundColor: Colors.white.withOpacity(0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            backgroundColor: Colors.white.withOpacity(0.07),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
             contentPadding: EdgeInsets.symmetric(
-              horizontal: isTabletOrBigger ? 32 : 24,
-              vertical: isTabletOrBigger ? 32 : 24,
+              horizontal: isLargeScreen ? 48 : 32,
+              vertical: isLargeScreen ? 48 : 32,
             ),
             content: SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: isTabletOrBigger ? 500 : double.infinity),
+                constraints: BoxConstraints(maxWidth: isLargeScreen ? 600 : double.infinity),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "Join a Classroom",
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: isTabletOrBigger ? 26 : 22,
+                        fontSize: isLargeScreen ? 32 : 26,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Code Input
                     _buildTextField(
                       controller: codeController,
                       hintText: "Enter Classroom Code",
+                      isLargeScreen: isLargeScreen,
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
 
                     // Join button
                     SizedBox(
@@ -85,10 +86,10 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
                           padding: EdgeInsets.symmetric(
-                            vertical: isTabletOrBigger ? 20 : 16,
+                            vertical: isLargeScreen ? 24 : 20,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         onPressed: _submit,
@@ -96,7 +97,7 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
                           "Join Classroom",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: isTabletOrBigger ? 18 : 16,
+                            fontSize: isLargeScreen ? 20 : 18,
                           ),
                         ),
                       ),
@@ -114,10 +115,8 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
+    required bool isLargeScreen,
   }) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isTabletOrBigger = screenWidth > 600;
-
     return TextField(
       controller: controller,
       style: const TextStyle(color: Colors.white),
@@ -125,17 +124,17 @@ class _JoinClassroomModalState extends State<JoinClassroomModal> {
         hintText: hintText,
         hintStyle: const TextStyle(color: Colors.white54),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.08),
+        fillColor: Colors.white.withOpacity(0.1),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: isTabletOrBigger ? 20 : 18,
+          horizontal: 20,
+          vertical: isLargeScreen ? 24 : 20,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.white24),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.white24),
         ),
       ),
