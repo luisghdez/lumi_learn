@@ -5,10 +5,10 @@ import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/student_controller.dart';
 import 'package:lumi_learn_app/controllers/class_controller.dart';
 
-
 import '../components/home_header.dart';
 import '../widgets/student/studentTab.dart';
-import 'package:lumi_learn_app/screens/classrooms/components/search_bar.dart' as custom;
+import 'package:lumi_learn_app/screens/classrooms/components/search_bar.dart'
+    as custom;
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/classroomsCard.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/emptyState.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/joinModal.dart';
@@ -21,8 +21,8 @@ class StudentView extends StatelessWidget {
   static const double _tabletBreakpoint = 800.0;
 
   final AuthController authController = Get.find();
-final ClassController classController = Get.put(ClassController()); // 👈 ADD THIS
-final StudentController studentController = Get.put(StudentController());
+  final ClassController classController = Get.put(ClassController());
+  final StudentController studentController = Get.put(StudentController());
   final RxInt selectedTabIndex = 0.obs;
 
   double _getHorizontalPadding(BuildContext context) {
@@ -33,13 +33,15 @@ final StudentController studentController = Get.put(StudentController());
   @override
   Widget build(BuildContext context) {
     final double horizontalPadding = _getHorizontalPadding(context);
-    final double topScrollViewPadding = MediaQuery.of(context).padding.top + horizontalPadding;
+    final double topScrollViewPadding =
+        MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
     if (classController.upcomingAssignments.isEmpty) {
-    classController.loadUpcomingAssignments();
-  }
+      classController.loadUpcomingAssignments();
+    }
 
-    final bool isTablet = MediaQuery.of(context).size.width >= _tabletBreakpoint;
+    final bool isTablet =
+        MediaQuery.of(context).size.width >= _tabletBreakpoint;
 
     final TextStyle sectionTitleStyle = isTablet
         ? Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -69,69 +71,75 @@ final StudentController studentController = Get.put(StudentController());
             builder: (context, constraints) {
               final double calculatedMinHeight = math.max(
                 0.0,
-                constraints.maxHeight - topScrollViewPadding - bottomScrollViewPadding,
+                constraints.maxHeight -
+                    topScrollViewPadding -
+                    bottomScrollViewPadding,
               );
 
-              return SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  top: topScrollViewPadding,
-                  bottom: bottomScrollViewPadding,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: calculatedMinHeight),
-                  child: Obx(() => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Home Header
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: HomeHeader(
-                              streakCount: authController.streakCount.value,
-                              xpCount: authController.xpCount.value,
-                              isPremium: authController.isPremium.value,
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-
-                          // Tabs
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: StudentTabs(
-                              selectedIndex: selectedTabIndex.value,
-                              onTabSelected: (index) {
-                                selectedTabIndex.value = index;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Section Title
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: Text(
-                              selectedTabIndex.value == 0 ? 'My Classrooms' : 'Upcoming',
-                              style: sectionTitleStyle,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Search Bar
-                          if (selectedTabIndex.value == 0)
+              return RefreshIndicator(
+                onRefresh: () async {
+                  await studentController.loadStudentClassrooms();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    top: topScrollViewPadding,
+                    bottom: bottomScrollViewPadding,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: calculatedMinHeight),
+                    child: Obx(() => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Home Header
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                              child: const custom.SearchBar(),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: HomeHeader(
+                                streakCount: authController.streakCount.value,
+                                xpCount: authController.xpCount.value,
+                                isPremium: authController.isPremium.value,
+                              ),
                             ),
-                          const SizedBox(height: 12),
+                            const SizedBox(height: 28),
 
-                          // Content Area
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: selectedTabIndex.value == 0
-                                ? _buildClassrooms()
-                                : _buildUpcoming(),
-                          ),
-                        ],
-                      )),
+                            // Tabs
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: StudentTabs(
+                                selectedIndex: selectedTabIndex.value,
+                                onTabSelected: (index) {
+                                  selectedTabIndex.value = index;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Section Title
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: Text(
+                                selectedTabIndex.value == 0
+                                    ? 'My Classrooms'
+                                    : 'Upcoming',
+                                style: sectionTitleStyle,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Content Area
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: selectedTabIndex.value == 0
+                                  ? _buildClassrooms()
+                                  : _buildUpcoming(),
+                            ),
+                          ],
+                        )),
+                  ),
                 ),
               );
             },
@@ -141,99 +149,99 @@ final StudentController studentController = Get.put(StudentController());
     );
   }
 
-Widget _buildClassrooms() {
-  final bool hasClassrooms = studentController.classrooms.isNotEmpty;
+  Widget _buildClassrooms() {
+    final bool hasClassrooms = studentController.classrooms.isNotEmpty;
 
-  if (hasClassrooms) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...studentController.classrooms.map((classroom) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: StudentClassroomCard(
-              classroomData: classroom,
-              onTap: () {
-                // Handle classroom tap for student
-                // For example, navigate to classroom details screen
-                Get.to(() => ClassroomDetails(classroom: classroom));
+    if (hasClassrooms) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...studentController.classrooms.map((classroom) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: StudentClassroomCard(
+                classroomData: classroom,
+                onTap: () async {
+                  await studentController.fetchClassCourses(classroom.id);
+                  // Handle classroom tap for student
+                  // For example, navigate to classroom details screen
+                  Get.to(() => ClassroomDetails(classroom: classroom));
+                },
+              ),
+            );
+          }).toList(),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () {
+                showDialog(
+                  context: Get.context!,
+                  builder: (context) => const JoinClassroomModal(),
+                );
               },
-            ),
-          );
-        }).toList(),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+              child: const Text(
+                'Join New Classroom',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
-            onPressed: () {
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          const SizedBox(height: 24),
+          EmptyClassroomCard(
+            onJoin: () {
               showDialog(
                 context: Get.context!,
                 builder: (context) => const JoinClassroomModal(),
               );
             },
-            child: const Text(
-              'Join New Classroom',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
           ),
-        ),
-      ],
-    );
-  } else {
-    return Column(
-      children: [
-        const SizedBox(height: 24),
-        EmptyClassroomCard(
-          onJoin: () {
-            showDialog(
-              context: Get.context!,
-              builder: (context) => const JoinClassroomModal(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-Widget _buildUpcoming() {
-  final bool hasUpcoming = classController.upcomingAssignments.isNotEmpty;
-
-  if (!hasUpcoming) {
-    return Container(
-      height: 300,
-      alignment: Alignment.center,
-      child: const Text(
-        "No Upcoming Events",
-        style: TextStyle(color: Colors.white, fontSize: 18),
-      ),
-    );
+        ],
+      );
+    }
   }
 
-  return Column(
-    children: classController.upcomingAssignments.map((assignment) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: UpcomingCard(
-          eventTitle: assignment.courseTitle,    // From backend
-          className: assignment.className,        // From backend
-          dueAt: assignment.dueAt,                // From backend
-          sideColor: Colors.blueAccent,           // 🎨 Static or dynamic color
+  Widget _buildUpcoming() {
+    final bool hasUpcoming = classController.upcomingAssignments.isNotEmpty;
+
+    if (!hasUpcoming) {
+      return Container(
+        height: 300,
+        alignment: Alignment.center,
+        child: const Text(
+          "No Upcoming Events",
+          style: TextStyle(color: Colors.white, fontSize: 18),
         ),
       );
-    }).toList(),
-  );
-}
+    }
 
+    return Column(
+      children: classController.upcomingAssignments.map((assignment) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: UpcomingCard(
+            eventTitle: assignment.courseTitle, // From backend
+            className: assignment.className, // From backend
+            dueAt: assignment.dueAt, // From backend
+            sideColor: Colors.blueAccent, // 🎨 Static or dynamic color
+          ),
+        );
+      }).toList(),
+    );
+  }
 }

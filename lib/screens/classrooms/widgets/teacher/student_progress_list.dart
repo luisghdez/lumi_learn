@@ -42,19 +42,18 @@ class _StudentProgressListState extends State<StudentProgressList> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
-            constraints: BoxConstraints(
-              minWidth: 300,
-              maxWidth: MediaQuery.of(context).size.width > 1000
-                  ? 1000
-                  : 800,
-            ),
+              constraints: BoxConstraints(
+                minWidth: 300,
+                maxWidth: MediaQuery.of(context).size.width > 1000 ? 1000 : 800,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
                 border: Border.all(color: Colors.white24),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -62,7 +61,8 @@ class _StudentProgressListState extends State<StudentProgressList> {
                     GestureDetector(
                       onTap: () => widget.showStudents.toggle(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 8),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -87,12 +87,7 @@ class _StudentProgressListState extends State<StudentProgressList> {
 
                     if (widget.showStudents.value) ...[
                       const Divider(color: Colors.white24, thickness: 1),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        child: custom.SearchBar(),
-                      ),
                       const SizedBox(height: 8),
-
                       if (students.isEmpty)
                         Container(
                           padding: const EdgeInsets.all(24),
@@ -109,7 +104,8 @@ class _StudentProgressListState extends State<StudentProgressList> {
                             padding: EdgeInsets.zero,
                             itemCount: students.length,
                             itemBuilder: (context, index) {
-                              return _buildStudentItem(students[index], screenWidth);
+                              return _buildStudentItem(
+                                  students[index], screenWidth);
                             },
                           ),
                         ),
@@ -132,7 +128,8 @@ class _StudentProgressListState extends State<StudentProgressList> {
             GestureDetector(
               onTap: () => isExpanded.toggle(),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 width: double.infinity,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,7 +157,8 @@ class _StudentProgressListState extends State<StudentProgressList> {
             ),
             if (isExpanded.value)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: progress.courseProgress.map((course) {
