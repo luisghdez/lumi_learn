@@ -123,15 +123,6 @@ class TeacherView extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
 
-                            // Search Bar
-                            if (selectedTabIndex.value == 0)
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: horizontalPadding),
-                                child: const custom.SearchBar(),
-                              ),
-                            const SizedBox(height: 12),
-
                             // Content Area
                             Padding(
                               padding: EdgeInsets.symmetric(

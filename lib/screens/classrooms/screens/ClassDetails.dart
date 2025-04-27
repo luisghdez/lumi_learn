@@ -1,36 +1,51 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/class_controller.dart';
+import 'package:lumi_learn_app/controllers/student_controller.dart';
+import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/ClassroomHeader.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/WeeklySchedule.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/ClassCourseCard.dart';
+import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
+import 'package:lumi_learn_app/screens/home/components/category_card.dart';
+import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:crypto/crypto.dart';
 
-class ClassroomDetails extends StatelessWidget {
+class ClassroomDetails extends StatefulWidget {
   final Classroom classroom;
+  const ClassroomDetails({Key? key, required this.classroom}) : super(key: key);
 
-  ClassroomDetails({Key? key, required this.classroom}) : super(key: key);
+  @override
+  _ClassroomDetailsState createState() => _ClassroomDetailsState();
+}
 
+class _ClassroomDetailsState extends State<ClassroomDetails> {
   static const double _tabletBreakpoint = 800.0;
-  final ClassController classController = Get.find(); // Find existing controller
+  final StudentController studentController = Get.find();
+  final CourseController courseController = Get.find();
+
+  @override
+  void initState() {
+    super.initState();
+    // 1) Load courses for this class as soon as the widget mounts
+    studentController.fetchClassCourses(widget.classroom.id);
+  }
 
   double _getHorizontalPadding(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return screenWidth > _tabletBreakpoint ? 32.0 : 16.0;
+    final w = MediaQuery.of(context).size.width;
+    return w > _tabletBreakpoint ? 32.0 : 16.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    final double horizontalPadding = _getHorizontalPadding(context);
-
-    // Fetch the list of courses for this classroom
-    final List<Course> courses = classController.classroomCourses[classroom.title] ?? [];
+    final pad = _getHorizontalPadding(context);
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/black_moons_lighter.png',
@@ -38,32 +53,24 @@ class ClassroomDetails extends StatelessWidget {
               alignment: Alignment.topCenter,
             ),
           ),
-          // Content
           Positioned.fill(
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 24),
+                padding: EdgeInsets.symmetric(horizontal: pad, vertical: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🛠 BACK BUTTON - outside the card
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Get.back(),
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                          color: Colors.white,
-                          iconSize: 24,
-                        ),
-                      ],
+                    // back button
+                    IconButton(
+                      onPressed: () => Get.back(),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      color: Colors.white,
                     ),
                     const SizedBox(height: 8),
-
-                    // 🛠 CLASSROOM CARD
-                    ClassroomHeaderCard(classroom: classroom),
+                    // header card
+                    ClassroomHeaderCard(classroom: widget.classroom),
                     const SizedBox(height: 32),
-
-                    // WEEKLY SCHEDULE
+                    // schedule
                     const Text(
                       "Class Weekly Schedule",
                       style: TextStyle(
@@ -73,11 +80,9 @@ class ClassroomDetails extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     const WeeklySchedule(),
                     const SizedBox(height: 32),
-
-                    // MY CLASS COURSES
+                    // courses
                     const Text(
                       "My Class Courses",
                       style: TextStyle(
@@ -87,18 +92,61 @@ class ClassroomDetails extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // 2) reactive list
+                    Obx(() {
+                      final courses = studentController
+                              .classroomCourses[widget.classroom.id] ??
+                          [];
+                      return Column(
+                        children: courses.map((course) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: CategoryCard(
+                              title: course.title,
+                              completedLessons: 0,
+                              totalLessons: 0,
+                              imagePath: getGalaxyForCourse(course.id),
+                              onTap: () async {
+                                // Prevent navigation if still loading
+                                if (false == true) return;
 
-                    Column(
-                      children: courses.map((course) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: ClassCourseCard(
-                            imagePath: 'assets/galaxies/galaxy10.png',
-                            courseName: course.title,
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                                courseController.setSelectedCourseId(
+                                  course.id,
+                                  course.title,
+                                );
+
+                                Get.to(
+                                  () => LoadingScreen(),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 500),
+                                );
+                                await Future.wait([
+                                  Future.delayed(
+                                      const Duration(milliseconds: 1000)),
+                                  precacheImage(
+                                    const AssetImage(
+                                        'assets/images/milky_way.png'),
+                                    context,
+                                  ),
+                                ]);
+
+                                while (courseController.isLoading.value) {
+                                  await Future.delayed(
+                                      const Duration(milliseconds: 100));
+                                }
+
+                                // Navigate to CourseOverviewScreen
+                                Get.offAll(
+                                  () => const CourseOverviewScreen(),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 500),
+                                );
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -112,10 +160,10 @@ class ClassroomDetails extends StatelessWidget {
 }
 
 // // This helper is unchanged – it just picks a galaxy image based on a hash of the courseId.
-// String getGalaxyForCourse(String courseId) {
-//   final bytes = utf8.encode(courseId);
-//   final hash = md5.convert(bytes).toString();
-//   final numericHash = int.parse(hash.substring(0, 6), radix: 16);
-//   final galaxyIndex = (numericHash % 17) + 1; // 1-17 for 17 images
-//   return 'assets/galaxies/galaxy$galaxyIndex.png';
-// }
+String getGalaxyForCourse(String courseId) {
+  final bytes = utf8.encode(courseId);
+  final hash = md5.convert(bytes).toString();
+  final numericHash = int.parse(hash.substring(0, 6), radix: 16);
+  final galaxyIndex = (numericHash % 17) + 1; // 1-17 for 17 images
+  return 'assets/galaxies/galaxy$galaxyIndex.png';
+}

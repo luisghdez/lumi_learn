@@ -21,7 +21,6 @@ class Classroom {
   final int totalCourses;
   final DateTime? nextDueAt;
 
-
   Classroom({
     required this.id,
     required this.title,
@@ -37,7 +36,6 @@ class Classroom {
     this.nextDueAt, // 🆕
   });
 }
-
 
 class UpcomingAssignment {
   final String classId;
@@ -153,7 +151,8 @@ class ClassController extends GetxController {
     await _loadRecentSubmissions();
   }
 
-    Future<void> loadUpcomingAssignments() async {   // MOVE THIS INSIDE TOO
+  Future<void> loadUpcomingAssignments() async {
+    // MOVE THIS INSIDE TOO
     final token = await _auth.getIdToken();
     if (token == null) {
       Get.snackbar('Error', 'Not authenticated');
@@ -380,57 +379,57 @@ class ClassController extends GetxController {
     final returnedHex = data['colorCode'] as String? ?? '#4A90E2';
 
     final room = Classroom(
-      id: data['id'] as String,
-      title: data['name'] as String,
-      subtitle: data['identifier'] as String,
-      studentsCount: 0,
-      coursesCount: 0,
-      newSubmissions: 0,
-      sideColor: _colorFromHex(returnedHex),
-      inviteCode: data['inviteCode'] as String,
-      ownerName: data['ownerName'] ?? 'Unknown',
-      completedCourses: 0,
-      totalCourses: 0
-    );
+        id: data['id'] as String,
+        title: data['name'] as String,
+        subtitle: data['identifier'] as String,
+        studentsCount: 0,
+        coursesCount: 0,
+        newSubmissions: 0,
+        sideColor: _colorFromHex(returnedHex),
+        inviteCode: data['inviteCode'] as String,
+        ownerName: data['ownerName'] ?? 'Unknown',
+        completedCourses: 0,
+        totalCourses: 0);
 
     classrooms.insert(0, room);
   }
 
-
   Future<void> loadStudentClasses() async {
-  final token = await _auth.getIdToken();
-  if (token == null) {
-    Get.snackbar('Error', 'Not authenticated');
-    return;
+    final token = await _auth.getIdToken();
+    if (token == null) {
+      Get.snackbar('Error', 'Not authenticated');
+      return;
+    }
+
+    final res = await _api.getStudentClasses(token: token);
+    if (res.statusCode != 200) {
+      Get.snackbar('Error', 'Failed to load student classes');
+      return;
+    }
+
+    final List data = jsonDecode(res.body);
+
+    final list = data.map((item) {
+      final colorHex = item['colorCode'] as String? ??
+          '#4A90E2'; // Optional: if you plan to return color
+      return Classroom(
+        id: item['id'],
+        title: item['name'],
+        subtitle: item['identifier'],
+        studentsCount: item['studentCount'],
+        coursesCount: item['courseCount'],
+        newSubmissions: 0,
+        sideColor: _colorFromHex(colorHex),
+        inviteCode:
+            '', // Students don't create classes, so no invite code for them
+        ownerName: '', // Optional: if backend sends owner name you can use it
+        completedCourses: item['completedCourses'] ?? 0,
+        totalCourses: item['totalCourses'] ?? 0,
+      );
+    }).toList();
+
+    classrooms.assignAll(list);
   }
-
-  final res = await _api.getStudentClasses(token: token);
-  if (res.statusCode != 200) {
-    Get.snackbar('Error', 'Failed to load student classes');
-    return;
-  }
-
-  final List data = jsonDecode(res.body);
-
-  final list = data.map((item) {
-    final colorHex = item['colorCode'] as String? ?? '#4A90E2'; // Optional: if you plan to return color
-    return Classroom(
-      id: item['id'],
-      title: item['name'],
-      subtitle: item['identifier'],
-      studentsCount: item['studentCount'],
-      coursesCount: item['courseCount'],
-      newSubmissions: 0,
-      sideColor: _colorFromHex(colorHex),
-      inviteCode: '', // Students don't create classes, so no invite code for them
-      ownerName: '', // Optional: if backend sends owner name you can use it
-      completedCourses: item['completedCourses'] ?? 0,
-      totalCourses: item['totalCourses'] ?? 0,
-    );
-  }).toList();
-
-  classrooms.assignAll(list);
-}
 
   var memberClasses = <Classroom>[].obs;
 
@@ -462,14 +461,11 @@ class ClassController extends GetxController {
       ownerName: data['ownerName'] ?? '',
       completedCourses: data['completedCourses'] ?? 0,
       totalCourses: data['totalCourses'] ?? 0,
-      nextDueAt: data['nextDueAt'] != null
-          ? DateTime.parse(data['nextDueAt'])
-          : null,
-      
+      nextDueAt:
+          data['nextDueAt'] != null ? DateTime.parse(data['nextDueAt']) : null,
     );
 
     // insert at the top of the list (triggers Obx)
     memberClasses.insert(0, newClass);
   }
-
 }

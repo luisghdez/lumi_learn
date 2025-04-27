@@ -41,13 +41,10 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
-            constraints: BoxConstraints(
-              minWidth: 300,
-              maxWidth: MediaQuery.of(context).size.width > 1000
-                  ? 1000
-                  : 800,
-            ),
-
+              constraints: BoxConstraints(
+                minWidth: 300,
+                maxWidth: MediaQuery.of(context).size.width > 1000 ? 1000 : 800,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
                 border: Border.all(color: Colors.white24),
@@ -61,7 +58,8 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
                     GestureDetector(
                       onTap: () => widget.showCourses.toggle(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 8),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -83,15 +81,9 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
                         ),
                       ),
                     ),
-
                     if (widget.showCourses.value) ...[
                       const Divider(color: Colors.white24, thickness: 1),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        child: custom.SearchBar(),
-                      ),
                       const SizedBox(height: 8),
-
                       if (courses.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(24),
@@ -119,7 +111,8 @@ class _ActiveCoursesListState extends State<ActiveCoursesList> {
                               endIndent: 8,
                             ),
                             itemBuilder: (context, index) {
-                              return _buildCourseItem(courses[index], screenWidth);
+                              return _buildCourseItem(
+                                  courses[index], screenWidth);
                             },
                           ),
                         ),
