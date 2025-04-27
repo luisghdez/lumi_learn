@@ -74,6 +74,10 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                         //   label: Constants.leaderboard,
                         // ),
                         BottomNavigationBarItem(
+                          icon: Icon(Icons.school), // Leaderboard (Trophy)
+                          label: Constants.classrooms,
+                        ),
+                        BottomNavigationBarItem(
                           icon: Icon(Icons.person), // Leaderboard (Trophy)
                           label: Constants.profile,
                         ),

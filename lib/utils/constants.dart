@@ -10,6 +10,7 @@ class Constants {
   static const String leaderboard = 'Leaderboard';
   static const String notifications = 'Notifications';
   static const String logout = 'Logout';
+  static const String classrooms = 'Classrooms';
 
   static const primaryColor = Color(0xFF6200EE);
 }

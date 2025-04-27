@@ -10,11 +10,17 @@ import 'package:lumi_learn_app/services/api_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+enum UserRole { student, teacher }
+
+
 class AuthController extends GetxController {
   static AuthController instance = Get.find();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxBool isLoading = false.obs; // Track loading state
+  Rxn<UserRole> userRole = Rxn<UserRole>();
+
+
 
   final RxBool hasCompletedOnboarding = false.obs;
   RxBool isAuthInitialized = false.obs;
@@ -394,5 +400,15 @@ class AuthController extends GetxController {
     // If you want to reset loading / init flags:
     isAuthInitialized.value = false;
     isLoading.value = false;
+
+    // If you want to reset user role
+    userRole.value = null; // <-- add this!
+
   }
+
+  //classrooms add, teacher student
+  void setUserRole(UserRole role) {
+  userRole.value = role;
+}
+
 }
