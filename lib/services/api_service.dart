@@ -8,8 +8,8 @@ import 'dart:io';
 import 'package:lumi_learn_app/models/leaderboard_model.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:3000';
-  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  // static const String _baseUrl = 'http://localhost:3000';
+  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,
@@ -351,18 +351,16 @@ class ApiService {
     );
   }
 
-
   Future<http.Response> getStudentClasses({required String token}) {
-  final uri = Uri.parse('$_baseUrl/student/classes');
-  return http.get(
-    uri,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-}
-
+    final uri = Uri.parse('$_baseUrl/student/classes');
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
 
   Future<http.Response> joinClass({
     required String token,
@@ -379,16 +377,14 @@ class ApiService {
     );
   }
 
-
   Future<http.Response> getUpcomingAssignments({required String token}) {
-  final uri = Uri.parse('$_baseUrl/assignments/upcoming');
-  return http.get(
-    uri,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-}
-
+    final uri = Uri.parse('$_baseUrl/assignments/upcoming');
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
 }
