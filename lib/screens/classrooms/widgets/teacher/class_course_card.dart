@@ -1,11 +1,90 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/class_controller.dart';
+import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 
 class ClassroomCardBox extends StatelessWidget {
   final Classroom classroomData;
 
   const ClassroomCardBox({Key? key, required this.classroomData}) : super(key: key);
+
+  void _showShareClassCode(BuildContext context, String code) {
+    final bool isTablet = MediaQuery.of(context).size.width > 600;
+
+    showDialog(
+      context: context,
+      builder: (context) => Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: AlertDialog(
+              backgroundColor: Colors.white.withOpacity(0.05),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              contentPadding: EdgeInsets.all(isTablet ? 32 : 24),
+              content: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: isTablet ? 400 : double.infinity),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Classroom Code',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      code,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Share this code with students to join your classroom!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () => Get.back(),
+                        child: const Text(
+                          'Close',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +113,7 @@ class ClassroomCardBox extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: classroomData.sideColor,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
               ),
               Padding(
@@ -76,6 +153,48 @@ class ClassroomCardBox extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white24),
+                              backgroundColor: Colors.white.withOpacity(0.08),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () {
+                              Get.to(() => const CourseCreation(), transition: Transition.fadeIn);
+                            },
+                            icon: const Icon(Icons.add, color: Colors.white),
+                            label: const Text(
+                              "New Course",
+                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white24),
+                              backgroundColor: Colors.white.withOpacity(0.08),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () {
+                              _showShareClassCode(context, classroomData.joinCode);
+                            },
+                            icon: const Icon(Icons.share, color: Colors.white),
+                            label: const Text(
+                              "Share Code",
+                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -87,7 +206,7 @@ class ClassroomCardBox extends StatelessWidget {
   }
 }
 
-// Small helper widget (local inside this file)
+// Helper Widget
 class _InfoIconText extends StatelessWidget {
   final IconData icon;
   final String text;

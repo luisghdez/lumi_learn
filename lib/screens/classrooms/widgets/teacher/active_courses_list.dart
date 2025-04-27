@@ -16,6 +16,9 @@ class ActiveCoursesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
+
     return Obx(() => ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: BackdropFilter(
@@ -30,25 +33,28 @@ class ActiveCoursesList extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title and toggle
               GestureDetector(
                 onTap: () => showCourses.toggle(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTabletOrBigger ? 24 : 16,
+                    vertical: isTabletOrBigger ? 20 : 16,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         "Active Class Courses",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: isTabletOrBigger ? 22 : 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Icon(
                         showCourses.value ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                         color: Colors.white,
+                        size: isTabletOrBigger ? 30 : 26,
                       ),
                     ],
                   ),
@@ -56,52 +62,64 @@ class ActiveCoursesList extends StatelessWidget {
               ),
               if (showCourses.value) ...[
                 const Divider(color: Colors.white24, thickness: 1),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: custom.SearchBar(),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTabletOrBigger ? 24 : 16,
+                    vertical: 8,
+                  ),
+                  child: const custom.SearchBar(),
                 ),
                 const SizedBox(height: 8),
 
-                ...classController.classCourses.map((course) => _buildCourseItem(course)).toList(),
+                ...List.generate(classController.classCourses.length, (index) {
+                  final course = classController.classCourses[index];
+                  return Column(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTabletOrBigger ? 24 : 16,
+                          vertical: isTabletOrBigger ? 18 : 16,
+                        ),
+                        width: double.infinity,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                course.courseName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isTabletOrBigger ? 18 : 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              "${course.avgProgress}%",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: isTabletOrBigger ? 16 : 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (index != classController.classCourses.length - 1)
+                        const Divider(
+                          color: Colors.white24,
+                          thickness: 1,
+                          indent: 16,
+                          endIndent: 16,
+                        ),
+                    ],
+                  );
+                }),
               ],
             ],
           ),
         ),
       ),
     ));
-  }
-
-  Widget _buildCourseItem(ClassCourse course) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          width: double.infinity,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  course.courseName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                "${course.avgProgress}%",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Divider(color: Colors.white24, thickness: 1, indent: 16, endIndent: 16),
-      ],
-    );
   }
 }

@@ -48,6 +48,7 @@ class _CreateClassroomModalState extends State<CreateClassroomModal> {
       studentsCount: 0,
       coursesCount: 0,
       sideColor: selectedColor,
+      joinCode: '',
     );
 
     Navigator.of(context).pop(); // Close modal

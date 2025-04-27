@@ -16,6 +16,9 @@ class StudentProgressList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
+
     return Obx(() => ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: BackdropFilter(
@@ -34,26 +37,28 @@ class StudentProgressList extends StatelessWidget {
               GestureDetector(
                 onTap: () => showStudents.toggle(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: EdgeInsets.symmetric(horizontal: isTabletOrBigger ? 24 : 16, vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         "Student Progress",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: isTabletOrBigger ? 20 : 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Icon(
                         showStudents.value ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                         color: Colors.white,
+                        size: isTabletOrBigger ? 32 : 28,
                       ),
                     ],
                   ),
                 ),
               ),
+
               if (showStudents.value) ...[
                 const Divider(color: Colors.white24, thickness: 1),
                 const Padding(
@@ -62,7 +67,8 @@ class StudentProgressList extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
 
-                ...classController.studentProgress.map((progress) => _buildStudentItem(progress)).toList(),
+                // Students list
+                ...classController.studentProgress.map((progress) => _buildStudentItem(context, progress)).toList(),
               ],
             ],
           ),
@@ -71,15 +77,17 @@ class StudentProgressList extends StatelessWidget {
     ));
   }
 
-  Widget _buildStudentItem(StudentProgress progress) {
+  Widget _buildStudentItem(BuildContext context, StudentProgress progress) {
     final RxBool isExpanded = false.obs;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
 
     return Obx(() => Column(
       children: [
         GestureDetector(
           onTap: () => isExpanded.toggle(),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: isTabletOrBigger ? 24 : 16, vertical: 16),
             width: double.infinity,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -87,9 +95,9 @@ class StudentProgressList extends StatelessWidget {
                 Flexible(
                   child: Text(
                     progress.studentName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: isTabletOrBigger ? 18 : 16,
                       fontWeight: FontWeight.bold,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -98,6 +106,7 @@ class StudentProgressList extends StatelessWidget {
                 Icon(
                   isExpanded.value ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                   color: Colors.white,
+                  size: isTabletOrBigger ? 28 : 24,
                 ),
               ],
             ),
@@ -105,7 +114,7 @@ class StudentProgressList extends StatelessWidget {
         ),
         if (isExpanded.value)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: isTabletOrBigger ? 32 : 24, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: progress.courseProgress.map((course) {
@@ -114,8 +123,24 @@ class StudentProgressList extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(course.courseName, style: const TextStyle(color: Colors.white70)),
-                      Text('${course.progress}%', style: const TextStyle(color: Colors.white)),
+                      Flexible(
+                        child: Text(
+                          course.courseName,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: isTabletOrBigger ? 16 : 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '${course.progress}%',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isTabletOrBigger ? 16 : 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 );

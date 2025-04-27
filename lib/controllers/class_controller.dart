@@ -9,6 +9,8 @@ class Classroom {
   final int coursesCount;
   final int newSubmissions;
   final Color sideColor;
+  final String joinCode; // 🆕 Add this!
+
 
   Classroom({
     required this.title,
@@ -17,6 +19,7 @@ class Classroom {
     required this.coursesCount,
     required this.newSubmissions,
     required this.sideColor,
+    required this.joinCode,
   });
 }
 
@@ -85,6 +88,7 @@ class ClassController extends GetxController {
     required int studentsCount,
     required int coursesCount,
     required Color sideColor,
+    required String joinCode, 
   }) {
     final newClassroom = Classroom(
       title: title,
@@ -93,6 +97,7 @@ class ClassController extends GetxController {
       coursesCount: coursesCount,
       newSubmissions: 0,
       sideColor: sideColor,
+      joinCode: joinCode,
     );
     classrooms.add(newClassroom);
   }
@@ -111,6 +116,7 @@ class ClassController extends GetxController {
         coursesCount: 3,
         newSubmissions: 5,
         sideColor: Colors.blueAccent,
+        joinCode: 'PHYS101',
       ),
       Classroom(
         title: 'Chemistry Advanced',
@@ -119,6 +125,7 @@ class ClassController extends GetxController {
         coursesCount: 2,
         newSubmissions: 2,
         sideColor: Colors.purpleAccent,
+        joinCode: 'CHEM678',
       ),
       Classroom(
         title: 'Introduction to Programming',
@@ -127,6 +134,7 @@ class ClassController extends GetxController {
         coursesCount: 5,
         newSubmissions: 8,
         sideColor: Colors.tealAccent,
+        joinCode: 'PROG543',
       ),
     ]);
   }
