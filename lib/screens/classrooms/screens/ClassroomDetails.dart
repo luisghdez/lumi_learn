@@ -6,10 +6,11 @@ import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/student_progre
 import 'package:lumi_learn_app/screens/classrooms/widgets/teacher/active_courses_list.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 
+
 class ClassroomDetailsPage extends StatelessWidget {
   final Classroom classroomData;
-
-  ClassroomDetailsPage({Key? key, required this.classroomData}) : super(key: key);
+  ClassroomDetailsPage({Key? key, required this.classroomData})
+      : super(key: key);
 
   final ClassController classController = Get.find();
   final RxBool showStudents = false.obs;
@@ -24,16 +25,15 @@ class ClassroomDetailsPage extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // background
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/black_moons_lighter.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/black_moons_lighter.png',
+                fit: BoxFit.cover),
           ),
+
           SafeArea(
             child: Column(
               children: [
-                // Top back button
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: isTabletOrBigger ? 16 : 8,
@@ -48,62 +48,40 @@ class ClassroomDetailsPage extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // ───── Scrollable (now inside RefreshIndicator) ─────
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTabletOrBigger ? 32 : 20,
-                      vertical: 10,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClassroomCardBox(classroomData: classroomData),
-                        const SizedBox(height: 24),
+                  child: RefreshIndicator(
+                    color: Colors.white,
+                    backgroundColor: Colors.black54,
+                    onRefresh: classController.loadAllTeacherData,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                        vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClassroomCardBox(classroomData: classroomData),
+                          const SizedBox(height: 24),
 
-                        // Student Progress
-                        StudentProgressList(
-                          showStudents: showStudents,
-                          classController: classController,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Active Class Courses
-                        ActiveCoursesList(
-                          showCourses: showCourses,
-                          classController: classController,
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Create New Course Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.55),
-                              side: const BorderSide(color: Colors.white24),
-                              padding: EdgeInsets.symmetric(
-                                vertical: isTabletOrBigger ? 20 : 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: () {
-                              Get.to(() => const CourseCreation(), transition: Transition.fadeIn);
-                            },
-                            icon: Icon(Icons.add, color: Colors.white, size: isTabletOrBigger ? 28 : 24),
-                            label: Text(
-                              "Create New Course",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: isTabletOrBigger ? 18 : 16,
-                              ),
-                            ),
+                          // student progress list
+                          StudentProgressList(
+                            classId: classroomData.id,
+                            showStudents: showStudents,
+                            classController: classController,
                           ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
+                          const SizedBox(height: 24),
+
+                          // active courses list
+                          ActiveCoursesList(
+                            classId: classroomData.id,
+                            showCourses: showCourses,
+                            classController: classController,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
