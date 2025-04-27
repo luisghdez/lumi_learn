@@ -13,6 +13,7 @@ class CreateClassroomModal extends StatefulWidget {
 class _CreateClassroomModalState extends State<CreateClassroomModal> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController subtitleController = TextEditingController();
+  final ClassController classController = Get.find<ClassController>();
 
   Color selectedColor = Colors.blue; // Default selected color
 
@@ -27,37 +28,26 @@ class _CreateClassroomModalState extends State<CreateClassroomModal> {
     Colors.amber,
   ];
 
-  void _submit() {
+  void _submit() async {
     final String title = titleController.text.trim();
-    final String subtitle = subtitleController.text.trim();
+    final String identifier = subtitleController.text.trim();
 
-    if (title.isEmpty || subtitle.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please fill all fields properly!",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    if (title.isEmpty || identifier.isEmpty) {
+      Get.snackbar("Error", "Please fill all fields properly!",
+          backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    // 🧠 Students and Courses count will be auto-managed by controller
-    Get.find<ClassController>().createClassroom(
+    await classController.createClassroom(
       title: title,
-      subtitle: subtitle,
-      studentsCount: 0,
-      coursesCount: 0,
+      identifier: identifier,
       sideColor: selectedColor,
     );
 
-    Navigator.of(context).pop(); // Close modal
+    Get.back();
 
-    Get.snackbar(
-      "Success",
-      "Classroom Created!",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    Get.snackbar("Success", "Classroom Created!",
+        backgroundColor: Colors.green, colorText: Colors.white);
   }
 
   @override
@@ -66,101 +56,108 @@ class _CreateClassroomModalState extends State<CreateClassroomModal> {
     final bool isTabletOrBigger = screenWidth > 600;
 
     return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: AlertDialog(
-            backgroundColor: Colors.white.withOpacity(0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: isTabletOrBigger ? 32 : 24,
-              vertical: isTabletOrBigger ? 32 : 24,
+      child: AlertDialog(
+        // Make the dialog shell itself transparent
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: EdgeInsets.zero,
+        content: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isTabletOrBigger ? 500 : double.infinity,
             ),
-            content: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: isTabletOrBigger ? 500 : double.infinity),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Create New Classroom",
-                      style: TextStyle(
-                        fontSize: isTabletOrBigger ? 26 : 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  // Your semi-transparent “frosted glass” background
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTabletOrBigger ? 32 : 24,
+                    vertical: isTabletOrBigger ? 32 : 24,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Create New Classroom",
+                        style: TextStyle(
+                          fontSize: isTabletOrBigger ? 26 : 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Title & Subtitle
-                    _buildTextField(controller: titleController, hintText: "Classroom Title"),
-                    const SizedBox(height: 16),
-                    _buildTextField(controller: subtitleController, hintText: "Subtitle (CRN)"),
-
-                    const SizedBox(height: 24),
-
-                    // Color Picker
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Pick Side Color:",
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      const SizedBox(height: 24),
+                      _buildTextField(
+                        controller: titleController,
+                        hintText: "Classroom Title",
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: availableColors.map((color) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: subtitleController,
+                        hintText: "Subtitle (CRN)",
+                      ),
+                      const SizedBox(height: 24),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Pick Side Color:",
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: availableColors.map((color) {
+                          return GestureDetector(
+                            onTap: () => setState(() {
                               selectedColor = color;
-                            });
-                          },
-                          child: Container(
-                            width: isTabletOrBigger ? 44 : 38,
-                            height: isTabletOrBigger ? 44 : 38,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: selectedColor == color
-                                  ? Border.all(color: Colors.white, width: 3)
-                                  : null,
+                            }),
+                            child: Container(
+                              width: isTabletOrBigger ? 44 : 38,
+                              height: isTabletOrBigger ? 44 : 38,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border: selectedColor == color
+                                    ? Border.all(color: Colors.white, width: 3)
+                                    : null,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            padding: EdgeInsets.symmetric(
+                              vertical: isTabletOrBigger ? 20 : 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                        );
-                      }).toList(),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Create button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(
-                            vertical: isTabletOrBigger ? 20 : 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        onPressed: _submit,
-                        child: Text(
-                          "Create Classroom",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: isTabletOrBigger ? 18 : 16,
+                          onPressed: _submit,
+                          child: Text(
+                            "Create Classroom",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTabletOrBigger ? 18 : 16,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

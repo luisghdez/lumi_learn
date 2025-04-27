@@ -8,8 +8,8 @@ import 'dart:io';
 import 'package:lumi_learn_app/models/leaderboard_model.dart';
 
 class ApiService {
-  // static const String _baseUrl = 'http://localhost:3000';
-  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  static const String _baseUrl = 'http://localhost:3000';
+  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
   // change before push
 
   Future<http.Response> createCourse({
@@ -288,5 +288,54 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to delete user data: ${response.body}');
     }
+  }
+
+  // GET /classes (teacher-owned)
+  Future<http.Response> getClasses({required String token}) =>
+      http.get(Uri.parse('$_baseUrl/classes'),
+          headers: {'Authorization': 'Bearer $token'});
+
+// GET /classes/submissions
+  Future<http.Response> getAllClassSubmissions({required String token}) =>
+      http.get(Uri.parse('$_baseUrl/classes/submissions'),
+          headers: {'Authorization': 'Bearer $token'});
+
+// GET /class/:id/courses
+  Future<http.Response> getClassCourses(
+          {required String token, required String classId}) =>
+      http.get(Uri.parse('$_baseUrl/class/$classId/courses'),
+          headers: {'Authorization': 'Bearer $token'});
+
+// GET /class/:id/students
+  Future<http.Response> getClassStudents(
+          {required String token, required String classId}) =>
+      http.get(Uri.parse('$_baseUrl/class/$classId/students'),
+          headers: {'Authorization': 'Bearer $token'});
+
+// GET /class/:id/progress
+  Future<http.Response> getClassProgress(
+          {required String token, required String classId}) =>
+      http.get(Uri.parse('$_baseUrl/class/$classId/progress'),
+          headers: {'Authorization': 'Bearer $token'});
+
+  Future<http.Response> createClassroom({
+    required String token,
+    required String name,
+    required String identifier,
+    required String colorCode,
+  }) {
+    final uri = Uri.parse('$_baseUrl/class');
+    return http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'identifier': identifier,
+        'colorCode': colorCode,
+      }),
+    );
   }
 }
