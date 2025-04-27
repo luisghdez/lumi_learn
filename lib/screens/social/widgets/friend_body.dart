@@ -14,6 +14,14 @@ class FriendProfile extends StatelessWidget {
     return topInset > 20;
   }
 
+  String getProfilePicturePath(String? profilePicture) {
+  if (profilePicture == null || profilePicture.isEmpty || profilePicture == "default") {
+    return 'assets/pfp/pfp1.png';
+  }
+  return 'assets/pfp/pfp$profilePicture.png';
+}
+
+
   @override
   Widget build(BuildContext context) {
     final FriendsController controller = Get.find<FriendsController>();
@@ -70,11 +78,9 @@ class FriendProfile extends StatelessWidget {
                   Center(
                     child: PfpViewer(
                       offsetUp: -120,
-                      backgroundImage: AssetImage(
-                          'assets/pfp/pfp${friend.profilePicture}.png'),
+                      backgroundImage: AssetImage(getProfilePicturePath(friend.profilePicture)),
                     ),
                   ),
-
                   // Info box
                   Container(
                     decoration: BoxDecoration(

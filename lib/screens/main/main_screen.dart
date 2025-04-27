@@ -8,6 +8,9 @@ import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart';
 import 'package:lumi_learn_app/screens/leaderboard/leaderboard_screen.dart';
+import 'package:lumi_learn_app/screens/classrooms/classroom_screen.dart';
+
+
 
 class MainScreen extends StatelessWidget {
   MainScreen({Key? key}) : super(key: key);
@@ -39,6 +42,8 @@ class MainScreen extends StatelessWidget {
                 children: [
                   HomeScreen(),
                   // LeaderboardPage(),
+                  ClassroomsScreen(),
+
                   const ProfileScreen(),
                   // const FriendsScreen(),
                 ],

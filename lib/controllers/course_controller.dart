@@ -382,6 +382,8 @@ class CourseController extends GetxController {
     required String description,
     required List<File> files,
     String content = '',
+    String? classId,
+    DateTime? dueDate,
   }) async {
     isLoading.value = true;
 
@@ -402,6 +404,8 @@ class CourseController extends GetxController {
         description: description,
         files: files,
         content: content,
+        classId: classId,
+        dueDate: dueDate,
       );
 
       if (response.statusCode == 201) {
