@@ -42,6 +42,7 @@ class UpcomingAssignment {
   final String className;
   final String courseId;
   final String courseTitle;
+  final String colorCode;
   final DateTime dueAt;
 
   UpcomingAssignment({
@@ -49,6 +50,7 @@ class UpcomingAssignment {
     required this.className,
     required this.courseId,
     required this.courseTitle,
+    required this.colorCode,
     required this.dueAt,
   });
 
@@ -58,6 +60,7 @@ class UpcomingAssignment {
       className: json['className'],
       courseId: json['courseId'],
       courseTitle: json['courseTitle'],
+      colorCode: json['colorCode'],
       dueAt: DateTime.parse(json['dueAt']),
     );
   }
@@ -160,7 +163,6 @@ class ClassController extends GetxController {
     }
 
     final res = await _api.getUpcomingAssignments(token: token);
-    print('Raw upcoming assignments response: ${res.body}');
     if (res.statusCode != 200) {
       Get.snackbar('Error', 'Failed to load upcoming assignments');
       return;

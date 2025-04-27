@@ -1,17 +1,18 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+
 class UpcomingCard extends StatelessWidget {
   final String eventTitle;
   final String className;
   final DateTime dueAt; // 🆕 Real DateTime
-  final Color sideColor;
+  final Color colorCode;
 
   const UpcomingCard({
     Key? key,
     required this.eventTitle,
     required this.className,
     required this.dueAt, // 🆕
-    required this.sideColor,
+    required this.colorCode,
   }) : super(key: key);
 
   @override
@@ -47,7 +48,7 @@ class UpcomingCard extends StatelessWidget {
                   height: 4,
                   width: 40,
                   decoration: BoxDecoration(
-                    color: sideColor,
+                    color: colorCode,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -80,7 +81,8 @@ class UpcomingCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.redAccent,
                         borderRadius: BorderRadius.circular(20),
@@ -128,8 +130,18 @@ class UpcomingCard extends StatelessWidget {
 
   String _monthName(int monthNumber) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return months[monthNumber - 1];
   }

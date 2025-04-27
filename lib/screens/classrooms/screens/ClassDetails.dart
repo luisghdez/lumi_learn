@@ -55,100 +55,108 @@ class _ClassroomDetailsState extends State<ClassroomDetails> {
           ),
           Positioned.fill(
             child: SafeArea(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: pad, vertical: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // back button
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 8),
-                    // header card
-                    ClassroomHeaderCard(classroom: widget.classroom),
-                    const SizedBox(height: 32),
-                    // schedule
-                    const Text(
-                      "Class Weekly Schedule",
-                      style: TextStyle(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  // 1) Load courses for this class
+                  await studentController
+                      .fetchClassCourses(widget.classroom.id);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: pad, vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // back button
+                      IconButton(
+                        onPressed: () => Get.back(),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
                         color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    const WeeklySchedule(),
-                    const SizedBox(height: 32),
-                    // courses
-                    const Text(
-                      "My Class Courses",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 8),
+                      // header card
+                      ClassroomHeaderCard(classroom: widget.classroom),
+                      const SizedBox(height: 32),
+                      // schedule
+                      const Text(
+                        "Class Weekly Schedule",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 2) reactive list
-                    Obx(() {
-                      final courses = studentController
-                              .classroomCourses[widget.classroom.id] ??
-                          [];
-                      return Column(
-                        children: courses.map((course) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: CategoryCard(
-                              title: course.title,
-                              completedLessons: 0,
-                              totalLessons: 0,
-                              imagePath: getGalaxyForCourse(course.id),
-                              onTap: () async {
-                                // Prevent navigation if still loading
-                                if (false == true) return;
+                      const SizedBox(height: 16),
+                      const WeeklySchedule(),
+                      const SizedBox(height: 32),
+                      // courses
+                      const Text(
+                        "My Class Courses",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // 2) reactive list
+                      Obx(() {
+                        final courses = studentController
+                                .classroomCourses[widget.classroom.id] ??
+                            [];
+                        return Column(
+                          children: courses.map((course) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: CategoryCard(
+                                title: course.title,
+                                completedLessons: 0,
+                                totalLessons: 0,
+                                imagePath: getGalaxyForCourse(course.id),
+                                onTap: () async {
+                                  // Prevent navigation if still loading
+                                  if (false == true) return;
 
-                                courseController.setSelectedCourseId(
-                                  course.id,
-                                  course.title,
-                                );
+                                  courseController.setSelectedCourseId(
+                                    course.id,
+                                    course.title,
+                                  );
 
-                                Get.to(
-                                  () => LoadingScreen(),
-                                  transition: Transition.fadeIn,
-                                  duration: const Duration(milliseconds: 500),
-                                );
-                                await Future.wait([
-                                  Future.delayed(
-                                      const Duration(milliseconds: 1000)),
-                                  precacheImage(
-                                    const AssetImage(
-                                        'assets/images/milky_way.png'),
-                                    context,
-                                  ),
-                                ]);
+                                  Get.to(
+                                    () => LoadingScreen(),
+                                    transition: Transition.fadeIn,
+                                    duration: const Duration(milliseconds: 500),
+                                  );
+                                  await Future.wait([
+                                    Future.delayed(
+                                        const Duration(milliseconds: 1000)),
+                                    precacheImage(
+                                      const AssetImage(
+                                          'assets/images/milky_way.png'),
+                                      context,
+                                    ),
+                                  ]);
 
-                                while (courseController.isLoading.value) {
-                                  await Future.delayed(
-                                      const Duration(milliseconds: 100));
-                                }
+                                  while (courseController.isLoading.value) {
+                                    await Future.delayed(
+                                        const Duration(milliseconds: 100));
+                                  }
 
-                                // Navigate to CourseOverviewScreen
-                                Get.offAll(
-                                  () => const CourseOverviewScreen(),
-                                  transition: Transition.fadeIn,
-                                  duration: const Duration(milliseconds: 500),
-                                );
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    }),
-                    const SizedBox(height: 32),
-                  ],
+                                  // Navigate to CourseOverviewScreen
+                                  Get.offAll(
+                                    () => const CourseOverviewScreen(),
+                                    transition: Transition.fadeIn,
+                                    duration: const Duration(milliseconds: 500),
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
             ),

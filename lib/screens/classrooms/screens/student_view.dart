@@ -79,6 +79,7 @@ class StudentView extends StatelessWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   await studentController.loadStudentClassrooms();
+                  await classController.loadUpcomingAssignments();
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -216,6 +217,14 @@ class StudentView extends StatelessWidget {
     }
   }
 
+  Color _hexToColor(String hexColor) {
+    hexColor = hexColor.replaceAll('#', '');
+    if (hexColor.length == 6) {
+      hexColor = 'FF$hexColor'; // Add opacity if not provided
+    }
+    return Color(int.parse(hexColor, radix: 16));
+  }
+
   Widget _buildUpcoming() {
     final bool hasUpcoming = classController.upcomingAssignments.isNotEmpty;
 
@@ -232,13 +241,15 @@ class StudentView extends StatelessWidget {
 
     return Column(
       children: classController.upcomingAssignments.map((assignment) {
+        final Color assignmentColor = _hexToColor(assignment.colorCode);
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: UpcomingCard(
             eventTitle: assignment.courseTitle, // From backend
             className: assignment.className, // From backend
             dueAt: assignment.dueAt, // From backend
-            sideColor: Colors.blueAccent, // 🎨 Static or dynamic color
+            colorCode: assignmentColor, // 🎨 Static or dynamic color
           ),
         );
       }).toList(),
