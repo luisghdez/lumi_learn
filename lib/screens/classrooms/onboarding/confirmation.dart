@@ -49,14 +49,27 @@ class ConfirmationScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
+                Row(
+                    children: [
+                      // 🔙 Back Button
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          Get.back();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Title
                   Text(
-                    "Welcome, $userName 👋",
+                    "Hey, $userName",
                     style: TextStyle(
                       fontSize: titleFontSize,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       decoration: TextDecoration.none,
                     ),
+                  ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Text(

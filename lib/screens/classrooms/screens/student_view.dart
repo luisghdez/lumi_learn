@@ -1,15 +1,29 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import '../components/home_header.dart';
-import 'dart:math' as math; // 👈 for safe constraints
+import 'package:lumi_learn_app/controllers/student_controller.dart';
+import 'package:lumi_learn_app/controllers/class_controller.dart';
 
+
+import '../components/home_header.dart';
+import '../widgets/student/studentTab.dart';
+import 'package:lumi_learn_app/screens/classrooms/components/search_bar.dart' as custom;
+import 'package:lumi_learn_app/screens/classrooms/widgets/student/classroomsCard.dart';
+import 'package:lumi_learn_app/screens/classrooms/widgets/student/emptyState.dart';
+import 'package:lumi_learn_app/screens/classrooms/widgets/student/joinModal.dart';
+import 'package:lumi_learn_app/screens/classrooms/widgets/student/upcoming_card.dart';
+import 'package:lumi_learn_app/screens/classrooms/screens/ClassDetails.dart';
 
 class StudentView extends StatelessWidget {
   StudentView({super.key});
 
-  final AuthController authController = Get.find();
   static const double _tabletBreakpoint = 800.0;
+
+  final AuthController authController = Get.find();
+final ClassController classController = Get.put(ClassController()); // 👈 ADD THIS
+final StudentController studentController = Get.put(StudentController());
+  final RxInt selectedTabIndex = 0.obs;
 
   double _getHorizontalPadding(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -22,8 +36,7 @@ class StudentView extends StatelessWidget {
     final double topScrollViewPadding = MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
 
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= _tabletBreakpoint;
+    final bool isTablet = MediaQuery.of(context).size.width >= _tabletBreakpoint;
 
     final TextStyle sectionTitleStyle = isTablet
         ? Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -62,38 +75,165 @@ class StudentView extends StatelessWidget {
                   bottom: bottomScrollViewPadding,
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: calculatedMinHeight,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                        child: Obx(() => HomeHeader(
+                  constraints: BoxConstraints(minHeight: calculatedMinHeight),
+                  child: Obx(() => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Home Header
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            child: HomeHeader(
                               streakCount: authController.streakCount.value,
                               xpCount: authController.xpCount.value,
                               isPremium: authController.isPremium.value,
-                            )),
-                      ),
-                      const SizedBox(height: 28),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                        child: Text(
-                          'Student Dashboard',
-                          style: sectionTitleStyle,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // TODO: Add teacher-specific widgets here
-                    ],
-                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Tabs
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            child: StudentTabs(
+                              selectedIndex: selectedTabIndex.value,
+                              onTabSelected: (index) {
+                                selectedTabIndex.value = index;
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Section Title
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            child: Text(
+                              selectedTabIndex.value == 0 ? 'My Classrooms' : 'Upcoming',
+                              style: sectionTitleStyle,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Search Bar
+                          if (selectedTabIndex.value == 0)
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                              child: const custom.SearchBar(),
+                            ),
+                          const SizedBox(height: 12),
+
+                          // Content Area
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            child: selectedTabIndex.value == 0
+                                ? _buildClassrooms()
+                                : _buildUpcoming(),
+                          ),
+                        ],
+                      )),
                 ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+Widget _buildClassrooms() {
+  final bool hasClassrooms = studentController.classrooms.isNotEmpty;
+
+  if (hasClassrooms) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...studentController.classrooms.map((classroom) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: StudentClassroomCard(
+              classroomData: classroom,
+              onTap: () {
+                // Handle classroom tap for student
+                // For example, navigate to classroom details screen
+                Get.to(() => ClassroomDetails(classroom: classroom));
+              },
+            ),
+          );
+        }).toList(),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () {
+              showDialog(
+                context: Get.context!,
+                builder: (context) => const JoinClassroomModal(),
+              );
+            },
+            child: const Text(
+              'Join New Classroom',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  } else {
+    return Column(
+      children: [
+        const SizedBox(height: 24),
+        EmptyClassroomCard(
+          onJoin: () {
+            showDialog(
+              context: Get.context!,
+              builder: (context) => const JoinClassroomModal(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+  Widget _buildUpcoming() {
+    final bool hasUpcoming = studentController.upcomingEvents.isNotEmpty;
+
+    if (!hasUpcoming) {
+      return Container(
+        height: 300,
+        alignment: Alignment.center,
+        child: const Text(
+          "No Upcoming Events",
+          style: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+      );
+    }
+
+    return Column(
+      children: studentController.upcomingEvents.map((event) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: UpcomingCard(
+            eventTitle: event.eventTitle,
+            className: event.className,
+            dueDateText: event.dueDateText,
+            daysLeftText: event.daysLeftText,
+            sideColor: event.sideColor,
+            onTap: () {
+              // Optional tap logic
+            },
+          ),
+        );
+      }).toList(),
     );
   }
 }

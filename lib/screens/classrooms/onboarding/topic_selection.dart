@@ -125,15 +125,34 @@ List<Map<String, dynamic>> _getTopicsForAge(String ageGroup) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  Text(
-                    "What are you interested in?",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: titleFontSize,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.none,
+                  Row(
+                    children: [
+                      // 🔙 Back Button
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () {
+                          Get.back();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Flexible Title
+                      Expanded(
+                        child: Text(
+                          "What interests you?",
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontSize: titleFontSize,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.none,
+                              ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                         ),
+                      ),
+                    ],
                   ),
+
+
                   const SizedBox(height: 24),
                   Expanded(
                     child: GridView.builder(

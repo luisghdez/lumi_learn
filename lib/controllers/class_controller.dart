@@ -9,8 +9,7 @@ class Classroom {
   final int coursesCount;
   final int newSubmissions;
   final Color sideColor;
-  final String joinCode; // 🆕 Add this!
-
+  final String joinCode;
 
   Classroom({
     required this.title,
@@ -64,6 +63,25 @@ class ClassCourse {
   ClassCourse({required this.courseName, required this.avgProgress, required this.color});
 }
 
+// ✅ Define Course model for classroomCourses
+class Course {
+  final String title;
+  final String imagePath;
+  final int completedLessons;
+  final int totalLessons;
+  final DateTime scheduledDate; // 🆕 Add this!
+
+
+
+  Course({
+    required this.title,
+    required this.imagePath,
+    required this.completedLessons,
+    required this.totalLessons,
+    required this.scheduledDate, // 🆕
+
+  });
+}
 
 // ✅ Controller
 class ClassController extends GetxController {
@@ -72,6 +90,9 @@ class ClassController extends GetxController {
   RxList<StudentProgress> studentProgress = <StudentProgress>[].obs;
   RxList<ClassCourse> classCourses = <ClassCourse>[].obs;
 
+  // 🆕 Added classroomCourses properly
+  RxMap<String, List<Course>> classroomCourses = <String, List<Course>>{}.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -79,6 +100,7 @@ class ClassController extends GetxController {
     _loadDummySubmissions();
     _loadDummyStudentProgress();
     _loadDummyClassCourses();
+    _loadDummyClassroomCourses(); // 🆕 load courses for each classroom
   }
 
   // ✅ Functions
@@ -88,7 +110,7 @@ class ClassController extends GetxController {
     required int studentsCount,
     required int coursesCount,
     required Color sideColor,
-    required String joinCode, 
+    required String joinCode,
   }) {
     final newClassroom = Classroom(
       title: title,
@@ -104,6 +126,7 @@ class ClassController extends GetxController {
 
   void clearClassrooms() {
     classrooms.clear();
+    classroomCourses.clear();
   }
 
   // ✅ Dummy Data Loaders
@@ -172,38 +195,79 @@ class ClassController extends GetxController {
     ]);
   }
 
-void _loadDummyStudentProgress() {
-  studentProgress.addAll([
-    StudentProgress(
-      studentName: 'Luis Hernandez',
-      courseProgress: [
-        CourseProgress(courseName: 'Calculus Lesson', progress: 60, color: Colors.orangeAccent),
-        CourseProgress(courseName: 'Other Lesson', progress: 45, color: Colors.deepPurpleAccent),
-      ],
-    ),
-    StudentProgress(
-      studentName: 'SITI AULIA RAHMAWATI PUTRI',
-      courseProgress: [
-        CourseProgress(courseName: 'Calculus Lesson', progress: 15, color: Colors.redAccent),
-        CourseProgress(courseName: 'Other Lesson', progress: 10, color: Colors.pinkAccent),
-      ],
-    ),
-    StudentProgress(
-      studentName: 'AHMAD FAUZAN BINTANG RAMADHAN',
-      courseProgress: [
-        CourseProgress(courseName: 'Calculus Lesson', progress: 100, color: Colors.greenAccent),
-        CourseProgress(courseName: 'Other Lesson', progress: 95, color: Colors.lightBlueAccent),
-      ],
-    ),
-  ]);
-}
+  void _loadDummyStudentProgress() {
+    studentProgress.addAll([
+      StudentProgress(
+        studentName: 'Luis Hernandez',
+        courseProgress: [
+          CourseProgress(courseName: 'Calculus Lesson', progress: 60, color: Colors.orangeAccent),
+          CourseProgress(courseName: 'Other Lesson', progress: 45, color: Colors.deepPurpleAccent),
+        ],
+      ),
+      StudentProgress(
+        studentName: 'SITI AULIA RAHMAWATI PUTRI',
+        courseProgress: [
+          CourseProgress(courseName: 'Calculus Lesson', progress: 15, color: Colors.redAccent),
+          CourseProgress(courseName: 'Other Lesson', progress: 10, color: Colors.pinkAccent),
+        ],
+      ),
+      StudentProgress(
+        studentName: 'AHMAD FAUZAN BINTANG RAMADHAN',
+        courseProgress: [
+          CourseProgress(courseName: 'Calculus Lesson', progress: 100, color: Colors.greenAccent),
+          CourseProgress(courseName: 'Other Lesson', progress: 95, color: Colors.lightBlueAccent),
+        ],
+      ),
+    ]);
+  }
 
-void _loadDummyClassCourses() {
-  classCourses.addAll([
-    ClassCourse(courseName: 'Calculus Lesson', avgProgress: 60, color: Colors.orangeAccent),
-    ClassCourse(courseName: 'Random Course', avgProgress: 15, color: Colors.redAccent),
-    ClassCourse(courseName: 'Personalized Course', avgProgress: 100, color: Colors.greenAccent),
-  ]);
-}
+  void _loadDummyClassCourses() {
+    classCourses.addAll([
+      ClassCourse(courseName: 'Calculus Lesson', avgProgress: 60, color: Colors.orangeAccent),
+      ClassCourse(courseName: 'Random Course', avgProgress: 15, color: Colors.redAccent),
+      ClassCourse(courseName: 'Personalized Course', avgProgress: 100, color: Colors.greenAccent),
+    ]);
+  }
 
+  void _loadDummyClassroomCourses() {
+    classroomCourses.addAll({
+      'Physics 101': [
+        Course(
+          title: 'Calculus Lesson',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 3,
+          totalLessons: 5,
+          scheduledDate: DateTime.now(),
+        ),
+        Course(
+          title: 'Physics Basics',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 2,
+          totalLessons: 4,
+          scheduledDate: DateTime.now(),
+        ),
+      ],
+      'Chemistry Advanced': [
+        Course(
+          title: 'Organic Chemistry',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 1,
+          totalLessons: 3,
+          scheduledDate: DateTime.now().add(Duration(days: 1)), // tomorrow
+
+
+        ),
+      ],
+      'Introduction to Programming': [
+        Course(
+          title: 'Intro to Python',
+          imagePath: 'assets/galaxies/galaxy10.png',
+          completedLessons: 4,
+          totalLessons: 6,
+          scheduledDate: DateTime.now().add(Duration(days: 1)), // tomorrow
+
+        ),
+      ],
+    });
+  }
 }
