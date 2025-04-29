@@ -39,9 +39,6 @@ class ApiService {
       request.fields['dueDate'] = dueDate.toIso8601String();
     }
 
-    print("due date : ${request.fields['dueDate']}");
-    print("classId : ${request.fields['classId']}");
-
     // Add files with automatic MIME detection
     for (File file in files) {
       // Determine MIME type based on file extension or file content
