@@ -45,6 +45,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Lumi Learn',
       theme: ThemeData(
+        useMaterial3: true,
         scaffoldBackgroundColor: const Color.fromARGB(255, 0, 0, 0),
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,

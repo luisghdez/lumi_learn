@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import 'components/category_list.dart';
 import 'components/search_bar.dart' as custom;
@@ -24,6 +28,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
     final CourseController courseController = Get.find();
+    final NavigationController navigationController = Get.find();
 
     final double horizontalPadding = _getHorizontalPadding(context);
     final double topScrollViewPadding =
@@ -88,9 +93,47 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: 28),
                           Padding(
                             padding: EdgeInsets.symmetric(
+                                horizontal: _getHorizontalPadding(context)),
+                            child: Row(
+                              children: [
+                                FeatureCard(
+                                  color:
+                                      const Color.fromARGB(255, 85, 151, 222),
+                                  icon: Symbols.document_scanner,
+                                  title: 'AI\nScanner',
+                                  onTap: () {
+                                    Get.to(() => const AiScannerMain());
+                                  },
+                                ),
+                                const SizedBox(width: 6),
+                                FeatureCard(
+                                  color:
+                                      const Color.fromARGB(255, 204, 75, 101),
+                                  icon: Symbols.note_add,
+                                  title: 'Course\nCreator',
+                                  onTap: () {
+                                    Get.to(() => const CourseCreation());
+                                  },
+                                ),
+                                const SizedBox(width: 6),
+                                FeatureCard(
+                                  color:
+                                      const Color.fromARGB(255, 81, 198, 127),
+                                  icon: Symbols.forum,
+                                  title: 'Lumi\nTutor',
+                                  onTap: () {
+                                    navigationController.updateIndex(3);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
                             child: Text(
-                              'Featured Courses',
+                              'Suggested Courses',
                               style: sectionTitleStyle,
                             ),
                           ),
