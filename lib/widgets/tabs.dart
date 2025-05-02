@@ -21,35 +21,31 @@ class CustomTabSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double scale = MediaQuery.of(context).textScaleFactor;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final bool isTablet = constraints.maxWidth > 600;
-
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white24),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            return _TabButton(
+              label: tabs[index].label,
+              icon: tabs[index].icon,
+              isSelected: selectedIndex == index,
+              onTap: () => onTabSelected(index),
+              isTabletOrBigger: isTabletOrBigger,
+            );
+          }),
         ),
-        padding: const EdgeInsets.all(4),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(tabs.length, (index) {
-              return _TabButton(
-                label: tabs[index].label,
-                icon: tabs[index].icon,
-                isSelected: selectedIndex == index,
-                onTap: () => onTabSelected(index),
-                isTablet: isTablet,
-                scale: scale,
-              );
-            }),
-          ),
-        ),
-      );
-    });
+      ),
+    );
   }
 }
 
@@ -58,8 +54,7 @@ class _TabButton extends StatelessWidget {
   final IconData? icon;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isTablet;
-  final double scale;
+  final bool isTabletOrBigger;
 
   const _TabButton({
     Key? key,
@@ -67,8 +62,7 @@ class _TabButton extends StatelessWidget {
     this.icon,
     required this.isSelected,
     required this.onTap,
-    required this.isTablet,
-    required this.scale,
+    required this.isTabletOrBigger,
   }) : super(key: key);
 
   @override
@@ -91,14 +85,14 @@ class _TabButton extends StatelessWidget {
             onTap: onTap,
             child: Padding(
               padding: EdgeInsets.symmetric(
-                vertical: isTablet ? 14 : 10,
-                horizontal: isTablet ? 20 : 14,
+                vertical: isTabletOrBigger ? 16 : 10,
+                horizontal: isTabletOrBigger ? 20 : 14,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, color: textColor, size: isTablet ? 20 : 16),
+                    Icon(icon, color: textColor, size: isTabletOrBigger ? 20 : 16),
                     const SizedBox(width: 6),
                   ],
                   Text(
@@ -106,7 +100,7 @@ class _TabButton extends StatelessWidget {
                     style: TextStyle(
                       color: textColor,
                       fontWeight: FontWeight.w600,
-                      fontSize: isTablet ? 16 * scale : 14 * scale,
+                      fontSize: isTabletOrBigger ? 18 : 14,
                     ),
                   ),
                 ],

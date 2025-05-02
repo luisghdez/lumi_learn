@@ -14,33 +14,30 @@ class CustomSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double scale = MediaQuery.of(context).textScaleFactor;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletOrBigger = screenWidth > 600;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final bool isTablet = constraints.maxWidth > 600;
-
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white24),
-        ),
-        child: TextField(
-          controller: controller,
-          style: TextStyle(color: Colors.white, fontSize: isTablet ? 16 * scale : 14 * scale),
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: TextStyle(color: Colors.white54, fontSize: isTablet ? 15 : 13),
-            prefixIcon: const Icon(Icons.search, color: Colors.white),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(
-              vertical: isTablet ? 16 : 12,
-              horizontal: 16,
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(color: Colors.white54),
+          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(
+            vertical: isTabletOrBigger ? 16 : 12,
+            horizontal: 16,
           ),
         ),
-      );
-    });
+      ),
+    );
   }
 }

@@ -26,23 +26,17 @@ class BaseScreenContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double screenHeight = MediaQuery.of(context).size.height;
     final double horizontalPadding = _getHorizontalPadding(context);
     final double topPadding = MediaQuery.of(context).padding.top + horizontalPadding;
 
     return Stack(
       children: [
-        // Background
         Positioned.fill(
           child: Image.asset(
             backgroundAsset,
             fit: BoxFit.cover,
-            filterQuality: FilterQuality.low,
-            gaplessPlayback: true,
           ),
         ),
-
-        // Foreground content with optional SafeArea
         if (includeSafeArea)
           SafeArea(
             top: false,
@@ -51,7 +45,7 @@ class BaseScreenContainer extends StatelessWidget {
               builder: (context, constraints) {
                 final double minHeight = math.max(
                   0.0,
-                  screenHeight - topPadding - bottomPadding,
+                  constraints.maxHeight - topPadding - bottomPadding,
                 );
 
                 return RefreshIndicator(
@@ -66,10 +60,7 @@ class BaseScreenContainer extends StatelessWidget {
                     ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(minHeight: minHeight),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                        child: builder(context),
-                      ),
+                      child: builder(context),
                     ),
                   ),
                 );
