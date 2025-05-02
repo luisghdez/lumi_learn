@@ -9,6 +9,12 @@ import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart';
 import 'package:lumi_learn_app/screens/leaderboard/leaderboard_screen.dart';
 import 'package:lumi_learn_app/screens/classrooms/classroom_screen.dart';
+import 'package:lumi_learn_app/screens/search/search_main.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
+import 'package:lumi_learn_app/screens/addCourse/add_course_main.dart';
+
+
+
 
 class MainScreen extends StatelessWidget {
   MainScreen({Key? key}) : super(key: key);
@@ -39,6 +45,10 @@ class MainScreen extends StatelessWidget {
                 index: navigationController.currentIndex.value,
                 children: [
                   HomeScreen(),
+                  const SearchMain(),
+                  const AddCourseMain(),
+                  const LumiTutorMain(),
+
                   // LeaderboardPage(),
                   // ClassroomsScreen(),
 

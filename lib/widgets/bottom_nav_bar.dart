@@ -37,6 +37,7 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2.0),
             child: Container(
+              width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
               decoration: BoxDecoration(
                 color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(20),
@@ -52,9 +53,7 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                 borderRadius: BorderRadius.circular(20),
                 child: Theme(
                   data: Theme.of(context).copyWith(
-                    // remove all ink splashes
                     splashFactory: NoSplash.splashFactory,
-                    // make highlight (the darker overlay on tap) transparent
                     highlightColor: Colors.transparent,
                   ),
                   child: IntrinsicHeight(
@@ -68,6 +67,18 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                         BottomNavigationBarItem(
                           icon: Icon(Icons.home),
                           label: Constants.home,
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.search),
+                          label: 'Search',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.add_circle_outline),
+                          label: 'Add',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.chat_bubble_outline),
+                          label: 'LumiTutor',
                         ),
                         // BottomNavigationBarItem(
                         //   icon: Icon(Icons.emoji_events), // Leaderboard (Trophy)
