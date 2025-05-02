@@ -44,7 +44,7 @@ class HomeScreen extends StatelessWidget {
               fontWeight: FontWeight.w300,
             )
         : const TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w300,
             color: Colors.white,
           );
@@ -132,12 +132,38 @@ class HomeScreen extends StatelessWidget {
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
-                            child: Text(
-                              'Suggested Courses',
-                              style: sectionTitleStyle,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Suggested Courses',
+                                  style:
+                                      sectionTitleStyle, // bold or headline style
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    navigationController.updateIndex(1);
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'Search',
+                                        style: sectionTitleStyle.copyWith(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withOpacity(0.8),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_forward,
+                                          size: 16, color: Colors.white),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           HorizontalCategoryList(
                               initialPadding: horizontalPadding),
                           const SizedBox(height: 18),
@@ -160,13 +186,6 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: const custom.SearchBar(),
-                          ),
-                          const SizedBox(height: 8),
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),

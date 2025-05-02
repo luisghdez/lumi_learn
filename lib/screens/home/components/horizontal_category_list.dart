@@ -20,7 +20,7 @@ class HorizontalCategoryList extends StatelessWidget {
     final CourseController courseController = Get.find<CourseController>();
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 260.0;
+    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 140.0;
 
     return Obx(() {
       final courses = courseController.featuredCourses;

@@ -23,7 +23,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   bool _overlayVisible = false;
   late FocusNode _focusNode;
 
-  static const double _aspectRatio = 170 / 260;
+  static const double _aspectRatio = 200 / 140;
 
   @override
   void initState() {
@@ -131,7 +131,7 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: isTablet ? 22 : 18,
+                                fontSize: isTablet ? 18 : 14,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
