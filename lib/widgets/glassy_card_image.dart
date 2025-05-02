@@ -23,129 +23,144 @@ class GlassyCardSideImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Stack(
-        children: [
-          // Glass blur background
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              color: Colors.white.withOpacity(0.05),
-            ),
-          ),
-          // Border and content
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white24),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Left image strip
-                  Container(
-                    width: 20,
-                    height: double.infinity,
-                    clipBehavior: Clip.hardEdge,
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
+    final double textScale = MediaQuery.of(context).textScaleFactor;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isLarge = constraints.maxWidth > 800;
+        final double fontSizeTitle = isLarge ? 16 : 14.5;
+        final double fontSizeMeta = isLarge ? 13 : 11.5;
+        final double imageWidth = isLarge ? 28 : 20;
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              // Glass effect
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  color: Colors.white.withOpacity(0.05),
+                ),
+              ),
+              // Border and Content
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white24),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left image strip
+                      Container(
+                        width: imageWidth,
+                        height: double.infinity,
+                        clipBehavior: Clip.hardEdge,
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            bottomLeft: Radius.circular(16),
+                          ),
+                        ),
+                        child: Image.asset(
+                          imagePath,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                    ),
-                    child: Image.asset(
-                      imagePath,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  // Right content
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            courseName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11.5,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
+                      // Right content
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.bookmark_border,
-                                  color: Colors.white60, size: 14),
-                              const SizedBox(width: 4),
                               Text(
-                                '$bookmarkCount',
-                                style: const TextStyle(
-                                    color: Colors.white60, fontSize: 11.5),
+                                courseName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: fontSizeTitle * textScale,
+                                ),
                               ),
-                              const Spacer(),
+                              const SizedBox(height: 4),
                               Text(
-                                '$lessonCount lessons',
-                                style: const TextStyle(
-                                    color: Colors.white60, fontSize: 11.5),
+                                description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: fontSizeMeta,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.bookmark_border,
+                                      color: Colors.white60, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$bookmarkCount',
+                                    style: TextStyle(
+                                        color: Colors.white60,
+                                        fontSize: fontSizeMeta),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    '$lessonCount lessons',
+                                    style: TextStyle(
+                                        color: Colors.white60,
+                                        fontSize: fontSizeMeta),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: tags
+                                    .map((tag) => _TagChip(label: tag))
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: onStartLearning,
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: Colors.white24),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    textStyle: TextStyle(
+                                      fontSize: fontSizeMeta,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  child: const Text('Start Learning!'),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            children:
-                                tags.map((tag) => _TagChip(label: tag)).toList(),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: onStartLearning,
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.white24),
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              child: const Text('Start Learning!'),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -157,6 +172,8 @@ class _TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = MediaQuery.of(context).size.width > 600;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -166,9 +183,9 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white70,
-          fontSize: 11,
+          fontSize: isTablet ? 12 : 11,
         ),
       ),
     );
