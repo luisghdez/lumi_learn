@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/widgets/tag_chip.dart';
 
 class HorizontalCategoryCard extends StatelessWidget {
   final String title;
@@ -82,7 +83,7 @@ class HorizontalCategoryCard extends StatelessWidget {
                           spacing: 6,
                           runSpacing: -6,
                           children: displayTags
-                              .map((tag) => _TagChip(label: tag))
+                              .map((tag) => TagChip(label: tag))
                               .toList(),
                         ),
                         const SizedBox(height: 12),
@@ -202,7 +203,7 @@ class HorizontalCategoryCard extends StatelessWidget {
                             spacing: 6,
                             runSpacing: -6,
                             children: displayTags
-                                .map((tag) => _TagChip(label: tag))
+                                .map((tag) => TagChip(label: tag))
                                 .toList(),
                           ),
                         ],
@@ -227,31 +228,6 @@ class HorizontalCategoryCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TagChip extends StatelessWidget {
-  final String label;
-
-  const _TagChip({Key? key, required this.label}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 11,
         ),
       ),
     );
