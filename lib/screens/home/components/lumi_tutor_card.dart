@@ -1,4 +1,3 @@
-// lib/screens/home/components/lumi_tutor_card.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
@@ -11,7 +10,6 @@ class LumiTutorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigationController = Get.find<NavigationController>();
 
-    // Two sample “aisles” of suggestions
     final popularQuestions = [
       'What is photosynthesis?',
       'Solve quadratic equations',
@@ -30,37 +28,38 @@ class LumiTutorCard extends StatelessWidget {
       'Essay structure tips',
     ];
 
-    // Build both rows inside one horizontal scroll
     Widget buildSuggestionRows() {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: popularQuestions
-                  .map((q) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _TransparentTag(label: q),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: recentQuestions
-                  .map((q) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _TransparentTag(label: q),
-                      ))
-                  .toList(),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: popularQuestions
+                    .map((q) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _TransparentTag(label: q),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: recentQuestions
+                    .map((q) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _TransparentTag(label: q),
+                        ))
+                    .toList(),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: greyBorder),
@@ -73,61 +72,65 @@ class LumiTutorCard extends StatelessWidget {
           end: Alignment.centerRight,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top row with image, title, button
-          Row(
-            children: [
-              Image.asset(
-                'assets/astronaut/teacher.png',
-                width: 100,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Ask Me Anything!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => navigationController.updateIndex(3),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/astronaut/teacher.png',
+                    width: 100,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Ask Me Anything!',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Go to LumiTutor'),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward),
-                          ],
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                navigationController.updateIndex(3),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('Go to LumiTutor'),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // --------- Single scroll for both rows ----------
-          buildSuggestionRows(),
-        ],
+            ),
+            const SizedBox(height: 12),
+            buildSuggestionRows(),
+          ],
+        ),
       ),
     );
   }
