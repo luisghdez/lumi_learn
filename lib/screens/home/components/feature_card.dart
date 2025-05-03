@@ -22,7 +22,7 @@ class FeatureCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          height: 140,
+          height: 110,
           decoration: BoxDecoration(
             border: Border.all(color: greyBorder),
             borderRadius: BorderRadius.circular(12),
@@ -33,16 +33,16 @@ class FeatureCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 10),
-                Icon(icon, weight: 300, color: color, size: 60),
+                Icon(icon, weight: 300, color: color, size: 50),
                 const SizedBox(height: 6),
                 Text(
                   title,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelMedium!.copyWith(
                         color: const Color.fromARGB(155, 255, 255, 255),
-                        height: 1.1,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: 0.1,
                       ),
                 ),
               ],

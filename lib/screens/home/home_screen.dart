@@ -100,27 +100,27 @@ class HomeScreen extends StatelessWidget {
                                   color:
                                       const Color.fromARGB(255, 85, 151, 222),
                                   icon: Symbols.document_scanner,
-                                  title: 'AI\nScanner',
+                                  title: 'AI Scanner',
                                   onTap: () {
                                     Get.to(() => const AiScannerMain());
                                   },
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 10),
                                 FeatureCard(
                                   color:
                                       const Color.fromARGB(255, 204, 75, 101),
                                   icon: Symbols.note_add,
-                                  title: 'Course\nCreator',
+                                  title: 'Add Course',
                                   onTap: () {
                                     Get.to(() => const CourseCreation());
                                   },
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 10),
                                 FeatureCard(
                                   color:
                                       const Color.fromARGB(255, 81, 198, 127),
                                   icon: Symbols.forum,
-                                  title: 'Lumi\nTutor',
+                                  title: 'LumiTutor',
                                   onTap: () {
                                     navigationController.updateIndex(3);
                                   },
