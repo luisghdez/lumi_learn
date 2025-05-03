@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/constants.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/screens/courses/my_courses_screen.dart';
 
 class TopPicksHeader extends StatelessWidget {
   final VoidCallback onAddTap;
@@ -19,50 +20,28 @@ class TopPicksHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get the text theme once for cleaner access
-    final textTheme = Theme.of(context).textTheme;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'My Courses',
-              style: titleStyle,
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-              decoration: BoxDecoration(
-                border: Border.all(color: greyBorder),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                isPremium ? '$slotsUsed/∞' : '$slotsUsed/$maxSlots',
-                style: textTheme.labelMedium?.copyWith(
-                  color: Colors.white54,
+        Text(
+          'My Courses',
+          style: titleStyle,
+        ),
+        GestureDetector(
+          onTap: () => Get.to(() => const MyCoursesScreen()),
+          child: Row(
+            children: [
+              Text(
+                'View All',
+                style: titleStyle.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white.withOpacity(0.8),
                 ),
               ),
-            ),
-          ],
-        ),
-        InkWell(
-          onTap: onAddTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white24,
-            ),
-            child: const Icon(
-              Icons.add,
-              color: Colors.white,
-            ),
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+            ],
           ),
         ),
       ],
