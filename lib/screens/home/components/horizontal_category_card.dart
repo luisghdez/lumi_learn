@@ -6,6 +6,7 @@ class HorizontalCategoryCard extends StatefulWidget {
   final String imagePath;
   final VoidCallback onConfirm;
   final double height;
+  final List<String> tags;
 
   const HorizontalCategoryCard({
     Key? key,
@@ -13,6 +14,7 @@ class HorizontalCategoryCard extends StatefulWidget {
     required this.imagePath,
     required this.onConfirm,
     required this.height,
+    required this.tags,
   }) : super(key: key);
 
   @override
@@ -70,9 +72,11 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
   Widget build(BuildContext context) {
     final double cardHeight = widget.height;
     final double cardWidth = cardHeight * _aspectRatio;
-    final double gradientHeight = cardHeight * (100 / 240);
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 600;
+
+    final List<String> displayTags =
+        widget.tags.isEmpty ? ['LumiOG', 'Classic'] : widget.tags;
 
     return SizedBox(
       width: cardWidth,
@@ -97,23 +101,10 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                 ),
                 child: Stack(
                   children: [
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: gradientHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(16),
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.9),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     Align(
@@ -136,15 +127,27 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Created By: Anonymous',
-                              style: TextStyle(
-                                fontSize: isTablet ? 16 : 12,
-                                color: const Color.fromARGB(255, 200, 200, 200),
-                              ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: -6,
+                              children: displayTags
+                                  .map((tag) => _TagChip(label: tag))
+                                  .toList(),
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        child: const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -164,13 +167,13 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Padding(
+                        const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.0),
                           child: Text(
                             'Do you want to \nsave and start\nthis course?',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: isTablet ? 22 : 18,
+                              fontSize: 18,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                               letterSpacing: -1,
@@ -220,6 +223,31 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  final String label;
+
+  const _TagChip({Key? key, required this.label}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 11,
         ),
       ),
     );

@@ -49,6 +49,7 @@ class HorizontalCategoryList extends StatelessWidget {
                     height: responsiveHeight,
                     title: course['title'] ?? 'Untitled',
                     imagePath: galaxyImagePath,
+                    tags: course['tags'] ?? [],
                     onConfirm: () async {
                       if (course['loading'] == true) return;
 
