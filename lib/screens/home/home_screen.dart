@@ -7,10 +7,10 @@ import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
+import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import 'components/category_list.dart';
-import 'components/search_bar.dart' as custom;
 import 'components/top_picks_header.dart';
 import 'components/home_header.dart';
 
@@ -166,6 +166,22 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: 8),
                           HorizontalCategoryList(
                               initialPadding: horizontalPadding),
+                          const SizedBox(height: 18),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'LumiTutor',
+                                  style: sectionTitleStyle,
+                                ),
+                                const SizedBox(height: 8),
+                                const LumiTutorCard(),
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 18),
                           Padding(
                             padding: EdgeInsets.symmetric(
