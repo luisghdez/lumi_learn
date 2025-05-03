@@ -33,8 +33,8 @@ class FeatureCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 10),
-                Icon(icon, weight: 300, color: color, size: 50),
-                const SizedBox(height: 6),
+                Icon(icon, weight: 400, color: color, size: 50),
+                const SizedBox(height: 12),
                 Text(
                   title,
                   textAlign: TextAlign.center,
