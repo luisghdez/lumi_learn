@@ -113,6 +113,7 @@ class _ClassroomDetailsState extends State<ClassroomDetails> {
                                 completedLessons: 0,
                                 totalLessons: 0,
                                 imagePath: getGalaxyForCourse(course.id),
+                                tags: [],
                                 onTap: () async {
                                   // Prevent navigation if still loading
                                   if (false == true) return;
