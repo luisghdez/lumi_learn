@@ -236,7 +236,12 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: GestureDetector(
                     onTap: () {
-                      Get.to(() => const CourseCreation());
+                      Get.to(
+                        () => const CourseCreation(),
+                        transition: Transition.downToUp,
+                        duration: const Duration(milliseconds: 400),
+                        fullscreenDialog: true,
+                      );
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
