@@ -6,6 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/badge.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/due_date_dropzone.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/section_header.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
@@ -181,10 +185,9 @@ class _CourseCreationState extends State<CourseCreation> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader(
+                      const SectionHeader(
                         icon: Icons.menu_book,
                         title: "Course Details",
-                        context: context,
                       ),
                       const SizedBox(height: 10),
 
@@ -276,10 +279,9 @@ class _CourseCreationState extends State<CourseCreation> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionHeader(
+                    const SectionHeader(
                       icon: Icons.upload_file,
                       title: "Add Files",
-                      context: context,
                     ),
                     Text(
                       "${selectedFiles.length}/10",
@@ -288,7 +290,7 @@ class _CourseCreationState extends State<CourseCreation> {
                   ],
                 ),
 
-                _buildDropZone(
+                DropZone(
                   onTap: () => handleFileChange(pickImages: false),
                   label: "documents",
                   subLabel: "PDF, PPTX, DOC, XLSX",
@@ -344,10 +346,9 @@ class _CourseCreationState extends State<CourseCreation> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionHeader(
+                    const SectionHeader(
                       icon: Icons.image,
                       title: "Add Images",
-                      context: context,
                     ),
                     Text(
                       "${selectedImages.length}/10",
@@ -356,7 +357,7 @@ class _CourseCreationState extends State<CourseCreation> {
                   ],
                 ),
 
-                _buildDropZone(
+                DropZone(
                   onTap: () => handleFileChange(pickImages: true),
                   label: "images",
                   subLabel: "PNG, JPG, JPEG",
@@ -422,10 +423,9 @@ class _CourseCreationState extends State<CourseCreation> {
                 const Divider(height: 40),
 
                 /// TEXT SECTION
-                _buildSectionHeader(
+                const SectionHeader(
                   icon: Icons.text_fields,
                   title: "Add Text",
-                  context: context,
                 ),
                 const SizedBox(height: 6),
                 // Main text input with a limit of 2000 characters and a counter
@@ -483,13 +483,15 @@ class _CourseCreationState extends State<CourseCreation> {
                 const Divider(height: 40),
 
                 if (widget.classId != null) ...[
-                  _buildSectionHeader(
+                  const SectionHeader(
                     icon: Icons.calendar_month,
                     title: "Due Date",
-                    context: context,
                   ),
                   // const SizedBox(height: 24),
-                  _buildDueDateDropZone(),
+                  DueDateDropZone(
+                    dueDate: _dueDate,
+                    onTap: _pickDueDate,
+                  ),
                   const Divider(height: 40),
                 ],
 
@@ -541,19 +543,19 @@ class _CourseCreationState extends State<CourseCreation> {
                           runSpacing: 4,
                           children: [
                             if (selectedFiles.isNotEmpty)
-                              _buildBadge(
+                              CustomBadge(
                                 icon: Icons.file_copy,
                                 label:
                                     "${selectedFiles.length} file${selectedFiles.length != 1 ? "s" : ""}",
                               ),
                             if (selectedImages.isNotEmpty)
-                              _buildBadge(
+                              CustomBadge(
                                 icon: Icons.image_outlined,
                                 label:
                                     "${selectedImages.length} image${selectedImages.length != 1 ? "s" : ""}",
                               ),
                             if (text.trim().isNotEmpty)
-                              _buildBadge(
+                              const CustomBadge(
                                 icon: Icons.text_fields,
                                 label: "Text",
                               ),
@@ -630,144 +632,6 @@ class _CourseCreationState extends State<CourseCreation> {
                 const SizedBox(height: 36),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Builds a small "badge" widget.
-  Widget _buildBadge({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey[800],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: greyBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds a section header (icon + title).
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String title,
-    required BuildContext context,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
-        ),
-      ],
-    );
-  }
-
-  /// Mimics the dashed-border drop zone for uploading files/images.
-  Widget _buildDropZone({
-    required VoidCallback onTap,
-    required String label,
-    required String subLabel,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 98,
-        margin: const EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: greyBorder,
-            style: BorderStyle.solid,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[1000],
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  children: [
-                    const TextSpan(
-                      text: "Click to upload ",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    TextSpan(text: label),
-                  ],
-                ),
-              ),
-              Text(
-                subLabel,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Add this function for the Due Date Drop Zone
-  Widget _buildDueDateDropZone() {
-    return GestureDetector(
-      onTap: _pickDueDate, // Correct way to call the function
-      child: Container(
-        height: 98,
-        margin: const EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: greyBorder,
-            style: BorderStyle.solid,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[1000],
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  children: [
-                    TextSpan(
-                      text: _dueDate == null ? "Click to set " : "Due Date: ",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    TextSpan(
-                      text: _dueDate == null
-                          ? "due date"
-                          : DateFormat.yMd().add_jm().format(_dueDate!),
-                    ),
-                  ],
-                ),
-              ),
-              const Text(
-                "Set a due date for this course",
-                style: TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
           ),
         ),
       ),
