@@ -139,23 +139,24 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                       final cat = _categories[i];
                       final selected = cat == _selectedCategory;
                       return ChoiceChip(
-                        avatar: Icon(
-                          _categoryIcons[cat],
-                          color: selected ? Colors.black : Colors.white,
-                        ),
-                        label: Text(
-                          cat,
-                          style: TextStyle(
+                          avatar: Icon(
+                            _categoryIcons[cat],
                             color: selected ? Colors.black : Colors.white,
                           ),
-                        ),
-                        showCheckmark: false,
-                        selected: selected,
-                        selectedColor: Colors.white,
-                        backgroundColor: Colors.grey.shade800,
-                        onSelected: (_) =>
-                            setState(() => _selectedCategory = cat),
-                      );
+                          label: Text(
+                            cat,
+                            style: TextStyle(
+                              color: selected ? Colors.black : Colors.white,
+                            ),
+                          ),
+                          showCheckmark: false,
+                          selected: selected,
+                          selectedColor: Colors.white,
+                          backgroundColor: Colors.grey.shade800,
+                          onSelected: (_) => setState(() {
+                                _selectedCategory = cat;
+                                _activeIndex = null; // ✅ Reset open topic
+                              }));
                     },
                   ),
                 ),
