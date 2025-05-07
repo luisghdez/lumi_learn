@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/screens/courses/course_topic_screen.dart';
 import '../controllers/navigation_controller.dart';
 import '../utils/constants.dart';
 
@@ -37,7 +38,8 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2.0),
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
+              width: MediaQuery.of(context).size.width *
+                  0.9, // 90% of screen width
               decoration: BoxDecoration(
                 color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(20),
@@ -61,7 +63,16 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                       currentIndex: currentIndex,
                       backgroundColor: Colors.grey[900],
                       onTap: (index) {
-                        navigationController.updateIndex(index);
+                        if (index == 2) {
+                          Get.to(
+                            () => const CourseTopicScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 400),
+                            fullscreenDialog: true,
+                          );
+                        } else {
+                          navigationController.updateIndex(index);
+                        }
                       },
                       items: const [
                         BottomNavigationBarItem(
