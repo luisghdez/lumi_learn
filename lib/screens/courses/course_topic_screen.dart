@@ -169,38 +169,15 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (ctx, i) {
                         final t = _filteredTopics[i];
-                        return GestureDetector(
-                          onTap: () {
-                            // TODO: handle pre-made topic click
+                        return _TopicTile(
+                          title: t['title']!,
+                          subtitle: t['subtitle']!,
+                          onConfirm: () {
+                            // 👉 Handle the final confirmation here
+                            // e.g. navigate to a lesson, pass data forward, etc.
+                            Get.snackbar(
+                                'Confirmed', 'You chose ${t['title']}');
                           },
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade900,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  t['title']!,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  t['subtitle']!,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         );
                       },
                     ),
@@ -295,6 +272,101 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TopicTile extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onConfirm;
+
+  const _TopicTile({
+    required this.title,
+    required this.subtitle,
+    required this.onConfirm,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<_TopicTile> createState() => _TopicTileState();
+}
+
+class _TopicTileState extends State<_TopicTile> {
+  bool _showConfirm = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => _showConfirm = !_showConfirm),
+      child: Container(
+        height: 70, // 💡 fixed height so Confirm can match it
+        decoration: BoxDecoration(
+          color: Colors.grey.shade900,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Stack(
+          children: [
+            // ---------- MAIN CONTENT ----------
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(widget.title,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white)),
+                        const SizedBox(height: 4),
+                        Text(widget.subtitle,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ---------- SLIDE-IN CONFIRM ----------
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              top: 0,
+              bottom: 0,
+              right: _showConfirm ? 0 : -140, // ⬅️ Slide in from right
+              width: 140, // same width always
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF7d48a8),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      bottomLeft: Radius.circular(8),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                onPressed: widget.onConfirm,
+                child: const Text(
+                  'Start Learning!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
