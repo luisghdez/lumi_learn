@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/data/course_topics_data.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 
 class CourseTopicScreen extends StatefulWidget {
@@ -10,73 +11,11 @@ class CourseTopicScreen extends StatefulWidget {
 }
 
 class _CourseTopicScreenState extends State<CourseTopicScreen> {
-  final List<String> _categories = [
-    'Nursing',
-    'Computer Science',
-    'Business',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    // …add more
-  ];
-
-  final Map<String, IconData> _categoryIcons = {
-    'Nursing': Icons.local_hospital,
-    'Computer Science': Icons.computer,
-    'Business': Icons.business_center,
-    'Mathematics': Icons.calculate,
-    'Physics': Icons.science,
-    'Chemistry': Icons.science_outlined,
-    'Biology': Icons.nature,
-    // …add more mappings here
-  };
+  final List<String> _categories = courseCategories;
+  final Map<String, IconData> _categoryIcons = categoryIcons;
+  final List<Map<String, String>> _allTopics = courseTopics;
 
   String _selectedCategory = 'Nursing';
-
-  final List<Map<String, String>> _allTopics = [
-    {
-      'title': 'Anatomy and Physiology',
-      'subtitle': 'Learn about structure and function of human body',
-      'category': 'Nursing',
-    },
-    {
-      'title': 'Pharmacology',
-      'subtitle': 'Explore effects of drugs on the body',
-      'category': 'Nursing',
-    },
-    {
-      'title': 'Nursing Care',
-      'subtitle': 'Learn principles of patient care',
-      'category': 'Nursing',
-    },
-    {
-      'title': 'Data Structures',
-      'subtitle': 'Learn about data organization and storage',
-      'category': 'Computer Science',
-    },
-    {
-      'title': 'Algorithms',
-      'subtitle': 'Explore problem-solving techniques',
-      'category': 'Computer Science',
-    },
-    {
-      'title': 'Software Engineering',
-      'subtitle': 'Learn about software development processes',
-      'category': 'Computer Science',
-    },
-    {
-      'title': 'Marketing Strategies',
-      'subtitle': 'Learn effective marketing techniques',
-      'category': 'Business',
-    },
-    {
-      'title': 'Financial Management',
-      'subtitle': 'Explore financial principles and practices',
-      'category': 'Business',
-    },
-    // … other topics
-  ];
 
   List<Map<String, String>> get _filteredTopics =>
       _allTopics.where((t) => t['category'] == _selectedCategory).toList();
