@@ -34,20 +34,34 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
               fit: BoxFit.cover,
             ),
           ),
+
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, top: 0),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white),
+                      onPressed: () => Get.back(),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 16),
                 // 1) Top graphic + title with horizontal padding
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                   child: Column(
                     children: [
                       Image.asset(
                         'assets/astronaut/moon.png',
-                        width: 220,
-                        height: 220,
+                        width: 180,
+                        height: 180,
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -213,7 +227,7 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 30),
               ],
             ),
           ),

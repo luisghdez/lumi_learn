@@ -113,7 +113,10 @@ class HomeScreen extends StatelessWidget {
                                   icon: Symbols.note_add,
                                   title: 'Add Course',
                                   onTap: () {
-                                    Get.to(() => const CourseTopicScreen());
+                                    Get.to(() => const CourseTopicScreen(),
+                                        transition: Transition.fadeIn,
+                                        duration:
+                                            const Duration(milliseconds: 500));
                                   },
                                 ),
                                 const SizedBox(width: 10),
