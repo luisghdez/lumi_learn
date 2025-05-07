@@ -8,6 +8,7 @@ class BaseScreenContainer extends StatelessWidget {
   final bool includeSafeArea;
   final double tabletBreakpoint;
   final double bottomPadding;
+  final bool enableScroll;
 
   const BaseScreenContainer({
     Key? key,
@@ -17,6 +18,7 @@ class BaseScreenContainer extends StatelessWidget {
     this.includeSafeArea = true,
     this.tabletBreakpoint = 800,
     this.bottomPadding = 40,
+    this.enableScroll = true,
   }) : super(key: key);
 
   double _getHorizontalPadding(BuildContext context) {
@@ -27,7 +29,8 @@ class BaseScreenContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double horizontalPadding = _getHorizontalPadding(context);
-    final double topPadding = MediaQuery.of(context).padding.top + horizontalPadding;
+    final double topPadding =
+        MediaQuery.of(context).padding.top + horizontalPadding;
 
     return Stack(
       children: [
@@ -48,6 +51,18 @@ class BaseScreenContainer extends StatelessWidget {
                   constraints.maxHeight - topPadding - bottomPadding,
                 );
 
+                // ✅ If scrolling is disabled (like in chat), skip wrapping
+                if (!enableScroll) {
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      top: topPadding,
+                      bottom: bottomPadding,
+                    ),
+                    child: builder(context),
+                  );
+                }
+
+                // ✅ Default scrollable layout
                 return RefreshIndicator(
                   color: Colors.white,
                   backgroundColor: Colors.black54,
