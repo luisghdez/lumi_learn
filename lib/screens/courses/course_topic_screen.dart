@@ -81,6 +81,8 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
   List<Map<String, String>> get _filteredTopics =>
       _allTopics.where((t) => t['category'] == _selectedCategory).toList();
 
+  int? _activeIndex;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,9 +174,13 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                         return _TopicTile(
                           title: t['title']!,
                           subtitle: t['subtitle']!,
+                          isActive: _activeIndex == i,
+                          onTap: () {
+                            setState(() {
+                              _activeIndex = _activeIndex == i ? null : i;
+                            });
+                          },
                           onConfirm: () {
-                            // 👉 Handle the final confirmation here
-                            // e.g. navigate to a lesson, pass data forward, etc.
                             Get.snackbar(
                                 'Confirmed', 'You chose ${t['title']}');
                           },
@@ -277,31 +283,28 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
   }
 }
 
-class _TopicTile extends StatefulWidget {
+class _TopicTile extends StatelessWidget {
   final String title;
   final String subtitle;
+  final bool isActive;
+  final VoidCallback onTap;
   final VoidCallback onConfirm;
 
   const _TopicTile({
     required this.title,
     required this.subtitle,
+    required this.isActive,
+    required this.onTap,
     required this.onConfirm,
     Key? key,
   }) : super(key: key);
 
   @override
-  State<_TopicTile> createState() => _TopicTileState();
-}
-
-class _TopicTileState extends State<_TopicTile> {
-  bool _showConfirm = false;
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => setState(() => _showConfirm = !_showConfirm),
+      onTap: onTap,
       child: Container(
-        height: 70, // 💡 fixed height so Confirm can match it
+        height: 70,
         decoration: BoxDecoration(
           color: Colors.grey.shade900,
           borderRadius: BorderRadius.circular(8),
@@ -319,13 +322,13 @@ class _TopicTileState extends State<_TopicTile> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(widget.title,
+                        Text(title,
                             style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white)),
                         const SizedBox(height: 4),
-                        Text(widget.subtitle,
+                        Text(subtitle,
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
                       ],
@@ -341,26 +344,26 @@ class _TopicTileState extends State<_TopicTile> {
               curve: Curves.easeOut,
               top: 0,
               bottom: 0,
-              right: _showConfirm ? 0 : -140, // ⬅️ Slide in from right
-              width: 140, // same width always
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF7d48a8),
-                  shape: const RoundedRectangleBorder(
+              right: isActive ? 0 : -140,
+              width: 140,
+              child: GestureDetector(
+                onTap: onConfirm,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF7d48a8),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(8),
                       bottomLeft: Radius.circular(8),
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                onPressed: widget.onConfirm,
-                child: const Text(
-                  'Start Learning!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Start Learning!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
