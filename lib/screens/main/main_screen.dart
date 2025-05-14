@@ -47,11 +47,9 @@ class MainScreen extends StatelessWidget {
                   HomeScreen(),
                   const SearchMain(),
                   const AddCourseMain(),
-                  const LumiTutorMain(),
-
+                  // const LumiTutorMain(),
                   // LeaderboardPage(),
                   // ClassroomsScreen(),
-
                   const ProfileScreen(),
                   // const FriendsScreen(),
                 ],

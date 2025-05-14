@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/models/chat_sender.dart';
 import 'package:lumi_learn_app/widgets/base_screen_container.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_header.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_bubble.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_input_area.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_drawer.dart';
+import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 
 class LumiTutorMain extends StatefulWidget {
   const LumiTutorMain({Key? key}) : super(key: key);
@@ -29,6 +32,58 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     "What is E = mc²?",
   ];
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Hide bottom nav bar when this screen is opened
+    Get.find<NavigationController>().hideNavBar();
+
+    _handleScannedInput();
+  }
+
+  @override
+  void dispose() {
+    // Show bottom nav bar again when leaving
+    Get.find<NavigationController>().showNavBar();
+    super.dispose();
+  }
+
+  void _handleScannedInput() {
+    final args = Get.arguments;
+    if (args != null && mounted) {
+      if (args['type'] == 'image') {
+        final List<String> paths = List<String>.from(args['paths']);
+        for (var path in paths) {
+          _messages.add({
+            "image": path,
+            "sender": ChatSender.user,
+          });
+        }
+      } else if (args['type'] == 'pdf') {
+        _messages.add({
+          "text": "📎 Sent a scanned PDF:\n${args['path']}",
+          "sender": ChatSender.user,
+        });
+      }
+
+      setState(() {});
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   void _handleSend(String message) {
     if (message.trim().isEmpty) return;
 
@@ -40,63 +95,66 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       });
     });
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const LumiDrawer(), // 👈 new sidebar drawer
+      drawer: const LumiDrawer(),
       backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: true, // important for keyboard
+
       body: BaseScreenContainer(
         includeSafeArea: true,
         enableScroll: false,
         onRefresh: null,
         builder: (context) => Column(
           children: [
-            // ───── Header ─────
             TutorHeader(
               onMenuPressed: () => Scaffold.of(context).openDrawer(),
               onCreateCourse: () => print("Create course from chat"),
             ),
-
-            // ───── Chat Area ─────
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
                 itemCount: _messages.length,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
+
+                  if (msg.containsKey("image")) {
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.file(
+                            File(msg["image"]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   return ChatBubble(
                     message: msg["text"],
-                    sender: msg["sender"],
+                    sender: msg["sender"] ?? ChatSender.tutor,
                   );
                 },
               ),
             ),
-
-            // ───── Input + Suggestions ─────
-            Padding(
-              padding: EdgeInsets.only(
-                left: 8,
-                right: 8,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 62,
-              ),
-              child: ChatInputArea(
+              ChatInputArea(
                 suggestions: _suggestions,
                 onSend: _handleSend,
-              ),
-            ),
+            )
           ],
         ),
       ),
