@@ -1,17 +1,20 @@
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:image/image.dart' as img;
+import 'package:crop_your_image/crop_your_image.dart';
 
-import 'widgets/camera_overlay.dart';
-import 'widgets/instruction_text.dart';
-import 'widgets/category_selector.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'camera_view.dart';
+import 'image_cropper_view.dart';
+
+import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
+
 
 
 class AiScannerMain extends StatefulWidget {
   final List<CameraDescription> cameras;
+
   const AiScannerMain({super.key, required this.cameras});
 
   @override
@@ -19,11 +22,15 @@ class AiScannerMain extends StatefulWidget {
 }
 
 class _AiScannerMainState extends State<AiScannerMain> {
-  late CameraController _controller;
-  bool _isCameraInitialized = false;
-  bool _showSubmitButton = false;
+  late final CameraController _controller;
+  final CropController _cropController = CropController();
 
-  int _selectedIndex = 2;
+  bool _isCameraInitialized = false;
+  bool _isCropping = false;
+  bool _isCroppingInProgress = false;
+
+  int _selectedIndex = 0;
+  Uint8List? _imageBytes;
 
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Math', 'color': Colors.blue, 'icon': Icons.calculate},
@@ -40,53 +47,62 @@ class _AiScannerMainState extends State<AiScannerMain> {
   }
 
   Future<void> _initializeCamera() async {
-    _controller = CameraController(widget.cameras[0], ResolutionPreset.high);
-    await _controller.initialize();
-    if (!mounted) return;
-    setState(() => _isCameraInitialized = true);
+    _controller = CameraController(widget.cameras.first, ResolutionPreset.high);
+    try {
+      await _controller.initialize();
+      if (mounted) {
+        setState(() => _isCameraInitialized = true);
+      }
+    } catch (e) {
+      Get.snackbar("Camera Error", "Failed to initialize camera: $e");
+    }
   }
 
+  Future<void> _captureImage() async {
+    if (!_controller.value.isInitialized || _controller.value.isTakingPicture) return;
 
-Future<void> _captureAndSend(String category) async {
-  try {
-    if (!_controller.value.isInitialized) return;
+    try {
+      final XFile rawImage = await _controller.takePicture();
+      final bytes = await rawImage.readAsBytes();
+      HapticFeedback.mediumImpact();
+      setState(() {
+        _imageBytes = bytes;
+        _isCropping = true;
+      });
+    } catch (e) {
+      Get.snackbar("Capture Error", "Failed to capture image: $e");
+    }
+  }
 
-    final XFile rawImage = await _controller.takePicture();
-    final path = rawImage.path;
-
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: path,
-      compressFormat: ImageCompressFormat.jpg,
-      compressQuality: 90,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop your question',
-          toolbarColor: Colors.black,
-          toolbarWidgetColor: Colors.white,
-          activeControlsWidgetColor: _categories[_selectedIndex]['color'],
-          initAspectRatio: CropAspectRatioPreset.original,
-          lockAspectRatio: false,
-        ),
-        IOSUiSettings(
-          title: 'Crop your question',
-        ),
-      ],
-    );
-
-    if (croppedFile == null) return;
-
-    final bytes = await croppedFile.readAsBytes();
+  void _submitCroppedImage(Uint8List croppedBytes) {
+    setState(() {
+      _isCropping = false;
+      _isCroppingInProgress = false;
+      _imageBytes = null;
+    });
 
     Get.toNamed('/lumiTutorChat', arguments: {
       'type': 'image',
-      'imageBytes': bytes,
-      'category': category,
+      'imageBytes': croppedBytes,
+      'category': _categories[_selectedIndex]['name'],
     });
-  } catch (e) {
-    Get.snackbar("Error", "Could not crop or send image: $e");
   }
-}
 
+  void _handleCategoryScroll(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_isCropping) {
+      setState(() {
+        _isCropping = false;
+        _imageBytes = null;
+        _isCroppingInProgress = false;
+      });
+      return false;
+    }
+    return true;
+  }
 
   @override
   void dispose() {
@@ -94,59 +110,41 @@ Future<void> _captureAndSend(String category) async {
     super.dispose();
   }
 
-  void _handleCategoryTap(int index) {
-    if (index >= 0 && index < _categories.length) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _selectedIndex = index;
-          _showSubmitButton = true;
-        });
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_isCameraInitialized) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
-      );
-    }
-
     final selectedColor = _categories[_selectedIndex]['color'] as Color;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Positioned.fill(child: CameraPreview(_controller)),
-          CameraOverlay(borderColor: selectedColor),
-          const InstructionText(),
-          CategorySelector(
-            categories: _categories,
-            selectedIndex: _selectedIndex,
-            onCategoryTap: _handleCategoryTap,
-          ),
-          if (_showSubmitButton)
-            Positioned(
-              bottom: 140,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedColor,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
-                  onPressed: () => _captureAndSend(_categories[_selectedIndex]['name']),
-                  icon: const Icon(Icons.check, color: Colors.white),
-                  label: const Text("Submit", style: TextStyle(color: Colors.white)),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            if (_isCropping && _imageBytes != null)
+            Navigator(
+              onGenerateRoute: (_) => NoSwipePageRoute(
+                builder: (_) => ImageCropperView(
+                  imageBytes: _imageBytes!,
+                  dotColor: selectedColor,
+                  isCroppingInProgress: _isCroppingInProgress,
+                  onCropPressed: () => setState(() => _isCroppingInProgress = true),
+                  onImageCropped: _submitCroppedImage,
+                  onCropError: () => setState(() => _isCroppingInProgress = false),
                 ),
               ),
-            ),
-        ],
+            )
+            else
+              CameraView(
+                controller: _controller,
+                isInitialized: _isCameraInitialized,
+                selectedColor: selectedColor,
+                categories: _categories,
+                selectedIndex: _selectedIndex,
+                onCategoryTap: _handleCategoryScroll,
+                onCapture: _captureImage,
+              ),
+          ],
+        ),
       ),
     );
   }

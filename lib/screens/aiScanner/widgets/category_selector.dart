@@ -1,16 +1,46 @@
 import 'package:flutter/material.dart';
 
-class CategorySelector extends StatelessWidget {
+class CategorySelector extends StatefulWidget {
   final List<Map<String, dynamic>> categories;
   final int selectedIndex;
-  final void Function(int) onCategoryTap;
+  final void Function(int) onPageChanged;
+  final VoidCallback onCapture;
 
   const CategorySelector({
     super.key,
     required this.categories,
     required this.selectedIndex,
-    required this.onCategoryTap,
+    required this.onPageChanged,
+    required this.onCapture,
   });
+
+  @override
+  State<CategorySelector> createState() => _CategorySelectorState();
+}
+
+class _CategorySelectorState extends State<CategorySelector> {
+  late final PageController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(
+      viewportFraction: 0.3,
+      initialPage: widget.selectedIndex,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant CategorySelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      _controller.animateToPage(
+        widget.selectedIndex,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,45 +49,46 @@ class CategorySelector extends StatelessWidget {
       left: 0,
       right: 0,
       child: SizedBox(
-        height: 100,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: categories.length,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        height: 120,
+        child: PageView.builder(
+          controller: _controller,
+          itemCount: widget.categories.length,
+          onPageChanged: widget.onPageChanged,
           itemBuilder: (context, index) {
-            final item = categories[index];
-            final isSelected = index == selectedIndex;
+            final item = widget.categories[index];
+            final isSelected = index == widget.selectedIndex;
 
             return GestureDetector(
-              onTap: () => onCategoryTap(index),
+              onTap: isSelected ? widget.onCapture : null,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    width: isSelected ? 75 : 65,
-                    height: isSelected ? 75 : 65,
+                    width: isSelected ? 80 : 60,
+                    height: isSelected ? 80 : 60,
                     decoration: BoxDecoration(
                       color: item['color'],
                       shape: BoxShape.circle,
                       border: isSelected
                           ? Border.all(color: Colors.white, width: 3)
                           : null,
-                      boxShadow: [
-                        if (isSelected)
-                          BoxShadow(
-                            color: item['color'].withOpacity(0.4),
-                            blurRadius: 10,
-                          ),
-                      ],
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: item['color'].withOpacity(0.4),
+                                blurRadius: 10,
+                              )
+                            ]
+                          : [],
                     ),
                     child: Icon(
                       item['icon'],
                       color: Colors.white,
-                      size: 30,
+                      size: isSelected ? 32 : 26,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     item['name'],
                     style: TextStyle(
