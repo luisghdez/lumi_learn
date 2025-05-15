@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 
@@ -30,27 +29,14 @@ class ImageCropperView extends StatefulWidget {
 class _ImageCropperViewState extends State<ImageCropperView> {
   late final CropController _controller;
   Uint8List? _resizedImageBytes;
-  final GlobalKey _repaintKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _controller = CropController();
-
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    _resizeImageToFitScreen(); // Resize image to full screen
-  }
-
-  Future<void> _resizeImageToFitScreen() async {
-    await Future.delayed(Duration(milliseconds: 100)); // Let widget build
-
-    final RenderRepaintBoundary boundary = _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    final ui.Image image = await boundary.toImage(pixelRatio: ui.window.devicePixelRatio);
-    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final Uint8List resized = byteData!.buffer.asUint8List();
-
-    setState(() => _resizedImageBytes = resized);
+    _resizeImageToScreen();
   }
 
   @override
@@ -59,55 +45,80 @@ class _ImageCropperViewState extends State<ImageCropperView> {
     super.dispose();
   }
 
+  void _handleSubmit() {
+  if (!widget.isCroppingInProgress) {
+    widget.onCropPressed();        // Set loading flag
+    _controller.crop();            // Start the actual crop
+  }
+}
+
+
+  Future<void> _resizeImageToScreen() async {
+    final screenSize = ui.window.physicalSize / ui.window.devicePixelRatio;
+
+    final codec = await ui.instantiateImageCodec(
+      widget.imageBytes,
+      targetWidth: screenSize.width.toInt(),
+      targetHeight: screenSize.height.toInt(),
+    );
+    final frame = await codec.getNextFrame();
+    final byteData = await frame.image.toByteData(format: ui.ImageByteFormat.png);
+    final resized = byteData!.buffer.asUint8List();
+
+    setState(() {
+      _resizedImageBytes = resized;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_resizedImageBytes == null) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          if (_resizedImageBytes == null)
-            RepaintBoundary(
-              key: _repaintKey,
-              child: Image.memory(
-                widget.imageBytes,
-                fit: BoxFit.cover,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-              ),
-            )
-          else
-            Crop(
-              image: _resizedImageBytes!,
-              controller: _controller,
-              onCropped: (CropResult result) {
-                switch (result) {
-                  case CropSuccess(:final croppedImage):
-                    widget.onImageCropped(croppedImage);
-                  case CropFailure():
-                    widget.onCropError();
-                }
-              },
-              interactive: false,
-              fixCropRect: false,
-              baseColor: Colors.black,
-              maskColor: Colors.black.withOpacity(0.65),
-              withCircleUi: false,
-              cornerDotBuilder: (size, _) => Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: widget.dotColor,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.dotColor.withOpacity(0.5),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
+          Crop(
+            image: _resizedImageBytes!,
+            controller: _controller,
+            onCropped: (CropResult result) {
+              switch (result) {
+                case CropSuccess(:final croppedImage):
+                  widget.onImageCropped(croppedImage);
+                case CropFailure():
+                  widget.onCropError();
+              }
+            },
+            initialRectBuilder: InitialRectBuilder.withSizeAndRatio(
+              size: 0.85,
+              aspectRatio: null,
+            ),
+            interactive: false,
+            fixCropRect: false,
+            baseColor: Colors.black,
+            maskColor: Colors.black.withOpacity(0.65),
+            withCircleUi: false,
+            cornerDotBuilder: (size, _) => Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: widget.dotColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.dotColor.withOpacity(0.5),
+                    blurRadius: 6,
+                  ),
+                ],
               ),
             ),
+          ),
 
           // Close Button
           Positioned(
@@ -126,8 +137,9 @@ class _ImageCropperViewState extends State<ImageCropperView> {
             left: 0,
             right: 0,
             child: Center(
-              child: GestureDetector(
-                onTap: widget.isCroppingInProgress ? null : widget.onCropPressed,
+              child: 
+              GestureDetector(
+                onTap: _handleSubmit,
                 child: Column(
                   children: [
                     Container(
@@ -151,6 +163,7 @@ class _ImageCropperViewState extends State<ImageCropperView> {
                   ],
                 ),
               ),
+
             ),
           ),
 

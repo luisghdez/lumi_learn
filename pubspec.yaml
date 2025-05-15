@@ -70,6 +70,7 @@ dependencies:
   crop_your_image: ^2.0.0
   image_cropper: ^5.0.0
   camera: ^0.10.5+2
+  uuid: ^4.5.1
 
 
 

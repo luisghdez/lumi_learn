@@ -24,24 +24,36 @@ class CameraView extends StatelessWidget {
     required this.onCapture,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
+@override
+Widget build(BuildContext context) {
+  return Stack(
+    children: [
+      if (isInitialized)
         Positioned.fill(
-          child: isInitialized
-              ? CameraPreview(controller)
-              : const Center(child: CircularProgressIndicator()),
-        ),
-        CameraOverlay(borderColor: selectedColor),
-        const InstructionText(),
-        CategorySelector(
-          categories: categories,
-          selectedIndex: selectedIndex,
-          onPageChanged: onCategoryTap,
-          onCapture: onCapture,
-        ),
-      ],
-    );
-  }
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: controller.value.previewSize!.height,
+              height: controller.value.previewSize!.width,
+              child: CameraPreview(controller),
+            ),
+          ),
+        )
+      else
+        const Center(child: CircularProgressIndicator()),
+
+      // UI Overlays
+      CameraOverlay(borderColor: selectedColor),
+      const InstructionText(),
+      CategorySelector(
+        categories: categories,
+        selectedIndex: selectedIndex,
+        onPageChanged: onCategoryTap,
+        onCapture: onCapture,
+      ),
+    ],
+  );
+}
+
+
 }

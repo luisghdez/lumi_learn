@@ -32,22 +32,32 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     "What is E = mc²?",
   ];
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
 
-    // Hide bottom nav bar when this screen is opened
+  // ✅ Delay navbar hide + scanned input handling until first frame is done
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+
     Get.find<NavigationController>().hideNavBar();
-
     _handleScannedInput();
-  }
+  });
+}
 
-  @override
-  void dispose() {
-    // Show bottom nav bar again when leaving
-    Get.find<NavigationController>().showNavBar();
-    super.dispose();
-  }
+
+
+@override
+void dispose() {
+  // Defer the showNavBar update until after current frame to avoid rebuild during widget disposal
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Get.find<NavigationController>().showNavBar();
+    }
+  });
+  super.dispose();
+}
+
 
   void _handleScannedInput() {
     final args = Get.arguments;

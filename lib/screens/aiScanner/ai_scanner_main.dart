@@ -7,9 +7,10 @@ import 'package:crop_your_image/crop_your_image.dart';
 
 import 'camera_view.dart';
 import 'image_cropper_view.dart';
-
 import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
-
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 
 class AiScannerMain extends StatefulWidget {
@@ -65,16 +66,54 @@ class _AiScannerMainState extends State<AiScannerMain> {
       final XFile rawImage = await _controller.takePicture();
       final bytes = await rawImage.readAsBytes();
       HapticFeedback.mediumImpact();
+
       setState(() {
-        _imageBytes = bytes;
         _isCropping = true;
+        _imageBytes = bytes;
       });
+
+      // Push to cropper screen (disable iOS swipe-back)
+      final selectedColor = _categories[_selectedIndex]['color'] as Color;
+
+      await Navigator.of(context).push(
+        NoSwipePageRoute(
+          builder: (_) => ImageCropperView(
+            imageBytes: bytes,
+            dotColor: selectedColor,
+            isCroppingInProgress: _isCroppingInProgress,
+            onCropPressed: () => setState(() => _isCroppingInProgress = true),
+            onImageCropped: _submitCroppedImage,
+            onCropError: () => setState(() => _isCroppingInProgress = false),
+          ),
+        ),
+      );
+
+      // Restore camera state after cropping screen
+      setState(() {
+        _isCropping = false;
+        _isCroppingInProgress = false;
+        _imageBytes = null;
+      });
+
     } catch (e) {
       Get.snackbar("Capture Error", "Failed to capture image: $e");
     }
   }
 
-  void _submitCroppedImage(Uint8List croppedBytes) {
+
+void _submitCroppedImage(Uint8List croppedBytes) async {
+  // Save file
+  final directory = await getTemporaryDirectory();
+  final filename = '${const Uuid().v4()}.png';
+  final filePath = '${directory.path}/$filename';
+
+  final file = File(filePath);
+  await file.writeAsBytes(croppedBytes);
+
+  // ✅ Delay to ensure navigation doesn't clash with disposal
+  Future.delayed(Duration(milliseconds: 100), () {
+    if (!mounted) return;
+
     setState(() {
       _isCropping = false;
       _isCroppingInProgress = false;
@@ -83,10 +122,13 @@ class _AiScannerMainState extends State<AiScannerMain> {
 
     Get.toNamed('/lumiTutorChat', arguments: {
       'type': 'image',
-      'imageBytes': croppedBytes,
+      'paths': [filePath],
       'category': _categories[_selectedIndex]['name'],
     });
-  }
+  });
+}
+
+
 
   void _handleCategoryScroll(int index) {
     setState(() => _selectedIndex = index);
@@ -118,32 +160,14 @@ class _AiScannerMainState extends State<AiScannerMain> {
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            if (_isCropping && _imageBytes != null)
-            Navigator(
-              onGenerateRoute: (_) => NoSwipePageRoute(
-                builder: (_) => ImageCropperView(
-                  imageBytes: _imageBytes!,
-                  dotColor: selectedColor,
-                  isCroppingInProgress: _isCroppingInProgress,
-                  onCropPressed: () => setState(() => _isCroppingInProgress = true),
-                  onImageCropped: _submitCroppedImage,
-                  onCropError: () => setState(() => _isCroppingInProgress = false),
-                ),
-              ),
-            )
-            else
-              CameraView(
-                controller: _controller,
-                isInitialized: _isCameraInitialized,
-                selectedColor: selectedColor,
-                categories: _categories,
-                selectedIndex: _selectedIndex,
-                onCategoryTap: _handleCategoryScroll,
-                onCapture: _captureImage,
-              ),
-          ],
+        body: CameraView(
+          controller: _controller,
+          isInitialized: _isCameraInitialized,
+          selectedColor: selectedColor,
+          categories: _categories,
+          selectedIndex: _selectedIndex,
+          onCategoryTap: _handleCategoryScroll,
+          onCapture: _captureImage,
         ),
       ),
     );
