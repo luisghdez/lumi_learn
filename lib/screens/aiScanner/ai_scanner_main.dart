@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:crop_your_image/crop_your_image.dart';
-
-import 'camera_view.dart';
-import 'image_cropper_view.dart';
-import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+import 'camera_view.dart';
+import 'image_cropper_view.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
+import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 
 class AiScannerMain extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -72,7 +72,6 @@ class _AiScannerMainState extends State<AiScannerMain> {
         _imageBytes = bytes;
       });
 
-      // Push to cropper screen (disable iOS swipe-back)
       final selectedColor = _categories[_selectedIndex]['color'] as Color;
 
       await Navigator.of(context).push(
@@ -88,31 +87,23 @@ class _AiScannerMainState extends State<AiScannerMain> {
         ),
       );
 
-      // Restore camera state after cropping screen
       setState(() {
         _isCropping = false;
         _isCroppingInProgress = false;
         _imageBytes = null;
       });
-
     } catch (e) {
       Get.snackbar("Capture Error", "Failed to capture image: $e");
     }
   }
 
+  void _submitCroppedImage(Uint8List croppedBytes) async {
+    final directory = await getTemporaryDirectory();
+    final filename = '${const Uuid().v4()}.png';
+    final filePath = '${directory.path}/$filename';
 
-void _submitCroppedImage(Uint8List croppedBytes) async {
-  // Save file
-  final directory = await getTemporaryDirectory();
-  final filename = '${const Uuid().v4()}.png';
-  final filePath = '${directory.path}/$filename';
-
-  final file = File(filePath);
-  await file.writeAsBytes(croppedBytes);
-
-  // ✅ Delay to ensure navigation doesn't clash with disposal
-  Future.delayed(Duration(milliseconds: 100), () {
-    if (!mounted) return;
+    final file = File(filePath);
+    await file.writeAsBytes(croppedBytes);
 
     setState(() {
       _isCropping = false;
@@ -120,15 +111,18 @@ void _submitCroppedImage(Uint8List croppedBytes) async {
       _imageBytes = null;
     });
 
-    Get.toNamed('/lumiTutorChat', arguments: {
-      'type': 'image',
-      'paths': [filePath],
-      'category': _categories[_selectedIndex]['name'],
-    });
-  });
-}
-
-
+    Navigator.of(context).push(
+      NoSwipePageRoute(
+        builder: (_) => LumiTutorMain(
+          initialArgs: {
+            'type': 'image',
+            'paths': [filePath],
+            'category': _categories[_selectedIndex]['name'],
+          },
+        ),
+      ),
+    );
+  }
 
   void _handleCategoryScroll(int index) {
     setState(() => _selectedIndex = index);

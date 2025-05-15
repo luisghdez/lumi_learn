@@ -10,7 +10,9 @@ import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_drawer.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 
 class LumiTutorMain extends StatefulWidget {
-  const LumiTutorMain({Key? key}) : super(key: key);
+  final Map<String, dynamic>? initialArgs;
+
+  const LumiTutorMain({Key? key, this.initialArgs}) : super(key: key);
 
   @override
   State<LumiTutorMain> createState() => _LumiTutorMainState();
@@ -32,35 +34,29 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     "What is E = mc²?",
   ];
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  // ✅ Delay navbar hide + scanned input handling until first frame is done
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-    Get.find<NavigationController>().hideNavBar();
-    _handleScannedInput();
-  });
-}
+      Get.find<NavigationController>().hideNavBar();
+      _handleScannedInput(widget.initialArgs);
+    });
+  }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Get.find<NavigationController>().showNavBar();
+      }
+    });
+    super.dispose();
+  }
 
-
-@override
-void dispose() {
-  // Defer the showNavBar update until after current frame to avoid rebuild during widget disposal
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      Get.find<NavigationController>().showNavBar();
-    }
-  });
-  super.dispose();
-}
-
-
-  void _handleScannedInput() {
-    final args = Get.arguments;
+  void _handleScannedInput(Map<String, dynamic>? args) {
     if (args != null && mounted) {
       if (args['type'] == 'image') {
         final List<String> paths = List<String>.from(args['paths']);
@@ -110,62 +106,64 @@ void dispose() {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: const LumiDrawer(),
-      backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: true, // important for keyboard
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        drawer: const LumiDrawer(),
+        backgroundColor: Colors.black,
+        resizeToAvoidBottomInset: true,
+        body: BaseScreenContainer(
+          includeSafeArea: true,
+          enableScroll: false,
+          onRefresh: null,
+          builder: (context) => Column(
+            children: [
+              TutorHeader(
+                onMenuPressed: () => Scaffold.of(context).openDrawer(),
+                onCreateCourse: () => print("Create course from chat"),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _messages.length,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final msg = _messages[index];
 
-      body: BaseScreenContainer(
-        includeSafeArea: true,
-        enableScroll: false,
-        onRefresh: null,
-        builder: (context) => Column(
-          children: [
-            TutorHeader(
-              onMenuPressed: () => Scaffold.of(context).openDrawer(),
-              onCreateCourse: () => print("Create course from chat"),
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _messages.length,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-
-                  if (msg.containsKey("image")) {
-                    return Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white12),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.file(
-                            File(msg["image"]),
-                            fit: BoxFit.cover,
+                    if (msg.containsKey("image")) {
+                      return Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(
+                              File(msg["image"]),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  return ChatBubble(
-                    message: msg["text"],
-                    sender: msg["sender"] ?? ChatSender.tutor,
-                  );
-                },
+                    return ChatBubble(
+                      message: msg["text"],
+                      sender: msg["sender"] ?? ChatSender.tutor,
+                    );
+                  },
+                ),
               ),
-            ),
               ChatInputArea(
                 suggestions: _suggestions,
                 onSend: _handleSend,
-            )
-          ],
+              )
+            ],
+          ),
         ),
       ),
     );

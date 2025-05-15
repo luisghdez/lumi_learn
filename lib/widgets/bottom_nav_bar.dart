@@ -61,18 +61,15 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                     child: BottomNavigationBar(
                       currentIndex: currentIndex,
                       backgroundColor: Colors.grey[900],
-                      onTap: (index) {
-                        if (index == 3) {
-                          // 👇 LumiTutor tapped
-                          navigationController.hideNavBar();
-                          Get.to(() => const LumiTutorMain())!.then((_) {
-                            navigationController.showNavBar();
-                          });
-                        } else {
-                          navigationController.updateIndex(index);
-                          navigationController.showNavBar();
-                        }
-                      },
+                            onTap: (index) {
+                              if (index == 3){
+                                Get.to(()=> const LumiTutorMain(),transition: Transition.fadeIn, 
+                                duration: const Duration(milliseconds: 400), fullscreenDialog: true);
+                              }
+                              else {
+                                navigationController.updateIndex(index);
+                              }
+                            },
                       items: const [
                         BottomNavigationBarItem(
                           icon: Icon(Icons.home),

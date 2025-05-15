@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
+import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
+
 class LumiTutorCard extends StatelessWidget {
   const LumiTutorCard({super.key});
 
@@ -101,9 +104,21 @@ class LumiTutorCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () =>
-                                navigationController.updateIndex(3),
+                          child: 
+                          ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              NoSwipePageRoute(
+                                builder: (_) => const LumiTutorMain(
+                                  initialArgs: {
+                                    'type': 'text',
+                                    'paths': [],
+                                    'category': 'Anything',
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
