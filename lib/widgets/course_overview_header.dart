@@ -86,7 +86,7 @@ class CourseOverviewHeader extends StatelessWidget {
                                 'Course Progress',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w300,
                                 ),
                               ),
@@ -94,7 +94,7 @@ class CourseOverviewHeader extends StatelessWidget {
                                 '${(progress * 100).toStringAsFixed(0)}%',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w300,
                                 ),
                               ),
@@ -127,89 +127,34 @@ class CourseOverviewHeader extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: GestureDetector(
+                            child: _HeaderButton(
+                              icon: Icons.note_alt_outlined,
+                              label: 'Note',
                               onTap: () {
-                                onViewFlashcards();
+                                // your Notes handler
                               },
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(140, 0, 0, 0),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(12)),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.menu_book_outlined,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'View Flashcards',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                           ),
-                          // potential Next Lesson button
-                          // const SizedBox(width: 8),
-                          // Expanded(
-                          //   child: Container(
-                          //     decoration: BoxDecoration(
-                          //       gradient: const LinearGradient(
-                          //         colors: [
-                          //           Color.fromARGB(255, 0, 0, 31),
-                          //           Color.fromARGB(255, 12, 0, 22)
-                          //         ],
-                          //         begin: Alignment.centerLeft,
-                          //         end: Alignment.centerRight,
-                          //       ),
-                          //       borderRadius: BorderRadius.circular(12),
-                          //       border: Border.all(
-                          //         color: Colors.white.withOpacity(0.2),
-                          //         width: 1,
-                          //       ),
-                          //     ),
-                          //     child: ElevatedButton(
-                          //       onPressed: () {},
-                          //       style: ElevatedButton.styleFrom(
-                          //         backgroundColor: Colors
-                          //             .transparent, // Make button background transparent
-                          //         shadowColor:
-                          //             Colors.transparent, // Remove shadow
-                          //         shape: RoundedRectangleBorder(
-                          //           borderRadius: BorderRadius.circular(
-                          //               12), // Same radius as container
-                          //         ),
-                          //       ),
-                          //       child: const Text(
-                          //         'Next Lesson',
-                          //         style: TextStyle(
-                          //           color: Colors.white,
-                          //           fontSize: 14,
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: _HeaderButton(
+                              icon: Icons.menu_book_outlined,
+                              label: 'Flashcards',
+                              onTap: onViewFlashcards,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: _HeaderButton(
+                              icon: Icons.chat_bubble_outline,
+                              label: 'LumiTutor',
+                              onTap: () {
+                                // your LumiTutor handler
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -218,6 +163,52 @@ class CourseOverviewHeader extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _HeaderButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center, // center the Row
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(140, 0, 0, 0),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center, // center contents
+          children: [
+            Icon(icon, color: Colors.white, size: 14),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
     );
