@@ -66,6 +66,7 @@ dependencies:
   intl: ^0.20.2
   purchases_flutter: ^8.7.2
   flutter_math_fork: ^0.7.3
+  flutter_markdown: ^0.7.7+1
 
 flutter_launcher_icons:
   android: true

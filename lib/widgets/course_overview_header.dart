@@ -8,6 +8,8 @@ class CourseOverviewHeader extends StatelessWidget {
   final String courseTitle;
   final double progress;
   final VoidCallback onViewFlashcards;
+  final VoidCallback onViewNotes;
+  final VoidCallback onViewLumiTutor;
 
   const CourseOverviewHeader({
     Key? key,
@@ -15,6 +17,8 @@ class CourseOverviewHeader extends StatelessWidget {
     required this.courseTitle,
     required this.progress,
     required this.onViewFlashcards,
+    required this.onViewNotes,
+    required this.onViewLumiTutor,
   }) : super(key: key);
 
   @override
@@ -132,9 +136,7 @@ class CourseOverviewHeader extends StatelessWidget {
                             child: _HeaderButton(
                               icon: Icons.note_alt_outlined,
                               label: 'Note',
-                              onTap: () {
-                                // your Notes handler
-                              },
+                              onTap: onViewNotes,
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -150,9 +152,7 @@ class CourseOverviewHeader extends StatelessWidget {
                             child: _HeaderButton(
                               icon: Icons.chat_bubble_outline,
                               label: 'LumiTutor',
-                              onTap: () {
-                                // your LumiTutor handler
-                              },
+                              onTap: onViewLumiTutor,
                             ),
                           ),
                         ],
