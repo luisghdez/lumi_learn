@@ -34,6 +34,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Color _knownGlow = Colors.transparent;
   Color _unknownGlow = Colors.transparent;
 
+  bool _completed = false;
+
   void _animateBubble(bool isKnown) {
     setState(() {
       if (isKnown) {
@@ -123,6 +125,41 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     );
   }
 
+  Widget _buildSummary() {
+    final total = widget.flashcards.length;
+    final known = _known;
+    final unknown = total - known;
+    final percent = ((known / total) * 100).round();
+
+    return Center(
+      child: SizedBox(
+        width: 200,
+        height: 200,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CustomPaint(
+              size: const Size(200, 200),
+              painter: _PiePainter(
+                knownFraction: known / total,
+                knownColor: Colors.green,
+                unknownColor: Colors.red,
+              ),
+            ),
+            Text(
+              '$percent%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// One‑by‑one flashcard view
   Widget _buildFlashcardView() {
     final current = widget.flashcards[currentIndex];
@@ -131,7 +168,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
     return Column(
       children: [
-        _counterStrip(),
+        // _counterStrip(),
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(padding),
@@ -165,12 +202,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                       final isKnown = dir == DismissDirection.startToEnd;
                       _status[currentIndex] = isKnown;
                       _animateBubble(isKnown);
+                      _resetTint();
 
-                      _resetTint(); // clear overlay for next card
                       if (currentIndex < widget.flashcards.length - 1) {
                         setState(() => currentIndex++);
                       } else {
-                        setState(() {}); // just refresh counters
+                        // no more cards → show summary
+                        setState(() => _completed = true);
                       }
                     },
 
@@ -306,15 +344,27 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         ),
       ),
       body: SafeArea(
-        top: false,
-        bottom: false,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: isListView
-              ? Container(key: const ValueKey('list'), child: _buildListView())
-              : Container(
-                  key: const ValueKey('cards'), child: _buildFlashcardView()),
-        ),
+        child: _completed
+            ? _buildSummary()
+            : Column(
+                children: [
+                  _counterStrip(),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: isListView
+                          ? KeyedSubtree(
+                              key: const ValueKey('list'),
+                              child: _buildListView(),
+                            )
+                          : KeyedSubtree(
+                              key: const ValueKey('cards'),
+                              child: _buildFlashcardView(),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -441,4 +491,54 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     _controller.dispose();
     super.dispose();
   }
+}
+
+class _PiePainter extends CustomPainter {
+  final double knownFraction;
+  final Color knownColor;
+  final Color unknownColor;
+
+  _PiePainter({
+    required this.knownFraction,
+    required this.knownColor,
+    required this.unknownColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = 16.0;
+    final rect = Offset.zero & size;
+    final startAngle = -pi / 2; // start at top
+    final knownSweep = 2 * pi * knownFraction;
+    final unknownSweep = 2 * pi * (1 - knownFraction);
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    // draw unknown first (so it shows as the “back”)
+    paint.color = unknownColor.withOpacity(.7);
+    canvas.drawArc(
+      rect.deflate(strokeWidth / 2),
+      startAngle + knownSweep,
+      unknownSweep,
+      false,
+      paint,
+    );
+
+    // draw known
+    paint.color = knownColor.withOpacity(.7);
+    canvas.drawArc(
+      rect.deflate(strokeWidth / 2),
+      startAngle,
+      knownSweep,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PiePainter old) =>
+      old.knownFraction != knownFraction;
 }
