@@ -29,6 +29,37 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Color _cardTint = Colors.transparent; // current overlay color
   void _resetTint() => _cardTint = Colors.transparent;
 
+  double _knownScale = 1.0;
+  double _unknownScale = 1.0;
+  Color _knownGlow = Colors.transparent;
+  Color _unknownGlow = Colors.transparent;
+
+  void _animateBubble(bool isKnown) {
+    setState(() {
+      if (isKnown) {
+        _knownScale = 1.25;
+        _knownGlow = Colors.green.withOpacity(.5);
+      } else {
+        _unknownScale = 1.25;
+        _unknownGlow = Colors.red.withOpacity(.5);
+      }
+    });
+
+    // snap back after 300 ms
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() {
+        if (isKnown) {
+          _knownScale = 1.0;
+          _knownGlow = Colors.transparent;
+        } else {
+          _unknownScale = 1.0;
+          _unknownGlow = Colors.transparent;
+        }
+      });
+    });
+  }
+
   late final List<bool?> _status =
       List<bool?>.filled(widget.flashcards.length, null, growable: false);
 
@@ -44,16 +75,34 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
-  Widget _bubble(int value, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withOpacity(.15),
-          border: Border.all(color: color),
-          borderRadius: BorderRadius.circular(20),
+  Widget _bubble(int value, Color color, double scale, Color glow) =>
+      TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1.0, end: scale),
+        duration: const Duration(milliseconds: 200),
+        builder: (_, s, child) => Transform.scale(
+          scale: s,
+          child: child,
         ),
-        child: Text(
-          value.toString(),
-          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(.15),
+            border: Border.all(color: color),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: glow == Colors.transparent
+                ? null
+                : [
+                    BoxShadow(
+                      color: glow,
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    )
+                  ],
+          ),
+          child: Text(
+            value.toString(),
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
         ),
       );
 
@@ -62,13 +111,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final padding = isTablet ? 32.0 : 16.0;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: padding),
+      padding: EdgeInsets.all(padding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _bubble(_unknown, Colors.red),
+          _bubble(_unknown, Colors.red, _unknownScale, _unknownGlow),
           const SizedBox(width: 6),
-          _bubble(_known, Colors.green),
+          _bubble(_known, Colors.green, _knownScale, _knownGlow),
         ],
       ),
     );
@@ -98,14 +147,15 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
                     // ⏪⏩ GRADUAL COLOR UPDATE
                     onUpdate: (details) {
-                      final p = details.progress; // 0 → 1
+                      final raw = details.progress; // 0→1
+                      final fast = (raw * 2).clamp(0.0, 1.0);
                       setState(() {
                         _cardTint = Color.lerp(
                           Colors.transparent,
                           details.direction == DismissDirection.startToEnd
                               ? Colors.green // RIGHT swipe  = known
                               : Colors.red, // LEFT swipe   = unknown
-                          p,
+                          fast,
                         )!;
                       });
                     },
@@ -114,6 +164,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                     onDismissed: (dir) {
                       final isKnown = dir == DismissDirection.startToEnd;
                       _status[currentIndex] = isKnown;
+                      _animateBubble(isKnown);
 
                       _resetTint(); // clear overlay for next card
                       if (currentIndex < widget.flashcards.length - 1) {
@@ -125,7 +176,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
                     // 🃏 the actual card, wrapped with AnimatedContainer for the tint
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
+                      duration: const Duration(milliseconds: 50),
                       decoration: BoxDecoration(
                         color: _cardTint,
                         borderRadius: BorderRadius.circular(30),
