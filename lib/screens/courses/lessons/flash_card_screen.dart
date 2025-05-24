@@ -24,6 +24,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   int currentIndex = 0;
   bool isListView = false;
+  int get _known => _status.where((s) => s == true).length;
+  int get _unknown => _status.where((s) => s == false).length;
+  Color _cardTint = Colors.transparent; // current overlay color
+  void _resetTint() => _cardTint = Colors.transparent;
+
+  late final List<bool?> _status =
+      List<bool?>.filled(widget.flashcards.length, null, growable: false);
 
   void _moveToPreviousCard() {
     if (currentIndex > 0) {
@@ -37,6 +44,36 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
+  Widget _bubble(int value, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(.15),
+          border: Border.all(color: color),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          value.toString(),
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
+      );
+
+  Widget _counterStrip() {
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final padding = isTablet ? 32.0 : 16.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: padding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _bubble(_unknown, Colors.red),
+          const SizedBox(width: 6),
+          _bubble(_known, Colors.green),
+        ],
+      ),
+    );
+  }
+
   /// One‑by‑one flashcard view
   Widget _buildFlashcardView() {
     final current = widget.flashcards[currentIndex];
@@ -45,15 +82,57 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
     return Column(
       children: [
+        _counterStrip(),
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(padding),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child:
-                    FlashcardWidget(key: ValueKey(current), flashcard: current),
-              ),
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Dismissible(
+                    key: ValueKey('card_$currentIndex'),
+                    direction: DismissDirection.horizontal,
+                    background:
+                        const SizedBox.shrink(), // no external background
+                    secondaryBackground: const SizedBox.shrink(),
+
+                    // ⏪⏩ GRADUAL COLOR UPDATE
+                    onUpdate: (details) {
+                      final p = details.progress; // 0 → 1
+                      setState(() {
+                        _cardTint = Color.lerp(
+                          Colors.transparent,
+                          details.direction == DismissDirection.startToEnd
+                              ? Colors.green // RIGHT swipe  = known
+                              : Colors.red, // LEFT swipe   = unknown
+                          p,
+                        )!;
+                      });
+                    },
+
+                    // ✔️ final classification
+                    onDismissed: (dir) {
+                      final isKnown = dir == DismissDirection.startToEnd;
+                      _status[currentIndex] = isKnown;
+
+                      _resetTint(); // clear overlay for next card
+                      if (currentIndex < widget.flashcards.length - 1) {
+                        setState(() => currentIndex++);
+                      } else {
+                        setState(() {}); // just refresh counters
+                      }
+                    },
+
+                    // 🃏 the actual card, wrapped with AnimatedContainer for the tint
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 100),
+                      decoration: BoxDecoration(
+                        color: _cardTint,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: FlashcardWidget(flashcard: current),
+                    ),
+                  )),
             ),
           ),
         ),
