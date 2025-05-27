@@ -77,6 +77,21 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
+  void _resetDeck() {
+    setState(() {
+      currentIndex = 0;
+      _completed = false;
+      for (var i = 0; i < _status.length; i++) {
+        _status[i] = null;
+      }
+      _knownScale = 1.0;
+      _unknownScale = 1.0;
+      _knownGlow = Colors.transparent;
+      _unknownGlow = Colors.transparent;
+      _resetTint();
+    });
+  }
+
   Widget _bubble(int value, Color color, double scale, Color glow) =>
       TweenAnimationBuilder<double>(
         tween: Tween(begin: 1.0, end: scale),
@@ -131,31 +146,82 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final unknown = total - known;
     final percent = ((known / total) * 100).round();
 
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final buttonFont = isTablet ? 20.0 : 16.0;
+    final buttonPad = isTablet ? 24.0 : 16.0;
+
     return Center(
-      child: SizedBox(
-        width: 200,
-        height: 200,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            CustomPaint(
-              size: const Size(200, 200),
-              painter: _PiePainter(
-                knownFraction: known / total,
-                knownColor: Colors.green,
-                unknownColor: Colors.red,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 200,
+            height: 200,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _AnimatedPieChart(
+                  knownFraction: known / total,
+                  knownColor: Colors.green,
+                  unknownColor: Colors.red,
+                ),
+                Text(
+                  '$known/$total',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Builder(
+            builder: (_) {
+              String comment;
+              if (known == total) {
+                comment = 'Amazing! You mastered the topic.';
+              } else if (known >= (0.8 * total).ceil()) {
+                comment = 'Great job! Just a little more practice.';
+              } else if (known >= (0.5 * total).ceil()) {
+                comment = 'Good effort! Review the ones you missed.';
+              } else if (known > 0) {
+                comment = 'Keep practicing! You can do it!';
+              } else {
+                comment = 'Don\'t give up! Try again and you\'ll improve.';
+              }
+              return Text(
+                comment,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: isTablet ? 20 : 16,
+                  fontWeight: FontWeight.w400,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: _resetDeck,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              padding: EdgeInsets.symmetric(horizontal: buttonPad * 2, vertical: buttonPad / 1.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
-            Text(
-              '$percent%',
-              style: const TextStyle(
+            child: Text(
+              'Try Again',
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+                fontSize: buttonFont,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -168,7 +234,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
     return Column(
       children: [
-        // _counterStrip(),
+        _counterStrip(),
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(padding),
@@ -348,7 +414,6 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             ? _buildSummary()
             : Column(
                 children: [
-                  _counterStrip(),
                   Expanded(
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
@@ -517,7 +582,7 @@ class _PiePainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.butt;
 
-    // draw unknown first (so it shows as the “back”)
+    // draw unknown first (so it shows as the "back")
     paint.color = unknownColor.withOpacity(.7);
     canvas.drawArc(
       rect.deflate(strokeWidth / 2),
@@ -541,4 +606,69 @@ class _PiePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PiePainter old) =>
       old.knownFraction != knownFraction;
+}
+
+class _AnimatedPieChart extends StatefulWidget {
+  final double knownFraction;
+  final Color knownColor;
+  final Color unknownColor;
+  final Duration duration;
+
+  const _AnimatedPieChart({
+    Key? key,
+    required this.knownFraction,
+    required this.knownColor,
+    required this.unknownColor,
+    this.duration = const Duration(milliseconds: 1200),
+  }) : super(key: key);
+
+  @override
+  State<_AnimatedPieChart> createState() => _AnimatedPieChartState();
+}
+
+class _AnimatedPieChartState extends State<_AnimatedPieChart> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+  late final Animation<double> _animation =
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedPieChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.knownFraction != widget.knownFraction) {
+      _controller.reset();
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return CustomPaint(
+          size: const Size(200, 200),
+          painter: _PiePainter(
+            knownFraction: widget.knownFraction * _animation.value,
+            knownColor: widget.knownColor,
+            unknownColor: widget.unknownColor,
+          ),
+        );
+      },
+    );
+  }
 }
