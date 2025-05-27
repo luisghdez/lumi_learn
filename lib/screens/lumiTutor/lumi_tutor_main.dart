@@ -40,7 +40,6 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
       Get.find<NavigationController>().hideNavBar();
       _handleScannedInput(widget.initialArgs);
     });
@@ -56,27 +55,37 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     super.dispose();
   }
 
-  void _handleScannedInput(Map<String, dynamic>? args) {
-    if (args != null && mounted) {
-      if (args['type'] == 'image') {
-        final List<String> paths = List<String>.from(args['paths']);
-        for (var path in paths) {
-          _messages.add({
-            "image": path,
-            "sender": ChatSender.user,
-          });
-        }
-      } else if (args['type'] == 'pdf') {
+void _handleScannedInput(Map<String, dynamic>? args) {
+  if (args != null && mounted) {
+    if (args['type'] == 'image') {
+      final List<String> paths = List<String>.from(args['paths']);
+      for (var path in paths) {
         _messages.add({
-          "text": "📎 Sent a scanned PDF:\n${args['path']}",
+          "image": path,
           "sender": ChatSender.user,
         });
       }
-
-      setState(() {});
-      _scrollToBottom();
+    } else if (args['type'] == 'pdf') {
+      _messages.add({
+        "text": "📎 Sent a scanned PDF:\n${args['path']}",
+        "sender": ChatSender.user,
+      });
+    } else if (args['type'] == 'text' && args.containsKey('initialMessage')) {
+      _messages.add({
+        "text": args['initialMessage'],
+        "sender": ChatSender.user,
+      });
+      _messages.add({
+        "text": "🧠 (Pretend GPT is responding to '${args['initialMessage']}'...)",
+        "sender": ChatSender.tutor,
+      });
     }
+
+    setState(() {});
+    _scrollToBottom();
   }
+}
+
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 400), () {
@@ -106,63 +115,84 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return WillPopScope(
       onWillPop: () async => false,
-      child: Scaffold(
-        drawer: const LumiDrawer(),
-        backgroundColor: Colors.black,
-        resizeToAvoidBottomInset: true,
-        body: BaseScreenContainer(
-          includeSafeArea: true,
-          enableScroll: false,
-          onRefresh: null,
-          builder: (context) => Column(
-            children: [
-              TutorHeader(
-                onMenuPressed: () => Scaffold.of(context).openDrawer(),
-                onCreateCourse: () => print("Create course from chat"),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _messages.length,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  itemBuilder: (context, index) {
-                    final msg = _messages[index];
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(), // ✅ dismiss keyboard on outside tap
+        child: Scaffold(
+          drawer: const LumiDrawer(),
+          backgroundColor: Colors.black,
+          resizeToAvoidBottomInset: true,
+          body: BaseScreenContainer(
+            includeSafeArea: true,
+            enableScroll: false,
+            onRefresh: null,
+            builder: (context) => Padding(
+              padding: EdgeInsets.only(bottom: bottomInset), // ✅ avoids gap
+              child: Column(
+                children: [
+                  TutorHeader(
+                    onMenuPressed: () => Scaffold.of(context).openDrawer(),
+                    onCreateCourse: () => print("Create course from chat"),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _messages.length,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
 
-                    if (msg.containsKey("image")) {
-                      return Align(
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.file(
-                              File(msg["image"]),
-                              fit: BoxFit.cover,
+                        if (msg.containsKey("image")) {
+                          return Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.file(
+                                  File(msg["image"]),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    }
+                          );
+                        }
 
-                    return ChatBubble(
-                      message: msg["text"],
-                      sender: msg["sender"] ?? ChatSender.tutor,
-                    );
-                  },
-                ),
+                        return ChatBubble(
+                          message: msg["text"],
+                          sender: msg["sender"] ?? ChatSender.tutor,
+                        );
+                      },
+                    ),
+                  ),
+                    ChatInputArea(
+                      suggestions: _suggestions,
+                      onSend: _handleSend,
+                      onImagePicked: (imageFile) {
+                        setState(() {
+                          _messages.add({"image": imageFile.path, "sender": ChatSender.user});
+                        });
+                        _scrollToBottom();
+                      },
+                      onFilePicked: (file) {
+                        setState(() {
+                          _messages.add({"text": "📎 Sent a file:\n${file.path}", "sender": ChatSender.user});
+                        });
+                        _scrollToBottom();
+                      },
+                    ),
+
+                ],
               ),
-              ChatInputArea(
-                suggestions: _suggestions,
-                onSend: _handleSend,
-              )
-            ],
+            ),
           ),
         ),
       ),

@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 
 class NoSwipePageRoute<T> extends PageRouteBuilder<T> {
-  NoSwipePageRoute({required WidgetBuilder builder})
-      : super(
+  NoSwipePageRoute({
+    required WidgetBuilder builder,
+    Duration duration = const Duration(milliseconds: 300),
+  }) : super(
           pageBuilder: (context, animation, secondaryAnimation) => builder(context),
-          transitionDuration: Duration(milliseconds: 0),
-          reverseTransitionDuration: Duration(milliseconds: 0),
+          transitionDuration: duration,
+          reverseTransitionDuration: duration,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
         );
 
   @override
@@ -29,11 +37,4 @@ class NoSwipePageRoute<T> extends PageRouteBuilder<T> {
   // ❌ Completely disables swipe-back gesture on iOS
   @override
   bool get popGestureEnabled => false;
-
-  @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation, Widget child) {
-    // No transition animation
-    return child;
-  }
 }

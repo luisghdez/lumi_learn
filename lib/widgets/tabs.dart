@@ -30,17 +30,24 @@ class CustomTabSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white24),
       ),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(2),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: List.generate(tabs.length, (index) {
-            return _TabButton(
-              label: tabs[index].label,
-              icon: tabs[index].icon,
-              isSelected: selectedIndex == index,
-              onTap: () => onTabSelected(index),
-              isTabletOrBigger: isTabletOrBigger,
+            final isFirst = index == 0;
+            return Padding(
+              padding: EdgeInsets.only(
+                left: isFirst ? 0 : 2,
+                right: 2,
+              ),
+              child: _TabButton(
+                label: tabs[index].label,
+                icon: tabs[index].icon,
+                isSelected: selectedIndex == index,
+                onTap: () => onTabSelected(index),
+                isTabletOrBigger: isTabletOrBigger,
+              ),
             );
           }),
         ),
@@ -69,42 +76,39 @@ class _TabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color textColor = isSelected ? Colors.black : Colors.white;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.white : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: isTabletOrBigger ? 16 : 10,
-                horizontal: isTabletOrBigger ? 20 : 14,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, color: textColor, size: isTabletOrBigger ? 20 : 16),
-                    const SizedBox(width: 6),
-                  ],
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: isTabletOrBigger ? 18 : 14,
-                    ),
-                  ),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: isTabletOrBigger ? 16 : 10,
+              horizontal: isTabletOrBigger ? 20 : 14,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: textColor, size: isTabletOrBigger ? 20 : 16),
+                  const SizedBox(width: 6),
                 ],
-              ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: isTabletOrBigger ? 18 : 14,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
