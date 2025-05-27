@@ -77,21 +77,28 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
-  // ①  ADD: a helper that returns the “peek” card
   Widget _nextCard() {
-    if (currentIndex + 1 >= widget.flashcards.length) return const SizedBox.shrink();
+    if (currentIndex + 1 >= widget.flashcards.length) {
+      return const SizedBox.shrink();
+    }
 
-    // scale & translate are animated via _dragProgress (see next code block)
-    return Transform.translate(
-      offset: Offset(0, 40 * (1 - _dragProgress)),        // moves up while you drag
-      child: Transform.scale(
-        scale: 0.9 + 0.1 * _dragProgress,                 // grows from 0.9→1.0
-        child: FlashcardWidget(
-          flashcard: widget.flashcards[currentIndex + 1],
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child),   // ⬅️ smooth fade-in
+      child: Transform.translate(
+      key: ValueKey('peek_${currentIndex + 1}'),        // ⬅️ new key each time
+        offset: Offset(0, 40 * (1 - _dragProgress)),      // slides up as you drag
+        child: Transform.scale(
+          scale: 0.9 + 0.1 * _dragProgress,               // grows 0.9 → 1.0
+          child: FlashcardWidget(
+            flashcard: widget.flashcards[currentIndex + 1],
+          ),
         ),
       ),
     );
   }
+
 
   // ②  ADD: track drag progress (0‒1) so we can animate the back card
   double _dragProgress = 0.0;
