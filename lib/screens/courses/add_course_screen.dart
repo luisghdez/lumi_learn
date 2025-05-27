@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/course_details_card.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/due_date_dropzone.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/file_list.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/image_preview_list.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/section_header.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/summary_card.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/text_input_section.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
@@ -150,7 +156,7 @@ class _CourseCreationState extends State<CourseCreation> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          icon: const Icon(Icons.arrow_downward_outlined,
                               color: Colors.white),
                           onPressed: () => Get.back(),
                         ),
@@ -171,103 +177,12 @@ class _CourseCreationState extends State<CourseCreation> {
                 const SizedBox(height: 24),
 
                 // Course Details Section
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: greyBorder),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionHeader(
-                        icon: Icons.menu_book,
-                        title: "Course Details",
-                        context: context,
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Course Title with a max of 20 characters and counter
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Course Title (required)",
-                            style: TextStyle(fontSize: 12, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[900],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: greyBorder),
-                            ),
-                            child: TextField(
-                              maxLength: 30,
-                              onChanged: (value) =>
-                                  setState(() => courseTitle = value),
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.white),
-                              cursorColor: Colors.white,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.transparent,
-                                hintText: "Enter course title",
-                                hintStyle: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                                border: InputBorder.none,
-                                counterText: "",
-                                suffix: Text(
-                                  "${courseTitle.length}/30",
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Course Description Section
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Course Description",
-                            style: TextStyle(fontSize: 12, color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[900],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: greyBorder),
-                            ),
-                            child: TextField(
-                              onChanged: (value) =>
-                                  setState(() => courseDescription = value),
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.white),
-                              cursorColor: Colors.white,
-                              minLines: 2,
-                              maxLines: 2,
-                              decoration: const InputDecoration(
-                                filled: true,
-                                fillColor: Colors.transparent,
-                                hintText:
-                                    "Briefly describe what this course is about",
-                                hintStyle:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                CourseDetailsCard(
+                  title: courseTitle,
+                  description: courseDescription,
+                  onTitleChanged: (v) => setState(() => courseTitle = v),
+                  onDescriptionChanged: (v) =>
+                      setState(() => courseDescription = v),
                 ),
 
                 const Divider(height: 40),
@@ -276,10 +191,9 @@ class _CourseCreationState extends State<CourseCreation> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionHeader(
+                    const SectionHeader(
                       icon: Icons.upload_file,
                       title: "Add Files",
-                      context: context,
                     ),
                     Text(
                       "${selectedFiles.length}/10",
@@ -288,54 +202,15 @@ class _CourseCreationState extends State<CourseCreation> {
                   ],
                 ),
 
-                _buildDropZone(
+                DropZone(
                   onTap: () => handleFileChange(pickImages: false),
                   label: "documents",
                   subLabel: "PDF, PPTX, DOC, XLSX",
                 ),
                 if (selectedFiles.isNotEmpty)
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    constraints: BoxConstraints(
-                      maxHeight: selectedFiles.length * 40.0,
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: selectedFiles.length,
-                      itemBuilder: (context, index) {
-                        final file = selectedFiles[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Container(
-                            height: 36,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 0, horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[900],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    file.path.split('/').last,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.white),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.close, size: 16),
-                                  onPressed: () => removeFile(index, "file"),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                  FileList(
+                    files: selectedFiles,
+                    onRemove: (i) => removeFile(i, "file"),
                   ),
 
                 const Divider(height: 40),
@@ -344,10 +219,9 @@ class _CourseCreationState extends State<CourseCreation> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionHeader(
+                    const SectionHeader(
                       icon: Icons.image,
                       title: "Add Images",
-                      context: context,
                     ),
                     Text(
                       "${selectedImages.length}/10",
@@ -356,212 +230,53 @@ class _CourseCreationState extends State<CourseCreation> {
                   ],
                 ),
 
-                _buildDropZone(
+                DropZone(
                   onTap: () => handleFileChange(pickImages: true),
                   label: "images",
                   subLabel: "PNG, JPG, JPEG",
                 ),
                 if (selectedImages.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(top: 8),
-                    height: 72, // Ensures enough height for images
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: List.generate(selectedImages.length, (index) {
-                          final imageFile = selectedImages[index];
-                          return Row(
-                            children: [
-                              Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Image.file(
-                                      imageFile,
-                                      width: 56,
-                                      height: 56,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: -8,
-                                    right: -8,
-                                    child: GestureDetector(
-                                      onTap: () => removeFile(index, "image"),
-                                      child: Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          size: 14,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 12),
-                            ],
-                          );
-                        }),
-                      ),
-                    ),
+                  ImagePreviewList(
+                    images: selectedImages,
+                    onRemove: (i) => removeFile(i, "image"),
                   ),
 
                 const Divider(height: 40),
 
                 /// TEXT SECTION
-                _buildSectionHeader(
+                const SectionHeader(
                   icon: Icons.text_fields,
                   title: "Add Text",
-                  context: context,
                 ),
                 const SizedBox(height: 6),
                 // Main text input with a limit of 2000 characters and a counter
-                Container(
-                  constraints: const BoxConstraints(
-                    maxHeight: 150,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[1000],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: greyBorder),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: TextField(
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(10000),
-                            ],
-                            minLines: 4,
-                            maxLines: null,
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.white),
-                            cursorColor: Colors.white,
-                            decoration: const InputDecoration(
-                              filled: true,
-                              fillColor: Colors.transparent,
-                              contentPadding:
-                                  EdgeInsets.symmetric(vertical: 10),
-                              hintText: "Enter course content here...",
-                              hintStyle:
-                                  TextStyle(fontSize: 12, color: Colors.grey),
-                              border: InputBorder.none,
-                            ),
-                            onChanged: (value) => setState(() => text = value),
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          "${text.length}/10,000",
-                          style: const TextStyle(
-                              fontSize: 10, color: Colors.white70),
-                        ),
-                      ),
-                    ],
-                  ),
+                TextInputSection(
+                  text: text,
+                  onChanged: (v) => setState(() => text = v),
                 ),
 
                 const Divider(height: 40),
 
                 if (widget.classId != null) ...[
-                  _buildSectionHeader(
+                  const SectionHeader(
                     icon: Icons.calendar_month,
                     title: "Due Date",
-                    context: context,
                   ),
                   // const SizedBox(height: 24),
-                  _buildDueDateDropZone(),
+                  DueDateDropZone(
+                    dueDate: _dueDate,
+                    onTap: _pickDueDate,
+                  ),
                   const Divider(height: 40),
                 ],
 
                 /// SUMMARY OF SELECTED ITEMS
                 if (totalItems > 0)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        topRight: Radius.circular(8),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Course Content",
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .primaryColor
-                                    .withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: greyBorder),
-                              ),
-                              child: Text(
-                                "$totalItems item${totalItems != 1 ? "s" : ""}",
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            if (selectedFiles.isNotEmpty)
-                              _buildBadge(
-                                icon: Icons.file_copy,
-                                label:
-                                    "${selectedFiles.length} file${selectedFiles.length != 1 ? "s" : ""}",
-                              ),
-                            if (selectedImages.isNotEmpty)
-                              _buildBadge(
-                                icon: Icons.image_outlined,
-                                label:
-                                    "${selectedImages.length} image${selectedImages.length != 1 ? "s" : ""}",
-                              ),
-                            if (text.trim().isNotEmpty)
-                              _buildBadge(
-                                icon: Icons.text_fields,
-                                label: "Text",
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+                  SummaryCard(
+                    totalItems: totalItems,
+                    fileCount: selectedFiles.length,
+                    imageCount: selectedImages.length,
+                    hasText: text.trim().isNotEmpty,
                   ),
 
                 /// CARD FOOTER (Create Button & Info)
@@ -630,144 +345,6 @@ class _CourseCreationState extends State<CourseCreation> {
                 const SizedBox(height: 36),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Builds a small "badge" widget.
-  Widget _buildBadge({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey[800],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: greyBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds a section header (icon + title).
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String title,
-    required BuildContext context,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
-        ),
-      ],
-    );
-  }
-
-  /// Mimics the dashed-border drop zone for uploading files/images.
-  Widget _buildDropZone({
-    required VoidCallback onTap,
-    required String label,
-    required String subLabel,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 98,
-        margin: const EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: greyBorder,
-            style: BorderStyle.solid,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[1000],
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  children: [
-                    const TextSpan(
-                      text: "Click to upload ",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    TextSpan(text: label),
-                  ],
-                ),
-              ),
-              Text(
-                subLabel,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Add this function for the Due Date Drop Zone
-  Widget _buildDueDateDropZone() {
-    return GestureDetector(
-      onTap: _pickDueDate, // Correct way to call the function
-      child: Container(
-        height: 98,
-        margin: const EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: greyBorder,
-            style: BorderStyle.solid,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[1000],
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  children: [
-                    TextSpan(
-                      text: _dueDate == null ? "Click to set " : "Due Date: ",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    TextSpan(
-                      text: _dueDate == null
-                          ? "due date"
-                          : DateFormat.yMd().add_jm().format(_dueDate!),
-                    ),
-                  ],
-                ),
-              ),
-              const Text(
-                "Set a due date for this course",
-                style: TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
           ),
         ),
       ),

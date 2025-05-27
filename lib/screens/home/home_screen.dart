@@ -7,6 +7,7 @@ import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/screens/courses/course_topic_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
 import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
@@ -133,7 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   icon: Symbols.note_add,
                                   title: 'Add Course',
                                   onTap: () {
-                                    Get.to(() => const CourseCreation());
+                                    Get.to(() => const CourseTopicScreen(),
+                                        transition: Transition.fadeIn,
+                                        duration:
+                                            const Duration(milliseconds: 500));
                                   },
                                 ),
                                 const SizedBox(width: 10),
