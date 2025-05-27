@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:camera/camera.dart';
+
 import 'package:lumi_learn_app/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
@@ -15,10 +17,29 @@ import 'components/category_list.dart';
 import 'components/top_picks_header.dart';
 import 'components/home_header.dart';
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   static const double _tabletBreakpoint = 800.0;
+  List<CameraDescription>? _cameras;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCameras();
+  }
+
+  Future<void> _loadCameras() async {
+    final cameras = await availableCameras();
+    setState(() {
+      _cameras = cameras;
+    });
+  }
 
   double _getHorizontalPadding(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -52,9 +73,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
             Positioned.fill(
@@ -94,22 +113,24 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: 28),
                           Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: _getHorizontalPadding(context)),
+                                horizontal: horizontalPadding),
                             child: Row(
                               children: [
                                 FeatureCard(
-                                  color:
-                                      const Color.fromARGB(255, 85, 151, 222),
+                                  color: const Color.fromARGB(255, 85, 151, 222),
                                   icon: Symbols.document_scanner,
                                   title: 'AI Scanner',
                                   onTap: () {
-                                    Get.to(() => const AiScannerMain());
+                                    if (_cameras != null) {
+                                      Get.to(() => AiScannerMain(cameras: _cameras!));
+                                    } else {
+                                      Get.snackbar('Camera Error', 'Cameras not ready yet');
+                                    }
                                   },
                                 ),
                                 const SizedBox(width: 10),
                                 FeatureCard(
-                                  color:
-                                      const Color.fromARGB(255, 204, 75, 101),
+                                  color: const Color.fromARGB(255, 204, 75, 101),
                                   icon: Symbols.note_add,
                                   title: 'Add Course',
                                   onTap: () {
@@ -121,8 +142,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 FeatureCard(
-                                  color:
-                                      const Color.fromARGB(255, 81, 198, 127),
+                                  color: const Color.fromARGB(255, 81, 198, 127),
                                   icon: Symbols.forum,
                                   title: 'LumiTutor',
                                   onTap: () {
@@ -141,8 +161,7 @@ class HomeScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Suggested Courses',
-                                  style:
-                                      sectionTitleStyle, // bold or headline style
+                                  style: sectionTitleStyle,
                                 ),
                                 GestureDetector(
                                   onTap: () {
@@ -168,8 +187,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          HorizontalCategoryList(
-                              initialPadding: horizontalPadding),
+                          HorizontalCategoryList(initialPadding: horizontalPadding),
                           const SizedBox(height: 18),
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -193,8 +211,7 @@ class HomeScreen extends StatelessWidget {
                             child: Obx(
                               () => TopPicksHeader(
                                 onAddTap: () {
-                                  if (courseController
-                                      .checkCourseSlotAvailable()) {
+                                  if (courseController.checkCourseSlotAvailable()) {
                                     Get.to(() => const CourseCreation(),
                                         transition: Transition.fadeIn);
                                   }

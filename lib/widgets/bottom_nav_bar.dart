@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/course_topic_screen.dart';
 import '../controllers/navigation_controller.dart';
 import '../utils/constants.dart';
+import '../screens/lumiTutor/lumi_tutor_main.dart'; // 👈 import the screen
 
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({Key? key}) : super(key: key);
@@ -66,6 +67,13 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                         if (index == 2) {
                           Get.to(
                             () => const CourseTopicScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 400),
+                            fullscreenDialog: true,
+                          );
+                        } else if (index == 3) {
+                          Get.to(
+                            () => const LumiTutorMain(),
                             transition: Transition.fadeIn,
                             duration: const Duration(milliseconds: 400),
                             fullscreenDialog: true,
