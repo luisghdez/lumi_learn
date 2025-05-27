@@ -77,6 +77,26 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
+  // ①  ADD: a helper that returns the “peek” card
+  Widget _nextCard() {
+    if (currentIndex + 1 >= widget.flashcards.length) return const SizedBox.shrink();
+
+    // scale & translate are animated via _dragProgress (see next code block)
+    return Transform.translate(
+      offset: Offset(0, 40 * (1 - _dragProgress)),        // moves up while you drag
+      child: Transform.scale(
+        scale: 0.9 + 0.1 * _dragProgress,                 // grows from 0.9→1.0
+        child: FlashcardWidget(
+          flashcard: widget.flashcards[currentIndex + 1],
+        ),
+      ),
+    );
+  }
+
+  // ②  ADD: track drag progress (0‒1) so we can animate the back card
+  double _dragProgress = 0.0;
+
+
   void _resetDeck() {
     setState(() {
       currentIndex = 0;
@@ -235,62 +255,66 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     return Column(
       children: [
         _counterStrip(),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.all(padding),
-            child: Center(
-              child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: Dismissible(
-                    key: ValueKey('card_$currentIndex'),
-                    direction: DismissDirection.horizontal,
-                    background:
-                        const SizedBox.shrink(), // no external background
-                    secondaryBackground: const SizedBox.shrink(),
+    Expanded(
+      child: Padding(
+        padding: EdgeInsets.all(padding),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Stack(                                     // <──── NEW
+              alignment: Alignment.center,
+              children: [
+                _nextCard(),                                  // back-card
+                Dismissible(                                  // front-card
+                  key: ValueKey('card_$currentIndex'),
+                  direction: DismissDirection.horizontal,
+                  resizeDuration: null,                       // keeps size constant
+                  background: const SizedBox.shrink(),
+                  secondaryBackground: const SizedBox.shrink(),
+                  onUpdate: (details) {
+                    // store progress for the parallax
+                    setState(() {
+                      _dragProgress = (details.progress * 2).clamp(0.0, 1.0);
+                      _cardTint = Color.lerp(
+                        Colors.transparent,
+                        details.direction == DismissDirection.startToEnd
+                            ? Colors.green
+                            : Colors.red,
+                        _dragProgress,
+                      )!;
+                    });
+                  },
+                  onDismissed: (dir) {
+                    final isKnown = dir == DismissDirection.startToEnd;
+                    _status[currentIndex] = isKnown;
+                    _animateBubble(isKnown);
+                    _resetTint();
+                    _dragProgress = 0.0;                      // reset for next pair
 
-                    // ⏪⏩ GRADUAL COLOR UPDATE
-                    onUpdate: (details) {
-                      final raw = details.progress; // 0→1
-                      final fast = (raw * 2).clamp(0.0, 1.0);
-                      setState(() {
-                        _cardTint = Color.lerp(
-                          Colors.transparent,
-                          details.direction == DismissDirection.startToEnd
-                              ? Colors.green // RIGHT swipe  = known
-                              : Colors.red, // LEFT swipe   = unknown
-                          fast,
-                        )!;
-                      });
-                    },
-
-                    // ✔️ final classification
-                    onDismissed: (dir) {
-                      final isKnown = dir == DismissDirection.startToEnd;
-                      _status[currentIndex] = isKnown;
-                      _animateBubble(isKnown);
-                      _resetTint();
-
-                      if (currentIndex < widget.flashcards.length - 1) {
-                        setState(() => currentIndex++);
-                      } else {
-                        // no more cards → show summary
-                        setState(() => _completed = true);
-                      }
-                    },
-
-                    // 🃏 the actual card, wrapped with AnimatedContainer for the tint
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 50),
-                      decoration: BoxDecoration(
-                        color: _cardTint,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: FlashcardWidget(flashcard: current),
+                    if (currentIndex < widget.flashcards.length - 1) {
+                      setState(() => currentIndex++);
+                    } else {
+                      setState(() => _completed = true);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 50),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  )),
+                    foregroundDecoration: BoxDecoration(
+                      color: _cardTint,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: FlashcardWidget(flashcard: current),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
+    ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
@@ -539,6 +563,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             BackdropFilter(filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5)),
             Container(
               decoration: BoxDecoration(
+                color: const Color(0xFF0F0F0F),
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(color: greyBorder, width: 1),
               ),
