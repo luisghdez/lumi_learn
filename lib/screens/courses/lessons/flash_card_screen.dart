@@ -441,26 +441,33 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         ),
       ),
       body: SafeArea(
-        child: _completed
-            ? _buildSummary()
-            : Column(
-                children: [
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: isListView
-                          ? KeyedSubtree(
-                              key: const ValueKey('list'),
-                              child: _buildListView(),
-                            )
-                          : KeyedSubtree(
-                              key: const ValueKey('cards'),
-                              child: _buildFlashcardView(),
-                            ),
-                    ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+          child: _completed
+              ? KeyedSubtree(key: const ValueKey('summary'), child: _buildSummary())
+              : KeyedSubtree(
+                  key: const ValueKey('main'),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: isListView
+                              ? KeyedSubtree(
+                                  key: const ValueKey('list'),
+                                  child: _buildListView(),
+                                )
+                              : KeyedSubtree(
+                                  key: const ValueKey('cards'),
+                                  child: _buildFlashcardView(),
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+        ),
       ),
     );
   }
