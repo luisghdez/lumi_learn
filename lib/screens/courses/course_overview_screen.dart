@@ -9,6 +9,8 @@ import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/note_screen.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_panel.dart';
 import 'package:lumi_learn_app/widgets/course_overview_header.dart';
@@ -17,6 +19,57 @@ import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
 import 'package:lumi_learn_app/controllers/course_controller.dart';
 import 'package:lumi_learn_app/controllers/auth_controller.dart'; // <--- Import your AuthController
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
+
+const exampleMarkdown = """
+# 🌱 Cell Biology Summary
+
+Welcome to your quick crash course on cell biology. Let's break it down!
+
+---
+
+## 🔬 Key Organelles and Their Functions
+
+| Organelle        | Function                                 |
+|------------------|-------------------------------------------|
+| Nucleus          | Contains DNA, the brain of the cell 🧠    |
+| Mitochondria     | Produces energy (ATP), the powerhouse ⚡   |
+| Ribosomes        | Synthesizes proteins 🧬                   |
+| Endoplasmic Ret. | Processes and transports proteins 📦     |
+| Golgi Apparatus  | Packages and ships molecules ✉️          |
+| Lysosomes        | Breaks down waste ♻️                     |
+
+---
+
+## 📋 Study Checklist
+
+- [x] Know the parts of a eukaryotic cell
+- [x] Understand the function of mitochondria
+- [ ] Memorize the steps of protein synthesis
+- [ ] Review differences between plant and animal cells
+
+---
+
+## 🧠 Quick Facts
+
+- All living things are made of **cells**
+- Cells come from **pre-existing cells**
+- The cell is the **basic unit of life**
+
+---
+
+> “The cell is the basic unit of structure in every living thing.”  
+> — The Cell Theory
+
+---
+
+## ✅ Before the Quiz
+
+1. Review the flashcards 🔁
+2. Try the mini quiz ❓
+3. Ask LumiTutor if you’re confused 💬
+
+Stay curious & keep learning! ✨
+""";
 
 class CourseOverviewScreen extends StatefulWidget {
   const CourseOverviewScreen({Key? key}) : super(key: key);
@@ -388,6 +441,23 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   onViewFlashcards: () {
                     Get.to(
                       () => FlashcardScreen(flashcards: flashcards),
+                      transition: Transition.fadeIn,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  onViewNotes: () {
+                    Get.to(
+                      () => const NoteScreen(
+                        markdownText: exampleMarkdown,
+                      ),
+                      transition: Transition.fadeIn,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  onViewLumiTutor: () {
+                    Get.to(
+                      // send with chat id
+                      () => const LumiTutorMain(),
                       transition: Transition.fadeIn,
                       duration: const Duration(milliseconds: 300),
                     );
