@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_details_card.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/due_date_dropzone.dart';

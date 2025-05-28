@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/services/api_service.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 
 // ─── Models ─────────────────────────────────────────────────────────────┐
 class Classroom {

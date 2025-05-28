@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class TutorHeader extends StatelessWidget {
@@ -84,7 +84,8 @@ class TutorHeader extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -108,7 +109,8 @@ class TutorHeader extends StatelessWidget {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.menu_book_rounded, color: Colors.white, size: 18),
+                    Icon(Icons.menu_book_rounded,
+                        color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Text(
                       'Create a course from this chat',
@@ -133,7 +135,7 @@ class TutorHeader extends StatelessWidget {
     return PageRouteBuilder(
       transitionDuration: const Duration(milliseconds: 600),
       reverseTransitionDuration: const Duration(milliseconds: 400),
-      pageBuilder: (_, __, ___) =>  MainScreen(),
+      pageBuilder: (_, __, ___) => MainScreen(),
       transitionsBuilder: (_, animation, __, child) {
         return FadeTransition(
           opacity: CurvedAnimation(

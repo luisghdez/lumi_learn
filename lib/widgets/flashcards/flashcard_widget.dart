@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
@@ -127,4 +127,4 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     _controller.dispose();
     super.dispose();
   }
-} 
+}

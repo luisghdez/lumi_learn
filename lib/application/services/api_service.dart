@@ -5,7 +5,7 @@ import 'package:http_parser/http_parser.dart'; // For MediaType
 import 'package:mime/mime.dart'; // For lookupMimeType
 import 'package:path/path.dart' as p;
 import 'dart:io';
-import 'package:lumi_learn_app/models/leaderboard_model.dart';
+import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class ApiService {
   // static const String _baseUrl = 'http://localhost:3000';

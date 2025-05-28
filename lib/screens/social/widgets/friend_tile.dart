@@ -1,7 +1,7 @@
 // lib/screens/social/widgets/friend_tile.dart
 
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/models/friends_model.dart';
+import 'package:lumi_learn_app/application/models/friends_model.dart';
 
 class FriendTile extends StatelessWidget {
   final Friend friend;

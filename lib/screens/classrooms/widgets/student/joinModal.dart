@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart';
+import 'package:lumi_learn_app/application/controllers/class_controller.dart';
 
 class JoinClassroomModal extends StatefulWidget {
   const JoinClassroomModal({Key? key}) : super(key: key);

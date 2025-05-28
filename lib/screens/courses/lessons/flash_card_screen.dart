@@ -1,13 +1,11 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/flashcards/flashcard_widget.dart';
-import 'package:lumi_learn_app/widgets/flashcards/summary_pie_chart.dart';
 import 'package:lumi_learn_app/widgets/flashcards/summary_view.dart';
 
 class FlashcardScreen extends StatefulWidget {
@@ -88,12 +86,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (child, anim) =>
-          FadeTransition(opacity: anim, child: child),   // ⬅️ smooth fade-in
+          FadeTransition(opacity: anim, child: child), // ⬅️ smooth fade-in
       child: Transform.translate(
-      key: ValueKey('peek_${currentIndex + 1}'),        // ⬅️ new key each time
-        offset: Offset(0, 40 * (1 - _dragProgress)),      // slides up as you drag
+        key: ValueKey('peek_${currentIndex + 1}'), // ⬅️ new key each time
+        offset: Offset(0, 40 * (1 - _dragProgress)), // slides up as you drag
         child: Transform.scale(
-          scale: 0.9 + 0.1 * _dragProgress,               // grows 0.9 → 1.0
+          scale: 0.9 + 0.1 * _dragProgress, // grows 0.9 → 1.0
           child: FlashcardWidget(
             flashcard: widget.flashcards[currentIndex + 1],
           ),
@@ -102,10 +100,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     );
   }
 
-
   // ②  ADD: track drag progress (0‒1) so we can animate the back card
   double _dragProgress = 0.0;
-
 
   void _resetDeck() {
     setState(() {
@@ -179,66 +175,69 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     return Column(
       children: [
         _counterStrip(),
-    Expanded(
-      child: Padding(
-        padding: EdgeInsets.all(padding),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Stack(                                     // <──── NEW
-              alignment: Alignment.center,
-              children: [
-                _nextCard(),                                  // back-card
-                Dismissible(                                  // front-card
-                  key: ValueKey('card_$currentIndex'),
-                  direction: DismissDirection.horizontal,
-                  resizeDuration: null,                       // keeps size constant
-                  background: const SizedBox.shrink(),
-                  secondaryBackground: const SizedBox.shrink(),
-                  onUpdate: (details) {
-                    // store progress for the parallax
-                    setState(() {
-                      _dragProgress = (details.progress * 2).clamp(0.0, 1.0);
-                      _cardTint = Color.lerp(
-                        Colors.transparent,
-                        details.direction == DismissDirection.startToEnd
-                            ? Colors.green
-                            : Colors.red,
-                        _dragProgress,
-                      )!;
-                    });
-                  },
-                  onDismissed: (dir) {
-                    final isKnown = dir == DismissDirection.startToEnd;
-                    _status[currentIndex] = isKnown;
-                    _animateBubble(isKnown);
-                    _resetTint();
-                    _dragProgress = 0.0;                      // reset for next pair
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(padding),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Stack(
+                  // <──── NEW
+                  alignment: Alignment.center,
+                  children: [
+                    _nextCard(), // back-card
+                    Dismissible(
+                      // front-card
+                      key: ValueKey('card_$currentIndex'),
+                      direction: DismissDirection.horizontal,
+                      resizeDuration: null, // keeps size constant
+                      background: const SizedBox.shrink(),
+                      secondaryBackground: const SizedBox.shrink(),
+                      onUpdate: (details) {
+                        // store progress for the parallax
+                        setState(() {
+                          _dragProgress =
+                              (details.progress * 2).clamp(0.0, 1.0);
+                          _cardTint = Color.lerp(
+                            Colors.transparent,
+                            details.direction == DismissDirection.startToEnd
+                                ? Colors.green
+                                : Colors.red,
+                            _dragProgress,
+                          )!;
+                        });
+                      },
+                      onDismissed: (dir) {
+                        final isKnown = dir == DismissDirection.startToEnd;
+                        _status[currentIndex] = isKnown;
+                        _animateBubble(isKnown);
+                        _resetTint();
+                        _dragProgress = 0.0; // reset for next pair
 
-                    if (currentIndex < widget.flashcards.length - 1) {
-                      setState(() => currentIndex++);
-                    } else {
-                      setState(() => _completed = true);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 50),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
+                        if (currentIndex < widget.flashcards.length - 1) {
+                          setState(() => currentIndex++);
+                        } else {
+                          setState(() => _completed = true);
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 50),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        foregroundDecoration: BoxDecoration(
+                          color: _cardTint,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: FlashcardWidget(flashcard: current),
+                      ),
                     ),
-                    foregroundDecoration: BoxDecoration(
-                      color: _cardTint,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: FlashcardWidget(flashcard: current),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
-    ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
@@ -360,9 +359,15 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
-          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+          transitionBuilder: (child, animation) =>
+              FadeTransition(opacity: animation, child: child),
           child: _completed
-              ? KeyedSubtree(key: const ValueKey('summary'), child: SummaryView(known: _known, total: widget.flashcards.length, onResetDeck: _resetDeck))
+              ? KeyedSubtree(
+                  key: const ValueKey('summary'),
+                  child: SummaryView(
+                      known: _known,
+                      total: widget.flashcards.length,
+                      onResetDeck: _resetDeck))
               : KeyedSubtree(
                   key: const ValueKey('main'),
                   child: Column(

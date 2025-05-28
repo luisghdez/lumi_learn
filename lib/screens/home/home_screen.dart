@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_topic_screen.dart';
@@ -15,10 +15,6 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
-
-
-
-
 
 import 'components/category_list.dart';
 import 'components/top_picks_header.dart';
@@ -124,20 +120,24 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Row(
                               children: [
                                 FeatureCard(
-                                  color: const Color.fromARGB(255, 85, 151, 222),
+                                  color:
+                                      const Color.fromARGB(255, 85, 151, 222),
                                   icon: Symbols.document_scanner,
                                   title: 'AI Scanner',
                                   onTap: () {
                                     if (_cameras != null) {
-                                      Get.to(() => AiScannerMain(cameras: _cameras!));
+                                      Get.to(() =>
+                                          AiScannerMain(cameras: _cameras!));
                                     } else {
-                                      Get.snackbar('Camera Error', 'Cameras not ready yet');
+                                      Get.snackbar('Camera Error',
+                                          'Cameras not ready yet');
                                     }
                                   },
                                 ),
                                 const SizedBox(width: 10),
                                 FeatureCard(
-                                  color: const Color.fromARGB(255, 204, 75, 101),
+                                  color:
+                                      const Color.fromARGB(255, 204, 75, 101),
                                   icon: Symbols.note_add,
                                   title: 'Add Course',
                                   onTap: () {
@@ -149,23 +149,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(width: 10),
                                 FeatureCard(
-                                  color: const Color.fromARGB(255, 81, 198, 127),
+                                  color:
+                                      const Color.fromARGB(255, 81, 198, 127),
                                   icon: Symbols.forum,
                                   title: 'LumiTutor',
                                   onTap: () {
-                              Navigator.of(context).push(
-                                    NoSwipePageRoute(
-                                      builder: (_) => const LumiTutorMain(
-                                        initialArgs: {
-                                          'type': 'text',
-                                          'paths': [],
-                                          'category': 'Anything',
-                                        },
+                                    Navigator.of(context).push(
+                                      NoSwipePageRoute(
+                                        builder: (_) => const LumiTutorMain(
+                                          initialArgs: {
+                                            'type': 'text',
+                                            'paths': [],
+                                            'category': 'Anything',
+                                          },
+                                        ),
+                                        duration:
+                                            const Duration(milliseconds: 300),
                                       ),
-                                      duration: const Duration(milliseconds: 300),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -205,7 +207,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          HorizontalCategoryList(initialPadding: horizontalPadding),
+                          HorizontalCategoryList(
+                              initialPadding: horizontalPadding),
                           const SizedBox(height: 18),
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -229,7 +232,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Obx(
                               () => TopPicksHeader(
                                 onAddTap: () {
-                                  if (courseController.checkCourseSlotAvailable()) {
+                                  if (courseController
+                                      .checkCourseSlotAvailable()) {
                                     Get.to(() => const CourseCreation(),
                                         transition: Transition.fadeIn);
                                   }

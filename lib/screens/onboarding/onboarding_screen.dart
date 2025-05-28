@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -122,97 +122,96 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-Widget _buildSinglePage(int index) {
-  final data = onboardingData[index];
-  final String title = data["title"] ?? "";
-  final String description = data["description"] ?? "";
-  final String description2 = data["description2"] ?? "";
-  final String image = data["image"] ?? "";
-  final bool isFullImage = data["isFullImage"] ?? false;
+  Widget _buildSinglePage(int index) {
+    final data = onboardingData[index];
+    final String title = data["title"] ?? "";
+    final String description = data["description"] ?? "";
+    final String description2 = data["description2"] ?? "";
+    final String image = data["image"] ?? "";
+    final bool isFullImage = data["isFullImage"] ?? false;
 
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final screenHeight = constraints.maxHeight;
-      final screenWidth = constraints.maxWidth;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenHeight = constraints.maxHeight;
+        final screenWidth = constraints.maxWidth;
 
-      final isTablet = screenWidth >= 768 || screenHeight >= 1000;
+        final isTablet = screenWidth >= 768 || screenHeight >= 1000;
 
-      // Adjust image height based on device type
-      final imageHeight = index == 1
-        ? (isFullImage
-            ? (isTablet ? screenHeight * 0.9 : screenHeight * 0.65)
-            : (isTablet ? screenHeight * 0.8 : screenHeight * 0.6))
-        : index == 2
-            ? (isTablet ? screenHeight * 0.65 : screenHeight * 0.55)
-            : (isTablet ? screenHeight * 0.65 : screenHeight * 0.42);
+        // Adjust image height based on device type
+        final imageHeight = index == 1
+            ? (isFullImage
+                ? (isTablet ? screenHeight * 0.9 : screenHeight * 0.65)
+                : (isTablet ? screenHeight * 0.8 : screenHeight * 0.6))
+            : index == 2
+                ? (isTablet ? screenHeight * 0.65 : screenHeight * 0.55)
+                : (isTablet ? screenHeight * 0.65 : screenHeight * 0.42);
 
+        final titleFontSize =
+            isTablet ? screenWidth * 0.06 : screenWidth * 0.08;
 
-      final titleFontSize = isTablet
-          ? screenWidth * 0.06
-          : screenWidth * 0.08;
-
-      return SafeArea(
-        top: true,
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: screenHeight * 0.03),
-
-              // Title
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  color: Colors.white,
-                  fontSize: titleFontSize.clamp(22.0, 44.0),
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -1.5,
-                ),
-              ),
-
-              SizedBox(height: screenHeight * 0.015),
-
-              SizedBox(
-                width: screenWidth * 0.8,
-                child: buildHighlightedText(description),
-              ),
-
-              if (index != 1) ...[
+        return SafeArea(
+          top: true,
+          bottom: false,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 SizedBox(height: screenHeight * 0.03),
-                Image.asset(
-                  image,
-                  height: imageHeight,
+
+                // Title
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.white,
+                    fontSize: titleFontSize.clamp(22.0, 44.0),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -1.5,
+                  ),
                 ),
-                SizedBox(height: screenHeight * 0.025),
+
+                SizedBox(height: screenHeight * 0.015),
+
                 SizedBox(
                   width: screenWidth * 0.8,
-                  child: buildHighlightedText(description2),
+                  child: buildHighlightedText(description),
                 ),
-              ],
 
-              if (index == 1)
-                Padding(
-                  padding: EdgeInsets.only(top: screenHeight * 0.04),
-                  child: Image.asset(
+                if (index != 1) ...[
+                  SizedBox(height: screenHeight * 0.03),
+                  Image.asset(
                     image,
                     height: imageHeight,
                   ),
-                ),
-            ],
+                  SizedBox(height: screenHeight * 0.025),
+                  SizedBox(
+                    width: screenWidth * 0.8,
+                    child: buildHighlightedText(description2),
+                  ),
+                ],
+
+                if (index == 1)
+                  Padding(
+                    padding: EdgeInsets.only(top: screenHeight * 0.04),
+                    child: Image.asset(
+                      image,
+                      height: imageHeight,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildBottomButtons() {
     final completedCount = _currentPage.clamp(0, 2);
-    final upcomingCount = (onboardingData.length - _currentPage - 1).clamp(0, 2);
+    final upcomingCount =
+        (onboardingData.length - _currentPage - 1).clamp(0, 2);
 
     return Positioned(
       left: 0,
@@ -235,7 +234,8 @@ Widget _buildSinglePage(int index) {
                       child: i < completedCount
                           ? GestureDetector(
                               onTap: () {
-                                final pageIndex = _currentPage - completedCount + i;
+                                final pageIndex =
+                                    _currentPage - completedCount + i;
                                 if (pageIndex >= 0) {
                                   _pageController.animateToPage(
                                     pageIndex,
@@ -246,7 +246,8 @@ Widget _buildSinglePage(int index) {
                               },
                               child: Container(
                                 key: ValueKey('circle-completed-$i'),
-                                margin: const EdgeInsets.symmetric(horizontal: 20),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 20),
                                 width: (i == completedCount - 1) ? 16 : 10,
                                 height: (i == completedCount - 1) ? 16 : 10,
                                 decoration: const BoxDecoration(
@@ -301,12 +302,14 @@ Widget _buildSinglePage(int index) {
                               },
                               child: Container(
                                 key: ValueKey('circle-upcoming-$i'),
-                                margin: const EdgeInsets.symmetric(horizontal: 20),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 20),
                                 width: (i == 0) ? 16 : 10,
                                 height: (i == 0) ? 16 : 10,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
                                   color: Colors.transparent,
                                 ),
                               ),

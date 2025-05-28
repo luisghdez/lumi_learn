@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class ConfirmationScreen extends StatelessWidget {
@@ -49,7 +49,7 @@ class ConfirmationScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                Row(
+                  Row(
                     children: [
                       // 🔙 Back Button
                       IconButton(
@@ -60,15 +60,15 @@ class ConfirmationScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       // Title
-                  Text(
-                    "Hey, $userName",
-                    style: TextStyle(
-                      fontSize: titleFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
+                      Text(
+                        "Hey, $userName",
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),

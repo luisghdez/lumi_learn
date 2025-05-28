@@ -26,7 +26,7 @@
 // }
 
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/models/leaderboard_model.dart';
+import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class LeaderboardController extends GetxController {
   RxList<Player> leaderboard = <Player>[].obs;

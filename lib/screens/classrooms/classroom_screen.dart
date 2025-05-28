@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/classrooms/screens/student_view.dart';
 import 'package:lumi_learn_app/screens/classrooms/screens/teacher_view.dart';
 import 'package:lumi_learn_app/screens/classrooms/components/role_selection.dart';
 import 'package:lumi_learn_app/screens/classrooms/onboarding/age_selection.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
-
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 
 class ClassroomsScreen extends StatelessWidget {
   ClassroomsScreen({super.key});
 
   final AuthController authController = Get.find();
   final navController = Get.find<NavigationController>();
-
 
   @override
   Widget build(BuildContext context) {

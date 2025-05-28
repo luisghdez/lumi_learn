@@ -4,9 +4,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/terms_deck.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speech_bubble.dart';
 

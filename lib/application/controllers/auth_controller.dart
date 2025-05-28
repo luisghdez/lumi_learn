@@ -2,16 +2,15 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 enum UserRole { student, teacher }
-
 
 class AuthController extends GetxController {
   static AuthController instance = Get.find();
@@ -19,8 +18,6 @@ class AuthController extends GetxController {
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxBool isLoading = false.obs; // Track loading state
   Rxn<UserRole> userRole = Rxn<UserRole>();
-
-
 
   final RxBool hasCompletedOnboarding = false.obs;
   RxBool isAuthInitialized = false.obs;
@@ -403,12 +400,10 @@ class AuthController extends GetxController {
 
     // If you want to reset user role
     userRole.value = null; // <-- add this!
-
   }
 
   //classrooms add, teacher student
   void setUserRole(UserRole role) {
-  userRole.value = role;
-}
-
+    userRole.value = role;
+  }
 }

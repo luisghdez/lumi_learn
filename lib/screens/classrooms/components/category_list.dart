@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';

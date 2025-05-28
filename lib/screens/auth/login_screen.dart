@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,94 +13,91 @@ class LoginScreen extends StatelessWidget {
 
   final AuthController authController = Get.find<AuthController>();
 
-@override
-Widget build(BuildContext context) {
-  final size = MediaQuery.of(context).size;
-  final isTablet = size.width >= 768;
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width >= 768;
 
+    final isSmallPhone = size.height < 700 || size.width < 375;
 
-final isSmallPhone = size.height < 700 || size.width < 375;
+    final double horizontalPadding = isTablet
+        ? size.width * 0.2
+        : isSmallPhone
+            ? 20
+            : size.width * 0.06;
 
-final double horizontalPadding = isTablet
-    ? size.width * 0.2
-    : isSmallPhone
-        ? 20
-        : size.width * 0.06;
+    final double titleFontSize = isTablet
+        ? 44
+        : isSmallPhone
+            ? 28
+            : 40;
 
-final double titleFontSize = isTablet
-    ? 44
-    : isSmallPhone
-        ? 28
-        : 40;
+    final double subTitleFontSize = isTablet
+        ? 64
+        : isSmallPhone
+            ? 42
+            : 58;
 
-final double subTitleFontSize = isTablet
-    ? 64
-    : isSmallPhone
-        ? 42
-        : 58;
+    final double topPadding = isTablet
+        ? size.height * 0.08
+        : isSmallPhone
+            ? 30
+            : size.height * 0.06;
 
-final double topPadding = isTablet
-    ? size.height * 0.08
-    : isSmallPhone
-        ? 30
-        : size.height * 0.06;
+    final double betweenTitleAndFields = isTablet
+        ? size.height * 0.1
+        : isSmallPhone
+            ? 24
+            : size.height * 0.08;
 
-final double betweenTitleAndFields = isTablet
-    ? size.height * 0.1
-    : isSmallPhone
-        ? 24
-        : size.height * 0.08;
+    final double spacingSmall = isSmallPhone ? 6 : 14;
+    final double spacingMedium = isSmallPhone ? 12 : 24;
+    final double spacingLarge = isSmallPhone ? 20 : 32;
 
-final double spacingSmall = isSmallPhone ? 6 : 14;
-final double spacingMedium = isSmallPhone ? 12 : 24;
-final double spacingLarge = isSmallPhone ? 20 : 32;
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/galaxies/galaxy22.png'),
+            fit: BoxFit.cover,
+            alignment: Alignment.centerLeft,
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: topPadding),
 
-
-
-return Scaffold(
-  body: Container(
-    width: double.infinity,
-    height: double.infinity,
-    decoration: const BoxDecoration(
-      image: DecorationImage(
-        image: AssetImage('assets/galaxies/galaxy22.png'),
-        fit: BoxFit.cover,
-        alignment: Alignment.centerLeft,
-      ),
-    ),
-    child: SingleChildScrollView(
-      child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: topPadding),
-
-              // Title
-              RichText(
-                text: TextSpan(
-                  text: "Let's\n",
-                  style: TextStyle(
-                    fontSize: titleFontSize.toDouble(),
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: "Start",
-                      style: GoogleFonts.poppins(
-                        fontSize: subTitleFontSize.toDouble(),
-                        fontWeight: FontWeight.bold,
+                  // Title
+                  RichText(
+                    text: TextSpan(
+                      text: "Let's\n",
+                      style: TextStyle(
+                        fontSize: titleFontSize.toDouble(),
+                        fontWeight: FontWeight.w400,
                         color: Colors.white,
+                        height: 1.1,
                       ),
+                      children: [
+                        TextSpan(
+                          text: "Start",
+                          style: GoogleFonts.poppins(
+                            fontSize: subTitleFontSize.toDouble(),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              SizedBox(height: betweenTitleAndFields),
+                  SizedBox(height: betweenTitleAndFields),
 
                   _buildInputField(
                     "Email Address",
