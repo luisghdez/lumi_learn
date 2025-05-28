@@ -5,11 +5,11 @@ import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart';
-import 'package:lumi_learn_app/services/api_service.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 

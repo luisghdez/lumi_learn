@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/models/friends_model.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/models/friends_model.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_tile.dart';
 
@@ -61,12 +61,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       body: Stack(
         children: [
           // Background image layer.
-        Positioned.fill(
-          child: Image.asset(
-            'assets/images/black_moons_lighter.png',
-            fit: BoxFit.cover,
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/black_moons_lighter.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
           // Main content layer.
           SafeArea(
             child: Padding(

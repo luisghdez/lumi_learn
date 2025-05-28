@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/models/leaderboard_model.dart';
+import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class TopPlayerWidget extends StatelessWidget {
   final Player player;

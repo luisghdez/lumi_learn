@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart'; // Import your controller
+import 'package:lumi_learn_app/application/controllers/class_controller.dart'; // Import your controller
+
 class WeeklySchedule extends StatelessWidget {
   const WeeklySchedule({super.key});
 
@@ -9,7 +10,8 @@ class WeeklySchedule extends StatelessWidget {
     final ClassController classController = Get.find();
 
     // Collect all course dates from classroomCourses
-    final List<DateTime> scheduledDates = classController.classroomCourses.values
+    final List<DateTime> scheduledDates = classController
+        .classroomCourses.values
         .expand((courses) => courses.map((course) => course.scheduledDate))
         .toList();
 
@@ -23,7 +25,8 @@ class WeeklySchedule extends StatelessWidget {
 
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday % 7));
-    final weekDates = List.generate(7, (index) => weekStart.add(Duration(days: index)));
+    final weekDates =
+        List.generate(7, (index) => weekStart.add(Duration(days: index)));
 
     final screenWidth = MediaQuery.of(context).size.width;
     double itemSize = screenWidth / 10;
@@ -38,10 +41,11 @@ class WeeklySchedule extends StatelessWidget {
         itemCount: 7,
         itemBuilder: (context, index) {
           final DateTime day = weekDates[index];
-          final bool today = day.day == now.day && day.month == now.month && day.year == now.year;
+          final bool today = day.day == now.day &&
+              day.month == now.month &&
+              day.year == now.year;
           final bool hasEvent = allEventDates.any((d) =>
-              d.day == day.day && d.month == day.month && d.year == day.year
-          );
+              d.day == day.day && d.month == day.month && d.year == day.year);
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),

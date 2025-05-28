@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/course_topic_screen.dart';
-import '../controllers/navigation_controller.dart';
+import '../application/controllers/navigation_controller.dart';
 import '../utils/constants.dart';
 import '../screens/lumiTutor/lumi_tutor_main.dart'; // 👈 import the screen
 

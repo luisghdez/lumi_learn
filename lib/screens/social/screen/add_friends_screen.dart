@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/social/widgets/add_friends_tab.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_requests_tab.dart';
-import 'package:lumi_learn_app/models/userSearch_model.dart';
+import 'package:lumi_learn_app/application/models/userSearch_model.dart';
 
 class AddFriendsScreen extends StatefulWidget {
   const AddFriendsScreen({super.key});

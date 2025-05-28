@@ -2,9 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart'; // Import your Classroom model
+import 'package:lumi_learn_app/application/controllers/class_controller.dart'; // Import your Classroom model
 import 'package:lumi_learn_app/screens/classrooms/screens/ClassroomDetails.dart';
-
 
 class ClassroomCard extends StatelessWidget {
   final Classroom classroomData;
@@ -96,9 +95,10 @@ class ClassroomCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         GestureDetector(
-                        onTap: () {
-                          Get.to(() => ClassroomDetailsPage(classroomData: classroomData));
-                        },
+                          onTap: () {
+                            Get.to(() => ClassroomDetailsPage(
+                                classroomData: classroomData));
+                          },
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 10),

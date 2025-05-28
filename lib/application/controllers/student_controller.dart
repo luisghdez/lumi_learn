@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart';
-import 'package:lumi_learn_app/services/api_service.dart'; // Import ClassController
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/class_controller.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart'; // Import ClassController
 
 // ✅ Upcoming Event model
 class UpcomingEvent {

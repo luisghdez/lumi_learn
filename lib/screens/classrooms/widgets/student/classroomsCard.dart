@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart';
+import 'package:lumi_learn_app/application/controllers/class_controller.dart';
 import 'package:lumi_learn_app/screens/classrooms/screens/ClassroomDetails.dart';
 
 class StudentClassroomCard extends StatelessWidget {
@@ -9,26 +9,25 @@ class StudentClassroomCard extends StatelessWidget {
   final VoidCallback onTap;
 
   String _formatDueDate(DateTime dueDate) {
-  final now = DateTime.now();
-  final difference = dueDate.difference(now);
+    final now = DateTime.now();
+    final difference = dueDate.difference(now);
 
-  if (difference.inDays == 0) {
-    // Same day
-    return "Today, ${_formatTime(dueDate)}";
-  } else if (difference.inDays == 1) {
-    return "Tomorrow, ${_formatTime(dueDate)}";
-  } else {
-    return "${dueDate.month}/${dueDate.day}, ${_formatTime(dueDate)}";
+    if (difference.inDays == 0) {
+      // Same day
+      return "Today, ${_formatTime(dueDate)}";
+    } else if (difference.inDays == 1) {
+      return "Tomorrow, ${_formatTime(dueDate)}";
+    } else {
+      return "${dueDate.month}/${dueDate.day}, ${_formatTime(dueDate)}";
+    }
   }
-}
 
-String _formatTime(DateTime dateTime) {
-  final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
-  final minute = dateTime.minute.toString().padLeft(2, '0');
-  final period = dateTime.hour >= 12 ? 'PM' : 'AM';
-  return "$hour:$minute $period";
-}
-
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return "$hour:$minute $period";
+  }
 
   const StudentClassroomCard({
     Key? key,
@@ -152,18 +151,18 @@ String _formatTime(DateTime dateTime) {
               const SizedBox(height: 16),
 
               // Next lesson
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: Colors.white54, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        classroomData.nextDueAt != null
-                            ? "Next Lesson Due ${_formatDueDate(classroomData.nextDueAt!)}"
-                            : "No upcoming lessons",
-                        style: const TextStyle(color: Colors.white54, fontSize: 12),
-                      ),
-                    ],
+              Row(
+                children: [
+                  Icon(Icons.access_time, color: Colors.white54, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    classroomData.nextDueAt != null
+                        ? "Next Lesson Due ${_formatDueDate(classroomData.nextDueAt!)}"
+                        : "No upcoming lessons",
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
+                ],
+              ),
 
               const SizedBox(height: 16),
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 
 class ProfileAvatar extends StatelessWidget {
   final VoidCallback onTap;
@@ -43,7 +43,8 @@ class ProfileAvatar extends StatelessWidget {
             backgroundColor: Colors.grey.shade300,
             backgroundImage: profileImage != null
                 ? AssetImage(profileImage)
-                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                : const AssetImage('assets/images/default_avatar.png')
+                    as ImageProvider,
           ),
         ],
       ),

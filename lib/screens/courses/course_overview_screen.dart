@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/note_screen.dart';
@@ -16,8 +16,8 @@ import 'package:lumi_learn_app/widgets/bottom_panel.dart';
 import 'package:lumi_learn_app/widgets/course_overview_header.dart';
 import 'package:lumi_learn_app/widgets/star_painter.dart';
 import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart'; // <--- Import your AuthController
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart'; // <--- Import your AuthController
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
 
 const exampleMarkdown = """

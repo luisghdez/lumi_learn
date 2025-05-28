@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 

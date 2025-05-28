@@ -7,10 +7,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:camera/camera.dart';
 
 import 'firebase_options.dart';
-import 'controllers/auth_controller.dart';
-import 'controllers/friends_controller.dart';
-import 'controllers/navigation_controller.dart';
-import 'services/friends_service.dart';
+import 'application/controllers/auth_controller.dart';
+import 'application/controllers/friends_controller.dart';
+import 'application/controllers/navigation_controller.dart';
+import 'application/services/friends_service.dart';
 import 'screens/auth/auth_gate.dart';
 import 'screens/lumiTutor/lumi_tutor_main.dart';
 

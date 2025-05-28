@@ -2,13 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
 import '../components/xp_chart_box.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
 
 class ProfileBody extends StatefulWidget {

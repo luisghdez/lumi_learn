@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/models/friend_profile_model.dart';
-import 'package:lumi_learn_app/models/friends_model.dart';
-import 'package:lumi_learn_app/models/userSearch_model.dart';
-import 'package:lumi_learn_app/services/api_service.dart';
-import 'package:lumi_learn_app/services/friends_service.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/models/friend_profile_model.dart';
+import 'package:lumi_learn_app/application/models/friends_model.dart';
+import 'package:lumi_learn_app/application/models/userSearch_model.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart';
+import 'package:lumi_learn_app/application/services/friends_service.dart';
 
 class FriendsController extends GetxController {
   static FriendsController instance = Get.find();

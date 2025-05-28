@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/models/chat_sender.dart';
+import 'package:lumi_learn_app/application/models/chat_sender.dart';
 import 'package:lumi_learn_app/widgets/base_screen_container.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_header.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_bubble.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_input_area.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_drawer.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 
 class LumiTutorMain extends StatefulWidget {
   final Map<String, dynamic>? initialArgs;
@@ -55,37 +55,37 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     super.dispose();
   }
 
-void _handleScannedInput(Map<String, dynamic>? args) {
-  if (args != null && mounted) {
-    if (args['type'] == 'image') {
-      final List<String> paths = List<String>.from(args['paths']);
-      for (var path in paths) {
+  void _handleScannedInput(Map<String, dynamic>? args) {
+    if (args != null && mounted) {
+      if (args['type'] == 'image') {
+        final List<String> paths = List<String>.from(args['paths']);
+        for (var path in paths) {
+          _messages.add({
+            "image": path,
+            "sender": ChatSender.user,
+          });
+        }
+      } else if (args['type'] == 'pdf') {
         _messages.add({
-          "image": path,
+          "text": "📎 Sent a scanned PDF:\n${args['path']}",
           "sender": ChatSender.user,
         });
+      } else if (args['type'] == 'text' && args.containsKey('initialMessage')) {
+        _messages.add({
+          "text": args['initialMessage'],
+          "sender": ChatSender.user,
+        });
+        _messages.add({
+          "text":
+              "🧠 (Pretend GPT is responding to '${args['initialMessage']}'...)",
+          "sender": ChatSender.tutor,
+        });
       }
-    } else if (args['type'] == 'pdf') {
-      _messages.add({
-        "text": "📎 Sent a scanned PDF:\n${args['path']}",
-        "sender": ChatSender.user,
-      });
-    } else if (args['type'] == 'text' && args.containsKey('initialMessage')) {
-      _messages.add({
-        "text": args['initialMessage'],
-        "sender": ChatSender.user,
-      });
-      _messages.add({
-        "text": "🧠 (Pretend GPT is responding to '${args['initialMessage']}'...)",
-        "sender": ChatSender.tutor,
-      });
+
+      setState(() {});
+      _scrollToBottom();
     }
-
-    setState(() {});
-    _scrollToBottom();
   }
-}
-
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 400), () {
@@ -120,7 +120,8 @@ void _handleScannedInput(Map<String, dynamic>? args) {
     return WillPopScope(
       onWillPop: () async => false,
       child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(), // ✅ dismiss keyboard on outside tap
+        onTap: () => FocusScope.of(context)
+            .unfocus(), // ✅ dismiss keyboard on outside tap
         child: Scaffold(
           drawer: const LumiDrawer(),
           backgroundColor: Colors.black,
@@ -141,7 +142,8 @@ void _handleScannedInput(Map<String, dynamic>? args) {
                     child: ListView.builder(
                       controller: _scrollController,
                       itemCount: _messages.length,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
                       itemBuilder: (context, index) {
                         final msg = _messages[index];
 
@@ -173,23 +175,28 @@ void _handleScannedInput(Map<String, dynamic>? args) {
                       },
                     ),
                   ),
-                    ChatInputArea(
-                      suggestions: _suggestions,
-                      onSend: _handleSend,
-                      onImagePicked: (imageFile) {
-                        setState(() {
-                          _messages.add({"image": imageFile.path, "sender": ChatSender.user});
+                  ChatInputArea(
+                    suggestions: _suggestions,
+                    onSend: _handleSend,
+                    onImagePicked: (imageFile) {
+                      setState(() {
+                        _messages.add({
+                          "image": imageFile.path,
+                          "sender": ChatSender.user
                         });
-                        _scrollToBottom();
-                      },
-                      onFilePicked: (file) {
-                        setState(() {
-                          _messages.add({"text": "📎 Sent a file:\n${file.path}", "sender": ChatSender.user});
+                      });
+                      _scrollToBottom();
+                    },
+                    onFilePicked: (file) {
+                      setState(() {
+                        _messages.add({
+                          "text": "📎 Sent a file:\n${file.path}",
+                          "sender": ChatSender.user
                         });
-                        _scrollToBottom();
-                      },
-                    ),
-
+                      });
+                      _scrollToBottom();
+                    },
+                  ),
                 ],
               ),
             ),

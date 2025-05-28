@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/auth/splash_screen.dart';

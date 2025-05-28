@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lumi_learn_app/tos.dart';
 import 'package:lumi_learn_app/privacy_policy.dart';

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 //controllers
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/class_controller.dart';
 
 //widgets
-import 'package:lumi_learn_app/widgets/app_header.dart'; 
+import 'package:lumi_learn_app/widgets/app_header.dart';
 import 'package:lumi_learn_app/widgets/base_screen_container.dart';
 import 'package:lumi_learn_app/widgets/custom_search_bar.dart';
 import 'package:lumi_learn_app/widgets/tabs.dart';
@@ -82,7 +81,8 @@ class _SearchMainState extends State<SearchMain> {
                 GlassyCardSideImage(
                   imagePath: 'assets/galaxies/galaxy9.png',
                   courseName: 'Advanced Mathematics 101',
-                  description: 'Master calculus and more in this structured, guided program.',
+                  description:
+                      'Master calculus and more in this structured, guided program.',
                   tags: ['Calculus', 'UTEP', 'Math'],
                   bookmarkCount: 24,
                   lessonCount: 4,

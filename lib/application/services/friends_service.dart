@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:lumi_learn_app/models/friends_model.dart';
-import 'package:lumi_learn_app/models/userSearch_model.dart';
+import 'package:lumi_learn_app/application/models/friends_model.dart';
+import 'package:lumi_learn_app/application/models/userSearch_model.dart';
 
 class FriendsService {
   // final String _baseUrl = 'http://localhost:3000';
