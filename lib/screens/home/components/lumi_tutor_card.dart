@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
+import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 
 class LumiTutorCard extends StatelessWidget {
   const LumiTutorCard({super.key});
@@ -40,7 +42,24 @@ class LumiTutorCard extends StatelessWidget {
                 children: popularQuestions
                     .map((q) => Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: _TransparentTag(label: q),
+                          child: _TransparentTag(
+                            label: q,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                NoSwipePageRoute(
+                                  builder: (_) => LumiTutorMain(
+                                    initialArgs: {
+                                      'type': 'text',
+                                      'paths': [],
+                                      'category': 'Anything',
+                                      'initialMessage': q,
+                                    },
+                                  ),
+                                  duration: const Duration(milliseconds: 300),
+                                ),
+                              );
+                            },
+                          ),
                         ))
                     .toList(),
               ),
@@ -49,7 +68,24 @@ class LumiTutorCard extends StatelessWidget {
                 children: recentQuestions
                     .map((q) => Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: _TransparentTag(label: q),
+                          child: _TransparentTag(
+                            label: q,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                NoSwipePageRoute(
+                                  builder: (_) => LumiTutorMain(
+                                    initialArgs: {
+                                      'type': 'text',
+                                      'paths': [],
+                                      'category': 'Anything',
+                                      'initialMessage': q,
+                                    },
+                                  ),
+                                  duration: const Duration(milliseconds: 300),
+                                ),
+                              );
+                            },
+                          ),
                         ))
                     .toList(),
               ),
@@ -102,8 +138,20 @@ class LumiTutorCard extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                navigationController.updateIndex(3),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                NoSwipePageRoute(
+                                  builder: (_) => const LumiTutorMain(
+                                    initialArgs: {
+                                      'type': 'text',
+                                      'paths': [],
+                                      'category': 'Anything',
+                                    },
+                                  ),
+                                  duration: const Duration(milliseconds: 300),
+                                ),
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
@@ -138,26 +186,31 @@ class LumiTutorCard extends StatelessWidget {
 
 class _TransparentTag extends StatelessWidget {
   final String label;
-  const _TransparentTag({required this.label});
+  final VoidCallback? onTap;
+
+  const _TransparentTag({required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(14, 255, 255, 255),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.4),
-          width: 1,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(14, 255, 255, 255),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.4),
+            width: 1,
+          ),
         ),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          height: 1,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            height: 1,
+          ),
         ),
       ),
     );

@@ -39,37 +39,16 @@ class FriendProfile extends StatelessWidget {
 
       return Scaffold(
         backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            // 🌌 Galaxy header background
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: Stack(
-                  children: [
-                    Image.asset(
-                      'assets/galaxies/galaxyDefault.png',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Colors.black, Colors.transparent],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+        body: 
+        Stack(
+      children: [
+        // 🌌 Fullscreen Galaxy Image
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
+          ),
+        ),
             // 👇 Scrollable body content
             SingleChildScrollView(
               padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
@@ -229,6 +208,7 @@ class FriendProfile extends StatelessWidget {
               ),
             ),
           ],
+
         ),
       );
     });

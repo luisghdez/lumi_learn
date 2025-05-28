@@ -43,16 +43,14 @@ class MainScreen extends StatelessWidget {
             child: Obx(
               () => IndexedStack(
                 index: navigationController.currentIndex.value,
-                children: [
+                children: const [
                   HomeScreen(),
-                  const SearchMain(),
-                  const AddCourseMain(),
-                  const LumiTutorMain(),
-
+                  SearchMain(),
+                  AddCourseMain(),
+                  LumiTutorMain(),
                   // LeaderboardPage(),
                   // ClassroomsScreen(),
-
-                  const ProfileScreen(),
+                  ProfileScreen(),
                   // const FriendsScreen(),
                 ],
               ),

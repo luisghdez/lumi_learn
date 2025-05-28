@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-enum ChatSender { user, tutor }
+import 'package:lumi_learn_app/models/chat_sender.dart'; // ✅ Shared enum
 
 class ChatBubble extends StatelessWidget {
   final String message;
