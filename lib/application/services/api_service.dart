@@ -17,6 +17,8 @@ class ApiService {
     required String description,
     required List<File> files,
     required String content,
+    required String language,
+    required String visibility,
     String? classId,
     DateTime? dueDate,
   }) async {
@@ -30,6 +32,8 @@ class ApiService {
     request.fields['title'] = title;
     request.fields['description'] = description;
     request.fields['content'] = content;
+    request.fields['language'] = language;
+    request.fields['visibility'] = visibility;
 
     if (classId != null) {
       request.fields['classId'] = classId;

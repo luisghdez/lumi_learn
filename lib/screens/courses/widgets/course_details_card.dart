@@ -16,6 +16,10 @@ class CourseDetailsCard extends StatelessWidget {
     required this.onSubjectChanged,
     required this.onLanguageChanged,
     required this.onVisibilityChanged,
+    this.titleError = false,
+    this.subjectError = false,
+    this.languageError = false,
+    this.visibilityError = false,
   }) : super(key: key);
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -30,6 +34,11 @@ class CourseDetailsCard extends StatelessWidget {
   final ValueChanged<String> onSubjectChanged;
   final ValueChanged<String> onLanguageChanged;
   final ValueChanged<String> onVisibilityChanged;
+
+  final bool titleError;
+  final bool subjectError;
+  final bool languageError;
+  final bool visibilityError;
 
   // ──────────────────────────────────────────────────────────────────────────
   // Data
@@ -95,11 +104,13 @@ class CourseDetailsCard extends StatelessWidget {
       {required String label,
       required String value,
       required List<String> items,
-      required ValueChanged<String> onChanged}) {
+      required ValueChanged<String> onChanged,
+      bool hasError = false}) {
     return GestureDetector(
       onTap: () => _showPicker(context,
           items: items, currentValue: value, onSelected: onChanged),
       child: _BorderedContainer(
+        hasError: hasError,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -136,6 +147,7 @@ class CourseDetailsCard extends StatelessWidget {
         const _Label('Title'),
         const SizedBox(height: 4),
         _BorderedContainer(
+          hasError: titleError,
           child: TextField(
             maxLength: 30,
             onChanged: onTitleChanged,
@@ -161,7 +173,8 @@ class CourseDetailsCard extends StatelessWidget {
             label: 'Select subject',
             value: subject,
             items: _subjects,
-            onChanged: onSubjectChanged),
+            onChanged: onSubjectChanged,
+            hasError: subjectError),
         const SizedBox(height: 12),
 
         // Language & Visibility (same row)
@@ -175,7 +188,8 @@ class CourseDetailsCard extends StatelessWidget {
                   label: 'Select language',
                   value: language,
                   items: _languages,
-                  onChanged: onLanguageChanged),
+                  onChanged: onLanguageChanged,
+                  hasError: languageError),
             ]),
           ),
           const SizedBox(width: 12),
@@ -188,7 +202,8 @@ class CourseDetailsCard extends StatelessWidget {
                   label: 'Select visibility',
                   value: visibility.isEmpty ? 'Public' : visibility,
                   items: _visibilities,
-                  onChanged: onVisibilityChanged),
+                  onChanged: onVisibilityChanged,
+                  hasError: visibilityError),
             ]),
           ),
         ]),
@@ -209,10 +224,12 @@ class _Label extends StatelessWidget {
 }
 
 class _BorderedContainer extends StatelessWidget {
-  const _BorderedContainer({Key? key, this.child, this.padding})
+  const _BorderedContainer(
+      {Key? key, this.child, this.padding, this.hasError = false})
       : super(key: key);
   final Widget? child;
   final EdgeInsetsGeometry? padding;
+  final bool hasError;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +238,7 @@ class _BorderedContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: greyBorder),
+        border: Border.all(color: hasError ? Colors.red : greyBorder),
       ),
       child: child,
     );

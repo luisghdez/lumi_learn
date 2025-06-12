@@ -381,6 +381,8 @@ class CourseController extends GetxController {
     required String title,
     required String description,
     required List<File> files,
+    required String language,
+    required String visibility,
     String content = '',
     String? classId,
     DateTime? dueDate,
@@ -406,6 +408,8 @@ class CourseController extends GetxController {
         content: content,
         classId: classId,
         dueDate: dueDate,
+        language: language,
+        visibility: visibility,
       );
 
       if (response.statusCode == 201) {

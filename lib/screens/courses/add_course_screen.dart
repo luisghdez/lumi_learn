@@ -32,7 +32,8 @@ class _CourseCreationState extends State<CourseCreation> {
   DateTime? _dueDate;
   File? selectedAudioFile;
   String language = "";
-  String visibility = "";
+  String visibility = "Public";
+  bool _submitted = false;
 
   /// Compute total items based on selected files, images, and whether text is non-empty.
   int get totalItems =>
@@ -194,6 +195,10 @@ class _CourseCreationState extends State<CourseCreation> {
                   visibility: visibility,
                   onLanguageChanged: (v) => setState(() => language = v),
                   onVisibilityChanged: (v) => setState(() => visibility = v),
+                  titleError: _submitted && courseTitle.trim().isEmpty,
+                  subjectError: _submitted && courseSubject.trim().isEmpty,
+                  languageError: _submitted && language.isEmpty,
+                  visibilityError: _submitted && visibility.isEmpty,
                 ),
 
                 const Divider(height: 40),
@@ -296,6 +301,21 @@ class _CourseCreationState extends State<CourseCreation> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
+                        setState(() {
+                          _submitted = true;
+                        });
+
+                        final isFormValid = courseTitle.trim().isNotEmpty &&
+                            courseSubject.trim().isNotEmpty &&
+                            language.isNotEmpty &&
+                            visibility.isNotEmpty;
+
+                        if (!isFormValid) {
+                          Get.snackbar("Missing Information",
+                              "Please fill all required fields in Course Details.");
+                          return;
+                        }
+
                         final courseController = Get.find<CourseController>();
 
                         // Create a temporary ID for the placeholder course.
@@ -321,6 +341,8 @@ class _CourseCreationState extends State<CourseCreation> {
                           dueDate: _dueDate,
                           classId: widget.classId,
                           content: text,
+                          language: language,
+                          visibility: visibility,
                         )
                             .then((result) {
                           courseController.removePlaceholderCourse(tempId);
