@@ -391,7 +391,6 @@ class CourseController extends GetxController {
 
     try {
       checkCourseSlotAvailable();
-
       final token = await authController.getIdToken();
       if (token == null) {
         isLoading.value = false;
