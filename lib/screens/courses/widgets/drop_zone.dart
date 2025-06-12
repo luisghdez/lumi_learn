@@ -18,7 +18,7 @@ class DropZone extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 98,
+        height: 70,
         margin: const EdgeInsets.only(top: 8),
         decoration: BoxDecoration(
           border: Border.all(color: greyBorder, width: 1),

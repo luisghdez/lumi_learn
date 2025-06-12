@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
-import 'package:flutter/services.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_details_card.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
@@ -29,25 +28,11 @@ class _CourseCreationState extends State<CourseCreation> {
   List<File> selectedImages = [];
   String text = "";
   String courseTitle = "";
-  String courseDescription = "";
+  String courseSubject = "";
   DateTime? _dueDate;
-
-  Future<void> _pickDueDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now().subtract(Duration(days: 1)),
-      lastDate: DateTime.now().add(Duration(days: 365)),
-    );
-    if (date == null) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (time == null) return;
-    setState(() => _dueDate =
-        DateTime(date.year, date.month, date.day, time.hour, time.minute));
-  }
+  File? selectedAudioFile;
+  String language = "";
+  String visibility = "";
 
   /// Compute total items based on selected files, images, and whether text is non-empty.
   int get totalItems =>
@@ -109,6 +94,29 @@ class _CourseCreationState extends State<CourseCreation> {
                 "Only $available files were added. Maximum is 10.");
           }
         }
+      });
+    }
+  }
+
+  Future<void> pickAudioFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'aac'],
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      const int maxFileSize = 10 * 1024 * 1024; // 10MB
+      final pf = result.files.first;
+
+      if (pf.size > maxFileSize) {
+        Get.snackbar(
+            "File too large", "Audio ${pf.name} exceeds the 10MB limit.");
+        return;
+      }
+
+      setState(() {
+        selectedAudioFile = File(pf.path!);
       });
     }
   }
@@ -179,10 +187,13 @@ class _CourseCreationState extends State<CourseCreation> {
                 // Course Details Section
                 CourseDetailsCard(
                   title: courseTitle,
-                  description: courseDescription,
+                  subject: courseSubject,
                   onTitleChanged: (v) => setState(() => courseTitle = v),
-                  onDescriptionChanged: (v) =>
-                      setState(() => courseDescription = v),
+                  onSubjectChanged: (v) => setState(() => courseSubject = v),
+                  language: language,
+                  visibility: visibility,
+                  onLanguageChanged: (v) => setState(() => language = v),
+                  onVisibilityChanged: (v) => setState(() => visibility = v),
                 ),
 
                 const Divider(height: 40),
@@ -243,6 +254,19 @@ class _CourseCreationState extends State<CourseCreation> {
 
                 const Divider(height: 40),
 
+                // submit audio section
+                const SectionHeader(
+                  icon: Icons.mic,
+                  title: "Submit Audio",
+                ),
+                DropZone(
+                  label: "audio",
+                  subLabel: "MP3, WAV, AAC",
+                  onTap: () => handleFileChange(pickImages: false),
+                ),
+
+                const Divider(height: 40),
+
                 /// TEXT SECTION
                 const SectionHeader(
                   icon: Icons.text_fields,
@@ -256,19 +280,6 @@ class _CourseCreationState extends State<CourseCreation> {
                 ),
 
                 const Divider(height: 40),
-
-                if (widget.classId != null) ...[
-                  const SectionHeader(
-                    icon: Icons.calendar_month,
-                    title: "Due Date",
-                  ),
-                  // const SizedBox(height: 24),
-                  DueDateDropZone(
-                    dueDate: _dueDate,
-                    onTap: _pickDueDate,
-                  ),
-                  const Divider(height: 40),
-                ],
 
                 /// SUMMARY OF SELECTED ITEMS
                 if (totalItems > 0)
@@ -294,7 +305,7 @@ class _CourseCreationState extends State<CourseCreation> {
                         courseController.addPlaceholderCourse({
                           "id": tempId,
                           "title": courseTitle,
-                          "description": courseDescription,
+                          "description": courseSubject,
                           "loading": true,
                         });
 
@@ -305,7 +316,7 @@ class _CourseCreationState extends State<CourseCreation> {
                         courseController
                             .createCourse(
                           title: courseTitle,
-                          description: courseDescription,
+                          description: courseSubject,
                           files: [...selectedFiles, ...selectedImages],
                           dueDate: _dueDate,
                           classId: widget.classId,

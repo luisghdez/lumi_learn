@@ -1,21 +1,124 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/section_header.dart';
 
+/// Card that captures basic metadata for a course — title, academic subject,
+/// language, and visibility.
 class CourseDetailsCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final ValueChanged<String> onTitleChanged;
-  final ValueChanged<String> onDescriptionChanged;
-
   const CourseDetailsCard({
     Key? key,
     required this.title,
-    required this.description,
+    required this.subject,
+    required this.language,
+    required this.visibility,
     required this.onTitleChanged,
-    required this.onDescriptionChanged,
+    required this.onSubjectChanged,
+    required this.onLanguageChanged,
+    required this.onVisibilityChanged,
   }) : super(key: key);
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // External state
+  // ──────────────────────────────────────────────────────────────────────────
+  final String title;
+  final String subject;
+  final String language;
+  final String visibility;
+
+  final ValueChanged<String> onTitleChanged;
+  final ValueChanged<String> onSubjectChanged;
+  final ValueChanged<String> onLanguageChanged;
+  final ValueChanged<String> onVisibilityChanged;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Data
+  // ──────────────────────────────────────────────────────────────────────────
+  static const List<String> _subjects = [
+    'Accounting',
+    'Art',
+    'Biology',
+    'Business',
+    'Chemistry',
+    'Computer Science',
+    'Economics',
+    'English',
+    'French',
+    'Geography',
+    'History',
+    'Mathematics',
+    'Music',
+    'Physics',
+    'Physical Education',
+    'Psychology',
+    'Spanish',
+  ];
+
+  static const List<String> _languages = ['English', 'Spanish'];
+  static const List<String> _visibilities = ['Public', 'Friends', 'Private'];
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ──────────────────────────────────────────────────────────────────────────
+  void _showPicker(BuildContext context,
+      {required List<String> items,
+      required String currentValue,
+      required ValueChanged<String> onSelected}) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => Container(
+        height: 280,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(children: [
+          Expanded(
+            child: CupertinoPicker(
+              itemExtent: 26,
+              squeeze: 1,
+              scrollController: FixedExtentScrollController(
+                initialItem: items.indexOf(
+                    currentValue.isNotEmpty ? currentValue : items.first),
+              ),
+              onSelectedItemChanged: (i) => onSelected(items[i]),
+              children: items.map(Text.new).toList(),
+            ),
+          ),
+          CupertinoButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Done'),
+          )
+        ]),
+      ),
+    );
+  }
+
+  Widget _dropdownField(BuildContext context,
+      {required String label,
+      required String value,
+      required List<String> items,
+      required ValueChanged<String> onChanged}) {
+    return GestureDetector(
+      onTap: () => _showPicker(context,
+          items: items, currentValue: value, onSelected: onChanged),
+      child: _BorderedContainer(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(value.isEmpty ? label : value,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: value.isEmpty ? Colors.grey : Colors.white)),
+            const Icon(CupertinoIcons.chevron_down,
+                size: 16, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Build
+  // ──────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -25,74 +128,102 @@ class CourseDetailsCard extends StatelessWidget {
         border: Border.all(color: greyBorder),
       ),
       padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionHeader(icon: Icons.menu_book, title: "Course Details"),
-          const SizedBox(height: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SectionHeader(icon: Icons.menu_book, title: 'Course Details'),
+        const SizedBox(height: 12),
 
-          // Title
-          const Text(
-            "Course Title (required)",
-            style: TextStyle(fontSize: 12, color: Colors.white),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: greyBorder),
-            ),
-            child: TextField(
-              maxLength: 30,
-              onChanged: onTitleChanged,
-              style: const TextStyle(fontSize: 12, color: Colors.white),
-              cursorColor: Colors.white,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.transparent,
-                hintText: "Enter course title",
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
-                border: InputBorder.none,
-                counterText: "",
-                suffix: Text(
-                  "${title.length}/30",
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
-                ),
-              ),
+        // Title
+        const _Label('Title'),
+        const SizedBox(height: 4),
+        _BorderedContainer(
+          child: TextField(
+            maxLength: 30,
+            onChanged: onTitleChanged,
+            style: const TextStyle(fontSize: 12, color: Colors.white),
+            cursorColor: Colors.white,
+            decoration: InputDecoration(
+              hintText: 'Enter course title',
+              hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+              counterText: '',
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              suffix: Text('${title.length}/30',
+                  style: const TextStyle(fontSize: 12)),
             ),
           ),
-          const SizedBox(height: 8),
+        ),
+        const SizedBox(height: 12),
 
-          // Description
-          const Text(
-            "Course Description",
-            style: TextStyle(fontSize: 12, color: Colors.white),
+        // Subject
+        const _Label('Subject'),
+        const SizedBox(height: 4),
+        _dropdownField(context,
+            label: 'Select subject',
+            value: subject,
+            items: _subjects,
+            onChanged: onSubjectChanged),
+        const SizedBox(height: 12),
+
+        // Language & Visibility (same row)
+        Row(children: [
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const _Label('Language'),
+              const SizedBox(height: 4),
+              _dropdownField(context,
+                  label: 'Select language',
+                  value: language,
+                  items: _languages,
+                  onChanged: onLanguageChanged),
+            ]),
           ),
-          const SizedBox(height: 4),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: greyBorder),
-            ),
-            child: TextField(
-              onChanged: onDescriptionChanged,
-              style: const TextStyle(fontSize: 12, color: Colors.white),
-              cursorColor: Colors.white,
-              minLines: 2,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                filled: true,
-                fillColor: Colors.transparent,
-                hintText: "Briefly describe what this course is about",
-                hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
-                border: InputBorder.none,
-              ),
-            ),
+          const SizedBox(width: 12),
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const _Label('Visibility'),
+              const SizedBox(height: 4),
+              _dropdownField(context,
+                  label: 'Select visibility',
+                  value: visibility.isEmpty ? 'Public' : visibility,
+                  items: _visibilities,
+                  onChanged: onVisibilityChanged),
+            ]),
           ),
-        ],
+        ]),
+      ]),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Reusable widgets
+// ──────────────────────────────────────────────────────────────────────────
+class _Label extends StatelessWidget {
+  const _Label(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) =>
+      Text(text, style: const TextStyle(fontSize: 12, color: Colors.white));
+}
+
+class _BorderedContainer extends StatelessWidget {
+  const _BorderedContainer({Key? key, this.child, this.padding})
+      : super(key: key);
+  final Widget? child;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: greyBorder),
       ),
+      child: child,
     );
   }
 }

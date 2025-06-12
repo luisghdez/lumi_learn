@@ -21,54 +21,7 @@ import 'package:lumi_learn_app/application/controllers/auth_controller.dart'; //
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
 
 const exampleMarkdown = """
-# 🌱 Cell Biology Summary
-
-Welcome to your quick crash course on cell biology. Let's break it down!
-
----
-
-## 🔬 Key Organelles and Their Functions
-
-| Organelle        | Function                                 |
-|------------------|-------------------------------------------|
-| Nucleus          | Contains DNA, the brain of the cell 🧠    |
-| Mitochondria     | Produces energy (ATP), the powerhouse ⚡   |
-| Ribosomes        | Synthesizes proteins 🧬                   |
-| Endoplasmic Ret. | Processes and transports proteins 📦     |
-| Golgi Apparatus  | Packages and ships molecules ✉️          |
-| Lysosomes        | Breaks down waste ♻️                     |
-
----
-
-## 📋 Study Checklist
-
-- [x] Know the parts of a eukaryotic cell
-- [x] Understand the function of mitochondria
-- [ ] Memorize the steps of protein synthesis
-- [ ] Review differences between plant and animal cells
-
----
-
-## 🧠 Quick Facts
-
-- All living things are made of **cells**
-- Cells come from **pre-existing cells**
-- The cell is the **basic unit of life**
-
----
-
-> “The cell is the basic unit of structure in every living thing.”  
-> — The Cell Theory
-
----
-
-## ✅ Before the Quiz
-
-1. Review the flashcards 🔁
-2. Try the mini quiz ❓
-3. Ask LumiTutor if you’re confused 💬
-
-Stay curious & keep learning! ✨
+# Unlocking International Business: A Student’s Guide to Key Terms 🌎\n\nReady to understand the risks, strategies, and incentives involved with investing abroad? Let’s break down these essential concepts—no confusing jargon, just clear explanations.\n\n---\n\n## 1. Understanding the Risks\n\n### **Country Risk**\n*The big-picture risk that comes with investing in or lending to a foreign country.*  \n- Can include political, economic, or social problems\n- Example: Sudden economic collapse or government changes\n\n### **Political Risk**\n*Risks specifically caused by government actions or instability.*  \n- Can lead to laws that hurt foreign businesses\n\n**Relationship:**  \n*Political risk is a form of country risk.*\n\n---\n\n## 2. How Host Governments Affect Investment\n\n### **Attitude of Host Government**\n*How welcoming or hostile a country is to foreign investors.*\n- Supportive governments help businesses thrive; hostile ones create obstacles\n\n### **Host Government Incentives for DFI**\n*Perks a country offers to attract foreign investors.*\n- Can include tax breaks, land, subsidies\n\n### **Host Government Barriers to DFI**\n*Rules or actions that make investing harder.*\n- High taxes, quotas, licensing, or outright bans\n\n---\n\n## 3. Common Political/Economic Challenges\n\n| Term                       | Meaning                                                                           |\n|----------------------------|-----------------------------------------------------------------------------------|\n| Blockage of fund transfers | Not being able to send profits/money out of the host country                      |\n| Currency inconvertibility  | Unable to exchange local currency for another; hard to repatriate funds           |\n| War and internal conflict  | Armed conflict or unrest disrupts business                                        |\n| Corruption                 | Bribery or dishonest practices; can raise costs or cause unfair treatment         |\n| Bureaucracy                | Slow and complicated government procedures; delaying business decisions           |\n| Political Instability Risk | The chance that sudden political changes will hurt business interests             |\n\n**Connections:**  \n- War, corruption, and bureaucracy are major factors in country and political risk.\n\n---\n\n## 4. Direct Foreign Investment (DFI) & Motivations\n\n### **Direct Foreign Investment (DFI)**\n*When a business from one country builds or buys operations in another country (like a factory, office, or company).*\n\n### **Forms of DFI**\n- **Joint Venture:** Partnering with a local firm\n- **Acquisition:** Buying a local company\n- **New Facilities:** Building from scratch (\"greenfield investment\")\n\n### **Why Do Companies Invest Abroad?**\n#### **Revenue-related Motives for DFI**\n- Enter new markets to sell more products\n- Get closer to customers\n- Bypass trade barriers\n\n#### **Cost-related Motives for DFI**\n- Find cheaper labor/materials\n- Benefit from economies of scale\n- Lower taxes\n\n#### **Exchange Rate Motives for DFI**\n- Invest where currency value may increase, boosting profits when converted back home\n\n#### **International Diversification**\n- Spreading investments across countries to reduce overall risk\n\n#### **Portfolio Variance**\n- A measure of how much the return on an investment might change; diversification lowers variance and risk\n\n---\n\n## 5. Making & Measuring Investment Decisions\n\n### **FDI Confidence Index**\n*A global survey ranking countries by how attractive they are to foreign investors.*\n- Considers economic outlook, stability, policies\n\n---\n\n## 6. See How It All Connects\n\n```mermaid\ngraph TD\n    DFI -- can be blocked by --> CountryRisk\n    CountryRisk -- includes --> PoliticalRisk\n    PoliticalRisk -- is raised by --> PoliticalInstabilityRisk\n    PoliticalRisk -- increases --> BlockageOfFundTransfers\n    PoliticalRisk -- increases --> CurrencyInconvertibility\n    DFI -- motivated by --> RevenueMotives\n    DFI -- motivated by --> CostMotives\n    DFI -- motivated by --> ExchangeRateMotives\n    DFI -- improves --> InternationalDiversification\n    InternationalDiversification -- reduces --> PortfolioVariance\n    HostGovAttitude -- can give --> Incentives\n    HostGovAttitude -- can create --> Barriers\n    Corruption -- increases --> PoliticalRisk\n    Bureaucracy -- increases --> CountryRisk\n```\n\n---\n\n## 7. Key Takeaways\n\n- **Country & political risks** can spoil foreign investment plans.\n- **Host governments** can attract or discourage investors through incentives or barriers.\n- **DFI** helps companies grow, lower costs, and spread risk, but brings challenges like currency issues and instability.\n- **Diversification** is important: it lowers risk in the investment portfolio.\n- The **FDI Confidence Index** helps investors spot safer, more promising locations.\n\n**Keep thinking:**  \nHow would a company decide where to invest next? What’s riskier—expanding into a new country, or missing out on its market?\n\n---
 """;
 
 class CourseOverviewScreen extends StatefulWidget {
