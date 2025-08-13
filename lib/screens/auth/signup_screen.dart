@@ -97,25 +97,25 @@ class SignupScreen extends StatelessWidget {
 
                   SizedBox(height: betweenTitleAndFields),
 
-                  _buildInputField("Your Name", Icons.person,
-                      controller: nameController),
-                  SizedBox(height: spacingMedium),
+                  // _buildInputField("Your Name", Icons.person,
+                  //     controller: nameController),
+                  // SizedBox(height: spacingMedium),
 
-                  _buildInputField("Email", Icons.email,
-                      controller: emailController),
-                  SizedBox(height: spacingMedium),
+                  // _buildInputField("Email", Icons.email,
+                  //     controller: emailController),
+                  // SizedBox(height: spacingMedium),
 
-                  _buildInputField("Password", Icons.lock,
-                      controller: passwordController, isPassword: true),
-                  SizedBox(height: spacingMedium),
+                  // _buildInputField("Password", Icons.lock,
+                  //     controller: passwordController, isPassword: true),
+                  // SizedBox(height: spacingMedium),
 
-                  _buildPrimaryButton("Sign Up", () {
-                    authController.signUp(
-                      emailController.text.trim(),
-                      passwordController.text.trim(),
-                      nameController.text.trim(),
-                    );
-                  }),
+                  // _buildPrimaryButton("Sign Up", () {
+                  //   authController.signUp(
+                  //     emailController.text.trim(),
+                  //     passwordController.text.trim(),
+                  //     nameController.text.trim(),
+                  //   );
+                  // }),
 
                   SizedBox(height: spacingLarge),
 
@@ -131,7 +131,7 @@ class SignupScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          "Or sign up with",
+                          "Sign up with",
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
