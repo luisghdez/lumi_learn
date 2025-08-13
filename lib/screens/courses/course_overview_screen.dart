@@ -394,7 +394,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   onViewFlashcards: () {
                     Get.to(
                       () => FlashcardScreen(flashcards: flashcards),
-                      transition: Transition.fadeIn,
                       duration: const Duration(milliseconds: 300),
                     );
                   },
@@ -403,7 +402,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       () => const NoteScreen(
                         markdownText: exampleMarkdown,
                       ),
-                      transition: Transition.fadeIn,
                       duration: const Duration(milliseconds: 300),
                     );
                   },
@@ -411,7 +409,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                     Get.to(
                       // send with chat id
                       () => const LumiTutorMain(),
-                      transition: Transition.fadeIn,
                       duration: const Duration(milliseconds: 300),
                     );
                   },

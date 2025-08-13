@@ -59,13 +59,7 @@ class TutorHeader extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
               onPressed: () {
-                final NavigationController navController = Get.find();
-                navController.updateIndex(0);
-                navController.showNavBar();
-                Navigator.of(context).pushAndRemoveUntil(
-                  _fadeRouteToMainScreen(),
-                  (route) => false,
-                );
+                Get.back();
               },
             ),
           ],
