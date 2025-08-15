@@ -11,8 +11,10 @@ import 'package:lumi_learn_app/application/controllers/navigation_controller.dar
 
 class LumiTutorMain extends StatefulWidget {
   final Map<String, dynamic>? initialArgs;
+  final String? courseId; // Add optional courseId parameter
 
-  const LumiTutorMain({Key? key, this.initialArgs}) : super(key: key);
+  const LumiTutorMain({Key? key, this.initialArgs, this.courseId})
+      : super(key: key);
 
   @override
   State<LumiTutorMain> createState() => _LumiTutorMainState();

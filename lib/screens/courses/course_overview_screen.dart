@@ -408,7 +408,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   onViewLumiTutor: () {
                     Get.to(
                       // send with chat id
-                      () => const LumiTutorMain(),
+                      () => LumiTutorMain(courseId: courseId.value),
                       duration: const Duration(milliseconds: 300),
                     );
                   },
