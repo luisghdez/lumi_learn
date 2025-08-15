@@ -67,60 +67,60 @@ class TutorHeader extends StatelessWidget {
         const SizedBox(height: 12),
 
         // ───── Glassy Gradient Button ─────
-        GestureDetector(
-          onTap: onCreateCourse,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(14),
-              bottomRight: Radius.circular(14),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0x55B388FF),
-                      Color(0x44D3B4FF),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border(
-                    bottom: BorderSide(color: Colors.white30),
-                    left: BorderSide(color: Colors.white30),
-                    right: BorderSide(color: Colors.white30),
-                    top: BorderSide.none,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(14),
-                    bottomRight: Radius.circular(14),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.menu_book_rounded,
-                        color: Colors.white, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'Create a course from this chat',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
+        // GestureDetector(
+        //   onTap: onCreateCourse,
+        //   child: ClipRRect(
+        //     borderRadius: const BorderRadius.only(
+        //       bottomLeft: Radius.circular(14),
+        //       bottomRight: Radius.circular(14),
+        //     ),
+        //     child: BackdropFilter(
+        //       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        //       child: Container(
+        //         width: double.infinity,
+        //         padding:
+        //             const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        //         decoration: const BoxDecoration(
+        //           gradient: LinearGradient(
+        //             colors: [
+        //               Color(0x55B388FF),
+        //               Color(0x44D3B4FF),
+        //             ],
+        //             begin: Alignment.topLeft,
+        //             end: Alignment.bottomRight,
+        //           ),
+        //           border: Border(
+        //             bottom: BorderSide(color: Colors.white30),
+        //             left: BorderSide(color: Colors.white30),
+        //             right: BorderSide(color: Colors.white30),
+        //             top: BorderSide.none,
+        //           ),
+        //           borderRadius: BorderRadius.only(
+        //             bottomLeft: Radius.circular(14),
+        //             bottomRight: Radius.circular(14),
+        //           ),
+        //         ),
+        //         child: const Row(
+        //           mainAxisAlignment: MainAxisAlignment.center,
+        //           children: [
+        //             Icon(Icons.menu_book_rounded,
+        //                 color: Colors.white, size: 18),
+        //             SizedBox(width: 8),
+        //             Text(
+        //               'Create a course from this chat',
+        //               style: TextStyle(
+        //                 color: Colors.white,
+        //                 fontWeight: FontWeight.w500,
+        //                 fontSize: 14,
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
+        // const SizedBox(height: 4),
       ],
     );
   }
