@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class TutorHeader extends StatelessWidget {
@@ -17,6 +18,7 @@ class TutorHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isTablet = MediaQuery.of(context).size.width > 600;
+    final TutorController tutorController = Get.find<TutorController>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,26 +37,28 @@ class TutorHeader extends StatelessWidget {
               backgroundColor: Colors.transparent,
             ),
             const SizedBox(width: 12),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'LumiTutor',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  'Helping 20,000 students now',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+            Obx(() => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'LumiTutor',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      tutorController.hasActiveThread
+                          ? 'Active chat'
+                          : 'Helping 20,000 students now',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                )),
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white),

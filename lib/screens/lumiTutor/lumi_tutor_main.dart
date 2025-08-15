@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/models/chat_sender.dart';
+import 'package:lumi_learn_app/application/models/message_model.dart';
+import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 import 'package:lumi_learn_app/widgets/base_screen_container.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_header.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_bubble.dart';
@@ -22,13 +24,7 @@ class LumiTutorMain extends StatefulWidget {
 
 class _LumiTutorMainState extends State<LumiTutorMain> {
   final ScrollController _scrollController = ScrollController();
-
-  final List<Map<String, dynamic>> _messages = [
-    {
-      "text": "Hi! I'm LumiTutor. How can I help you today?",
-      "sender": ChatSender.tutor,
-    }
-  ];
+  final TutorController _tutorController = Get.find<TutorController>();
 
   final List<String> _suggestions = [
     "What is Newton’s First Law?",
@@ -44,6 +40,13 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       if (!mounted) return;
       Get.find<NavigationController>().hideNavBar();
       _handleScannedInput(widget.initialArgs);
+
+      // Listen to messages changes to scroll to bottom
+      ever(_tutorController.messages, (_) {
+        if (mounted) {
+          _scrollToBottom();
+        }
+      });
     });
   }
 
@@ -62,29 +65,17 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       if (args['type'] == 'image') {
         final List<String> paths = List<String>.from(args['paths']);
         for (var path in paths) {
-          _messages.add({
-            "image": path,
-            "sender": ChatSender.user,
-          });
+          // TODO: Handle image upload to active thread
+          print('Image uploaded: $path');
         }
       } else if (args['type'] == 'pdf') {
-        _messages.add({
-          "text": "📎 Sent a scanned PDF:\n${args['path']}",
-          "sender": ChatSender.user,
-        });
+        // TODO: Handle PDF upload to active thread
+        print('PDF uploaded: ${args['path']}');
       } else if (args['type'] == 'text' && args.containsKey('initialMessage')) {
-        _messages.add({
-          "text": args['initialMessage'],
-          "sender": ChatSender.user,
-        });
-        _messages.add({
-          "text":
-              "🧠 (Pretend GPT is responding to '${args['initialMessage']}'...)",
-          "sender": ChatSender.tutor,
-        });
+        // Create a new thread with the initial message
+        _tutorController.createThread(args['initialMessage']);
       }
 
-      setState(() {});
       _scrollToBottom();
     }
   }
@@ -104,13 +95,13 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
   void _handleSend(String message) {
     if (message.trim().isEmpty) return;
 
-    setState(() {
-      _messages.add({"text": message, "sender": ChatSender.user});
-      _messages.add({
-        "text": "🧠 (Pretend GPT is responding here...)",
-        "sender": ChatSender.tutor,
-      });
-    });
+    if (_tutorController.hasActiveThread) {
+      // Send message to active thread
+      _tutorController.sendMessage(message);
+    } else {
+      // Create new thread with this message
+      _tutorController.createThread(message);
+    }
 
     _scrollToBottom();
   }
@@ -141,61 +132,66 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                     onCreateCourse: () => print("Create course from chat"),
                   ),
                   Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      itemCount: _messages.length,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 16),
-                      itemBuilder: (context, index) {
-                        final msg = _messages[index];
+                    child: Obx(() {
+                      if (_tutorController.isLoadingMessages.value) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        );
+                      }
 
-                        if (msg.containsKey("image")) {
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white12),
+                      if (!_tutorController.hasActiveThread) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                color: Colors.white54,
+                                size: 64,
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.file(
-                                  File(msg["image"]),
-                                  fit: BoxFit.cover,
+                              SizedBox(height: 16),
+                              Text(
+                                'Select a chat from the menu\nor start a new conversation',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 16,
                                 ),
                               ),
-                            ),
-                          );
-                        }
-
-                        return ChatBubble(
-                          message: msg["text"],
-                          sender: msg["sender"] ?? ChatSender.tutor,
+                            ],
+                          ),
                         );
-                      },
-                    ),
+                      }
+
+                      return ListView.builder(
+                        controller: _scrollController,
+                        itemCount: _tutorController.messages.length,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        itemBuilder: (context, index) {
+                          final message = _tutorController.messages[index];
+
+                          return ChatBubble(
+                            message: message.content,
+                            sender: message.role == MessageRole.user
+                                ? ChatSender.user
+                                : ChatSender.tutor,
+                          );
+                        },
+                      );
+                    }),
                   ),
                   ChatInputArea(
                     suggestions: _suggestions,
                     onSend: _handleSend,
                     onImagePicked: (imageFile) {
-                      setState(() {
-                        _messages.add({
-                          "image": imageFile.path,
-                          "sender": ChatSender.user
-                        });
-                      });
+                      // TODO: Handle image upload to active thread
+                      print('Image picked: ${imageFile.path}');
                       _scrollToBottom();
                     },
                     onFilePicked: (file) {
-                      setState(() {
-                        _messages.add({
-                          "text": "📎 Sent a file:\n${file.path}",
-                          "sender": ChatSender.user
-                        });
-                      });
+                      // TODO: Handle file upload to active thread
+                      print('File picked: ${file.path}');
                       _scrollToBottom();
                     },
                   ),

@@ -156,13 +156,9 @@ class LumiDrawer extends StatelessWidget {
           );
         },
       ),
-      onTap: () {
-        // TODO: Navigate to thread chat
-        Get.snackbar(
-          'Open Thread',
-          'Opening thread: ${thread.threadId}',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+      onTap: () async {
+        await controller.setActiveThread(thread);
+        Navigator.of(context).pop(); // Close the drawer
       },
     );
   }

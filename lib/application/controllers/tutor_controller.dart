@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/models/thread_model.dart';
+import 'package:lumi_learn_app/application/models/message_model.dart';
 import 'package:lumi_learn_app/application/services/tutor_service.dart';
 
 class TutorController extends GetxController {
@@ -15,6 +16,11 @@ class TutorController extends GetxController {
   RxBool isLoading = false.obs;
   RxBool hasMore = false.obs;
   RxString errorMessage = ''.obs;
+
+  // Active thread and messages
+  Rxn<Thread> activeThread = Rxn<Thread>();
+  RxList<Message> messages = <Message>[].obs;
+  RxBool isLoadingMessages = false.obs;
 
   @override
   void onInit() {
@@ -80,6 +86,37 @@ class TutorController extends GetxController {
     }
   }
 
+  Future<void> sendMessage(String message) async {
+    if (activeThread.value == null) {
+      errorMessage.value = 'No active thread';
+      return;
+    }
+
+    try {
+      final token = await _authController.getIdToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required';
+        return;
+      }
+
+      final response = await _tutorService.sendMessage(
+        token: token,
+        threadId: activeThread.value!.threadId,
+        message: message,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Refresh messages after sending
+        await fetchThreadMessages(activeThread.value!.threadId);
+      } else {
+        errorMessage.value = 'Failed to send message: ${response.statusCode}';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error sending message: $e';
+      print('Error sending message: $e');
+    }
+  }
+
   Future<void> refreshThreads() async {
     await fetchThreads();
   }
@@ -101,4 +138,51 @@ class TutorController extends GetxController {
     sortedThreads.sort((a, b) => b.lastMessageAt.compareTo(a.lastMessageAt));
     return sortedThreads;
   }
+
+  Future<void> setActiveThread(Thread thread) async {
+    activeThread.value = thread;
+    await fetchThreadMessages(thread.threadId);
+  }
+
+  Future<void> fetchThreadMessages(String threadId) async {
+    if (isLoadingMessages.value) return;
+
+    isLoadingMessages.value = true;
+    errorMessage.value = '';
+
+    try {
+      final token = await _authController.getIdToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required';
+        isLoadingMessages.value = false;
+        return;
+      }
+
+      final response = await _tutorService.getThreadMessages(
+        token: token,
+        threadId: threadId,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final messagesResponse = ThreadMessagesResponse.fromJson(data);
+
+        messages.value = messagesResponse.messages;
+      } else {
+        errorMessage.value = 'Failed to fetch messages: ${response.statusCode}';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error fetching messages: $e';
+      print('Error fetching messages: $e');
+    } finally {
+      isLoadingMessages.value = false;
+    }
+  }
+
+  void clearActiveThread() {
+    activeThread.value = null;
+    messages.clear();
+  }
+
+  bool get hasActiveThread => activeThread.value != null;
 }
