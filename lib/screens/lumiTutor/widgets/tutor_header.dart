@@ -8,12 +8,14 @@ import 'package:lumi_learn_app/screens/main/main_screen.dart';
 class TutorHeader extends StatelessWidget {
   final VoidCallback onMenuPressed;
   final VoidCallback onCreateCourse;
+  final VoidCallback onClearThread;
   final String? courseTitle;
 
   const TutorHeader({
     Key? key,
     required this.onMenuPressed,
     required this.onCreateCourse,
+    required this.onClearThread,
     required this.courseTitle,
   }) : super(key: key);
 
@@ -29,8 +31,10 @@ class TutorHeader extends StatelessWidget {
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: onMenuPressed,
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Get.back();
+              },
             ),
             const SizedBox(width: 8),
             Column(
@@ -80,10 +84,12 @@ class TutorHeader extends StatelessWidget {
             ),
             const Spacer(),
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () {
-                Get.back();
-              },
+              icon: const Icon(Icons.add, color: Colors.white),
+              onPressed: onClearThread,
+            ),
+            IconButton(
+              icon: const Icon(Icons.history, color: Colors.white),
+              onPressed: onMenuPressed,
             ),
           ],
         ),

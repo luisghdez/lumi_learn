@@ -116,7 +116,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         onTap: () => FocusScope.of(context)
             .unfocus(), // ✅ dismiss keyboard on outside tap
         child: Scaffold(
-          drawer: const LumiDrawer(),
+          endDrawer: const LumiDrawer(),
           backgroundColor: Colors.black,
           resizeToAvoidBottomInset: true,
           body: BaseScreenContainer(
@@ -128,8 +128,9 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
               child: Column(
                 children: [
                   TutorHeader(
-                    onMenuPressed: () => Scaffold.of(context).openDrawer(),
+                    onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
                     onCreateCourse: () => print("Create course from chat"),
+                    onClearThread: () => _tutorController.clearActiveThread(),
                     courseTitle:
                         _tutorController.activeThread.value?.courseTitle,
                   ),
