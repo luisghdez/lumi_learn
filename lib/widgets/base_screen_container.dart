@@ -29,8 +29,7 @@ class BaseScreenContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double horizontalPadding = _getHorizontalPadding(context);
-    final double topPadding =
-        MediaQuery.of(context).padding.top + horizontalPadding;
+    final double topPadding = MediaQuery.of(context).padding.top;
 
     return Stack(
       children: [
