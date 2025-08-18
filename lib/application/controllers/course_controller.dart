@@ -26,6 +26,7 @@ class CourseController extends GetxController {
   var featuredCourses = [].obs;
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
+  var selectedCourseHasEmbeddings = false.obs;
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
   var flashcards = <Map<String, dynamic>>[].obs;
@@ -575,10 +576,15 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<void> setSelectedCourseId(String courseId, String courseTitle) async {
+  Future<void> setSelectedCourseId(
+    String courseId,
+    String courseTitle, [
+    bool hasEmbeddings = false,
+  ]) async {
     lessons.value = []; // Clear the lessons list
     selectedCourseId.value = courseId;
     selectedCourseTitle.value = courseTitle;
+    selectedCourseHasEmbeddings.value = hasEmbeddings;
     isLoading.value = true; // Start loading
 
     try {

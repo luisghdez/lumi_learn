@@ -136,9 +136,7 @@ class CategoryList extends StatelessWidget {
                     if (course['loading'] == true) return;
 
                     courseController.setSelectedCourseId(
-                      course['id'],
-                      course['title'],
-                    );
+                        course['id'], course['title'], course['hasEmbeddings']);
 
                     Get.to(
                       () => LoadingScreen(),
