@@ -49,12 +49,16 @@ class ChatBubble extends StatelessWidget {
         ),
       );
     } else {
-      // Tutor message - ChatGPT-like design with markdown and math
+      // Tutor message - Markdown with LaTeX support
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
         child: MarkdownBody(
           data: message,
+          // ✅ Teach the parser LaTeX delimiters so it emits <math> nodes
+          inlineSyntaxes: [MathSyntax()],
+          // Keep GitHub extensions (tables, strikethrough, etc.)
+          extensionSet: md.ExtensionSet.gitHubFlavored,
           builders: {
             'math': MathBuilder(),
           },
@@ -122,7 +126,7 @@ class ChatBubble extends StatelessWidget {
               color: Colors.white70,
               fontStyle: FontStyle.italic,
             ),
-            blockquoteDecoration: BoxDecoration(
+            blockquoteDecoration: const BoxDecoration(
               border: Border(
                 left: BorderSide(color: Colors.cyanAccent, width: 4),
               ),
@@ -133,7 +137,7 @@ class ChatBubble extends StatelessWidget {
             tableCellsDecoration: BoxDecoration(
               color: Colors.white.withOpacity(0.02),
             ),
-            horizontalRuleDecoration: BoxDecoration(
+            horizontalRuleDecoration: const BoxDecoration(
               border: Border(
                 top: BorderSide(color: Colors.white24, width: 1),
               ),
@@ -146,60 +150,91 @@ class ChatBubble extends StatelessWidget {
   }
 }
 
+///
+/// Custom inline syntax to turn LaTeX spans into <math> nodes.
+/// Supported:
+///   \( ... \)   → inline
+///   \[ ... \]   → block
+///   $ ... $     → inline
+///   $$ ... $$   → block
+///
+/// Notes:
+/// - We avoid matching "$" inside "$$ ... $$".
+/// - We keep patterns conservative (no newlines) which works for typical API output.
+///
+class MathSyntax extends md.InlineSyntax {
+  MathSyntax()
+      : super(
+          r'(\\\([^\)]+\)│\\\[[^\]]+\\\]|(?<!\$)\$\$[^$\n]+\$\$(?!\$)|(?<!\$)\$[^$\n]+\$(?!\$))'
+              .replaceAll('│', '|'),
+        );
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final raw = match.group(0)!;
+
+    late String content;
+    late bool isBlock;
+
+    if (raw.startsWith(r'\(') && raw.endsWith(r'\)')) {
+      content = raw.substring(2, raw.length - 2); // remove \( \)
+      isBlock = false;
+    } else if (raw.startsWith(r'\[') && raw.endsWith(r'\]')) {
+      content = raw.substring(2, raw.length - 2); // remove \[ \]
+      isBlock = true;
+      // } else if (raw.startsWith('$$') && raw.endsWith('$$')) {
+      //   content = raw.substring(2, raw.length - 2); // remove $$
+      //   isBlock = true;
+    } else {
+      // single-dollar inline math
+      content = raw.substring(1, raw.length - 1); // remove $
+      isBlock = false;
+    }
+
+    final el = md.Element.text('math', content);
+    el.attributes['display'] = isBlock ? 'block' : 'inline';
+    parser.addNode(el);
+    return true;
+  }
+}
+
 class MathBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-    final String tex = element.textContent;
+    final tex = element.textContent; // pure LaTeX (delimiters already stripped)
+    final isBlock = element.attributes['display'] == 'block';
 
-    // Handle both inline and block math
-    final bool isBlock =
-        element.tag == 'math' && tex.startsWith('\\[') && tex.endsWith('\\]');
-    final bool isInline =
-        element.tag == 'math' && tex.startsWith('\\(') && tex.endsWith('\\)');
-
-    if (isBlock || isInline) {
-      // Extract the math content
-      String mathContent = tex;
-      if (isBlock) {
-        mathContent = tex.substring(2, tex.length - 2); // Remove \[ and \]
-      } else if (isInline) {
-        mathContent = tex.substring(2, tex.length - 2); // Remove \( and \)
-      }
-
-      return Padding(
-        padding: EdgeInsets.symmetric(
-          vertical: isBlock ? 12.0 : 4.0,
-          horizontal: isBlock ? 8.0 : 0.0,
-        ),
-        child: isBlock
-            ? Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Math.tex(
-                  mathContent,
-                  textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  mathStyle: MathStyle.display,
-                ),
-              )
-            : Math.tex(
-                mathContent,
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: isBlock ? 12.0 : 4.0,
+        horizontal: isBlock ? 8.0 : 0.0,
+      ),
+      child: isBlock
+          ? Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Math.tex(
+                tex,
                 textStyle: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                 ),
-                mathStyle: MathStyle.text,
+                mathStyle: MathStyle.display,
               ),
-      );
-    }
-
-    return null;
+            )
+          : Math.tex(
+              tex,
+              textStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+              mathStyle: MathStyle.text,
+            ),
+    );
   }
 }
