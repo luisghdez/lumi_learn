@@ -52,15 +52,7 @@ class ChatBubble extends StatelessWidget {
       // Tutor message - ChatGPT-like design with markdown and math
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
-          border: Border(
-            top: BorderSide(color: Colors.white12, width: 0.5),
-            bottom: BorderSide(color: Colors.white12, width: 0.5),
-          ),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
         child: MarkdownBody(
           data: message,
           builders: {
