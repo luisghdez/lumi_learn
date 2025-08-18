@@ -3,12 +3,16 @@ class Thread {
   final String initialMessage;
   final DateTime lastMessageAt;
   final int messageCount;
+  final String? courseId;
+  final String? courseTitle;
 
   Thread({
     required this.threadId,
     required this.initialMessage,
     required this.lastMessageAt,
     required this.messageCount,
+    this.courseId,
+    this.courseTitle,
   });
 
   factory Thread.fromJson(Map<String, dynamic> json) {
@@ -17,6 +21,8 @@ class Thread {
       initialMessage: json['initialMessage'],
       lastMessageAt: DateTime.parse(json['lastMessageAt']),
       messageCount: json['messageCount'],
+      courseId: json['courseId'],
+      courseTitle: json['courseTitle'],
     );
   }
 
@@ -26,6 +32,8 @@ class Thread {
       'initialMessage': initialMessage,
       'lastMessageAt': lastMessageAt.toIso8601String(),
       'messageCount': messageCount,
+      'courseId': courseId,
+      'courseTitle': courseTitle,
     };
   }
 }

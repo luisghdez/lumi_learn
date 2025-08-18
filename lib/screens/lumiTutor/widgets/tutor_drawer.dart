@@ -39,46 +39,18 @@ class LumiDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Chats with Lumi',
+                      Text(
+                        'Chat History',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 16,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: () => tutorController.refreshThreads(),
-                      ),
                     ],
                   ),
-                  // const SizedBox(height: 30),
-                  // const Text(
-                  //   'Saved Courses',
-                  //   style: TextStyle(color: Colors.white70, fontSize: 16),
-                  // ),
-                  // const SizedBox(height: 10),
-                  // ...List.generate(3, (i) {
-                  //   return ListTile(
-                  //     contentPadding: EdgeInsets.zero,
-                  //     title: const Text(
-                  //       'Course Title Placeholder',
-                  //       style: TextStyle(color: Colors.white),
-                  //     ),
-                  //     onTap: () {
-                  //       // Navigate to course detail or show modal
-                  //     },
-                  //   );
-                  // }),
-                  // const Divider(color: Colors.white30),
-                  // const SizedBox(height: 10),
-                  // const Text(
-                  //   'Chat History',
-                  //   style: TextStyle(color: Colors.white70, fontSize: 16),
-                  // ),
                   const SizedBox(height: 10),
                   Obx(() {
                     if (tutorController.isLoading.value) {
@@ -109,8 +81,13 @@ class LumiDrawer extends StatelessWidget {
                     }
 
                     return Expanded(
-                      child: ListView.builder(
+                      child: ListView.separated(
                         itemCount: tutorController.getSortedThreads().length,
+                        separatorBuilder: (context, index) => const Divider(
+                          color: Colors.white12,
+                          height: 1,
+                          thickness: 0.5,
+                        ),
                         itemBuilder: (context, index) {
                           final thread =
                               tutorController.getSortedThreads()[index];
@@ -133,29 +110,55 @@ class LumiDrawer extends StatelessWidget {
       BuildContext context, Thread thread, TutorController controller) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(
-        thread.initialMessage.length > 50
-            ? '${thread.initialMessage.substring(0, 50)}...'
-            : thread.initialMessage,
-        style: const TextStyle(color: Colors.white),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              thread.initialMessage.length > 50
+                  ? '${thread.initialMessage.substring(0, 50)}...'
+                  : thread.initialMessage,
+              style: const TextStyle(color: Colors.white),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _formatDate(thread.lastMessageAt),
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ],
       ),
-      subtitle: Text(
-        '${thread.messageCount} messages • ${_formatDate(thread.lastMessageAt)}',
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.white54, size: 20),
-        onPressed: () {
-          // TODO: Implement delete thread functionality
-          Get.snackbar(
-            'Delete Thread',
-            'Delete functionality coming soon',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        },
-      ),
+      subtitle: (thread.courseTitle ?? '').trim().isNotEmpty
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Colors.cyanAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        thread.courseTitle!.trim(),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : null,
       onTap: () async {
         await controller.setActiveThread(thread);
         Navigator.of(context).pop(); // Close the drawer

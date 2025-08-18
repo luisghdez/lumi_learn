@@ -31,34 +31,18 @@ class TutorHeader extends StatelessWidget {
               onPressed: onMenuPressed,
             ),
             const SizedBox(width: 8),
-            const CircleAvatar(
-              backgroundImage: AssetImage('assets/astronaut/teacher2.png'),
-              radius: 24,
-              backgroundColor: Colors.transparent,
+            const Column(
+              children: [
+                Text(
+                  'LumiTutor',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Obx(() => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'LumiTutor',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      tutorController.hasActiveThread
-                          ? 'Active chat'
-                          : 'Helping 20,000 students now',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                )),
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
