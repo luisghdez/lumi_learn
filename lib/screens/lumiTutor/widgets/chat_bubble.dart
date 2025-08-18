@@ -218,13 +218,16 @@ class MathBuilder extends MarkdownElementBuilder {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.white12),
               ),
-              child: Math.tex(
-                tex,
-                textStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Math.tex(
+                  tex,
+                  textStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                  mathStyle: MathStyle.display,
                 ),
-                mathStyle: MathStyle.display,
               ),
             )
           : Math.tex(
