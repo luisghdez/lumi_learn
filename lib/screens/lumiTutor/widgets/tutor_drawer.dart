@@ -150,7 +150,7 @@ class LumiDrawer extends StatelessWidget {
                       child: Text(
                         thread.courseTitle!.trim(),
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                            color: Colors.white70, fontSize: 12, height: 0.8),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

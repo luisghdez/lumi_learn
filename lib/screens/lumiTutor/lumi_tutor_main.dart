@@ -130,6 +130,8 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                   TutorHeader(
                     onMenuPressed: () => Scaffold.of(context).openDrawer(),
                     onCreateCourse: () => print("Create course from chat"),
+                    courseTitle:
+                        _tutorController.activeThread.value?.courseTitle,
                   ),
                   Expanded(
                     child: Obx(() {

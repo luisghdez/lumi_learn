@@ -8,11 +8,13 @@ import 'package:lumi_learn_app/screens/main/main_screen.dart';
 class TutorHeader extends StatelessWidget {
   final VoidCallback onMenuPressed;
   final VoidCallback onCreateCourse;
+  final String? courseTitle;
 
   const TutorHeader({
     Key? key,
     required this.onMenuPressed,
     required this.onCreateCourse,
+    required this.courseTitle,
   }) : super(key: key);
 
   @override
@@ -31,15 +33,48 @@ class TutorHeader extends StatelessWidget {
               onPressed: onMenuPressed,
             ),
             const SizedBox(width: 8),
-            const Column(
+            Column(
               children: [
-                Text(
-                  'LumiTutor',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'LumiTutor',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (courseTitle != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.cyanAccent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              courseTitle!,
+                              style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w400),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -52,6 +87,7 @@ class TutorHeader extends StatelessWidget {
             ),
           ],
         ),
+
         const SizedBox(height: 12),
 
         // ───── Glassy Gradient Button ─────
