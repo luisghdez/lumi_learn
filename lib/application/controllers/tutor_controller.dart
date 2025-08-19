@@ -101,18 +101,76 @@ class TutorController extends GetxController {
         return;
       }
 
-      final response = await _tutorService.sendMessage(
+      // Optimistically append the user message
+      final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+      messages.add(
+        Message(
+          messageId: tempId,
+          role: MessageRole.user,
+          content: message,
+          timestamp: DateTime.now(),
+        ),
+      );
+
+      // Placeholder assistant message that we will stream-update
+      final String assistantTempId = '${tempId}_assistant';
+      messages.add(
+        Message(
+          messageId: assistantTempId,
+          role: MessageRole.assistant,
+          content: '',
+          timestamp: DateTime.now(),
+        ),
+      );
+
+      final stream = _tutorService.sendMessageStream(
         token: token,
         threadId: activeThread.value!.threadId,
         message: message,
         courseId: activeThread.value!.courseId,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Refresh messages after sending
-        await fetchThreadMessages(activeThread.value!.threadId);
-      } else {
-        errorMessage.value = 'Failed to send message: ${response.statusCode}';
+      String accumulated = '';
+      await for (final event in stream) {
+        final type = event['type'] as String?;
+        if (type == 'delta') {
+          final delta = (event['delta'] as String?) ?? '';
+          if (delta.isEmpty) continue;
+          accumulated += delta;
+          // Update the last assistant message content progressively
+          final int index = messages.lastIndexWhere((m) =>
+              m.messageId == assistantTempId &&
+              m.role == MessageRole.assistant);
+          if (index != -1) {
+            messages[index] = Message(
+              messageId: assistantTempId,
+              role: MessageRole.assistant,
+              content: accumulated,
+              timestamp: DateTime.now(),
+            );
+            messages.refresh();
+          }
+        } else if (type == 'message') {
+          // Final persisted message: replace the placeholder with real one
+          try {
+            final persisted = Message.fromJson(event);
+            final int index = messages.lastIndexWhere((m) =>
+                m.messageId == assistantTempId &&
+                m.role == MessageRole.assistant);
+            if (index != -1) {
+              messages[index] = persisted;
+              messages.refresh();
+            } else {
+              messages.add(persisted);
+            }
+          } catch (_) {
+            // ignore parse issues
+          }
+        } else if (type == 'error' || type == 'http_error') {
+          errorMessage.value = 'Failed to send message';
+        } else if (type == 'done') {
+          // Stream finished
+        }
       }
     } catch (e) {
       errorMessage.value = 'Error sending message: $e';
