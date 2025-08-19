@@ -12,13 +12,16 @@ import 'package:lumi_learn_app/application/controllers/navigation_controller.dar
 
 class LumiTutorMain extends StatefulWidget {
   final Map<String, dynamic>? initialArgs;
-  final String? courseId; // Add optional courseId parameter
+  final String? courseId; // Optional courseId parameter
   final String?
       courseTitle; // Optional course title for header when no thread exists
 
-  const LumiTutorMain(
-      {Key? key, this.initialArgs, this.courseId, this.courseTitle})
-      : super(key: key);
+  const LumiTutorMain({
+    Key? key,
+    this.initialArgs,
+    this.courseId,
+    this.courseTitle,
+  }) : super(key: key);
 
   @override
   State<LumiTutorMain> createState() => _LumiTutorMainState();
@@ -34,6 +37,16 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     "What is E = mc²?",
   ];
 
+  // ---- Smart-scroll state ----
+  bool _suppressAutoScroll = false; // true right after switching threads
+
+  bool get _isNearBottom {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    // With reverse:true, "bottom" is minScrollExtent (usually 0).
+    return (position.pixels - position.minScrollExtent).abs() < 80.0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,23 +56,24 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       Get.find<NavigationController>().hideNavBar();
       _handleScannedInput(widget.initialArgs);
 
-      // Keep pinned to bottom on message updates
+      // Animate subtly to the bottom as new messages stream in
+      // ONLY if we're already near the bottom and not right after a thread switch.
       ever(_tutorController.messages, (_) {
-        if (!mounted) return;
-        _animateToBottom();
-      });
-
-      // Jump to bottom when switching threads
-      ever(_tutorController.activeThread, (_) {
-        _jumpToBottom();
-      });
-
-      // After messages finish loading for a thread, jump to bottom once
-      ever(_tutorController.isLoadingMessages, (isLoading) {
-        if (isLoading == false) {
-          _jumpToBottom();
+        if (!mounted || _suppressAutoScroll) return;
+        if (_isNearBottom) {
+          _animateToBottom(durationMs: 120); // gentle nudge
         }
       });
+
+      // When switching threads, do NOT animate or jump — just render latest.
+      ever(_tutorController.activeThread, (_) {
+        _suppressAutoScroll = true; // prevent one-frame auto-scroll
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _suppressAutoScroll = false;
+        });
+      });
+
+      // We intentionally do NOT auto-scroll on isLoadingMessages changes.
     });
   }
 
@@ -79,10 +93,12 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         final List<String> paths = List<String>.from(args['paths']);
         for (var path in paths) {
           // TODO: Handle image upload to active thread
+          // ignore: avoid_print
           print('Image uploaded: $path');
         }
       } else if (args['type'] == 'pdf') {
         // TODO: Handle PDF upload to active thread
+        // ignore: avoid_print
         print('PDF uploaded: ${args['path']}');
       } else if (args['type'] == 'text' && args.containsKey('initialMessage')) {
         // Create a new thread with the initial message
@@ -96,22 +112,15 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     }
   }
 
-  void _animateToBottom() {
+  void _animateToBottom({int durationMs = 120}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
+          _scrollController
+              .position.minScrollExtent, // bottom with reverse:true
+          duration: Duration(milliseconds: durationMs),
           curve: Curves.easeOut,
         );
-      }
-    });
-  }
-
-  void _jumpToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
   }
@@ -130,7 +139,9 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       );
     }
 
-    _animateToBottom();
+    // Ensure we stay pinned to the bottom after sending,
+    // in case the user was scrolled up browsing history.
+    _animateToBottom(durationMs: 150);
   }
 
   @override
@@ -140,8 +151,8 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     return WillPopScope(
       onWillPop: () async => false,
       child: GestureDetector(
-        onTap: () => FocusScope.of(context)
-            .unfocus(), // ✅ dismiss keyboard on outside tap
+        onTap: () =>
+            FocusScope.of(context).unfocus(), // dismiss keyboard on outside tap
         child: Scaffold(
           endDrawer: const LumiDrawer(),
           backgroundColor: Colors.black,
@@ -151,7 +162,8 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
             enableScroll: false,
             onRefresh: null,
             builder: (context) => Padding(
-              padding: EdgeInsets.only(bottom: bottomInset), // ✅ avoids gap
+              padding:
+                  EdgeInsets.only(bottom: bottomInset), // avoids keyboard gap
               child: Column(
                 children: [
                   Obx(() {
@@ -166,7 +178,8 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                     }
                     return TutorHeader(
                       onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
-                      onCreateCourse: () => print("Create course from chat"),
+                      onCreateCourse: () =>
+                          debugPrint("Create course from chat"),
                       onClearThread: () => _tutorController.clearActiveThread(),
                       courseTitle: headerCourseTitle,
                     );
@@ -185,6 +198,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                             widget.courseId != null) {
                           return ListView.builder(
                             controller: _scrollController,
+                            reverse: true, // keep behavior consistent
                             itemCount: 0,
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
@@ -215,13 +229,19 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                         );
                       }
 
+                      // Main chat list
                       return ListView.builder(
                         controller: _scrollController,
+                        reverse:
+                            true, // show latest at "top" of the viewport (bottom visually)
                         itemCount: _tutorController.messages.length,
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 16),
                         itemBuilder: (context, index) {
-                          final message = _tutorController.messages[index];
+                          final reversedIndex =
+                              _tutorController.messages.length - 1 - index;
+                          final message =
+                              _tutorController.messages[reversedIndex];
 
                           return ChatBubble(
                             message: message.content,
@@ -238,11 +258,13 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                     onSend: _handleSend,
                     onImagePicked: (imageFile) {
                       // TODO: Handle image upload to active thread
+                      // ignore: avoid_print
                       print('Image picked: ${imageFile.path}');
                       _animateToBottom();
                     },
                     onFilePicked: (file) {
                       // TODO: Handle file upload to active thread
+                      // ignore: avoid_print
                       print('File picked: ${file.path}');
                       _animateToBottom();
                     },

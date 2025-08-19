@@ -161,7 +161,7 @@ class LumiDrawer extends StatelessWidget {
           : null,
       onTap: () async {
         await controller.setActiveThread(thread);
-        Navigator.of(context).pop(); // Close the drawer
+        Get.back();
       },
     );
   }

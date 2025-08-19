@@ -201,8 +201,8 @@ class TutorController extends GetxController {
   }
 
   Future<void> setActiveThread(Thread thread) async {
-    activeThread.value = thread;
     await fetchThreadMessages(thread.threadId);
+    activeThread.value = thread;
   }
 
   Future<void> fetchThreadMessages(String threadId) async {
