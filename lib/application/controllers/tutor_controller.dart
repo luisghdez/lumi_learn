@@ -105,6 +105,7 @@ class TutorController extends GetxController {
         token: token,
         threadId: activeThread.value!.threadId,
         message: message,
+        courseId: activeThread.value!.courseId,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

@@ -61,17 +61,22 @@ class TutorService {
     required String token,
     required String threadId,
     required String message,
+    String? courseId,
   }) async {
     final uri = Uri.parse('$_baseUrl/threads/$threadId/messages');
+    final Map<String, dynamic> payload = {
+      'message': message,
+    };
+    if (courseId != null && courseId.isNotEmpty) {
+      payload['courseId'] = courseId;
+    }
     final response = await http.post(
       uri,
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'message': message,
-      }),
+      body: jsonEncode(payload),
     );
     return response;
   }
