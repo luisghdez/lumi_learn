@@ -62,7 +62,7 @@ class TutorController extends GetxController {
     }
   }
 
-  Future<void> createThread(String initialMessage) async {
+  Future<void> createThread(String initialMessage, {String? courseId}) async {
     try {
       final token = await _authController.getIdToken();
       if (token == null) {
@@ -73,6 +73,7 @@ class TutorController extends GetxController {
       final response = await _tutorService.createThread(
         token: token,
         initialMessage: initialMessage,
+        courseId: courseId,
       );
 
       if (response.statusCode == 201) {

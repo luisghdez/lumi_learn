@@ -22,17 +22,22 @@ class TutorService {
   Future<http.Response> createThread({
     required String token,
     required String initialMessage,
+    String? courseId,
   }) async {
     final uri = Uri.parse('$_baseUrl/threads');
+    final Map<String, dynamic> payload = {
+      'initialMessage': initialMessage,
+    };
+    if (courseId != null && courseId.isNotEmpty) {
+      payload['courseId'] = courseId;
+    }
     final response = await http.post(
       uri,
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'initialMessage': initialMessage,
-      }),
+      body: jsonEncode(payload),
     );
     return response;
   }

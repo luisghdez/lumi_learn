@@ -75,7 +75,10 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         print('PDF uploaded: ${args['path']}');
       } else if (args['type'] == 'text' && args.containsKey('initialMessage')) {
         // Create a new thread with the initial message
-        _tutorController.createThread(args['initialMessage']);
+        _tutorController.createThread(
+          args['initialMessage'],
+          courseId: widget.courseId,
+        );
       }
 
       _scrollToBottom();
@@ -102,7 +105,10 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       _tutorController.sendMessage(message);
     } else {
       // Create new thread with this message
-      _tutorController.createThread(message);
+      _tutorController.createThread(
+        message,
+        courseId: widget.courseId,
+      );
     }
 
     _scrollToBottom();
