@@ -43,10 +43,21 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       Get.find<NavigationController>().hideNavBar();
       _handleScannedInput(widget.initialArgs);
 
-      // Listen to messages changes to scroll to bottom
+      // Keep pinned to bottom on message updates
       ever(_tutorController.messages, (_) {
-        if (mounted) {
-          _scrollToBottom();
+        if (!mounted) return;
+        _animateToBottom();
+      });
+
+      // Jump to bottom when switching threads
+      ever(_tutorController.activeThread, (_) {
+        _jumpToBottom();
+      });
+
+      // After messages finish loading for a thread, jump to bottom once
+      ever(_tutorController.isLoadingMessages, (isLoading) {
+        if (isLoading == false) {
+          _jumpToBottom();
         }
       });
     });
@@ -81,18 +92,26 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         );
       }
 
-      _scrollToBottom();
+      _animateToBottom();
     }
   }
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 400), () {
+  void _animateToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
         );
+      }
+    });
+  }
+
+  void _jumpToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
   }
@@ -111,7 +130,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       );
     }
 
-    _scrollToBottom();
+    _animateToBottom();
   }
 
   @override
@@ -220,12 +239,12 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                     onImagePicked: (imageFile) {
                       // TODO: Handle image upload to active thread
                       print('Image picked: ${imageFile.path}');
-                      _scrollToBottom();
+                      _animateToBottom();
                     },
                     onFilePicked: (file) {
                       // TODO: Handle file upload to active thread
                       print('File picked: ${file.path}');
-                      _scrollToBottom();
+                      _animateToBottom();
                     },
                   ),
                 ],

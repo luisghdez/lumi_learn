@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class TutorHeader extends StatelessWidget {
@@ -97,8 +98,12 @@ class TutorHeader extends StatelessWidget {
             ),
           ],
         ),
+        const Divider(
+          color: greyBorder,
+          height: 1,
+        ),
 
-        const SizedBox(height: 12),
+        // const SizedBox(height: 12),
 
         // ───── Glassy Gradient Button ─────
         // GestureDetector(
