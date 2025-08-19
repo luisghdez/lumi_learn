@@ -1,71 +1,51 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 class ColorUtils {
-  // Predefined list of vibrant colors that work well in the app's theme
-  static const List<Color> _courseColors = [
-    Colors.pinkAccent,
-    Colors.orangeAccent,
-    Colors.greenAccent,
-    Colors.purpleAccent,
-    Colors.yellowAccent,
-    Colors.lightBlueAccent,
-    Colors.limeAccent,
-    Colors.indigoAccent,
-    Colors.tealAccent,
-    Colors.deepOrangeAccent,
-    Colors.amberAccent,
-    Colors.lightGreenAccent,
-    Colors.blueAccent,
-    Colors.redAccent,
-    Colors.deepPurpleAccent,
-  ];
-
-  /// Generates a consistent color for a given course ID
-  /// The same courseId will always return the same color
+  /// Generates a unique, consistent color for a given course ID.
+  /// Uses a 64-bit FNV-1a hash and maps multiple independent bit ranges
+  /// to H, S, and L to avoid collisions (not just hue).
   static Color getCourseColor(String? courseId) {
     if (courseId == null || courseId.isEmpty) {
-      // Return a default color for threads without a course
       return Colors.grey;
     }
 
-    // Generate a hash from the courseId to ensure consistency
-    int hash = 0;
-    for (int i = 0; i < courseId.length; i++) {
-      hash = ((hash << 5) - hash + courseId.codeUnitAt(i)) & 0xFFFFFFFF;
-    }
+    final int hash = _fnv1a64(courseId);
 
-    // Use the hash to select a color from our predefined list
-    final colorIndex = hash.abs() % _courseColors.length;
-    return _courseColors[colorIndex];
+    // Spread different parts of the hash across H, S, and L
+    final int hBits = hash & 0xFFFF; // 16 bits → Hue
+    final int sBits = (hash >> 16) & 0xFF; // 8 bits  → Saturation band
+    final int lBits = (hash >> 24) & 0xFF; // 8 bits  → Lightness band
+    final int jBits = (hash >> 32) & 0xFFFF; // 16 bits → tiny jitter
+
+    final double hue = (hBits / 0xFFFF) * 360.0; // 0..360
+    final double saturation = 0.60 + (sBits / 255.0) * 0.30; // 0.60..0.90
+    final double lightness = 0.50 + (lBits / 255.0) * 0.20; // 0.50..0.70
+
+    // Tiny deterministic jitter (~≤1°) to separate near-equal colors after 8-bit rounding.
+    final double hueJitter = (jBits / 0xFFFF) * 1.0; // degrees
+
+    return _hslToColor(hue + hueJitter, saturation, lightness);
   }
 
-  /// Alternative method using a more sophisticated hash for better distribution
-  static Color getCourseColorV2(String? courseId) {
-    if (courseId == null || courseId.isEmpty) {
-      return Colors.grey;
+  /// 64-bit FNV-1a hash (stable across runs, no dependencies).
+  static int _fnv1a64(String input) {
+    const int fnvOffset = 0xcbf29ce484222325; // 14695981039346656037
+    const int fnvPrime = 0x100000001b3; // 1099511628211
+    const int mask64 = 0xFFFFFFFFFFFFFFFF;
+
+    int hash = fnvOffset;
+    for (int i = 0; i < input.length; i++) {
+      hash ^= input.codeUnitAt(i);
+      hash = (hash * fnvPrime) & mask64;
     }
-
-    // Use a more sophisticated hash function
-    int hash = 5381;
-    for (int i = 0; i < courseId.length; i++) {
-      hash = ((hash << 5) + hash) + courseId.codeUnitAt(i);
-    }
-
-    // Generate HSL values for more visually distinct colors
-    final hue = (hash.abs() % 360).toDouble();
-    final saturation = 0.7 + (hash.abs() % 30) / 100.0; // 70-100% saturation
-    final lightness = 0.5 + (hash.abs() % 20) / 100.0; // 50-70% lightness
-
-    // Convert HSL to RGB
-    return _hslToColor(hue, saturation, lightness);
+    return hash;
   }
 
-  /// Convert HSL values to Color
+  /// Convert HSL values to a Flutter [Color].
   static Color _hslToColor(double h, double s, double l) {
-    h = h / 360.0;
-    s = s.clamp(0.0, 1.0);
-    l = l.clamp(0.0, 1.0);
+    double hh = ((h % 360) + 360) % 360 / 360.0; // normalize to [0,1)
+    double ss = s.clamp(0.0, 1.0);
+    double ll = l.clamp(0.0, 1.0);
 
     double hue2rgb(double p, double q, double t) {
       if (t < 0) t += 1;
@@ -77,15 +57,14 @@ class ColorUtils {
     }
 
     double r, g, b;
-
-    if (s == 0) {
-      r = g = b = l; // achromatic
+    if (ss == 0) {
+      r = g = b = ll; // achromatic
     } else {
-      double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      double p = 2 * l - q;
-      r = hue2rgb(p, q, h + 1 / 3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1 / 3);
+      final double q = ll < 0.5 ? ll * (1 + ss) : ll + ss - ll * ss;
+      final double p = 2 * ll - q;
+      r = hue2rgb(p, q, hh + 1 / 3);
+      g = hue2rgb(p, q, hh);
+      b = hue2rgb(p, q, hh - 1 / 3);
     }
 
     return Color.fromARGB(

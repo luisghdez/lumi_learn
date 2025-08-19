@@ -28,8 +28,6 @@ class TutorHeader extends StatelessWidget {
     final bool isTablet = MediaQuery.of(context).size.width > 600;
     final TutorController tutorController = Get.find<TutorController>();
 
-    print('courseId: $courseId');
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

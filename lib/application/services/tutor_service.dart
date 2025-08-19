@@ -165,4 +165,69 @@ class TutorService {
 
     return controller.stream;
   }
+
+  /// Streaming version of createThread that reads NDJSON lines and emits
+  /// each parsed JSON object as a map on the returned Stream.
+  Stream<Map<String, dynamic>> createThreadStream({
+    required String token,
+    required String initialMessage,
+    String? courseId,
+  }) {
+    final uri = Uri.parse('$_baseUrl/threads');
+    final client = http.Client();
+    final request = http.Request('POST', uri);
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+      'Accept': 'application/x-ndjson',
+    });
+    final Map<String, dynamic> payload = {
+      'initialMessage': initialMessage,
+    };
+    if (courseId != null && courseId.isNotEmpty) {
+      payload['courseId'] = courseId;
+    }
+    request.body = jsonEncode(payload);
+
+    final controller = StreamController<Map<String, dynamic>>();
+
+    client.send(request).then((streamedResponse) {
+      // Non-200: surface as an error-type event and close
+      if (streamedResponse.statusCode != 200) {
+        controller.add({
+          'type': 'http_error',
+          'status': streamedResponse.statusCode,
+        });
+        controller.close();
+        client.close();
+        return;
+      }
+
+      streamedResponse.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((line) {
+        if (line.trim().isEmpty) return;
+        try {
+          final Map<String, dynamic> obj = jsonDecode(line);
+          controller.add(obj);
+        } catch (_) {
+          // ignore malformed lines
+        }
+      }, onError: (error) {
+        controller.add({'type': 'error', 'error': error.toString()});
+        controller.close();
+        client.close();
+      }, onDone: () {
+        controller.close();
+        client.close();
+      });
+    }).catchError((error) {
+      controller.add({'type': 'error', 'error': error.toString()});
+      controller.close();
+      client.close();
+    });
+
+    return controller.stream;
+  }
 }

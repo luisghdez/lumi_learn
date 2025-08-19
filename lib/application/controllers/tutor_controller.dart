@@ -70,17 +70,118 @@ class TutorController extends GetxController {
         return;
       }
 
-      final response = await _tutorService.createThread(
+      // Create a temporary thread to show messages immediately
+      final String tempThreadId =
+          'temp_${DateTime.now().millisecondsSinceEpoch}';
+      final tempThread = Thread(
+        threadId: tempThreadId,
+        initialMessage: initialMessage,
+        lastMessageAt: DateTime.now(),
+        messageCount: 0,
+        courseId: courseId,
+        courseTitle: null,
+      );
+      activeThread.value = tempThread;
+
+      // Optimistically add user message to current messages
+      final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+      messages.add(
+        Message(
+          messageId: tempId,
+          role: MessageRole.user,
+          content: initialMessage,
+          timestamp: DateTime.now(),
+        ),
+      );
+
+      // Placeholder assistant message that we will stream-update
+      final String assistantTempId = '${tempId}_assistant';
+      messages.add(
+        Message(
+          messageId: assistantTempId,
+          role: MessageRole.assistant,
+          content: '',
+          timestamp: DateTime.now(),
+        ),
+      );
+
+      final stream = _tutorService.createThreadStream(
         token: token,
         initialMessage: initialMessage,
         courseId: courseId,
       );
 
-      if (response.statusCode == 201) {
-        // Refresh threads after creating a new one
-        await fetchThreads();
-      } else {
-        errorMessage.value = 'Failed to create thread: ${response.statusCode}';
+      String accumulated = '';
+      Thread? newThread;
+      List<Map<String, dynamic>>? sources;
+
+      await for (final event in stream) {
+        final type = event['type'] as String?;
+
+        if (type == 'start') {
+          // Stream started, sources might be included
+          sources = event['sources'] != null
+              ? List<Map<String, dynamic>>.from(event['sources'])
+              : null;
+        } else if (type == 'delta') {
+          final delta = (event['delta'] as String?) ?? '';
+          if (delta.isEmpty) continue;
+          accumulated += delta;
+          // Update the last assistant message content progressively
+          final int index = messages.lastIndexWhere((m) =>
+              m.messageId == assistantTempId &&
+              m.role == MessageRole.assistant);
+          if (index != -1) {
+            messages[index] = Message(
+              messageId: assistantTempId,
+              role: MessageRole.assistant,
+              content: accumulated,
+              timestamp: DateTime.now(),
+              sources: sources,
+            );
+            messages.refresh();
+          }
+        } else if (type == 'thread') {
+          // Thread created, update active thread
+          try {
+            newThread = Thread.fromJson(event);
+            activeThread.value = newThread;
+          } catch (_) {
+            // ignore parse issues
+          }
+        } else if (type == 'message') {
+          // Final persisted message: replace the placeholder with real one
+          try {
+            final persisted = Message.fromJson(event);
+            final int index = messages.lastIndexWhere((m) =>
+                m.messageId == assistantTempId &&
+                m.role == MessageRole.assistant);
+            if (index != -1) {
+              messages[index] = persisted;
+              messages.refresh();
+            } else {
+              messages.add(persisted);
+            }
+          } catch (_) {
+            // ignore parse issues
+          }
+        } else if (type == 'error' || type == 'http_error') {
+          errorMessage.value = 'Failed to create thread';
+          // Remove the placeholder messages on error
+          messages.removeWhere(
+              (m) => m.messageId == tempId || m.messageId == assistantTempId);
+          messages.refresh();
+          // Clear the temporary thread
+          activeThread.value = null;
+        } else if (type == 'done') {
+          // Stream finished
+        }
+      }
+
+      // If we got a new thread, add it to the threads list and refresh
+      if (newThread != null) {
+        threads.insert(0, newThread);
+        threads.refresh();
       }
     } catch (e) {
       errorMessage.value = 'Error creating thread: $e';
@@ -131,9 +232,15 @@ class TutorController extends GetxController {
       );
 
       String accumulated = '';
+      List<Map<String, dynamic>>? sources;
       await for (final event in stream) {
         final type = event['type'] as String?;
-        if (type == 'delta') {
+        if (type == 'start') {
+          // Stream started, sources might be included
+          sources = event['sources'] != null
+              ? List<Map<String, dynamic>>.from(event['sources'])
+              : null;
+        } else if (type == 'delta') {
           final delta = (event['delta'] as String?) ?? '';
           if (delta.isEmpty) continue;
           accumulated += delta;
@@ -147,6 +254,7 @@ class TutorController extends GetxController {
               role: MessageRole.assistant,
               content: accumulated,
               timestamp: DateTime.now(),
+              sources: sources,
             );
             messages.refresh();
           }

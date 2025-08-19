@@ -416,6 +416,7 @@ class CourseController extends GetxController {
         final responseData = jsonDecode(response.body);
         final courseId = responseData['courseId'] as String;
         final lessonCount = responseData['lessonCount'];
+        final hasEmbeddings = responseData['hasEmbeddings'] ?? true;
 
         final newCourse = {
           'id': courseId,
@@ -423,6 +424,7 @@ class CourseController extends GetxController {
           'description': description,
           'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
           'totalLessons': lessonCount,
+          'hasEmbeddings': hasEmbeddings,
           'loading': false,
         };
 

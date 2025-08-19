@@ -5,12 +5,14 @@ class Message {
   final MessageRole role;
   final String content;
   final DateTime timestamp;
+  final List<Map<String, dynamic>>? sources;
 
   Message({
     required this.messageId,
     required this.role,
     required this.content,
     required this.timestamp,
+    this.sources,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,9 @@ class Message {
       ),
       content: json['content'],
       timestamp: DateTime.parse(json['timestamp']),
+      sources: json['sources'] != null
+          ? List<Map<String, dynamic>>.from(json['sources'])
+          : null,
     );
   }
 
@@ -31,6 +36,7 @@ class Message {
       'role': role.name,
       'content': content,
       'timestamp': timestamp.toIso8601String(),
+      if (sources != null) 'sources': sources,
     };
   }
 }

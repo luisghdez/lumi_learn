@@ -327,6 +327,8 @@ class _CourseCreationState extends State<CourseCreation> {
                           "title": courseTitle,
                           "description": courseSubject,
                           "loading": true,
+                          "hasEmbeddings":
+                              true, // Default to false for placeholder
                         });
 
                         // Navigate immediately back to the HomeScreen.
@@ -350,6 +352,7 @@ class _CourseCreationState extends State<CourseCreation> {
                             "id": result['courseId'],
                             'totalLessons': result['lessonCount'],
                             "loading": false,
+                            "hasEmbeddings": result['hasEmbeddings'] ?? true,
                           });
                         }).catchError((error) {
                           courseController.removePlaceholderCourse(tempId);
