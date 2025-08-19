@@ -10,6 +10,7 @@ class CourseOverviewHeader extends StatelessWidget {
   final VoidCallback onViewFlashcards;
   final VoidCallback onViewNotes;
   final VoidCallback onViewLumiTutor;
+  final bool isOpeningTutor;
 
   const CourseOverviewHeader({
     Key? key,
@@ -19,6 +20,7 @@ class CourseOverviewHeader extends StatelessWidget {
     required this.onViewFlashcards,
     required this.onViewNotes,
     required this.onViewLumiTutor,
+    this.isOpeningTutor = false,
   }) : super(key: key);
 
   @override
@@ -153,6 +155,7 @@ class CourseOverviewHeader extends StatelessWidget {
                               icon: Icons.chat_bubble_outline,
                               label: 'LumiTutor',
                               onTap: onViewLumiTutor,
+                              isLoading: isOpeningTutor,
                             ),
                           ),
                         ],
@@ -173,17 +176,19 @@ class _HeaderButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool isLoading;
 
   const _HeaderButton({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         alignment: Alignment.center, // center the Row
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -199,8 +204,20 @@ class _HeaderButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center, // center contents
           children: [
-            Icon(icon, color: Colors.white, size: 14),
-            const SizedBox(width: 8),
+            if (!isLoading) ...[
+              Icon(icon, color: Colors.white, size: 14),
+              const SizedBox(width: 8),
+            ] else ...[
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             Text(
               label,
               style: const TextStyle(

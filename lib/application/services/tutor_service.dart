@@ -70,4 +70,22 @@ class TutorService {
     );
     return response;
   }
+
+  /// GET /courses/:courseId/messages
+  /// Returns the messages for the tutor thread associated with the given course.
+  /// If no thread exists yet, the backend should return 404.
+  Future<http.Response> getCourseMessages({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses/$courseId/messages');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
 }

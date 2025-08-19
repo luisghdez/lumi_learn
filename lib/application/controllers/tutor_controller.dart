@@ -21,6 +21,7 @@ class TutorController extends GetxController {
   Rxn<Thread> activeThread = Rxn<Thread>();
   RxList<Message> messages = <Message>[].obs;
   RxBool isLoadingMessages = false.obs;
+  RxBool isOpeningFromCourse = false.obs;
 
   @override
   void onInit() {
@@ -185,4 +186,68 @@ class TutorController extends GetxController {
   }
 
   bool get hasActiveThread => activeThread.value != null;
+
+  /// Open tutor for a specific course.
+  /// - Calls GET /courses/:courseId/messages
+  /// - If 200: sets active thread (by matching threadId from response if present)
+  ///           and loads messages
+  /// - If 404: clears active thread and leaves messages empty (UI shows empty chat)
+  Future<void> openTutorForCourse({
+    required String courseId,
+  }) async {
+    if (isOpeningFromCourse.value) return;
+    isOpeningFromCourse.value = true;
+    errorMessage.value = '';
+
+    try {
+      final token = await _authController.getIdToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required';
+        return;
+      }
+
+      final response = await _tutorService.getCourseMessages(
+        token: token,
+        courseId: courseId,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Expecting shape compatible with ThreadMessagesResponse
+        final messagesResponse = ThreadMessagesResponse.fromJson(data);
+        messages.value = messagesResponse.messages;
+
+        // Try to find corresponding thread in current list and set it active
+        final thread = getThreadById(messagesResponse.threadId);
+        if (thread != null) {
+          activeThread.value = thread;
+        } else {
+          // If not found, synthesize a minimal thread model so header can show course title if provided
+          activeThread.value = Thread(
+            threadId: messagesResponse.threadId,
+            initialMessage: messagesResponse.messages.isNotEmpty
+                ? messagesResponse.messages.first.content
+                : '',
+            lastMessageAt: messagesResponse.messages.isNotEmpty
+                ? messagesResponse.messages.last.timestamp
+                : DateTime.now(),
+            messageCount: messagesResponse.messages.length,
+            courseId: null,
+            courseTitle: null,
+          );
+        }
+      } else if (response.statusCode == 404) {
+        // No thread exists yet for this course
+        clearActiveThread();
+      } else {
+        errorMessage.value =
+            'Failed to open tutor for course: ${response.statusCode}';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error opening tutor for course: $e';
+      print('Error opening tutor for course: $e');
+    } finally {
+      isOpeningFromCourse.value = false;
+    }
+  }
 }

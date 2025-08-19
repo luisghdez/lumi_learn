@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/models/chat_sender.dart';
@@ -14,8 +13,11 @@ import 'package:lumi_learn_app/application/controllers/navigation_controller.dar
 class LumiTutorMain extends StatefulWidget {
   final Map<String, dynamic>? initialArgs;
   final String? courseId; // Add optional courseId parameter
+  final String?
+      courseTitle; // Optional course title for header when no thread exists
 
-  const LumiTutorMain({Key? key, this.initialArgs, this.courseId})
+  const LumiTutorMain(
+      {Key? key, this.initialArgs, this.courseId, this.courseTitle})
       : super(key: key);
 
   @override
@@ -127,13 +129,23 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
               padding: EdgeInsets.only(bottom: bottomInset), // ✅ avoids gap
               child: Column(
                 children: [
-                  TutorHeader(
-                    onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
-                    onCreateCourse: () => print("Create course from chat"),
-                    onClearThread: () => _tutorController.clearActiveThread(),
-                    courseTitle:
-                        _tutorController.activeThread.value?.courseTitle,
-                  ),
+                  Obx(() {
+                    String? headerCourseTitle;
+                    if (_tutorController.hasActiveThread) {
+                      final t =
+                          _tutorController.activeThread.value?.courseTitle;
+                      headerCourseTitle =
+                          (t == null || t.trim().isEmpty) ? null : t;
+                    } else {
+                      headerCourseTitle = widget.courseTitle;
+                    }
+                    return TutorHeader(
+                      onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
+                      onCreateCourse: () => print("Create course from chat"),
+                      onClearThread: () => _tutorController.clearActiveThread(),
+                      courseTitle: headerCourseTitle,
+                    );
+                  }),
                   Expanded(
                     child: Obx(() {
                       if (_tutorController.isLoadingMessages.value) {
@@ -143,6 +155,18 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                       }
 
                       if (!_tutorController.hasActiveThread) {
+                        // If opened from a course (title provided), show an empty chat area ready for first message
+                        if (widget.courseTitle != null ||
+                            widget.courseId != null) {
+                          return ListView.builder(
+                            controller: _scrollController,
+                            itemCount: 0,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                            itemBuilder: (context, index) =>
+                                const SizedBox.shrink(),
+                          );
+                        }
                         return const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
