@@ -195,6 +195,7 @@ class TutorController extends GetxController {
   /// - If 404: clears active thread and leaves messages empty (UI shows empty chat)
   Future<void> openTutorForCourse({
     required String courseId,
+    String? courseTitle,
   }) async {
     if (isOpeningFromCourse.value) return;
     isOpeningFromCourse.value = true;
@@ -221,7 +222,22 @@ class TutorController extends GetxController {
         // Try to find corresponding thread in current list and set it active
         final thread = getThreadById(messagesResponse.threadId);
         if (thread != null) {
-          activeThread.value = thread;
+          // If existing thread lacks title but we have one, create a copy with title
+          if ((thread.courseTitle == null ||
+                  thread.courseTitle!.trim().isEmpty) &&
+              courseTitle != null &&
+              courseTitle.trim().isNotEmpty) {
+            activeThread.value = Thread(
+              threadId: thread.threadId,
+              initialMessage: thread.initialMessage,
+              lastMessageAt: thread.lastMessageAt,
+              messageCount: thread.messageCount,
+              courseId: thread.courseId ?? courseId,
+              courseTitle: courseTitle,
+            );
+          } else {
+            activeThread.value = thread;
+          }
         } else {
           // If not found, synthesize a minimal thread model so header can show course title if provided
           activeThread.value = Thread(
@@ -233,8 +249,10 @@ class TutorController extends GetxController {
                 ? messagesResponse.messages.last.timestamp
                 : DateTime.now(),
             messageCount: messagesResponse.messages.length,
-            courseId: null,
-            courseTitle: null,
+            courseId: courseId,
+            courseTitle: (courseTitle != null && courseTitle.trim().isNotEmpty)
+                ? courseTitle
+                : null,
           );
         }
       } else if (response.statusCode == 404) {

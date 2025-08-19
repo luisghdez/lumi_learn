@@ -428,7 +428,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                             return;
                           }
                           tutorController
-                              .openTutorForCourse(courseId: courseId.value)
+                              .openTutorForCourse(
+                                  courseId: courseId.value,
+                                  courseTitle: courseTitle)
                               .whenComplete(() {
                             Get.to(
                               () => LumiTutorMain(
