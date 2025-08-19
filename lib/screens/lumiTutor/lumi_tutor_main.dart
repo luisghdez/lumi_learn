@@ -253,6 +253,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                             sender: message.role == MessageRole.user
                                 ? ChatSender.user
                                 : ChatSender.tutor,
+                            sources: message.sources,
                           );
                         },
                       );

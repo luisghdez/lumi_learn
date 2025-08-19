@@ -3,15 +3,18 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:lumi_learn_app/application/models/chat_sender.dart'; // ✅ Shared enum
+import 'package:lumi_learn_app/screens/lumiTutor/widgets/sources_display.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
   final ChatSender sender;
+  final List<Map<String, dynamic>>? sources;
 
   const ChatBubble({
     Key? key,
     required this.message,
     required this.sender,
+    this.sources,
   }) : super(key: key);
 
   @override
@@ -49,102 +52,114 @@ class ChatBubble extends StatelessWidget {
         ),
       );
     } else {
-      // Tutor message - Markdown with LaTeX support
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-        child: MarkdownBody(
-          data: message,
-          // ✅ Teach the parser LaTeX delimiters so it emits <math> nodes
-          inlineSyntaxes: [MathSyntax()],
-          // Keep GitHub extensions (tables, strikethrough, etc.)
-          extensionSet: md.ExtensionSet.gitHubFlavored,
-          builders: {
-            'math': MathBuilder(),
-          },
-          styleSheet: MarkdownStyleSheet(
-            p: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              height: 1.6,
-            ),
-            h1: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-            h2: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-            h3: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-            h4: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-            h5: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-            h6: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-            strong: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-            em: const TextStyle(
-              color: Colors.white,
-              fontStyle: FontStyle.italic,
-            ),
-            // code: TextStyle(
-            //   color: Colors.cyanAccent,
-            //   backgroundColor: Colors.white.withOpacity(0.1),
-            //   fontFamily: 'monospace',
-            // ),
-            codeblockDecoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white12),
-            ),
-            blockquote: const TextStyle(
-              color: Colors.white70,
-              fontStyle: FontStyle.italic,
-            ),
-            blockquoteDecoration: const BoxDecoration(
-              border: Border(
-                left: BorderSide(color: Colors.cyanAccent, width: 4),
+      // Tutor message - Markdown with LaTeX support + Sources
+      List<Widget> children = [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+          child: MarkdownBody(
+            data: message,
+            // ✅ Teach the parser LaTeX delimiters so it emits <math> nodes
+            inlineSyntaxes: [MathSyntax()],
+            // Keep GitHub extensions (tables, strikethrough, etc.)
+            extensionSet: md.ExtensionSet.gitHubFlavored,
+            builders: {
+              'math': MathBuilder(),
+            },
+            styleSheet: MarkdownStyleSheet(
+              p: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                height: 1.6,
+              ),
+              h1: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+              h2: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+              h3: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+              h4: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+              h5: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+              h6: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+              strong: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              em: const TextStyle(
+                color: Colors.white,
+                fontStyle: FontStyle.italic,
+              ),
+              // code: TextStyle(
+              //   color: Colors.cyanAccent,
+              //   backgroundColor: Colors.white.withOpacity(0.1),
+              //   fontFamily: 'monospace',
+              // ),
+              codeblockDecoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
+              ),
+              blockquote: const TextStyle(
+                color: Colors.white70,
+                fontStyle: FontStyle.italic,
+              ),
+              blockquoteDecoration: const BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: Colors.cyanAccent, width: 4),
+                ),
+              ),
+              listBullet: const TextStyle(color: Colors.white),
+              tableBorder: TableBorder.all(color: Colors.white24),
+              tableColumnWidth: const FlexColumnWidth(),
+              tableCellsDecoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.02),
+              ),
+              horizontalRuleDecoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Colors.white24, width: 1),
+                ),
               ),
             ),
-            listBullet: const TextStyle(color: Colors.white),
-            tableBorder: TableBorder.all(color: Colors.white24),
-            tableColumnWidth: const FlexColumnWidth(),
-            tableCellsDecoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
-            ),
-            horizontalRuleDecoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.white24, width: 1),
-              ),
-            ),
+            selectable: true,
           ),
-          selectable: true,
         ),
+      ];
+
+      // Add sources if available
+      if (sources != null && sources!.isNotEmpty) {
+        children.add(SourcesDisplay(sources: sources!));
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       );
     }
   }
