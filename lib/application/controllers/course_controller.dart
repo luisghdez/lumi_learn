@@ -27,6 +27,7 @@ class CourseController extends GetxController {
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   var selectedCourseHasEmbeddings = false.obs;
+  var selectedCourseSummary = ''.obs;
   final questionsCount = 0.obs;
   var lessons = <Map<String, dynamic>>[].obs;
   var flashcards = <Map<String, dynamic>>[].obs;
@@ -618,6 +619,7 @@ class CourseController extends GetxController {
         lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
         flashcards.value =
             List<Map<String, dynamic>>.from(data['mergedFlashcards']);
+        selectedCourseSummary.value = data['summary'];
       } else {
         print(
             'Error fetching lessons: ${response.statusCode} - ${response.body}');
