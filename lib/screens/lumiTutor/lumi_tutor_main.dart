@@ -168,13 +168,17 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                 children: [
                   Obx(() {
                     String? headerCourseTitle;
+                    String? headerCourseId;
                     if (_tutorController.hasActiveThread) {
                       final t =
                           _tutorController.activeThread.value?.courseTitle;
                       headerCourseTitle =
                           (t == null || t.trim().isEmpty) ? null : t;
+                      headerCourseId =
+                          _tutorController.activeThread.value?.courseId;
                     } else {
                       headerCourseTitle = widget.courseTitle;
+                      headerCourseId = widget.courseId;
                     }
                     return TutorHeader(
                       onMenuPressed: () => Scaffold.of(context).openEndDrawer(),
@@ -182,6 +186,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                           debugPrint("Create course from chat"),
                       onClearThread: () => _tutorController.clearActiveThread(),
                       courseTitle: headerCourseTitle,
+                      courseId: headerCourseId,
                     );
                   }),
                   Expanded(

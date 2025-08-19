@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 import 'package:lumi_learn_app/application/models/thread_model.dart';
+import 'package:lumi_learn_app/utils/color_utils.dart';
 
 class LumiDrawer extends StatelessWidget {
   const LumiDrawer({super.key});
@@ -140,8 +141,8 @@ class LumiDrawer extends StatelessWidget {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: const BoxDecoration(
-                        color: Colors.cyanAccent,
+                      decoration: BoxDecoration(
+                        color: ColorUtils.getCourseColor(thread.courseId),
                         shape: BoxShape.circle,
                       ),
                     ),

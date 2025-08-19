@@ -5,12 +5,14 @@ import 'package:lumi_learn_app/application/controllers/navigation_controller.dar
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
+import 'package:lumi_learn_app/utils/color_utils.dart';
 
 class TutorHeader extends StatelessWidget {
   final VoidCallback onMenuPressed;
   final VoidCallback onCreateCourse;
   final VoidCallback onClearThread;
   final String? courseTitle;
+  final String? courseId;
 
   const TutorHeader({
     Key? key,
@@ -18,12 +20,15 @@ class TutorHeader extends StatelessWidget {
     required this.onCreateCourse,
     required this.onClearThread,
     required this.courseTitle,
+    this.courseId,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final bool isTablet = MediaQuery.of(context).size.width > 600;
     final TutorController tutorController = Get.find<TutorController>();
+
+    print('courseId: $courseId');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,8 +69,8 @@ class TutorHeader extends StatelessWidget {
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.cyanAccent,
+                            decoration: BoxDecoration(
+                              color: ColorUtils.getCourseColor(courseId),
                               shape: BoxShape.circle,
                             ),
                           ),

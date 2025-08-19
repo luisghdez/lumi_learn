@@ -112,11 +112,11 @@ class ChatBubble extends StatelessWidget {
               color: Colors.white,
               fontStyle: FontStyle.italic,
             ),
-            code: TextStyle(
-              color: Colors.cyanAccent,
-              backgroundColor: Colors.white.withOpacity(0.1),
-              fontFamily: 'monospace',
-            ),
+            // code: TextStyle(
+            //   color: Colors.cyanAccent,
+            //   backgroundColor: Colors.white.withOpacity(0.1),
+            //   fontFamily: 'monospace',
+            // ),
             codeblockDecoration: BoxDecoration(
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(8),
