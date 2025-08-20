@@ -49,7 +49,7 @@ class _CourseCreationState extends State<CourseCreation> {
       // image branch stays the same
       type: pickImages ? FileType.image : FileType.custom,
       // only apply extensions when NOT picking images
-      allowedExtensions: pickImages ? null : ['pdf', 'pptx', 'doc', 'xlsx'],
+      allowedExtensions: pickImages ? null : ['pdf'],
     );
     if (result != null && result.files.isNotEmpty) {
       // Define max file size (5 MB)
@@ -221,7 +221,7 @@ class _CourseCreationState extends State<CourseCreation> {
                 DropZone(
                   onTap: () => handleFileChange(pickImages: false),
                   label: "documents",
-                  subLabel: "PDF, PPTX, DOC, XLSX",
+                  subLabel: "PDF",
                 ),
                 if (selectedFiles.isNotEmpty)
                   FileList(
