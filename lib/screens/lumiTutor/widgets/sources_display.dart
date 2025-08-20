@@ -105,9 +105,9 @@ class SourceButton extends StatelessWidget {
 
   String _getDisplayName() {
     final fileName = source['fileName']?.toString() ?? 'Unknown';
-    final page = source['page']?.toString();
-    if (page != null && page.isNotEmpty) {
-      return '$fileName (p.$page)';
+    final pageNumber = source['pageNumber']?.toString();
+    if (pageNumber != null && pageNumber.isNotEmpty) {
+      return '$fileName (p.$pageNumber)';
     }
     return fileName;
   }
@@ -118,7 +118,14 @@ class SourceButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          showPdfViewerModal(context, source['fileName']?.toString() ?? '');
+          final page = source['pageNumber'];
+          final int? initialPage =
+              page is int ? page : (page is String ? int.tryParse(page) : null);
+          showPdfViewerModal(
+            context,
+            source['fileName']?.toString() ?? '',
+            initialPageNumber: initialPage,
+          );
         },
         borderRadius: BorderRadius.circular(20),
         child: Container(

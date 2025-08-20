@@ -7,18 +7,23 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 ///   showPdfViewerModal(context,
 ///     'https://.../courses/A1Y8ynTKM-evd2lZP90gw.pdf');
 ///   showPdfViewerModal(context, 'courses/A1Y8ynTKM-evd2lZP90gw.pdf');
-void showPdfViewerModal(BuildContext context, String pdfPathOrUrl) {
+void showPdfViewerModal(BuildContext context, String pdfPathOrUrl,
+    {int? initialPageNumber}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _PdfViewerModal(input: pdfPathOrUrl),
+    builder: (_) => _PdfViewerModal(
+      input: pdfPathOrUrl,
+      initialPageNumber: initialPageNumber,
+    ),
   );
 }
 
 class _PdfViewerModal extends StatelessWidget {
   final String input;
-  const _PdfViewerModal({required this.input});
+  final int? initialPageNumber;
+  const _PdfViewerModal({required this.input, this.initialPageNumber});
 
   static const _fallbackHost =
       'https://storage.googleapis.com/lumi-7f941.firebasestorage.app';
@@ -97,6 +102,10 @@ class _PdfViewerModal extends StatelessWidget {
                   // Optional UX niceties:
                   canShowPaginationDialog: true,
                   canShowScrollHead: true,
+                  initialPageNumber:
+                      (initialPageNumber == null || initialPageNumber! < 1)
+                          ? 1
+                          : initialPageNumber!,
                   onDocumentLoadFailed: (details) {
                     // Syncfusion will show its own error UI; this is just a log.
                     // You can wire in a custom Snackbar if you prefer.
