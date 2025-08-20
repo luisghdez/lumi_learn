@@ -81,6 +81,38 @@ class ChatBubble extends StatelessWidget {
         }
       }
 
+      // Determine which file indices are actually referenced in the message
+      final Set<String> citedFiles = <String>{};
+      // [Source k] references
+      final RegExp sourceRef =
+          RegExp(r'\[(?:Source)\s+(\d+)(?:,\s*p\.?\s*(\d+))?\]');
+      for (final match in sourceRef.allMatches(message)) {
+        final int? idx = int.tryParse(match.group(1) ?? '');
+        if (idx != null && idx >= 1 && idx <= srcList.length) {
+          final Map<String, dynamic> src = srcList[idx - 1];
+          final String fileName = (src['fileName'] ?? '').toString();
+          if (fileName.isNotEmpty) citedFiles.add(fileName);
+        }
+      }
+      // [k] references (per-file index)
+      final Map<int, String> indexToFileName = {
+        for (final e in fileNameToIndex.entries) e.value: e.key
+      };
+      final RegExp numberRef = RegExp(r'\[(\d+)(?:,\s*p\.?\s*(\d+))?\]');
+      for (final match in numberRef.allMatches(message)) {
+        final int? idx = int.tryParse(match.group(1) ?? '');
+        if (idx != null) {
+          final String? fileName = indexToFileName[idx];
+          if (fileName != null && fileName.isNotEmpty) {
+            citedFiles.add(fileName);
+          }
+        }
+      }
+
+      final List<String> filteredFiles = citedFiles.isEmpty
+          ? <String>[]
+          : orderedFiles.where((f) => citedFiles.contains(f)).toList();
+
       List<Widget> children = [
         Container(
           width: double.infinity,
@@ -188,13 +220,13 @@ class ChatBubble extends StatelessWidget {
         ),
       ];
 
-      // Add grouped source list at the bottom if any
-      if (orderedFiles.isNotEmpty) {
+      // Add grouped source list at the bottom if any referenced indices exist
+      if (filteredFiles.isNotEmpty) {
         children.add(const SizedBox(height: 8));
         // children
         //     .add(Divider(color: Colors.white.withOpacity(0.08), height: 20));
         children.add(const SizedBox(height: 4));
-        for (final file in orderedFiles) {
+        for (final file in filteredFiles) {
           final int idx = fileNameToIndex[file]!;
           final String originalName =
               (fileNameToOriginalName[file]?.trim().isNotEmpty ?? false)
