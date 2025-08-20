@@ -124,6 +124,7 @@ class SourceButton extends StatelessWidget {
           showPdfViewerModal(
             context,
             source['fileName']?.toString() ?? '',
+            originalName: source['originalName']?.toString(),
             initialPageNumber: initialPage,
           );
         },

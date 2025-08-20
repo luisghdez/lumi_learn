@@ -57,15 +57,21 @@ class ChatBubble extends StatelessWidget {
       final List<Map<String, dynamic>> srcList = sources ?? const [];
       final Map<String, int> fileNameToIndex = <String, int>{};
       final Map<String, Set<int>> fileNameToPages = <String, Set<int>>{};
+      final Map<String, String> fileNameToOriginalName = <String, String>{};
       final List<String> orderedFiles = <String>[];
 
       // TODO: originalName is just for display, and fileName is the actual file
       for (final s in srcList) {
         final String fileName = (s['fileName'] ?? '').toString();
+        final String originalName = (s['originalName'] ?? '').toString();
         if (fileName.isEmpty) continue;
         if (!fileNameToIndex.containsKey(fileName)) {
           fileNameToIndex[fileName] = fileNameToIndex.length + 1;
           orderedFiles.add(fileName);
+        }
+        if (originalName.isNotEmpty &&
+            !fileNameToOriginalName.containsKey(fileName)) {
+          fileNameToOriginalName[fileName] = originalName;
         }
         final page = s['pageNumber'];
         final int? p =
@@ -190,6 +196,10 @@ class ChatBubble extends StatelessWidget {
         children.add(const SizedBox(height: 4));
         for (final file in orderedFiles) {
           final int idx = fileNameToIndex[file]!;
+          final String originalName =
+              (fileNameToOriginalName[file]?.trim().isNotEmpty ?? false)
+                  ? fileNameToOriginalName[file]!.trim()
+                  : file;
 
           children.add(
             Padding(
@@ -200,6 +210,7 @@ class ChatBubble extends StatelessWidget {
                     showPdfViewerModal(
                       context,
                       file,
+                      originalName: originalName,
                       initialPageNumber: 1,
                     );
                   },
@@ -233,7 +244,7 @@ class ChatBubble extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            file,
+                            originalName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -464,6 +475,11 @@ class SourceIndexRefBuilder extends MarkdownElementBuilder {
                 showPdfViewerModal(
                   context,
                   fileName,
+                  originalName:
+                      (src['originalName']?.toString().trim().isNotEmpty ??
+                              false)
+                          ? src['originalName'].toString()
+                          : fileName,
                   initialPageNumber: initialPage,
                 );
               },
@@ -521,6 +537,11 @@ class NumberRefBuilder extends MarkdownElementBuilder {
                 showPdfViewerModal(
                   context,
                   fileName,
+                  originalName:
+                      (src['originalName']?.toString().trim().isNotEmpty ??
+                              false)
+                          ? src['originalName'].toString()
+                          : fileName,
                   initialPageNumber: initialPage,
                 );
               },

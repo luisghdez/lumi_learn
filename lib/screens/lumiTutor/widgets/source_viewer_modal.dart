@@ -8,13 +8,14 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 ///     'https://.../courses/A1Y8ynTKM-evd2lZP90gw.pdf');
 ///   showPdfViewerModal(context, 'courses/A1Y8ynTKM-evd2lZP90gw.pdf');
 void showPdfViewerModal(BuildContext context, String pdfPathOrUrl,
-    {int? initialPageNumber}) {
+    {String? originalName, int? initialPageNumber}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _PdfViewerModal(
       input: pdfPathOrUrl,
+      originalName: originalName,
       initialPageNumber: initialPageNumber,
     ),
   );
@@ -23,7 +24,9 @@ void showPdfViewerModal(BuildContext context, String pdfPathOrUrl,
 class _PdfViewerModal extends StatelessWidget {
   final String input;
   final int? initialPageNumber;
-  const _PdfViewerModal({required this.input, this.initialPageNumber});
+  final String? originalName;
+  const _PdfViewerModal(
+      {required this.input, this.originalName, this.initialPageNumber});
 
   static const _fallbackHost =
       'https://storage.googleapis.com/lumi-7f941.firebasestorage.app';
@@ -49,7 +52,9 @@ class _PdfViewerModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedUrl = _resolveUrl(input);
-    final title = _fileName(resolvedUrl);
+    final title = (originalName != null && originalName!.trim().isNotEmpty)
+        ? originalName!.trim()
+        : _fileName(resolvedUrl);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
