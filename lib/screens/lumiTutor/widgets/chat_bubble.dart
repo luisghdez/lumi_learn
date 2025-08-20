@@ -84,7 +84,7 @@ class ChatBubble extends StatelessWidget {
       List<Widget> children = [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+          padding: const EdgeInsets.only(top: 12),
           child: MarkdownBody(
             data: message,
             // ✅ Teach the parser LaTeX delimiters so it emits <math> nodes
@@ -191,8 +191,8 @@ class ChatBubble extends StatelessWidget {
       // Add grouped source list at the bottom if any
       if (orderedFiles.isNotEmpty) {
         children.add(const SizedBox(height: 8));
-        children
-            .add(Divider(color: Colors.white.withOpacity(0.08), height: 20));
+        // children
+        //     .add(Divider(color: Colors.white.withOpacity(0.08), height: 20));
         children.add(const SizedBox(height: 4));
         for (final file in orderedFiles) {
           final int idx = fileNameToIndex[file]!;
@@ -203,7 +203,7 @@ class ChatBubble extends StatelessWidget {
 
           children.add(
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.only(bottom: 12),
               child: Builder(
                 builder: (context) => InkWell(
                   onTap: () {
@@ -217,18 +217,19 @@ class ChatBubble extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.04),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: Colors.white12),
                     ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.max,
+                      // mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                              horizontal: 4, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),
@@ -236,8 +237,10 @@ class ChatBubble extends StatelessWidget {
                           child: Text(
                             '[$idx]',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.white54,
                               fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              height: 1.0,
                             ),
                           ),
                         ),
@@ -248,7 +251,7 @@ class ChatBubble extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                color: Colors.white, fontSize: 14),
+                                color: Colors.white54, fontSize: 14),
                           ),
                         ),
                       ],
