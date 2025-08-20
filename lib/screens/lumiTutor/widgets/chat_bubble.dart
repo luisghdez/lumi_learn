@@ -3,7 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:lumi_learn_app/application/models/chat_sender.dart'; // ✅ Shared enum
-import 'package:lumi_learn_app/screens/lumiTutor/widgets/sources_display.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/widgets/source_viewer_modal.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -52,7 +52,7 @@ class ChatBubble extends StatelessWidget {
         ),
       );
     } else {
-      // Tutor message - Markdown with LaTeX support + Sources
+      // Tutor message - Markdown with LaTeX support + inline [Source N] chips
       List<Widget> children = [
         Container(
           width: double.infinity,
@@ -60,11 +60,15 @@ class ChatBubble extends StatelessWidget {
           child: MarkdownBody(
             data: message,
             // ✅ Teach the parser LaTeX delimiters so it emits <math> nodes
-            inlineSyntaxes: [MathSyntax()],
+            inlineSyntaxes: [
+              SourceRefSyntax(),
+              MathSyntax(),
+            ],
             // Keep GitHub extensions (tables, strikethrough, etc.)
             extensionSet: md.ExtensionSet.gitHubFlavored,
             builders: {
               'math': MathBuilder(),
+              'sourceRef': SourceRefBuilder(sources ?? const []),
             },
             styleSheet: MarkdownStyleSheet(
               p: const TextStyle(
@@ -151,11 +155,6 @@ class ChatBubble extends StatelessWidget {
           ),
         ),
       ];
-
-      // Add sources if available
-      if (sources != null && sources!.isNotEmpty) {
-        children.add(SourcesDisplay(sources: sources!));
-      }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,6 +252,89 @@ class MathBuilder extends MarkdownElementBuilder {
               ),
               mathStyle: MathStyle.text,
             ),
+    );
+  }
+}
+
+class SourceRefSyntax extends md.InlineSyntax {
+  SourceRefSyntax() : super(r'\[Source\s+(\d+)\]');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    print(match);
+    final number = match.group(1) ?? '';
+    final el = md.Element.text('sourceRef', number);
+    el.attributes['index'] = number;
+    parser.addNode(el);
+    return true;
+  }
+}
+
+class SourceRefBuilder extends MarkdownElementBuilder {
+  final List<Map<String, dynamic>> sources;
+  SourceRefBuilder(this.sources);
+
+  @override
+  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    final String idxStr = element.attributes['index'] ?? element.textContent;
+    final int? idx = int.tryParse(idxStr);
+
+    if (idx == null || idx < 1 || idx > sources.length) {
+      return Text('[Source $idxStr]',
+          style: const TextStyle(color: Colors.cyanAccent));
+    }
+
+    final src = sources[idx - 1];
+    final fileName = (src['fileName'] ?? '').toString();
+    final page = src['pageNumber'];
+    final int? initialPage =
+        page is int ? page : (page is String ? int.tryParse(page) : null);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+      child: Builder(
+        builder: (context) => Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: fileName.isEmpty
+                ? null
+                : () {
+                    showPdfViewerModal(
+                      context,
+                      fileName,
+                      initialPageNumber: initialPage,
+                    );
+                  },
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.cyanAccent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.cyanAccent.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.source, size: 14, color: Colors.cyanAccent),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Source $idx',
+                    style: const TextStyle(
+                      color: Colors.cyanAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
