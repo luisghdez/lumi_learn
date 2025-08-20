@@ -224,7 +224,7 @@ class ChatBubble extends StatelessWidget {
                       border: Border.all(color: Colors.white12),
                     ),
                     child: Row(
-                      // mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
@@ -244,15 +244,13 @@ class ChatBubble extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            originalName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                color: Colors.white54, fontSize: 14),
-                          ),
+                        const SizedBox(width: 6),
+                        Text(
+                          originalName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 14),
                         ),
                       ],
                     ),
