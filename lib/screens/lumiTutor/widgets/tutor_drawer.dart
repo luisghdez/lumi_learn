@@ -82,19 +82,75 @@ class LumiDrawer extends StatelessWidget {
                     }
 
                     return Expanded(
-                      child: ListView.separated(
-                        itemCount: tutorController.getSortedThreads().length,
-                        separatorBuilder: (context, index) => const Divider(
-                          color: Colors.white12,
-                          height: 1,
-                          thickness: 0.5,
-                        ),
-                        itemBuilder: (context, index) {
-                          final thread =
-                              tutorController.getSortedThreads()[index];
-                          return _buildThreadTile(
-                              context, thread, tutorController);
-                        },
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: RefreshIndicator(
+                              onRefresh: () => tutorController.refreshThreads(),
+                              color: Colors.white,
+                              backgroundColor: Colors.black.withOpacity(0.3),
+                              child: ListView.separated(
+                                itemCount:
+                                    tutorController.getSortedThreads().length,
+                                separatorBuilder: (context, index) =>
+                                    const Divider(
+                                  color: Colors.white12,
+                                  height: 1,
+                                  thickness: 0.5,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final thread =
+                                      tutorController.getSortedThreads()[index];
+                                  return _buildThreadTile(
+                                      context, thread, tutorController);
+                                },
+                              ),
+                            ),
+                          ),
+                          // Load More Button
+                          Obx(() {
+                            if (!tutorController.hasMore.value) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: tutorController.isLoadingMore.value
+                                      ? null
+                                      : () => tutorController.loadMoreThreads(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Colors.white.withOpacity(0.1),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: tutorController.isLoadingMore.value
+                                      ? const SizedBox(
+                                          height: 16,
+                                          width: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Load More',
+                                          style: TextStyle(fontSize: 14),
+                                        ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
                       ),
                     );
                   }),

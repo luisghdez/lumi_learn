@@ -31,6 +31,11 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
   final ScrollController _scrollController = ScrollController();
   final TutorController _tutorController = Get.find<TutorController>();
 
+  // GetX workers to clean up reactive listeners
+  Worker? _messagesWorker;
+  Worker? _activeThreadWorker;
+  Worker? _loadingMoreWorker;
+
   final List<String> _suggestions = [
     "What is Newton’s First Law?",
     "Explain the Doppler effect",
@@ -39,6 +44,10 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
 
   // ---- Smart-scroll state ----
   bool _suppressAutoScroll = false; // true right after switching threads
+
+  // ---- Lazy-load anchor state ----
+  double? _preLoadMaxScrollExtent;
+  bool _awaitingLoadMoreApply = false;
 
   bool get _isNearBottom {
     if (!_scrollController.hasClients) return true;
@@ -56,9 +65,12 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       Get.find<NavigationController>().hideNavBar();
       _handleScannedInput(widget.initialArgs);
 
+      // Listen for scrolls to trigger lazy loading when nearing the top (older end)
+      _scrollController.addListener(_onScroll);
+
       // Animate subtly to the bottom as new messages stream in
       // ONLY if we're already near the bottom and not right after a thread switch.
-      ever(_tutorController.messages, (_) {
+      _messagesWorker = ever(_tutorController.messages, (_) {
         if (!mounted || _suppressAutoScroll) return;
         if (_isNearBottom) {
           _animateToBottom(durationMs: 120); // gentle nudge
@@ -66,14 +78,12 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       });
 
       // When switching threads, do NOT animate or jump — just render latest.
-      ever(_tutorController.activeThread, (_) {
+      _activeThreadWorker = ever(_tutorController.activeThread, (_) {
         _suppressAutoScroll = true; // prevent one-frame auto-scroll
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _suppressAutoScroll = false;
         });
       });
-
-      // We intentionally do NOT auto-scroll on isLoadingMessages changes.
     });
   }
 
@@ -84,6 +94,10 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         Get.find<NavigationController>().showNavBar();
       }
     });
+    _messagesWorker?.dispose();
+    _activeThreadWorker?.dispose();
+    _loadingMoreWorker?.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -123,6 +137,23 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         );
       }
     });
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients || !_tutorController.hasActiveThread) {
+      return;
+    }
+    final position = _scrollController.position;
+    const threshold = 160.0; // begin prefetching slightly before the edge
+    final isNearTop = (position.maxScrollExtent - position.pixels) <= threshold;
+
+    if (isNearTop &&
+        _tutorController.hasMoreMessages.value &&
+        !_tutorController.isLoadingMoreMessages.value) {
+      _preLoadMaxScrollExtent = position.maxScrollExtent;
+      _awaitingLoadMoreApply = true;
+      _tutorController.loadMoreMessages();
+    }
   }
 
   void _handleSend(String message) {
@@ -234,28 +265,56 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                         );
                       }
 
-                      // Main chat list
-                      return ListView.builder(
-                        controller: _scrollController,
-                        reverse:
-                            true, // show latest at "top" of the viewport (bottom visually)
-                        itemCount: _tutorController.messages.length,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        itemBuilder: (context, index) {
-                          final reversedIndex =
-                              _tutorController.messages.length - 1 - index;
-                          final message =
-                              _tutorController.messages[reversedIndex];
+                      // Main chat list + top overlay loader for lazy loading
+                      return Stack(
+                        children: [
+                          ListView.builder(
+                            controller: _scrollController,
+                            reverse:
+                                true, // show latest at "top" of the viewport (bottom visually)
+                            itemCount: _tutorController.messages.length,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                            itemBuilder: (context, index) {
+                              final reversedIndex =
+                                  _tutorController.messages.length - 1 - index;
+                              final message =
+                                  _tutorController.messages[reversedIndex];
 
-                          return ChatBubble(
-                            message: message.content,
-                            sender: message.role == MessageRole.user
-                                ? ChatSender.user
-                                : ChatSender.tutor,
-                            sources: message.sources,
-                          );
-                        },
+                              return ChatBubble(
+                                message: message.content,
+                                sender: message.role == MessageRole.user
+                                    ? ChatSender.user
+                                    : ChatSender.tutor,
+                                sources: message.sources,
+                              );
+                            },
+                          ),
+                          // Subtle loader that appears at the top when fetching older messages
+                          if (_tutorController.isLoadingMoreMessages.value)
+                            Positioned(
+                              top: 8,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.0,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       );
                     }),
                   ),

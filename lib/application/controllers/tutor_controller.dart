@@ -14,13 +14,19 @@ class TutorController extends GetxController {
   // Observable state
   RxList<Thread> threads = <Thread>[].obs;
   RxBool isLoading = false.obs;
+  RxBool isLoadingMore = false.obs;
   RxBool hasMore = false.obs;
   RxString errorMessage = ''.obs;
+  RxnString nextCursor = RxnString();
 
   // Active thread and messages
   Rxn<Thread> activeThread = Rxn<Thread>();
   RxList<Message> messages = <Message>[].obs;
   RxBool isLoadingMessages = false.obs;
+  RxBool isLoadingMoreMessages = false.obs;
+  RxBool hasMoreMessages = false.obs;
+  RxnString nextMessageCursor = RxnString();
+  RxInt totalMessageCount = 0.obs;
   RxBool isOpeningFromCourse = false.obs;
 
   @override
@@ -43,7 +49,10 @@ class TutorController extends GetxController {
         return;
       }
 
-      final response = await _tutorService.getThreads(token: token);
+      final response = await _tutorService.getThreads(
+        token: token,
+        limit: 10,
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -51,6 +60,7 @@ class TutorController extends GetxController {
 
         threads.value = threadsResponse.threads;
         hasMore.value = threadsResponse.hasMore;
+        nextCursor.value = threadsResponse.nextCursor;
       } else {
         errorMessage.value = 'Failed to fetch threads: ${response.statusCode}';
       }
@@ -182,6 +192,9 @@ class TutorController extends GetxController {
       if (newThread != null) {
         threads.insert(0, newThread);
         threads.refresh();
+        // Reset pagination state since we have a new thread
+        hasMore.value = false;
+        nextCursor.value = null;
       }
     } catch (e) {
       errorMessage.value = 'Error creating thread: $e';
@@ -287,11 +300,119 @@ class TutorController extends GetxController {
   }
 
   Future<void> refreshThreads() async {
+    // Reset pagination state when refreshing
+    nextCursor.value = null;
+    hasMore.value = false;
     await fetchThreads();
+  }
+
+  Future<void> loadMoreThreads() async {
+    if (isLoadingMore.value || !hasMore.value || nextCursor.value == null)
+      return;
+
+    isLoadingMore.value = true;
+    errorMessage.value = '';
+
+    try {
+      final token = await _authController.getIdToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required';
+        isLoadingMore.value = false;
+        return;
+      }
+
+      final response = await _tutorService.getThreads(
+        token: token,
+        limit: 10,
+        cursor: nextCursor.value,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final threadsResponse = ThreadsResponse.fromJson(data);
+
+        // Append new threads to existing list
+        threads.addAll(threadsResponse.threads);
+        hasMore.value = threadsResponse.hasMore;
+        nextCursor.value = threadsResponse.nextCursor;
+      } else {
+        errorMessage.value =
+            'Failed to load more threads: ${response.statusCode}';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error loading more threads: $e';
+      print('Error loading more threads: $e');
+    } finally {
+      isLoadingMore.value = false;
+    }
   }
 
   void clearError() {
     errorMessage.value = '';
+  }
+
+  void clearThreads() {
+    threads.clear();
+    hasMore.value = false;
+    nextCursor.value = null;
+    errorMessage.value = '';
+  }
+
+  Future<void> loadMoreMessages() async {
+    if (isLoadingMoreMessages.value ||
+        !hasMoreMessages.value ||
+        nextMessageCursor.value == null) {
+      return;
+    }
+
+    isLoadingMoreMessages.value = true;
+    errorMessage.value = '';
+
+    try {
+      final token = await _authController.getIdToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required';
+        isLoadingMoreMessages.value = false;
+        return;
+      }
+
+      final response = await _tutorService.getThreadMessages(
+        token: token,
+        threadId: activeThread.value!.threadId,
+        limit: 10,
+        cursor: nextMessageCursor.value,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final messagesResponse = ThreadMessagesResponse.fromJson(data);
+
+        // Prepend new messages to existing list (since messages are in reverse chronological order)
+        messages.insertAll(0, messagesResponse.messages);
+        hasMoreMessages.value = messagesResponse.hasMore;
+        nextMessageCursor.value = messagesResponse.nextCursor;
+      } else {
+        errorMessage.value =
+            'Failed to load more messages: ${response.statusCode}';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error loading more messages: $e';
+      print('Error loading more messages: $e');
+    } finally {
+      isLoadingMoreMessages.value = false;
+    }
+  }
+
+  Future<void> refreshMessages() async {
+    if (activeThread.value == null) return;
+
+    // Reset pagination state
+    hasMoreMessages.value = false;
+    nextMessageCursor.value = null;
+    totalMessageCount.value = 0;
+
+    // Reload messages
+    await fetchThreadMessages(activeThread.value!.threadId);
   }
 
   Thread? getThreadById(String threadId) {
@@ -330,6 +451,7 @@ class TutorController extends GetxController {
       final response = await _tutorService.getThreadMessages(
         token: token,
         threadId: threadId,
+        limit: 10,
       );
 
       if (response.statusCode == 200) {
@@ -337,6 +459,9 @@ class TutorController extends GetxController {
         final messagesResponse = ThreadMessagesResponse.fromJson(data);
 
         messages.value = messagesResponse.messages;
+        hasMoreMessages.value = messagesResponse.hasMore;
+        nextMessageCursor.value = messagesResponse.nextCursor;
+        totalMessageCount.value = messagesResponse.totalCount ?? 0;
       } else {
         errorMessage.value = 'Failed to fetch messages: ${response.statusCode}';
       }
@@ -351,6 +476,9 @@ class TutorController extends GetxController {
   void clearActiveThread() {
     activeThread.value = null;
     messages.clear();
+    hasMoreMessages.value = false;
+    nextMessageCursor.value = null;
+    totalMessageCount.value = 0;
   }
 
   bool get hasActiveThread => activeThread.value != null;
@@ -378,6 +506,7 @@ class TutorController extends GetxController {
       final response = await _tutorService.getCourseMessages(
         token: token,
         courseId: courseId,
+        limit: 10,
       );
 
       if (response.statusCode == 200) {
@@ -385,6 +514,9 @@ class TutorController extends GetxController {
         // Expecting shape compatible with ThreadMessagesResponse
         final messagesResponse = ThreadMessagesResponse.fromJson(data);
         messages.value = messagesResponse.messages;
+        hasMoreMessages.value = messagesResponse.hasMore;
+        nextMessageCursor.value = messagesResponse.nextCursor;
+        totalMessageCount.value = messagesResponse.totalCount ?? 0;
 
         // Try to find corresponding thread in current list and set it active
         final thread = getThreadById(messagesResponse.threadId);

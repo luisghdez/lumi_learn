@@ -8,8 +8,17 @@ class TutorService {
 
   Future<http.Response> getThreads({
     required String token,
+    int? limit,
+    String? cursor,
+    String? lastDoc,
   }) async {
-    final uri = Uri.parse('$_baseUrl/threads');
+    final queryParams = <String, String>{};
+    if (limit != null) queryParams['limit'] = limit.toString();
+    if (cursor != null) queryParams['cursor'] = cursor;
+    if (lastDoc != null) queryParams['lastDoc'] = lastDoc;
+
+    final uri =
+        Uri.parse('$_baseUrl/threads').replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
       headers: {
@@ -46,8 +55,17 @@ class TutorService {
   Future<http.Response> getThreadMessages({
     required String token,
     required String threadId,
+    int? limit,
+    String? cursor,
+    String? lastDoc,
   }) async {
-    final uri = Uri.parse('$_baseUrl/threads/$threadId/messages');
+    final queryParams = <String, String>{};
+    if (limit != null) queryParams['limit'] = limit.toString();
+    if (cursor != null) queryParams['cursor'] = cursor;
+    if (lastDoc != null) queryParams['lastDoc'] = lastDoc;
+
+    final uri = Uri.parse('$_baseUrl/threads/$threadId/messages')
+        .replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
       headers: {
@@ -88,8 +106,17 @@ class TutorService {
   Future<http.Response> getCourseMessages({
     required String token,
     required String courseId,
+    int? limit,
+    String? cursor,
+    String? lastDoc,
   }) async {
-    final uri = Uri.parse('$_baseUrl/courses/$courseId/messages');
+    final queryParams = <String, String>{};
+    if (limit != null) queryParams['limit'] = limit.toString();
+    if (cursor != null) queryParams['cursor'] = cursor;
+    if (lastDoc != null) queryParams['lastDoc'] = lastDoc;
+
+    final uri = Uri.parse('$_baseUrl/courses/$courseId/messages')
+        .replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
       headers: {

@@ -41,10 +41,12 @@ class Thread {
 class ThreadsResponse {
   final List<Thread> threads;
   final bool hasMore;
+  final String? nextCursor;
 
   ThreadsResponse({
     required this.threads,
     required this.hasMore,
+    this.nextCursor,
   });
 
   factory ThreadsResponse.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class ThreadsResponse {
           .map((threadJson) => Thread.fromJson(threadJson))
           .toList(),
       hasMore: json['hasMore'] ?? false,
+      nextCursor: json['nextCursor'],
     );
   }
 
@@ -60,6 +63,7 @@ class ThreadsResponse {
     return {
       'threads': threads.map((thread) => thread.toJson()).toList(),
       'hasMore': hasMore,
+      if (nextCursor != null) 'nextCursor': nextCursor,
     };
   }
 }

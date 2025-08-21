@@ -45,11 +45,15 @@ class ThreadMessagesResponse {
   final String threadId;
   final List<Message> messages;
   final bool hasMore;
+  final String? nextCursor;
+  final int? totalCount;
 
   ThreadMessagesResponse({
     required this.threadId,
     required this.messages,
     required this.hasMore,
+    this.nextCursor,
+    this.totalCount,
   });
 
   factory ThreadMessagesResponse.fromJson(Map<String, dynamic> json) {
@@ -59,6 +63,8 @@ class ThreadMessagesResponse {
           .map((messageJson) => Message.fromJson(messageJson))
           .toList(),
       hasMore: json['hasMore'] ?? false,
+      nextCursor: json['nextCursor'],
+      totalCount: json['totalCount'],
     );
   }
 
@@ -67,6 +73,8 @@ class ThreadMessagesResponse {
       'threadId': threadId,
       'messages': messages.map((message) => message.toJson()).toList(),
       'hasMore': hasMore,
+      if (nextCursor != null) 'nextCursor': nextCursor,
+      if (totalCount != null) 'totalCount': totalCount,
     };
   }
 }
