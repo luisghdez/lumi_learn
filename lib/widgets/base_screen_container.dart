@@ -17,7 +17,7 @@ class BaseScreenContainer extends StatelessWidget {
     this.backgroundAsset = 'assets/images/black_moons_lighter.png',
     this.includeSafeArea = true,
     this.tabletBreakpoint = 800,
-    this.bottomPadding = 40,
+    this.bottomPadding = 0,
     this.enableScroll = true,
   }) : super(key: key);
 
@@ -29,8 +29,7 @@ class BaseScreenContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double horizontalPadding = _getHorizontalPadding(context);
-    final double topPadding =
-        MediaQuery.of(context).padding.top + horizontalPadding;
+    final double topPadding = MediaQuery.of(context).padding.top;
 
     return Stack(
       children: [
@@ -43,7 +42,7 @@ class BaseScreenContainer extends StatelessWidget {
         if (includeSafeArea)
           SafeArea(
             top: false,
-            bottom: false,
+            bottom: true,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final double minHeight = math.max(

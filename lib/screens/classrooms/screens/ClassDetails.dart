@@ -119,9 +119,7 @@ class _ClassroomDetailsState extends State<ClassroomDetails> {
                                   if (false == true) return;
 
                                   courseController.setSelectedCourseId(
-                                    course.id,
-                                    course.title,
-                                  );
+                                      course.id, course.title);
 
                                   Get.to(
                                     () => LoadingScreen(),

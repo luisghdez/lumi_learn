@@ -47,23 +47,29 @@ class _LumiTextInputFieldState extends State<LumiTextInputField> {
             children: [
               ListTile(
                 leading: const Icon(Icons.image, color: Colors.white),
-                title: const Text('Pick Image', style: TextStyle(color: Colors.white)),
+                title: const Text('Pick Image',
+                    style: TextStyle(color: Colors.white)),
                 onTap: () async {
                   Navigator.pop(context);
                   final picker = ImagePicker();
-                  final image = await picker.pickImage(source: ImageSource.gallery);
+                  final image =
+                      await picker.pickImage(source: ImageSource.gallery);
                   if (image != null && widget.onImagePicked != null) {
                     widget.onImagePicked!(File(image.path));
                   }
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.insert_drive_file, color: Colors.white),
-                title: const Text('Pick File', style: TextStyle(color: Colors.white)),
+                leading:
+                    const Icon(Icons.insert_drive_file, color: Colors.white),
+                title: const Text('Pick File',
+                    style: TextStyle(color: Colors.white)),
                 onTap: () async {
                   Navigator.pop(context);
                   final result = await FilePicker.platform.pickFiles();
-                  if (result != null && result.files.single.path != null && widget.onFilePicked != null) {
+                  if (result != null &&
+                      result.files.single.path != null &&
+                      widget.onFilePicked != null) {
                     widget.onFilePicked!(File(result.files.single.path!));
                   }
                 },
@@ -89,14 +95,15 @@ class _LumiTextInputFieldState extends State<LumiTextInputField> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30),
           border: Border.all(color: Colors.white24),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.attach_file, color: Colors.white60, size: 22),
+              icon: const Icon(Icons.attach_file,
+                  color: Colors.white60, size: 22),
               onPressed: _handleAttachment,
               tooltip: 'Attach file or image',
             ),
@@ -118,7 +125,8 @@ class _LumiTextInputFieldState extends State<LumiTextInputField> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+              icon:
+                  const Icon(Icons.send_rounded, color: Colors.white, size: 22),
               onPressed: _handleSend,
               tooltip: 'Send message',
             ),

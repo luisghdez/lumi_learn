@@ -17,14 +17,14 @@ class NoteScreen extends StatelessWidget {
     final appBarPad = isTablet ? 32.0 : 0.0;
 
     final markdownStyle = MarkdownStyleSheet(
-      // palette
-      // Deep purple primary, softer lavender accents
-      // (tuned for contrast on pure black)
+      // Links with purple accent
       a: TextStyle(
-        color: const Color(0xFFB388FF), // link lavender
+        color: const Color(0xFFB388FF),
         decoration: TextDecoration.underline,
         decorationColor: const Color(0xFFB388FF).withOpacity(0.6),
       ),
+
+      // Headers with consistent hierarchy
       h1: TextStyle(
         fontSize: isTablet ? 28 : 22,
         fontWeight: FontWeight.bold,
@@ -34,7 +34,7 @@ class NoteScreen extends StatelessWidget {
       h2: TextStyle(
         fontSize: isTablet ? 24 : 20,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFFEDE7F6), // very light purple
+        color: const Color(0xFFEDE7F6),
         height: 1.3,
       ),
       h3: TextStyle(
@@ -44,12 +44,13 @@ class NoteScreen extends StatelessWidget {
         height: 1.35,
       ),
       h4: TextStyle(
-        // NEW for subheaders
         fontSize: isTablet ? 18 : 16,
         fontWeight: FontWeight.w500,
-        color: const Color(0xFFB388FF), // soft lavender
+        color: const Color(0xFFB388FF),
         height: 1.4,
       ),
+
+      // Body text
       p: TextStyle(
         fontSize: isTablet ? 18 : 14,
         fontWeight: FontWeight.w300,
@@ -57,41 +58,48 @@ class NoteScreen extends StatelessWidget {
         height: 1.55,
       ),
 
-      // Quotes: subtle purple tint + left border
+      // Tables with glass morphism
+      tableBorder: TableBorder.all(
+        color: Colors.white.withOpacity(0.08),
+        width: 1,
+        borderRadius: BorderRadius.circular(16),
+      ),
+
+      // Blockquotes with glass morphism effect
       blockquote: TextStyle(
         fontStyle: FontStyle.italic,
         color: const Color(0xFFEDE7F6),
         fontSize: isTablet ? 16 : 14,
         height: 1.45,
       ),
-      blockquotePadding: const EdgeInsets.all(12),
+      blockquotePadding: const EdgeInsets.all(16),
       blockquoteDecoration: BoxDecoration(
-        color: const Color(0xFF5E35B1).withOpacity(0.12), // soft purple wash
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF7C4DFF).withOpacity(0.35),
+          color: Colors.white.withOpacity(0.08),
           width: 1,
         ),
       ),
 
-      // Inline code + fenced code blocks
+      // Code blocks with glass morphism
       code: TextStyle(
         fontFamily: 'monospace',
         fontSize: isTablet ? 16 : 14,
-        color: const Color(0xFFF3E5F5), // light lilac
-        backgroundColor: const Color(0xFF1A1424), // near-black purple
+        color: const Color(0xFFF3E5F5),
+        backgroundColor: const Color(0xFF1A1A1A),
       ),
-      codeblockPadding: const EdgeInsets.all(12),
+      codeblockPadding: const EdgeInsets.all(16),
       codeblockDecoration: BoxDecoration(
-        color: const Color(0xFF1A1424),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF7C4DFF).withOpacity(0.35),
+          color: Colors.white.withOpacity(0.08),
           width: 1,
         ),
       ),
 
-      // Lists & checkboxes
+      // Lists with consistent styling
       listBullet: TextStyle(
         color: const Color(0xFFD1C4E9),
         fontSize: isTablet ? 16 : 14,
@@ -101,7 +109,7 @@ class NoteScreen extends StatelessWidget {
         fontSize: isTablet ? 16 : 14,
       ),
 
-      // Tables: light borders, purple header
+      // Tables with glass morphism
       tableHead: TextStyle(
         color: Colors.white,
         fontWeight: FontWeight.bold,
@@ -112,27 +120,28 @@ class NoteScreen extends StatelessWidget {
         fontSize: isTablet ? 16 : 14,
       ),
       tableCellsDecoration: BoxDecoration(
-        border: Border.all(color: Colors.white12, width: 1),
+        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
       ),
 
-      // Horizontal rule
+      // Horizontal rule with purple accent
       horizontalRuleDecoration: const BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: Color(0xFF7C4DFF), // primary purple
+            color: Color(0xFF7C4DFF),
             width: 0.8,
           ),
         ),
       ),
 
-      // Spacing tuned for readability
-      blockSpacing: 12,
+      // Spacing for readability
+      blockSpacing: 16,
     );
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A0A0A),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           iconSize: iconSize,
@@ -143,10 +152,24 @@ class NoteScreen extends StatelessWidget {
       ),
       body: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Markdown(
-          data: markdownText,
-          styleSheet: markdownStyle,
-          physics: const BouncingScrollPhysics(),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.08),
+                width: 1,
+              ),
+            ),
+            child: Markdown(
+              data: markdownText,
+              styleSheet: markdownStyle,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.all(padding),
+            ),
+          ),
         ),
       ),
     );

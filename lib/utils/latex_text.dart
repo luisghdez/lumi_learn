@@ -78,9 +78,12 @@ List<InlineSpan> buildLatexSpans(
     }
     spans.add(WidgetSpan(
       alignment: PlaceholderAlignment.middle,
-      child: Math.tex(
-        match.group(1)!,
-        textStyle: style.copyWith(fontSize: style.fontSize! + 2),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Math.tex(
+          match.group(1)!,
+          textStyle: style.copyWith(fontSize: style.fontSize! + 2),
+        ),
       ),
     ));
     start = match.end;
