@@ -2,16 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/application/controllers/course_controller.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/course_details_card.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/due_date_dropzone.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/file_list.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/image_preview_list.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/section_header.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/summary_card.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/text_input_section.dart';
-import 'package:lumi_learn_app/screens/main/main_screen.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/course_details_step.dart';
+import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -23,7 +18,8 @@ class CourseCreation extends StatefulWidget {
   State<CourseCreation> createState() => _CourseCreationState();
 }
 
-class _CourseCreationState extends State<CourseCreation> {
+class _CourseCreationState extends State<CourseCreation>
+    with TickerProviderStateMixin {
   List<File> selectedFiles = [];
   List<File> selectedImages = [];
   String text = "";
@@ -34,6 +30,58 @@ class _CourseCreationState extends State<CourseCreation> {
   String language = "";
   String visibility = "Public";
   bool _submitted = false;
+  int _currentStep = 0;
+  String? _selectedInputType; // Track selected input type
+
+  // Animation controllers
+  late AnimationController _stepController;
+  late AnimationController _progressController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize step transition animation
+    _stepController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    // Initialize progress bar animation
+    _progressController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _stepController,
+      curve: Curves.easeInOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.3, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _stepController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Start initial animations
+    _stepController.forward();
+    _progressController.forward();
+  }
+
+  @override
+  void dispose() {
+    _stepController.dispose();
+    _progressController.dispose();
+    super.dispose();
+  }
 
   /// Compute total items based on selected files, images, and whether text is non-empty.
   int get totalItems =>
@@ -133,6 +181,139 @@ class _CourseCreationState extends State<CourseCreation> {
     });
   }
 
+  void _selectInputType(String inputType) {
+    setState(() {
+      _selectedInputType = inputType;
+    });
+    // Automatically advance to next step
+    _nextStep();
+  }
+
+  void _nextStep() {
+    if (_currentStep < 2) {
+      _stepController.reverse().then((_) {
+        setState(() {
+          _currentStep++;
+        });
+        _stepController.forward();
+        _progressController.forward();
+      });
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      _stepController.reverse().then((_) {
+        setState(() {
+          // Clear content when going back from step 2 to step 1
+          if (_currentStep == 2 && _currentStep - 1 == 1) {
+            // Going back to step 2, no clearing needed
+          } else if (_currentStep == 1 && _currentStep - 1 == 0) {
+            // Going back to step 1 (input selection), clear all content
+            _clearAllContent();
+            _selectedInputType = null;
+          }
+          _currentStep--;
+        });
+        _stepController.forward();
+        _progressController.forward();
+      });
+    }
+  }
+
+  void _clearAllContent() {
+    selectedFiles.clear();
+    selectedImages.clear();
+    text = "";
+    selectedAudioFile = null;
+  }
+
+  bool get _canProceedToNextStep {
+    switch (_currentStep) {
+      case 0:
+        return _selectedInputType != null;
+      case 1:
+        return totalItems > 0;
+      default:
+        return false;
+    }
+  }
+
+  Widget _buildStepIndicator() {
+    return CourseStepIndicator(
+      currentStep: _currentStep,
+      progressController: _progressController,
+    );
+  }
+
+  Widget _buildStepContent() {
+    return AnimatedBuilder(
+      animation: _stepController,
+      builder: (context, child) {
+        return SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: _getCurrentStepWidget(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _getCurrentStepWidget() {
+    switch (_currentStep) {
+      case 0:
+        return InputTypeSelectionStep(
+          selectedInputType: _selectedInputType,
+          onInputTypeSelected: _selectInputType,
+        );
+      case 1:
+        return ContentUploadStep(
+          selectedInputType: _selectedInputType ?? "file",
+          selectedFiles: selectedFiles,
+          selectedImages: selectedImages,
+          text: text,
+          onFileUpload: () => handleFileChange(pickImages: false),
+          onImageUpload: () => handleFileChange(pickImages: true),
+          onTextChanged: (value) => setState(() => text = value),
+          onRemoveFile: removeFile,
+        );
+      case 2:
+        return CourseDetailsStep(
+          courseTitle: courseTitle,
+          courseSubject: courseSubject,
+          language: language,
+          visibility: visibility,
+          submitted: _submitted,
+          onTitleChanged: (v) => setState(() => courseTitle = v),
+          onSubjectChanged: (v) => setState(() => courseSubject = v),
+          onLanguageChanged: (v) => setState(() => language = v),
+          onVisibilityChanged: (v) => setState(() => visibility = v),
+          onSubmittedChanged: () => setState(() => _submitted = true),
+          selectedFiles: selectedFiles,
+          selectedImages: selectedImages,
+          text: text,
+          dueDate: _dueDate,
+          classId: widget.classId,
+        );
+      default:
+        return InputTypeSelectionStep(
+          selectedInputType: _selectedInputType,
+          onInputTypeSelected: _selectInputType,
+        );
+    }
+  }
+
+  Widget _buildNavigationButtons() {
+    return CourseNavigationButtons(
+      currentStep: _currentStep,
+      canProceedToNextStep: _canProceedToNextStep,
+      onPrevious: _previousStep,
+      onNext: _nextStep,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffoldHome(
@@ -149,18 +330,6 @@ class _CourseCreationState extends State<CourseCreation> {
                   height: 56, // adjust to taste
                   child: Stack(
                     children: [
-                      // 1) centered title
-                      Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Create New Course",
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                        ),
-                      ),
                       // 2) back button on the left
                       Align(
                         alignment: Alignment.centerLeft,
@@ -175,209 +344,15 @@ class _CourseCreationState extends State<CourseCreation> {
                 ),
                 const SizedBox(height: 4),
 
-                Text(
-                  "Combine files, images, and text to create your course",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
+                // Step Indicator
+                _buildStepIndicator(),
 
-                // Course Details Section
-                CourseDetailsCard(
-                  title: courseTitle,
-                  subject: courseSubject,
-                  onTitleChanged: (v) => setState(() => courseTitle = v),
-                  onSubjectChanged: (v) => setState(() => courseSubject = v),
-                  language: language,
-                  visibility: visibility,
-                  onLanguageChanged: (v) => setState(() => language = v),
-                  onVisibilityChanged: (v) => setState(() => visibility = v),
-                  titleError: _submitted && courseTitle.trim().isEmpty,
-                  subjectError: _submitted && courseSubject.trim().isEmpty,
-                  languageError: _submitted && language.isEmpty,
-                  visibilityError: _submitted && visibility.isEmpty,
-                ),
+                // Step Content
+                _buildStepContent(),
 
-                const Divider(height: 40),
+                // Navigation Buttons
+                _buildNavigationButtons(),
 
-                /// FILES SECTION
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SectionHeader(
-                      icon: Icons.upload_file,
-                      title: "Add Files",
-                    ),
-                    Text(
-                      "${selectedFiles.length}/10",
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-
-                DropZone(
-                  onTap: () => handleFileChange(pickImages: false),
-                  label: "documents",
-                  subLabel: "PDF",
-                ),
-                if (selectedFiles.isNotEmpty)
-                  FileList(
-                    files: selectedFiles,
-                    onRemove: (i) => removeFile(i, "file"),
-                  ),
-
-                const Divider(height: 40),
-
-                /// IMAGES SECTION
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SectionHeader(
-                      icon: Icons.image,
-                      title: "Add Images",
-                    ),
-                    Text(
-                      "${selectedImages.length}/10",
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-
-                DropZone(
-                  onTap: () => handleFileChange(pickImages: true),
-                  label: "images",
-                  subLabel: "PNG, JPG, JPEG",
-                ),
-                if (selectedImages.isNotEmpty)
-                  ImagePreviewList(
-                    images: selectedImages,
-                    onRemove: (i) => removeFile(i, "image"),
-                  ),
-
-                const Divider(height: 40),
-
-                // submit audio section
-                const SectionHeader(
-                  icon: Icons.mic,
-                  title: "Submit Audio",
-                ),
-                DropZone(
-                  label: "audio",
-                  subLabel: "MP3, WAV, AAC",
-                  onTap: () => handleFileChange(pickImages: false),
-                ),
-
-                const Divider(height: 40),
-
-                /// TEXT SECTION
-                const SectionHeader(
-                  icon: Icons.text_fields,
-                  title: "Add Text",
-                ),
-                const SizedBox(height: 6),
-                // Main text input with a limit of 2000 characters and a counter
-                TextInputSection(
-                  text: text,
-                  onChanged: (v) => setState(() => text = v),
-                ),
-
-                const Divider(height: 40),
-
-                /// SUMMARY OF SELECTED ITEMS
-                if (totalItems > 0)
-                  SummaryCard(
-                    totalItems: totalItems,
-                    fileCount: selectedFiles.length,
-                    imageCount: selectedImages.length,
-                    hasText: text.trim().isNotEmpty,
-                  ),
-
-                /// CARD FOOTER (Create Button & Info)
-                if (totalItems > 0)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _submitted = true;
-                        });
-
-                        final isFormValid = courseTitle.trim().isNotEmpty &&
-                            courseSubject.trim().isNotEmpty &&
-                            language.isNotEmpty &&
-                            visibility.isNotEmpty;
-
-                        if (!isFormValid) {
-                          Get.snackbar("Missing Information",
-                              "Please fill all required fields in Course Details.");
-                          return;
-                        }
-
-                        final courseController = Get.find<CourseController>();
-
-                        // Create a temporary ID for the placeholder course.
-                        final tempId =
-                            "temp_${DateTime.now().millisecondsSinceEpoch}";
-                        // Add a placeholder course with a loading flag to the controller.
-                        courseController.addPlaceholderCourse({
-                          "id": tempId,
-                          "title": courseTitle,
-                          "description": courseSubject,
-                          "loading": true,
-                          "hasEmbeddings":
-                              true, // Default to false for placeholder
-                        });
-
-                        // Navigate immediately back to the HomeScreen.
-                        Get.offAll(() => MainScreen());
-
-                        // Initiate the createCourse request in the background.
-                        courseController
-                            .createCourse(
-                          title: courseTitle,
-                          description: courseSubject,
-                          files: [...selectedFiles, ...selectedImages],
-                          dueDate: _dueDate,
-                          classId: widget.classId,
-                          content: text,
-                          language: language,
-                          visibility: visibility,
-                        )
-                            .then((result) {
-                          courseController.removePlaceholderCourse(tempId);
-                          courseController.updatePlaceholderCourse(tempId, {
-                            "id": result['courseId'],
-                            'totalLessons': result['lessonCount'],
-                            "loading": false,
-                            "hasEmbeddings": result['hasEmbeddings'] ?? true,
-                          });
-                        }).catchError((error) {
-                          courseController.removePlaceholderCourse(tempId);
-                          Get.snackbar("Error", "Failed to create course");
-                        });
-                      },
-                      icon: const Icon(Icons.add, color: Colors.black),
-                      label: const Text(
-                        "Create Course",
-                        style: TextStyle(color: Colors.black),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        textStyle: const TextStyle(fontSize: 16),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(8),
-                            bottomRight: Radius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 const SizedBox(height: 36),
               ],
             ),
