@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_details_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
+import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -239,6 +241,67 @@ class _CourseCreationState extends State<CourseCreation>
     }
   }
 
+  bool get _canCreateCourse {
+    return courseTitle.trim().isNotEmpty &&
+        courseSubject.trim().isNotEmpty &&
+        language.isNotEmpty &&
+        visibility.isNotEmpty;
+  }
+
+  void _createCourse() {
+    setState(() {
+      _submitted = true;
+    });
+
+    if (!_canCreateCourse) {
+      Get.snackbar("Missing Information",
+          "Please fill all required fields in Course Details.");
+      return;
+    }
+
+    final courseController = Get.find<CourseController>();
+
+    // Create a temporary ID for the placeholder course.
+    final tempId = "temp_${DateTime.now().millisecondsSinceEpoch}";
+
+    // Add a placeholder course with a loading flag to the controller.
+    courseController.addPlaceholderCourse({
+      "id": tempId,
+      "title": courseTitle,
+      "description": courseSubject,
+      "loading": true,
+      "hasEmbeddings": true, // Default to false for placeholder
+    });
+
+    // Navigate immediately back to the HomeScreen.
+    Get.offAll(() => MainScreen());
+
+    // Initiate the createCourse request in the background.
+    courseController
+        .createCourse(
+      title: courseTitle,
+      description: courseSubject,
+      files: [...selectedFiles, ...selectedImages],
+      dueDate: _dueDate,
+      classId: widget.classId,
+      content: text,
+      language: language,
+      visibility: visibility,
+    )
+        .then((result) {
+      courseController.removePlaceholderCourse(tempId);
+      courseController.updatePlaceholderCourse(tempId, {
+        "id": result['courseId'],
+        'totalLessons': result['lessonCount'],
+        "loading": false,
+        "hasEmbeddings": result['hasEmbeddings'] ?? true,
+      });
+    }).catchError((error) {
+      courseController.removePlaceholderCourse(tempId);
+      Get.snackbar("Error", "Failed to create course");
+    });
+  }
+
   Widget _buildStepIndicator() {
     return CourseStepIndicator(
       currentStep: _currentStep,
@@ -291,6 +354,7 @@ class _CourseCreationState extends State<CourseCreation>
           onLanguageChanged: (v) => setState(() => language = v),
           onVisibilityChanged: (v) => setState(() => visibility = v),
           onSubmittedChanged: () => setState(() => _submitted = true),
+          onCreateCourse: _createCourse,
           selectedFiles: selectedFiles,
           selectedImages: selectedImages,
           text: text,
@@ -309,8 +373,10 @@ class _CourseCreationState extends State<CourseCreation>
     return CourseNavigationButtons(
       currentStep: _currentStep,
       canProceedToNextStep: _canProceedToNextStep,
+      canCreateCourse: _canCreateCourse,
       onPrevious: _previousStep,
       onNext: _nextStep,
+      onCreateCourse: _createCourse,
     );
   }
 
