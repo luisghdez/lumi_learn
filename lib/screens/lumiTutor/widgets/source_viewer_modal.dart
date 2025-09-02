@@ -13,6 +13,9 @@ void showPdfViewerModal(BuildContext context, String pdfPathOrUrl,
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    enableDrag:
+        false, // Disable drag to dismiss to prevent conflict with PDF scrolling
+    isDismissible: true, // Still allow tapping outside or using close button
     builder: (_) => _PdfViewerModal(
       input: pdfPathOrUrl,
       originalName: originalName,
@@ -105,8 +108,8 @@ class _PdfViewerModal extends StatelessWidget {
                 child: SfPdfViewer.network(
                   resolvedUrl,
                   // Optional UX niceties:
-                  canShowPaginationDialog: true,
-                  canShowScrollHead: true,
+                  scrollDirection: PdfScrollDirection.vertical,
+                  pageLayoutMode: PdfPageLayoutMode.continuous,
                   initialPageNumber:
                       (initialPageNumber == null || initialPageNumber! < 1)
                           ? 1
