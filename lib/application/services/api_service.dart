@@ -8,8 +8,12 @@ import 'dart:io';
 import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class ApiService {
+  //LOCAL
   // static const String _baseUrl = 'http://localhost:3000';
-  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  //DEV
+  static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
+  //PROD
+  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,
