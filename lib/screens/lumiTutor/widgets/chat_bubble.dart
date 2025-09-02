@@ -17,6 +17,13 @@ class ChatBubble extends StatelessWidget {
     this.sources,
   }) : super(key: key);
 
+
+  String truncateWithEllipsis(String text, {int maxLength = 40}) {
+  if (text.length <= maxLength) return text;
+  return '${text.substring(0, maxLength)}...';
+}
+
+
   @override
   Widget build(BuildContext context) {
     final bool isUser = sender == ChatSender.user;
@@ -277,12 +284,16 @@ class ChatBubble extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          originalName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: Colors.white54, fontSize: 14),
+                        Flexible(
+                          child: Text(
+                            truncateWithEllipsis(originalName, maxLength: 40),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ],
                     ),
