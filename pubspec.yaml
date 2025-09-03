@@ -75,6 +75,7 @@ dependencies:
   pdfx: ^2.9.2
   syncfusion_flutter_pdfviewer: ^29.1.38
   firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^19.4.1
 
 flutter_launcher_icons:
   android: true
