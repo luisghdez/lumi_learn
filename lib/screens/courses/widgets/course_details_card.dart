@@ -140,9 +140,6 @@ class CourseDetailsCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SectionHeader(icon: Icons.menu_book, title: 'Course Details'),
-        const SizedBox(height: 12),
-
         // Title
         const _Label('Title'),
         const SizedBox(height: 4),

@@ -46,7 +46,7 @@ class ContentUploadStep extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          "Step 2: Upload Files",
+          "Upload Files",
           style: TextStyle(
             fontSize: 18,
             color: Colors.white,
@@ -62,16 +62,12 @@ class ContentUploadStep extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        // const SizedBox(height: 6),
 
         /// FILES SECTION
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const SectionHeader(
-              icon: Icons.upload_file,
-              title: "Add Files",
-            ),
             Text(
               "${selectedFiles.length}/10",
               style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -90,7 +86,7 @@ class ContentUploadStep extends StatelessWidget {
             onRemove: (i) => onRemoveFile(i, "file"),
           ),
 
-        const Divider(height: 40),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -99,7 +95,7 @@ class ContentUploadStep extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          "Step 2: Upload Images",
+          "Upload Images",
           style: TextStyle(
             fontSize: 18,
             color: Colors.white,
@@ -115,16 +111,12 @@ class ContentUploadStep extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        // const SizedBox(height: 6),
 
         /// IMAGES SECTION
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const SectionHeader(
-              icon: Icons.image,
-              title: "Add Images",
-            ),
             Text(
               "${selectedImages.length}/10",
               style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -142,8 +134,7 @@ class ContentUploadStep extends StatelessWidget {
             images: selectedImages,
             onRemove: (i) => onRemoveFile(i, "image"),
           ),
-
-        const Divider(height: 40),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -152,7 +143,7 @@ class ContentUploadStep extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          "Step 2: Add Text Content",
+          "Add Text Content",
           style: TextStyle(
             fontSize: 18,
             color: Colors.white,
@@ -168,21 +159,13 @@ class ContentUploadStep extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
-
-        /// TEXT SECTION
-        const SectionHeader(
-          icon: Icons.text_fields,
-          title: "Add Text",
-        ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 20),
         // Main text input with a limit of 2000 characters and a counter
         TextInputSection(
           text: text,
           onChanged: onTextChanged,
         ),
-
-        const Divider(height: 40),
+        const SizedBox(height: 12),
       ],
     );
   }

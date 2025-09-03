@@ -34,7 +34,7 @@ class CourseNavigationButtons extends StatelessWidget {
           child: Opacity(
             opacity: value,
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
               child: Row(
                 children: [
                   if (currentStep > 0)

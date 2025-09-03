@@ -51,7 +51,7 @@ class CourseDetailsStep extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          "Step 3: Course Details",
+          "Course Details",
           style: TextStyle(
             fontSize: 18,
             color: Colors.white,
@@ -70,18 +70,18 @@ class CourseDetailsStep extends StatelessWidget {
         const SizedBox(height: 24),
 
         /// CONTENT SUMMARY
-        if (totalItems > 0)
-          Column(
-            children: [
-              SummaryCard(
-                totalItems: totalItems,
-                fileCount: selectedFiles.length,
-                imageCount: selectedImages.length,
-                hasText: text.trim().isNotEmpty,
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+        // if (totalItems > 0)
+        //   Column(
+        //     children: [
+        //       SummaryCard(
+        //         totalItems: totalItems,
+        //         fileCount: selectedFiles.length,
+        //         imageCount: selectedImages.length,
+        //         hasText: text.trim().isNotEmpty,
+        //       ),
+        //       const SizedBox(height: 24),
+        //     ],
+        //   ),
 
         // Course Details Section
         CourseDetailsCard(

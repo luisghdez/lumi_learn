@@ -26,10 +26,10 @@ class InputTypeSelectionStep extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           "Choose one input type for your content",
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: Colors.grey),
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[400],
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -37,7 +37,7 @@ class InputTypeSelectionStep extends StatelessWidget {
         // File Option
         InputTypeCard(
           icon: Icons.upload_file,
-          title: "File",
+          title: "Files",
           description: "Upload documents or files",
           examples: "e.g., PDFs like syllabi, presentations, research papers",
           isSelected: selectedInputType == "file",
