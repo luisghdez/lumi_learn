@@ -12,7 +12,7 @@ class TextInputSection extends StatelessWidget {
     Key? key,
     required this.text,
     this.maxLength = 10000,
-    this.minLength = 500,
+    this.minLength = 250,
     required this.onChanged,
   }) : super(key: key);
 
@@ -43,7 +43,7 @@ class TextInputSection extends StatelessWidget {
                   fillColor: Colors.transparent,
                   contentPadding: EdgeInsets.symmetric(vertical: 10),
                   hintText:
-                      "Enter course content here... (minimum 500 characters)",
+                      "Enter course content here... (minimum 250 characters)",
                   hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
                   border: InputBorder.none,
                 ),

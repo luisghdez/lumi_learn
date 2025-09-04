@@ -18,6 +18,7 @@ class AppScaffoldHome extends StatelessWidget {
       appBar: appBar,
       floatingActionButton: floatingActionButton,
       backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // Background image stretched fully
