@@ -91,6 +91,15 @@ class _CourseCreationState extends State<CourseCreation>
       selectedImages.length +
       (text.trim().isNotEmpty ? 1 : 0);
 
+  /// Calculate total file size in MB for selected files only (images use count limit)
+  double get totalFileSizeMB {
+    double totalSize = 0;
+    for (File file in selectedFiles) {
+      totalSize += file.lengthSync();
+    }
+    return totalSize / (1024 * 1024); // Convert bytes to MB
+  }
+
   /// Generic file picker method. If [pickImages] is true, it allows image picking only;
   /// otherwise it allows any file type.
   Future<void> handleFileChange({bool pickImages = false}) async {
@@ -102,25 +111,30 @@ class _CourseCreationState extends State<CourseCreation>
       allowedExtensions: pickImages ? null : ['pdf'],
     );
     if (result != null && result.files.isNotEmpty) {
-      // Define max file size (5 MB)
-      const int maxFileSize = 10 * 1024 * 1024; // 5MB in bytes
+      // Define max file size per file (10 MB)
+      const int maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+      const double maxTotalSize = 25.0; // 25MB total limit for files
+      const int maxImageCount = 10; // 10 image count limit
 
-      // Filter out files that are too large
+      // Filter out files that are too large individually
       final validPlatformFiles = result.files.where((pf) {
         if (pf.size > maxFileSize) {
-          Get.snackbar(
-              "File too large", "File ${pf.name} exceeds the 5MB limit.");
+          Get.snackbar("File too large",
+              "File ${pf.name} exceeds the 10MB individual file limit.");
           return false;
         }
         return true;
       }).toList();
 
+      if (validPlatformFiles.isEmpty) return;
+
       setState(() {
         final fileList =
             validPlatformFiles.map((pf) => File(pf.path!)).toList();
+
         if (pickImages) {
-          // Limit to 10 images
-          final available = 10 - selectedImages.length;
+          // For images: Use count limit (10 images max)
+          final available = maxImageCount - selectedImages.length;
           if (available <= 0) {
             Get.snackbar(
                 "Limit reached", "You can only upload up to 10 images.");
@@ -132,18 +146,20 @@ class _CourseCreationState extends State<CourseCreation>
                 "Only $available images were added. Maximum is 10.");
           }
         } else {
-          // Limit to 2 files
-          final available = 10 - selectedFiles.length;
-          if (available <= 0) {
-            Get.snackbar(
-                "Limit reached", "You can only upload up to 10 files.");
+          // For files: Use size limit (25MB total)
+          double currentFileSize =
+              selectedFiles.fold(0.0, (sum, file) => sum + file.lengthSync()) /
+                  (1024 * 1024);
+          double newFilesSize = validPlatformFiles.fold(
+              0.0, (sum, pf) => sum + (pf.size / (1024 * 1024)));
+          double projectedFileSize = currentFileSize + newFilesSize;
+
+          if (projectedFileSize > maxTotalSize) {
+            Get.snackbar("Size limit exceeded",
+                "Adding these files would exceed the 25MB limit for files. Current files: ${currentFileSize.toStringAsFixed(1)}MB");
             return;
           }
-          selectedFiles.addAll(fileList.take(available));
-          if (fileList.length > available) {
-            Get.snackbar("Limit reached",
-                "Only $available files were added. Maximum is 10.");
-          }
+          selectedFiles.addAll(fileList);
         }
       });
     }
@@ -337,6 +353,7 @@ class _CourseCreationState extends State<CourseCreation>
           selectedFiles: selectedFiles,
           selectedImages: selectedImages,
           text: text,
+          totalFileSizeMB: totalFileSizeMB,
           onFileUpload: () => handleFileChange(pickImages: false),
           onImageUpload: () => handleFileChange(pickImages: true),
           onTextChanged: (value) => setState(() => text = value),

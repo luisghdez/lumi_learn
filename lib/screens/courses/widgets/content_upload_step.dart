@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/section_header.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/file_list.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/image_preview_list.dart';
@@ -11,6 +10,7 @@ class ContentUploadStep extends StatelessWidget {
   final List<File> selectedFiles;
   final List<File> selectedImages;
   final String text;
+  final double totalFileSizeMB;
   final VoidCallback onFileUpload;
   final VoidCallback onImageUpload;
   final Function(String) onTextChanged;
@@ -22,6 +22,7 @@ class ContentUploadStep extends StatelessWidget {
     required this.selectedFiles,
     required this.selectedImages,
     required this.text,
+    required this.totalFileSizeMB,
     required this.onFileUpload,
     required this.onImageUpload,
     required this.onTextChanged,
@@ -62,14 +63,14 @@ class ContentUploadStep extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        // const SizedBox(height: 6),
+        const SizedBox(height: 6),
 
         /// FILES SECTION
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text(
-              "${selectedFiles.length}/10",
+              "${totalFileSizeMB.toStringAsFixed(1)}MB / 25MB",
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
