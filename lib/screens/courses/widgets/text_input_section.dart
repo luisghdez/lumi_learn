@@ -5,12 +5,14 @@ import 'package:lumi_learn_app/constants.dart';
 class TextInputSection extends StatelessWidget {
   final String text;
   final int maxLength;
+  final int minLength;
   final ValueChanged<String> onChanged;
 
   const TextInputSection({
     Key? key,
     required this.text,
     this.maxLength = 10000,
+    this.minLength = 500,
     required this.onChanged,
   }) : super(key: key);
 
@@ -40,7 +42,8 @@ class TextInputSection extends StatelessWidget {
                   filled: true,
                   fillColor: Colors.transparent,
                   contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  hintText: "Enter course content here...",
+                  hintText:
+                      "Enter course content here... (minimum 500 characters)",
                   hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
                   border: InputBorder.none,
                 ),
@@ -50,9 +53,22 @@ class TextInputSection extends StatelessWidget {
           ),
           Align(
             alignment: Alignment.centerRight,
-            child: Text(
-              "${text.length}/$maxLength",
-              style: const TextStyle(fontSize: 10, color: Colors.white70),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "${text.length}/$maxLength",
+                  style: const TextStyle(fontSize: 10, color: Colors.white70),
+                ),
+                Text(
+                  "Min: $minLength chars ${text.length >= minLength ? '✓' : ''}",
+                  style: TextStyle(
+                    fontSize: 9,
+                    color:
+                        text.length >= minLength ? Colors.green : Colors.orange,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

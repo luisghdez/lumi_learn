@@ -85,11 +85,11 @@ class _CourseCreationState extends State<CourseCreation>
     super.dispose();
   }
 
-  /// Compute total items based on selected files, images, and whether text is non-empty.
+  /// Compute total items based on selected files, images, and whether text meets minimum requirement.
   int get totalItems =>
       selectedFiles.length +
       selectedImages.length +
-      (text.trim().isNotEmpty ? 1 : 0);
+      (text.trim().length >= 500 ? 1 : 0);
 
   /// Calculate total file size in MB for selected files only (images use count limit)
   double get totalFileSizeMB {
@@ -99,6 +99,9 @@ class _CourseCreationState extends State<CourseCreation>
     }
     return totalSize / (1024 * 1024); // Convert bytes to MB
   }
+
+  /// Check if text meets minimum character requirement
+  bool get textMeetsMinimum => text.trim().length >= 500;
 
   /// Generic file picker method. If [pickImages] is true, it allows image picking only;
   /// otherwise it allows any file type.
