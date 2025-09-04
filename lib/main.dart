@@ -8,23 +8,33 @@ import 'package:camera/camera.dart';
 
 import 'firebase_options.dart';
 import 'application/controllers/auth_controller.dart';
-import 'application/controllers/friends_controller.dart';
 import 'application/controllers/navigation_controller.dart';
-import 'application/services/friends_service.dart';
 import 'screens/auth/auth_gate.dart';
 import 'screens/lumiTutor/lumi_tutor_main.dart';
 
-// <<< NEW
+// <<< NEW: Notifications services
+import 'notifications/firebase_messaging.dart';
+import 'notifications/local_notifications.dart';
+
+// <<< NEW: Keyboard utils
 import 'utils/keyboard.dart';
 import 'utils/keyboard_dismiss_observer.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // <<< NEW: Init local + FCM notifications
+  final localNotificationsService = LocalNotificationsService.instance();
+  await localNotificationsService.init();
+
+  final firebaseMessagingService = FirebaseMessagingService.instance();
+  await firebaseMessagingService.init(localNotificationsService: localNotificationsService);
+
+  // RevenueCat setup
   await Purchases.setLogLevel(LogLevel.debug);
   if (Platform.isIOS) {
     const revenueCatApiKey = 'appl_XogUDdsMUBFvcOEdKPcoEyYUlkk';
@@ -32,9 +42,11 @@ void main() async {
     await Purchases.configure(configuration);
   }
 
+  // GetX controllers
   Get.put(AuthController());
   Get.put(NavigationController());
 
+  // Camera initialization
   final cameras = await availableCameras();
 
   runApp(MyApp(cameras: cameras));
@@ -62,22 +74,15 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/lumiTutorChat', page: () => const LumiTutorMain()),
       ],
 
-      // <<< NEW: dismiss on any route change (GetX + Navigator)
+      // <<< Keyboard handling
       navigatorObservers: [
         KeyboardDismissObserver(),
       ],
-
-      // <<< NEW: also hide when Get’s routing changes (covers nested/router cases)
       routingCallback: (routing) {
-        // This fires on Get.to, Get.off*, etc.
         Keyboard.hide();
       },
-
-      // <<< NEW: ensure the very first frame (e.g., Home) starts with keyboard hidden
       builder: (context, child) {
-        // Hide after first layout of each route to prevent “stuck keyboard” on entry
         WidgetsBinding.instance.addPostFrameCallback((_) => Keyboard.hide());
-        // Global tap-to-dismiss anywhere (nice UX)
         return GestureDetector(
           behavior: HitTestBehavior.deferToChild,
           onTap: Keyboard.hide,
