@@ -58,32 +58,6 @@ class CourseStepIndicator extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: AnimatedBuilder(
-              animation: progressController,
-              builder: (context, child) {
-                return TweenAnimationBuilder<Color?>(
-                  duration: const Duration(milliseconds: 400),
-                  tween: ColorTween(
-                    begin: Colors.grey.withOpacity(0.3),
-                    end: currentStep >= 2
-                        ? Colors.white
-                        : Colors.grey.withOpacity(0.3),
-                  ),
-                  builder: (context, color, child) {
-                    return Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
         ],
       ),
     );

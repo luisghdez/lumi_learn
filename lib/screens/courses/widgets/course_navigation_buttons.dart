@@ -55,21 +55,6 @@ class CourseNavigationButtons extends StatelessWidget {
                   if (currentStep > 0) const SizedBox(width: 16),
                   if (currentStep == 1)
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: canProceedToNextStep ? onNext : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text("Next"),
-                      ),
-                    ),
-                  if (currentStep == 2)
-                    Expanded(
                       child: ElevatedButton.icon(
                         onPressed: canCreateCourse && onCreateCourse != null
                             ? onCreateCourse

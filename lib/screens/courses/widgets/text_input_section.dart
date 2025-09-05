@@ -43,7 +43,7 @@ class TextInputSection extends StatelessWidget {
                   fillColor: Colors.transparent,
                   contentPadding: EdgeInsets.symmetric(vertical: 10),
                   hintText:
-                      "Enter course content here... (minimum 250 characters)",
+                      "Paste your content here, or write something like 'Create a course about biology fundamentals'...",
                   hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
                   border: InputBorder.none,
                 ),

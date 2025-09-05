@@ -6,7 +6,6 @@ import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
-import 'package:lumi_learn_app/screens/courses/widgets/course_details_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
@@ -25,13 +24,8 @@ class _CourseCreationState extends State<CourseCreation>
   List<File> selectedFiles = [];
   List<File> selectedImages = [];
   String text = "";
-  String courseTitle = "";
-  String courseSubject = "";
   DateTime? _dueDate;
   File? selectedAudioFile;
-  String language = "";
-  String visibility = "Public";
-  bool _submitted = false;
   int _currentStep = 0;
   String? _selectedInputType; // Track selected input type
 
@@ -211,7 +205,7 @@ class _CourseCreationState extends State<CourseCreation>
   }
 
   void _nextStep() {
-    if (_currentStep < 2) {
+    if (_currentStep < 1) {
       _stepController.reverse().then((_) {
         setState(() {
           _currentStep++;
@@ -226,11 +220,9 @@ class _CourseCreationState extends State<CourseCreation>
     if (_currentStep > 0) {
       _stepController.reverse().then((_) {
         setState(() {
-          // Clear content when going back from step 2 to step 1
-          if (_currentStep == 2 && _currentStep - 1 == 1) {
-            // Going back to step 2, no clearing needed
-          } else if (_currentStep == 1 && _currentStep - 1 == 0) {
-            // Going back to step 1 (input selection), clear all content
+          // Clear content when going back from step 1 to step 0
+          if (_currentStep == 1 && _currentStep - 1 == 0) {
+            // Going back to step 0 (input selection), clear all content
             _clearAllContent();
             _selectedInputType = null;
           }
@@ -261,20 +253,13 @@ class _CourseCreationState extends State<CourseCreation>
   }
 
   bool get _canCreateCourse {
-    return courseTitle.trim().isNotEmpty &&
-        courseSubject.trim().isNotEmpty &&
-        language.isNotEmpty &&
-        visibility.isNotEmpty;
+    return totalItems > 0;
   }
 
   void _createCourse() {
-    setState(() {
-      _submitted = true;
-    });
-
     if (!_canCreateCourse) {
-      Get.snackbar("Missing Information",
-          "Please fill all required fields in Course Details.");
+      Get.snackbar(
+          "Missing Content", "Please add content before creating the course.");
       return;
     }
 
@@ -286,28 +271,25 @@ class _CourseCreationState extends State<CourseCreation>
     // Add a placeholder course with a loading flag to the controller.
     courseController.addPlaceholderCourse({
       "id": tempId,
-      "title": courseTitle,
-      "description": courseSubject,
+      "title": "New Course", // Backend will generate title
+      "description":
+          "Generating course...", // Backend will generate description
       "loading": true,
-      "hasEmbeddings": true, // Default to false for placeholder
+      "hasEmbeddings": true,
     });
 
     // Navigate immediately back to the HomeScreen.
     Get.offAll(() => MainScreen());
 
     // Initiate the createCourse request in the background.
-    courseController
-        .createCourse(
-      title: courseTitle,
-      description: courseSubject,
+    courseController.createCourse(
       files: [...selectedFiles, ...selectedImages],
       dueDate: _dueDate,
       classId: widget.classId,
       content: text,
-      language: language,
-      visibility: visibility,
-    )
-        .then((result) {
+      language: "English", // Default language
+      visibility: "Public", // Default visibility
+    ).then((result) {
       courseController.removePlaceholderCourse(tempId);
       courseController.updatePlaceholderCourse(tempId, {
         "id": result['courseId'],
@@ -361,25 +343,6 @@ class _CourseCreationState extends State<CourseCreation>
           onImageUpload: () => handleFileChange(pickImages: true),
           onTextChanged: (value) => setState(() => text = value),
           onRemoveFile: removeFile,
-        );
-      case 2:
-        return CourseDetailsStep(
-          courseTitle: courseTitle,
-          courseSubject: courseSubject,
-          language: language,
-          visibility: visibility,
-          submitted: _submitted,
-          onTitleChanged: (v) => setState(() => courseTitle = v),
-          onSubjectChanged: (v) => setState(() => courseSubject = v),
-          onLanguageChanged: (v) => setState(() => language = v),
-          onVisibilityChanged: (v) => setState(() => visibility = v),
-          onSubmittedChanged: () => setState(() => _submitted = true),
-          onCreateCourse: _createCourse,
-          selectedFiles: selectedFiles,
-          selectedImages: selectedImages,
-          text: text,
-          dueDate: _dueDate,
-          classId: widget.classId,
         );
       default:
         return InputTypeSelectionStep(
