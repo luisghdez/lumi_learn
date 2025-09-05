@@ -67,6 +67,7 @@ class FirebaseMessagingService {
       sound: true,
     );
 
+
     // Log the user's permission decision
     print('User granted permission: ${result.authorizationStatus}');
   }

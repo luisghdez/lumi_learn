@@ -60,6 +60,10 @@ class LocalNotificationsService {
       print('Foreground notification has been tapped: ${response.payload}');
     });
 
+    await _flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+      ?.requestPermissions(alert: true, badge: true, sound: true);
+
     // Create Android notification channel
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -85,7 +89,11 @@ class LocalNotificationsService {
     );
 
     // iOS-specific notification details
-    const iosDetails = DarwinNotificationDetails();
+    const iosDetails = DarwinNotificationDetails(
+      sound: 'confirm.wav',
+      presentSound: true,
+    );
+
 
     // Combine platform-specific details
     final notificationDetails = NotificationDetails(
