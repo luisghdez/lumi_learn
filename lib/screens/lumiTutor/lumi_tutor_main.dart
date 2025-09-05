@@ -62,7 +62,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      Get.find<NavigationController>().hideNavBar();
+
       _handleScannedInput(widget.initialArgs);
 
       // Listen for scrolls to trigger lazy loading when nearing the top (older end)
@@ -169,15 +169,12 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
         courseId: widget.courseId,
       );
     }
-
-    // Ensure we stay pinned to the bottom after sending,
     // in case the user was scrolled up browsing history.
     _animateToBottom(durationMs: 150);
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return WillPopScope(
       onWillPop: () async => false,
@@ -194,7 +191,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
             onRefresh: null,
             builder: (context) => Padding(
               padding:
-                  EdgeInsets.only(bottom: bottomInset), // avoids keyboard gap
+                  const EdgeInsets.only(bottom: 8), // avoids keyboard gap
               child: Column(
                 children: [
                   Obx(() {

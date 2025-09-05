@@ -3,7 +3,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class TutorService {
-  static const String _baseUrl = 'http://localhost:3000';
+  //LOCAL
+  // static const String _baseUrl = 'http://localhost:3000';
+  //DEV
+  static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
+  //PROD
   // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> getThreads({
