@@ -1,5 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'local_notifications.dart';
+// import '../application/services/notif_service.dart';
+import 'package:lumi_learn_app/application/services/notif_service.dart';
+
 
 
 class FirebaseMessagingService {
@@ -42,21 +45,26 @@ class FirebaseMessagingService {
     }
   }
 
+  final service = NotifService();
+
+
   /// Retrieves and manages the FCM token for push notifications
   Future<void> _handlePushNotificationsToken() async {
-    // Get the FCM token for the device
     final token = await FirebaseMessaging.instance.getToken();
     print('Push notifications token: $token');
 
-    // Listen for token refresh events
-    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+    if (token != null) {
+      await service.sendFcmTokenToServer(token); // ✅ Send to backend here
+    }
+
+    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
       print('FCM token refreshed: $fcmToken');
-      // TODO: optionally send token to your server for targeting this device
+      await service.sendFcmTokenToServer(fcmToken); // ✅ Update on refresh too
     }).onError((error) {
-      // Handle errors during token refresh
       print('Error refreshing FCM token: $error');
     });
   }
+
 
   /// Requests notification permission from the user
   Future<void> _requestPermission() async {
