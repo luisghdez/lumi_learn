@@ -2,67 +2,81 @@ import 'firebase_messaging.dart';
 import 'local_notifications.dart';
 
 class NotificationCampaigns {
-  // Singleton pattern
+  // Singleton
   NotificationCampaigns._internal();
-
   static final NotificationCampaigns _instance = NotificationCampaigns._internal();
-
   factory NotificationCampaigns.instance() => _instance;
 
   // Services
-  final _messagingService = FirebaseMessagingService.instance();
+  final _messagingService = FirebaseMessagingService.instance(); // (not used yet, but fine to keep)
   final _localNotificationsService = LocalNotificationsService.instance();
 
-  /// Show a streak milestone notification
-  Future<void> showStreakMilestoneNotification(int streakCount) async {
-    if (streakCount == 1) {
-      await _localNotificationsService.showNotification(
-        "🔥 5-Day Streak!",
-        "You're on fire! Keep the momentum going.",
-        "streak_5",
-      );
+  /// Schedule a streak milestone notification (default: 2 hours later)
+  Future<void> scheduleStreakMilestoneNotification(
+    int streakCount, {
+    Duration delay = const Duration(hours: 2),
+  }) async {
+    String? title;
+    String? body;
+    final payload = 'streak_$streakCount';
+
+    if (streakCount == 5) {
+      title = 'Lumi is happy 5-Day Streak!';
+      body  = "You're on fire! Keep the momentum going.";
     } else if (streakCount == 10) {
-      await _localNotificationsService.showNotification(
-        "🎯 10-Day Streak!",
-        "Consistency pays off — keep going strong.",
-        "streak_10",
-      );
+      title = 'Lumi is impressed 10-Day Streak!';
+      body  = 'Consistency pays off — keep going strong.';
+    } else if (streakCount == 20) {
+      title = 'Lumi is blushing 20-Day Streak!';
+      body  = "Amazing run — don't stop now.";
+    } else if (streakCount == 30) {
+      title = 'Lumi knows you are him 30-Day Streak!';
+      body  = 'A full month! Legendary consistency.';
     }
-    // Add more milestones as needed
-  }
 
-  /// Show a re-engagement notification for inactive users
-  Future<void> showReengagementNotification(int daysInactive) async {
-    if (daysInactive >= 3 && daysInactive < 7) {
-      await _localNotificationsService.showNotification(
-        "👋 We miss you!",
-        "Jump back into your course — just 5 minutes today makes a difference.",
-        "reengage_3_days",
-      );
-    } else if (daysInactive >= 7) {
-      await _localNotificationsService.showNotification(
-        "📚 It's been a while...",
-        "Let’s pick things up where you left off!",
-        "reengage_7_days",
+    if (title != null && body != null) {
+      if (delay.isNegative || delay.inSeconds == 0) return;
+      await _localNotificationsService.scheduleNotification(
+        delay: delay,
+        title: title,
+        body: body,
+        payload: payload,
       );
     }
   }
 
-  /// Show a study reminder at a set time (e.g., night)
-  Future<void> showDailyReminder() async {
-    await _localNotificationsService.showNotification(
-      "⏰ Study Reminder",
-      "Got 10 minutes before bed? Perfect for a quick session!",
-      "daily_reminder",
-    );
-  }
+  /// Remind the user they're about to lose their streak if they don't check in today.
+  ///
+  /// By default:
+  ///   - deadline = tonight at local midnight
+  ///   - warningBefore = 2 hours → schedules at 10 PM
+/// Remind the user 22h after their last check-in (i.e., 2h before losing a 24h-based streak)
+Future<void> scheduleStreakRiskReminderAfterLastCheckIn({
+  required DateTime lastCheckIn,
+  Duration after = const Duration(hours: 22),
+}) async {
+  final now = DateTime.now();
+  final scheduled = lastCheckIn.add(after);
 
-  /// Show XP level up (future use)
-  Future<void> showXPLevelUp(int newXp) async {
-    await _localNotificationsService.showNotification(
-      "🏆 Level Up!",
-      "You've reached $newXp XP! Keep it up!",
-      "xp_level_up",
+  if (scheduled.isAfter(now)) {
+    final delay = scheduled.difference(now);
+    if (delay.inSeconds <= 0) return;
+
+    await _localNotificationsService.scheduleNotification(
+      delay: delay,
+      title: "⚠️ Don't lose your streak!",
+      body: 'Check in within the next 2 hours to keep your streak alive 🔥',
+      payload: 'streak_risk',
     );
+  } else {
+    // Too late to schedule based on lastCheckIn + 22h; skip (or choose to notify soon)
+    // Example alternative if you prefer:
+    // await _localNotificationsService.scheduleNotification(
+    //   delay: const Duration(minutes: 1),
+    //   title: "⚠️ Don't lose your streak!",
+    //   body: 'You’re close to losing it — check in now 🔥',
+    //   payload: 'streak_risk',
+    // );
   }
+}
 }

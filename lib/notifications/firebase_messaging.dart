@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'local_notifications.dart';
 // import '../application/services/notif_service.dart';
 import 'package:lumi_learn_app/application/services/notif_service.dart';
+import 'package:get/get.dart';
 
 
 
@@ -86,16 +88,32 @@ class FirebaseMessagingService {
     final notificationData = message.notification;
     if (notificationData != null) {
       // Display a local notification using the service
-      _localNotificationsService?.showNotification(
-          notificationData.title, notificationData.body, message.data.toString());
+    _localNotificationsService?.showNotification(
+      notificationData.title,
+      notificationData.body,
+      jsonEncode(message.data),
+    );
     }
   }
 
   /// Handles notification taps when app is opened from the background or terminated state
-  void _onMessageOpenedApp(RemoteMessage message) {
-    print('Notification caused the app to open: ${message.data.toString()}');
-    // TODO: Add navigation or specific handling based on message data
+void _onMessageOpenedApp(RemoteMessage message) {
+  print('Notification tapped: ${message.data}');
+  final route = message.data['route'];
+  if (route != null) {
+    switch (route) {
+      case "/streak":
+        Get.toNamed("/streakScreen", arguments: message.data);
+        break;
+      case "/reengage":
+        Get.toNamed("/");
+        break;
+      default:
+        Get.toNamed("/");
+    }
   }
+}
+
 }
 
 /// Background message handler (must be top-level function or static)
