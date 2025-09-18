@@ -131,6 +131,8 @@ class CategoryList extends StatelessWidget {
                   totalLessons: course['totalLessons'] ?? 0,
                   imagePath: galaxyImagePath,
                   tags: course['tags'] ?? [],
+                  subject: course['subject'],
+                  hasEmbeddings: course['hasEmbeddings'] ?? false,
                   onTap: () async {
                     // Prevent navigation if still loading
                     if (course['loading'] == true) return;
