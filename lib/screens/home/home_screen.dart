@@ -5,9 +5,9 @@ import 'package:camera/camera.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
-import 'package:lumi_learn_app/screens/courses/test_course_loading.dart';
 import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
 import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
@@ -117,59 +117,74 @@ class _HomeScreenState extends State<HomeScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
-                            child: Row(
-                              children: [
-                                FeatureCard(
-                                  color:
-                                      const Color.fromARGB(255, 85, 151, 222),
-                                  icon: Symbols.document_scanner,
-                                  title: 'AI Scanner',
-                                  onTap: () {
-                                    if (_cameras != null) {
-                                      Get.to(() =>
-                                          AiScannerMain(cameras: _cameras!));
-                                    } else {
-                                      Get.snackbar('Camera Error',
-                                          'Cameras not ready yet');
-                                    }
-                                  },
+                            child: Container(
+                              height: 130,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: greyBorder),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0x9900012D),
+                                    Color(0x993A005A),
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
                                 ),
-                                const SizedBox(width: 10),
-                                FeatureCard(
-                                  color:
-                                      const Color.fromARGB(255, 204, 75, 101),
-                                  icon: Symbols.note_add,
-                                  title: 'Add Course',
-                                  onTap: () {
-                                    Get.to(() => const CourseCreation(),
-                                        transition: Transition.fadeIn,
-                                        duration:
-                                            const Duration(milliseconds: 500));
-                                  },
-                                ),
-                                const SizedBox(width: 10),
-                                FeatureCard(
-                                  color:
-                                      const Color.fromARGB(255, 81, 198, 127),
-                                  icon: Symbols.forum,
-                                  title: 'LumiTutor',
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      NoSwipePageRoute(
-                                        builder: (_) => const LumiTutorMain(
-                                          initialArgs: {
-                                            'type': 'text',
-                                            'paths': [],
-                                            'category': 'Anything',
-                                          },
+                              ),
+                              child: Row(
+                                children: [
+                                  FeatureCard(
+                                    gradientColors: const [],
+                                    icon: Symbols.document_scanner,
+                                    title: 'AI Scanner',
+                                    subtitle: 'Scan & learn instantly',
+                                    onTap: () {
+                                      if (_cameras != null) {
+                                        Get.to(() =>
+                                            AiScannerMain(cameras: _cameras!));
+                                      } else {
+                                        Get.snackbar('Camera Error',
+                                            'Cameras not ready yet');
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(width: 12),
+                                  FeatureCard(
+                                    gradientColors: const [],
+                                    icon: Symbols.note_add,
+                                    title: 'Add Course',
+                                    subtitle: 'Create new course',
+                                    onTap: () {
+                                      Get.to(() => const CourseCreation(),
+                                          transition: Transition.fadeIn,
+                                          duration: const Duration(
+                                              milliseconds: 500));
+                                    },
+                                  ),
+                                  const SizedBox(width: 12),
+                                  FeatureCard(
+                                    gradientColors: const [],
+                                    icon: Symbols.forum,
+                                    title: 'LumiTutor',
+                                    subtitle: 'AI study companion',
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        NoSwipePageRoute(
+                                          builder: (_) => const LumiTutorMain(
+                                            initialArgs: {
+                                              'type': 'text',
+                                              'paths': [],
+                                              'category': 'Anything',
+                                            },
+                                          ),
+                                          duration:
+                                              const Duration(milliseconds: 300),
                                         ),
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 24),
