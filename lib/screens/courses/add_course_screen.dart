@@ -7,7 +7,7 @@ import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dar
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
-import 'package:lumi_learn_app/screens/courses/course_creation_loading_screen.dart';
+import 'package:lumi_learn_app/screens/courses/course_loading_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -265,42 +265,19 @@ class _CourseCreationState extends State<CourseCreation>
 
     final courseController = Get.find<CourseController>();
 
-    // Create a temporary ID for the placeholder course.
-    final tempId = "temp_${DateTime.now().millisecondsSinceEpoch}";
-
-    // Add a placeholder course with a loading flag to the controller.
-    courseController.addPlaceholderCourse({
-      "id": tempId,
-      "title": "New Course", // Backend will generate title
-      "description":
-          "Generating course...", // Backend will generate description
-      "loading": true,
-      "hasEmbeddings": true,
-    });
-
-    // Navigate to the course creation loading screen.
-    Get.offAll(() => CourseCreationLoadingScreen(tempCourseId: tempId));
-
-    // Initiate the createCourse request in the background.
-    courseController.createCourse(
+    // Start the course creation process and get the Future
+    final courseCreationFuture = courseController.createCourse(
       files: [...selectedFiles, ...selectedImages],
       dueDate: _dueDate,
       classId: widget.classId,
       content: text,
       language: "English", // Default language
       visibility: "Public", // Default visibility
-    ).then((result) {
-      courseController.removePlaceholderCourse(tempId);
-      courseController.updatePlaceholderCourse(tempId, {
-        "id": result['courseId'],
-        'totalLessons': result['lessonCount'],
-        "loading": false,
-        "hasEmbeddings": result['hasEmbeddings'] ?? true,
-      });
-    }).catchError((error) {
-      courseController.removePlaceholderCourse(tempId);
-      Get.snackbar("Error", "Failed to create course");
-    });
+    );
+
+    // Navigate immediately to the new loading screen with the Future
+    Get.offAll(
+        () => CourseLoadingScreen(courseCreationFuture: courseCreationFuture));
   }
 
   Widget _buildStepIndicator() {

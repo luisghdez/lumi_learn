@@ -439,7 +439,12 @@ class CourseController extends GetxController {
           colorText: Colors.white,
         );
 
-        return {'courseId': courseId, 'lessonCount': lessonCount};
+        return {
+          'courseId': courseId,
+          'lessonCount': lessonCount,
+          'title': courseTitle,
+          'hasEmbeddings': hasEmbeddings
+        };
       } else {
         Get.snackbar(
           "Error",
