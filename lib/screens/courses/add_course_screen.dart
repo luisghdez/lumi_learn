@@ -7,7 +7,7 @@ import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dar
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
-import 'package:lumi_learn_app/screens/main/main_screen.dart';
+import 'package:lumi_learn_app/screens/courses/course_creation_loading_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -278,8 +278,8 @@ class _CourseCreationState extends State<CourseCreation>
       "hasEmbeddings": true,
     });
 
-    // Navigate immediately back to the HomeScreen.
-    Get.offAll(() => MainScreen());
+    // Navigate to the course creation loading screen.
+    Get.offAll(() => CourseCreationLoadingScreen(tempCourseId: tempId));
 
     // Initiate the createCourse request in the background.
     courseController.createCourse(
