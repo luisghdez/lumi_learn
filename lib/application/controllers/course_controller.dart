@@ -432,13 +432,6 @@ class CourseController extends GetxController {
 
         authController.courseSlotsUsed.value++;
 
-        Get.snackbar(
-          "Success",
-          "Course created successfully!",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-
         return {
           'courseId': courseId,
           'lessonCount': lessonCount,
