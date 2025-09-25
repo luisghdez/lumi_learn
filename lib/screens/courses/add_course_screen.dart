@@ -383,7 +383,7 @@ class _CourseCreationState extends State<CourseCreation>
                       Align(
                         alignment: Alignment.centerLeft,
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_downward_outlined,
+                          icon: const Icon(Icons.arrow_back_ios_new,
                               color: Colors.white),
                           onPressed: () => Get.back(),
                         ),
