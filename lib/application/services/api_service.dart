@@ -8,13 +8,11 @@ import 'dart:io';
 import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class ApiService {
-  // static const String _baseUrl = 'http://localhost:3000';
-  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  static const String _baseUrl = 'http://localhost:3000';
+  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,
-    required String title,
-    required String description,
     required List<File> files,
     required String content,
     required String language,
@@ -29,8 +27,6 @@ class ApiService {
     request.headers['Authorization'] = 'Bearer $token';
 
     // Add text fields
-    request.fields['title'] = title;
-    request.fields['description'] = description;
     request.fields['content'] = content;
     request.fields['language'] = language;
     request.fields['visibility'] = visibility;
