@@ -1,4 +1,5 @@
 // source_viewer_modal.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:http/http.dart' as http;
@@ -503,11 +504,17 @@ class _TxtFileViewerModalState extends State<_TxtFileViewerModal> {
   Future<void> _loadTextContent() async {
     try {
       final resolvedUrl = _resolveUrl(widget.input);
-      final response = await http.get(Uri.parse(resolvedUrl));
+      final response = await http.get(
+        Uri.parse(resolvedUrl),
+        headers: {
+          'Accept-Charset': 'utf-8',
+        },
+      );
 
       if (response.statusCode == 200) {
         setState(() {
-          _content = response.body;
+          // Explicitly decode as UTF-8 to handle special characters properly
+          _content = utf8.decode(response.bodyBytes);
           _isLoading = false;
         });
       } else {
