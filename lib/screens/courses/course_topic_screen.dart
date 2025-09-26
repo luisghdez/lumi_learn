@@ -44,8 +44,7 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                   child: Align(
                     alignment: Alignment.topLeft,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: Colors.white),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Get.back(),
                     ),
                   ),
@@ -215,7 +214,7 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  'Upload your PDF, Images, PPTX for personalized learning',
+                                  'Upload your Files, Images, Text for personalized learning',
                                   style: TextStyle(fontSize: 10),
                                 ),
                               ],

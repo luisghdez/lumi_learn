@@ -9,6 +9,8 @@ class CategoryCard extends StatelessWidget {
   final String imagePath;
   final List<String> tags;
   final VoidCallback onTap;
+  final String? subject;
+  final bool hasEmbeddings;
 
   const CategoryCard({
     Key? key,
@@ -18,6 +20,8 @@ class CategoryCard extends StatelessWidget {
     required this.imagePath,
     required this.tags,
     required this.onTap,
+    this.subject,
+    this.hasEmbeddings = false,
   }) : super(key: key);
 
   @override
@@ -30,8 +34,15 @@ class CategoryCard extends StatelessWidget {
     final double progress =
         totalLessons > 0 ? completedLessons / totalLessons : 0.0;
 
-    final List<String> displayTags =
-        tags.isEmpty ? ['#LumiOG', '#classic'] : tags;
+    List<String> displayTags = List.from(tags);
+
+    // Add subject tag if hasEmbeddings is true and subject is available
+    if (hasEmbeddings && subject != null && subject!.isNotEmpty) {
+      displayTags.insert(0, subject!);
+    } else if (tags.isEmpty) {
+      // Only show default tags when no subject and no other tags
+      displayTags = ['#Classic'];
+    }
 
     return InkWell(
       splashColor: Colors.transparent,

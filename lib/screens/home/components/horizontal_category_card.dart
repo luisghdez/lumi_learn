@@ -9,6 +9,8 @@ class HorizontalCategoryCard extends StatelessWidget {
   final VoidCallback onConfirm;
   final double height;
   final List<String> tags;
+  final String? subject;
+  final bool hasEmbeddings;
 
   const HorizontalCategoryCard({
     Key? key,
@@ -17,12 +19,22 @@ class HorizontalCategoryCard extends StatelessWidget {
     required this.onConfirm,
     required this.height,
     required this.tags,
+    this.subject,
+    this.hasEmbeddings = false,
   }) : super(key: key);
 
   static const double _aspectRatio = 220 / 140;
 
   void _showConfirmationDialog(BuildContext context) {
-    final displayTags = tags.isEmpty ? ['#LumiOG', '#classic'] : tags;
+    List<String> displayTags = List.from(tags);
+
+    // Add subject tag if hasEmbeddings is true and subject is available
+    if (hasEmbeddings && subject != null && subject!.isNotEmpty) {
+      displayTags.insert(0, subject!);
+    } else if (tags.isEmpty) {
+      // Only show default tags when no subject and no other tags
+      displayTags = ['#LumiOG', '#classic'];
+    }
 
     Get.generalDialog(
       barrierDismissible: true,
@@ -147,8 +159,15 @@ class HorizontalCategoryCard extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 600;
 
-    final List<String> displayTags =
-        tags.isEmpty ? ['#LumiOG', '#classic'] : tags;
+    List<String> displayTags = List.from(tags);
+
+    // Add subject tag if hasEmbeddings is true and subject is available
+    if (hasEmbeddings && subject != null && subject!.isNotEmpty) {
+      displayTags.insert(0, subject!);
+    } else if (tags.isEmpty) {
+      // Only show default tags when no subject and no other tags
+      displayTags = ['#LumiOG', '#classic'];
+    }
 
     return SizedBox(
       width: cardWidth,

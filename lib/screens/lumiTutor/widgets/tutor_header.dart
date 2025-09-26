@@ -75,7 +75,9 @@ class TutorHeader extends StatelessWidget {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              courseTitle!,
+                              courseTitle!.length > 10
+                                  ? '${courseTitle!.substring(0, 10)}...'
+                                  : courseTitle!,
                               style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,

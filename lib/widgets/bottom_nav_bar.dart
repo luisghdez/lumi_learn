@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/screens/courses/course_topic_screen.dart';
+import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import '../application/controllers/navigation_controller.dart';
 import '../utils/constants.dart';
 import '../screens/lumiTutor/lumi_tutor_main.dart'; // 👈 import the screen
@@ -66,7 +66,7 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                       onTap: (index) {
                         if (index == 2) {
                           Get.to(
-                            () => const CourseTopicScreen(),
+                            () => const CourseCreation(),
                             transition: Transition.fadeIn,
                             duration: const Duration(milliseconds: 400),
                             fullscreenDialog: true,

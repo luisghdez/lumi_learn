@@ -18,7 +18,7 @@ class DropZone extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 70,
+        height: 170,
         margin: const EdgeInsets.only(top: 8),
         decoration: BoxDecoration(
           border: Border.all(color: greyBorder, width: 1),
@@ -29,6 +29,10 @@ class DropZone extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              //  add a upload icon
+              const Icon(Icons.ios_share_outlined,
+                  size: 42, color: Colors.grey),
+              const SizedBox(height: 16),
               RichText(
                 text: TextSpan(
                   style: const TextStyle(fontSize: 14, color: Colors.grey),

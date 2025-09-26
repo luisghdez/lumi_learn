@@ -380,8 +380,6 @@ class CourseController extends GetxController {
   }
 
   Future<Map<String, dynamic>> createCourse({
-    required String title,
-    required String description,
     required List<File> files,
     required String language,
     required String visibility,
@@ -403,8 +401,6 @@ class CourseController extends GetxController {
       final apiService = ApiService();
       final response = await apiService.createCourse(
         token: token,
-        title: title,
-        description: description,
         files: files,
         content: content,
         classId: classId,
@@ -418,11 +414,14 @@ class CourseController extends GetxController {
         final courseId = responseData['courseId'] as String;
         final lessonCount = responseData['lessonCount'];
         final hasEmbeddings = responseData['hasEmbeddings'] ?? true;
+        final courseTitle = responseData['title'] ?? 'New Course';
+        final courseDescription =
+            responseData['description'] ?? 'Course description';
 
         final newCourse = {
           'id': courseId,
-          'title': title,
-          'description': description,
+          'title': courseTitle,
+          'description': courseDescription,
           'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
           'totalLessons': lessonCount,
           'hasEmbeddings': hasEmbeddings,
@@ -433,14 +432,12 @@ class CourseController extends GetxController {
 
         authController.courseSlotsUsed.value++;
 
-        Get.snackbar(
-          "Success",
-          "Course created successfully!",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-
-        return {'courseId': courseId, 'lessonCount': lessonCount};
+        return {
+          'courseId': courseId,
+          'lessonCount': lessonCount,
+          'title': courseTitle,
+          'hasEmbeddings': hasEmbeddings
+        };
       } else {
         Get.snackbar(
           "Error",
