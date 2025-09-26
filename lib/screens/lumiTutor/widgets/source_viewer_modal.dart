@@ -198,8 +198,6 @@ class _PdfViewerModal extends StatelessWidget {
                   scrollDirection: PdfScrollDirection.vertical,
                   pageLayoutMode: PdfPageLayoutMode.continuous,
                   // Optional UX niceties:
-                  scrollDirection: PdfScrollDirection.vertical,
-                  pageLayoutMode: PdfPageLayoutMode.continuous,
                   initialPageNumber:
                       (initialPageNumber == null || initialPageNumber! < 1)
                           ? 1
