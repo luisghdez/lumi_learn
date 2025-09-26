@@ -38,7 +38,7 @@ dependencies:
   provider: ^6.0.0 # add this line
   get: ^4.6.6
   flutter_launcher_icons: ^0.13.1
-  file_picker: ^6.1.1 # Add this line
+  file_picker: ^8.1.2 # Add this line
   audioplayers: ^6.4.0
   image_picker: ^0.8.7
   http: ^1.1.0
@@ -66,7 +66,7 @@ dependencies:
   sign_in_with_apple: ^6.1.4
   intl: ^0.20.2
   purchases_flutter: ^8.7.2
-  flutter_math_fork: ^0.7.4
+  flutter_math_fork: 0.7.3
   flutter_markdown: ^0.7.7+1
   flutter_doc_scanner: ^0.0.16
   crop_your_image: ^2.0.0
@@ -159,3 +159,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+dependency_overrides:
+  flutter:
+    sdk: flutter
