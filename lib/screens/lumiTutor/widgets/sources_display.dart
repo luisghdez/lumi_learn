@@ -124,11 +124,12 @@ class SourceButton extends StatelessWidget {
           final page = source['pageNumber'];
           final int? initialPage =
               page is int ? page : (page is String ? int.tryParse(page) : null);
-          showPdfViewerModal(
+          showSourceViewerModal(
             context,
             source['fileName']?.toString() ?? '',
             originalName: source['originalName']?.toString(),
             initialPageNumber: initialPage,
+            source: source,
           );
         },
         borderRadius: BorderRadius.circular(20),

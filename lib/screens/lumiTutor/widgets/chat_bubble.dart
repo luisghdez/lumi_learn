@@ -515,6 +515,7 @@ class SourceIndexRefBuilder extends MarkdownElementBuilder {
                           ? src['originalName'].toString()
                           : fileName,
                   initialPageNumber: initialPage,
+                  source: src,
                 );
               },
       ),
@@ -577,6 +578,7 @@ class NumberRefBuilder extends MarkdownElementBuilder {
                           ? src['originalName'].toString()
                           : fileName,
                   initialPageNumber: initialPage,
+                  source: src,
                 );
               },
       ),
