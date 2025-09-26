@@ -108,10 +108,10 @@ class ChatBubble extends StatelessWidget {
           }
         }
       }
-
-      final List<String> filteredFiles = citedFiles.isEmpty
-          ? <String>[]
-          : orderedFiles.where((f) => citedFiles.contains(f)).toList();
+      // DONT DELETE I MIGHT USE LATER!!!!
+      // final List<String> filteredFiles = citedFiles.isEmpty
+      //     ? <String>[]
+      //     : orderedFiles.where((f) => citedFiles.contains(f)).toList();
 
       List<Widget> children = [
         Container(
@@ -220,79 +220,80 @@ class ChatBubble extends StatelessWidget {
         ),
       ];
 
+      // DONT DELETE I MIGHT USE LATER!!!!
       // Add grouped source list at the bottom if any referenced indices exist
-      if (filteredFiles.isNotEmpty) {
-        children.add(const SizedBox(height: 8));
-        // children
-        //     .add(Divider(color: Colors.white.withOpacity(0.08), height: 20));
-        children.add(const SizedBox(height: 4));
-        for (final file in filteredFiles) {
-          final int idx = fileNameToIndex[file]!;
-          final String originalName =
-              (fileNameToOriginalName[file]?.trim().isNotEmpty ?? false)
-                  ? fileNameToOriginalName[file]!.trim()
-                  : file;
+      // if (filteredFiles.isNotEmpty) {
+      //   children.add(const SizedBox(height: 8));
+      //   // children
+      //   //     .add(Divider(color: Colors.white.withOpacity(0.08), height: 20));
+      //   children.add(const SizedBox(height: 4));
+      //   for (final file in filteredFiles) {
+      //     final int idx = fileNameToIndex[file]!;
+      //     final String originalName =
+      //         (fileNameToOriginalName[file]?.trim().isNotEmpty ?? false)
+      //             ? fileNameToOriginalName[file]!.trim()
+      //             : file;
 
-          children.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Builder(
-                builder: (context) => InkWell(
-                  onTap: () {
-                    showPdfViewerModal(
-                      context,
-                      file,
-                      originalName: originalName,
-                      initialPageNumber: 1,
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.04),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '[$idx]',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          originalName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: Colors.white54, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
-      }
+      //     children.add(
+      //       Padding(
+      //         padding: const EdgeInsets.only(bottom: 12),
+      //         child: Builder(
+      //           builder: (context) => InkWell(
+      //             onTap: () {
+      //               showSourceViewerModal(
+      //                 context,
+      //                 file,
+      //                 originalName: originalName,
+      //                 initialPageNumber: 1,
+      //               );
+      //             },
+      //             borderRadius: BorderRadius.circular(18),
+      //             child: Container(
+      //               padding:
+      //                   const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      //               decoration: BoxDecoration(
+      //                 color: Colors.white.withOpacity(0.04),
+      //                 borderRadius: BorderRadius.circular(18),
+      //                 border: Border.all(color: Colors.white12),
+      //               ),
+      //               child: Row(
+      //                 mainAxisSize: MainAxisSize.min,
+      //                 crossAxisAlignment: CrossAxisAlignment.center,
+      //                 children: [
+      //                   Container(
+      //                     padding: const EdgeInsets.symmetric(
+      //                         horizontal: 4, vertical: 4),
+      //                     decoration: BoxDecoration(
+      //                       color: Colors.white.withOpacity(0.12),
+      //                       borderRadius: BorderRadius.circular(6),
+      //                     ),
+      //                     child: Text(
+      //                       '[$idx]',
+      //                       style: const TextStyle(
+      //                         color: Colors.white54,
+      //                         fontWeight: FontWeight.w600,
+      //                         fontSize: 12,
+      //                         height: 1.0,
+      //                       ),
+      //                     ),
+      //                   ),
+      //                   const SizedBox(width: 6),
+      //                   Text(
+      //                     originalName,
+      //                     maxLines: 1,
+      //                     overflow: TextOverflow.ellipsis,
+      //                     style: const TextStyle(
+      //                         color: Colors.white54, fontSize: 14),
+      //                   ),
+      //                 ],
+      //               ),
+      //             ),
+      //           ),
+      //         ),
+      //       ),
+      //     );
+      //   }
+      // }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +506,7 @@ class SourceIndexRefBuilder extends MarkdownElementBuilder {
         onTap: fileName.isEmpty
             ? null
             : () {
-                showPdfViewerModal(
+                showSourceViewerModal(
                   context,
                   fileName,
                   originalName:
@@ -567,7 +568,7 @@ class NumberRefBuilder extends MarkdownElementBuilder {
         onTap: fileName.isEmpty
             ? null
             : () {
-                showPdfViewerModal(
+                showSourceViewerModal(
                   context,
                   fileName,
                   originalName:

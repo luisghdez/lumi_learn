@@ -96,7 +96,10 @@ class SourceButton extends StatelessWidget {
         return Colors.red;
       case 'PPT':
         return Colors.orange;
-      case 'IMG':
+      case 'PNG':
+      case 'JPG':
+      case 'JPEG':
+      case 'GIF':
         return Colors.green;
       default:
         return Colors.blue;
