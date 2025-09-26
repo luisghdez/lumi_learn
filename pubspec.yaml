@@ -66,7 +66,7 @@ dependencies:
   sign_in_with_apple: ^6.1.4
   intl: ^0.20.2
   purchases_flutter: ^8.7.2
-  flutter_math_fork: ^0.7.3
+  flutter_math_fork: ^0.7.4
   flutter_markdown: ^0.7.7+1
   flutter_doc_scanner: ^0.0.16
   crop_your_image: ^2.0.0
@@ -75,6 +75,8 @@ dependencies:
   uuid: ^4.5.1
   pdfx: ^2.9.2
   syncfusion_flutter_pdfviewer: ^29.1.38
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^19.4.1
 
 flutter_launcher_icons:
   android: true

@@ -2,25 +2,39 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:purchases_flutter/purchases_flutter.dart'; // <-- RevenueCat SDK
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:camera/camera.dart';
 
 import 'firebase_options.dart';
 import 'application/controllers/auth_controller.dart';
-import 'application/controllers/friends_controller.dart';
 import 'application/controllers/navigation_controller.dart';
-import 'application/services/friends_service.dart';
 import 'screens/auth/auth_gate.dart';
 import 'screens/lumiTutor/lumi_tutor_main.dart';
 
-void main() async {
+// <<< NEW: Notifications services
+import 'notifications/firebase_messaging.dart';
+import 'notifications/local_notifications.dart';
+
+// <<< NEW: Keyboard utils
+import 'utils/keyboard.dart';
+import 'utils/keyboard_dismiss_observer.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // <<< NEW: Init local + FCM notifications
+  final localNotificationsService = LocalNotificationsService.instance();
+  await localNotificationsService.init();
+
+  final firebaseMessagingService = FirebaseMessagingService.instance();
+  await firebaseMessagingService.init(localNotificationsService: localNotificationsService);
+
+  // RevenueCat setup
   await Purchases.setLogLevel(LogLevel.debug);
   if (Platform.isIOS) {
     const revenueCatApiKey = 'appl_XogUDdsMUBFvcOEdKPcoEyYUlkk';
@@ -28,9 +42,11 @@ void main() async {
     await Purchases.configure(configuration);
   }
 
+  // GetX controllers
   Get.put(AuthController());
   Get.put(NavigationController());
 
+  // Camera initialization
   final cameras = await availableCameras();
 
   runApp(MyApp(cameras: cameras));
@@ -56,9 +72,23 @@ class MyApp extends StatelessWidget {
       getPages: [
         GetPage(name: '/', page: () => AuthGate()),
         GetPage(name: '/lumiTutorChat', page: () => const LumiTutorMain()),
-        // 👇 Add this when you want to route directly to scanner with camera
-        // GetPage(name: '/scanner', page: () => AiScannerMain(cameras: cameras)),
       ],
+
+      // <<< Keyboard handling
+      navigatorObservers: [
+        KeyboardDismissObserver(),
+      ],
+      routingCallback: (routing) {
+        Keyboard.hide();
+      },
+      builder: (context, child) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => Keyboard.hide());
+        return GestureDetector(
+          behavior: HitTestBehavior.deferToChild,
+          onTap: Keyboard.hide,
+          child: child ?? const SizedBox(),
+        );
+      },
     );
   }
 }

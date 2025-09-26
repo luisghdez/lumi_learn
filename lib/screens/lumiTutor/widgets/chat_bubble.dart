@@ -17,6 +17,13 @@ class ChatBubble extends StatelessWidget {
     this.sources,
   }) : super(key: key);
 
+
+  String truncateWithEllipsis(String text, {int maxLength = 40}) {
+  if (text.length <= maxLength) return text;
+  return '${text.substring(0, maxLength)}...';
+}
+
+
   @override
   Widget build(BuildContext context) {
     final bool isUser = sender == ChatSender.user;
