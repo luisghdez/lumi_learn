@@ -412,27 +412,7 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  const Text(
-                    'Select Subject',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 20),
             // Search bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
