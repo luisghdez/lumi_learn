@@ -193,7 +193,7 @@ Widget _buildCourseList(
           imagePath: galaxyImagePath,
           courseName: course['title'] ?? 'Untitled',
           tags: List<String>.from(course['tags'] ?? []),
-          bookmarkCount: course['totalLessons'] ?? 0,
+          bookmarkCount: course['totalSaves'] ?? 0,
           lessonCount: course['totalLessons'] ?? 0,
           subject: course['subject'],
           hasEmbeddings: course['hasEmbeddings'] ?? false,
@@ -387,13 +387,11 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
-    final double maxHeight = screenHeight * 0.75;
+    final double modalHeight = screenHeight * 0.75;
 
     return Material(
       child: Container(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-        ),
+        height: modalHeight,
         decoration: const BoxDecoration(
           color: Color(0xFF1A1A1A),
           borderRadius: BorderRadius.only(
@@ -457,92 +455,133 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
             ),
             const SizedBox(height: 16),
             // Subject list
-            Flexible(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                shrinkWrap: true,
-                itemCount: _filteredSubjects.length,
-                itemBuilder: (context, index) {
-                  final subject = _filteredSubjects[index];
-                  final isSelected = widget.selectedSubject?.id == subject.id;
+            Expanded(
+              child: _filteredSubjects.isEmpty
+                  ? _buildEmptySearchState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _filteredSubjects.length,
+                      itemBuilder: (context, index) {
+                        final subject = _filteredSubjects[index];
+                        final isSelected =
+                            widget.selectedSubject?.id == subject.id;
 
-                  // If this is a header item
-                  if (subject.isHeader) {
-                    return Container(
-                      margin:
-                          EdgeInsets.only(top: index == 0 ? 0 : 16, bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(
-                            subject.icon,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            subject.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                        // If this is a header item
+                        if (subject.isHeader) {
+                          return Container(
+                            margin: EdgeInsets.only(
+                                top: index == 0 ? 0 : 16, bottom: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  subject.icon,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  subject.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Expanded(
+                                  child: Divider(
+                                    color: Colors.white30,
+                                    indent: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Regular subject item
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8, left: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.white.withOpacity(0.15)
+                                : Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  isSelected ? Colors.white30 : Colors.white10,
                             ),
                           ),
-                          const Expanded(
-                            child: Divider(
-                              color: Colors.white30,
-                              indent: 16,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              leading: Icon(
+                                subject.icon,
+                                color:
+                                    isSelected ? Colors.white : Colors.white70,
+                                size: 20,
+                              ),
+                              title: Text(
+                                subject.name,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.white70,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(Icons.check, color: Colors.white)
+                                  : null,
+                              onTap: () {
+                                widget.onSubjectSelected(subject);
+                                Navigator.pop(context);
+                              },
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  // Regular subject item
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8, left: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white.withOpacity(0.15)
-                          : Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? Colors.white30 : Colors.white10,
-                      ),
+                        );
+                      },
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: ListTile(
-                        leading: Icon(
-                          subject.icon,
-                          color: isSelected ? Colors.white : Colors.white70,
-                          size: 20,
-                        ),
-                        title: Text(
-                          subject.name,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white70,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(Icons.check, color: Colors.white)
-                            : null,
-                        onTap: () {
-                          widget.onSubjectSelected(subject);
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
             ),
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptySearchState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 48,
+            color: Colors.white60,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No subjects found',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Try a different search term',
+            style: TextStyle(
+              color: Colors.white60,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
