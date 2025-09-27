@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/screens/courses/my_courses_screen.dart';
+import 'package:lumi_learn_app/application/controllers/search_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 
 class TopPicksHeader extends StatelessWidget {
   final VoidCallback onAddTap;
@@ -28,7 +29,17 @@ class TopPicksHeader extends StatelessWidget {
           style: titleStyle,
         ),
         GestureDetector(
-          onTap: () => Get.to(() => const MyCoursesScreen()),
+          onTap: () {
+            // Set the search controller to show saved courses
+            final LumiSearchController searchController =
+                Get.find<LumiSearchController>();
+            searchController.showSavedCourses();
+
+            // Navigate to search screen using navigation controller
+            final NavigationController navigationController =
+                Get.find<NavigationController>();
+            navigationController.updateIndex(1);
+          },
           child: Row(
             children: [
               Text(

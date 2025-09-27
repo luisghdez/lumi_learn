@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
@@ -64,6 +65,13 @@ class AuthGate extends StatelessWidget {
       if (!Get.isRegistered<TutorController>()) {
         Get.put<TutorController>(
           TutorController(),
+          permanent: true,
+        );
+      }
+
+      if (!Get.isRegistered<LumiSearchController>()) {
+        Get.put<LumiSearchController>(
+          LumiSearchController(),
           permanent: true,
         );
       }
