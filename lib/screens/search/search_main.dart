@@ -98,14 +98,14 @@ Widget _buildCourseList(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white24),
       ),
-      child: Column(
+      child: const Column(
         children: [
           Icon(
             Icons.explore,
             size: 48,
             color: Colors.white60,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Select "Saved" to view your courses',
             style: TextStyle(
@@ -114,7 +114,7 @@ Widget _buildCourseList(
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Toggle the saved filter to see all your saved courses',
             style: TextStyle(
@@ -374,8 +374,10 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
       if (query.isEmpty) {
         _filteredSubjects = widget.subjects;
       } else {
+        // When searching, show only matching subjects (no headers)
         _filteredSubjects = widget.subjects
             .where((subject) =>
+                !subject.isHeader &&
                 subject.name.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
@@ -464,8 +466,41 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
                   final subject = _filteredSubjects[index];
                   final isSelected = widget.selectedSubject?.id == subject.id;
 
+                  // If this is a header item
+                  if (subject.isHeader) {
+                    return Container(
+                      margin:
+                          EdgeInsets.only(top: index == 0 ? 0 : 16, bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            subject.icon,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            subject.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Expanded(
+                            child: Divider(
+                              color: Colors.white30,
+                              indent: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Regular subject item
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
+                    margin: const EdgeInsets.only(bottom: 8, left: 12),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Colors.white.withOpacity(0.15)
@@ -481,6 +516,7 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
                         leading: Icon(
                           subject.icon,
                           color: isSelected ? Colors.white : Colors.white70,
+                          size: 20,
                         ),
                         title: Text(
                           subject.name,
@@ -488,6 +524,7 @@ class _SubjectSelectionModalState extends State<_SubjectSelectionModal> {
                             color: isSelected ? Colors.white : Colors.white70,
                             fontWeight:
                                 isSelected ? FontWeight.w600 : FontWeight.w500,
+                            fontSize: 16,
                           ),
                         ),
                         trailing: isSelected

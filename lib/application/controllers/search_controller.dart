@@ -5,11 +5,13 @@ class Subject {
   final String id;
   final String name;
   final IconData icon;
+  final bool isHeader;
 
   const Subject({
     required this.id,
     required this.name,
     required this.icon,
+    this.isHeader = false,
   });
 }
 
@@ -19,30 +21,85 @@ class LumiSearchController extends GetxController {
   final RxBool showSavedOnly = false.obs;
   final RxString searchQuery = ''.obs;
 
-  // Available subjects
+  // Available subjects organized by categories
   final List<Subject> subjects = const [
     Subject(id: 'all', name: 'All Subjects', icon: Icons.apps),
-    Subject(id: 'math', name: 'Mathematics', icon: Icons.calculate),
-    Subject(id: 'physics', name: 'Physics', icon: Icons.science),
-    Subject(id: 'english', name: 'English', icon: Icons.menu_book),
+
+    // Math category header
+    Subject(
+        id: 'math_header', name: 'Math', icon: Icons.calculate, isHeader: true),
+    Subject(id: 'algebra', name: 'Algebra', icon: Icons.functions),
+    Subject(id: 'geometry', name: 'Geometry', icon: Icons.change_history),
+    Subject(id: 'statistics', name: 'Statistics', icon: Icons.bar_chart),
+    Subject(id: 'calculus', name: 'Calculus', icon: Icons.timeline),
+
+    // Science category header
+    Subject(
+        id: 'science_header',
+        name: 'Science',
+        icon: Icons.science,
+        isHeader: true),
     Subject(id: 'biology', name: 'Biology', icon: Icons.biotech),
     Subject(id: 'chemistry', name: 'Chemistry', icon: Icons.bubble_chart),
-    Subject(id: 'history', name: 'History', icon: Icons.history_edu),
+    Subject(id: 'physics', name: 'Physics', icon: Icons.scatter_plot),
+    Subject(
+        id: 'earth_space', name: 'Earth & Space Science', icon: Icons.public),
+    Subject(
+        id: 'environmental', name: 'Environmental Science', icon: Icons.eco),
     Subject(
         id: 'computer_science', name: 'Computer Science', icon: Icons.computer),
-    Subject(id: 'economics', name: 'Economics', icon: Icons.trending_up),
+
+    // Social Studies category header
+    Subject(
+        id: 'social_header',
+        name: 'Social Studies',
+        icon: Icons.history_edu,
+        isHeader: true),
+    Subject(id: 'world_history', name: 'World History', icon: Icons.language),
+    Subject(id: 'us_history', name: 'U.S. History', icon: Icons.flag),
+    Subject(
+        id: 'european_history', name: 'European History', icon: Icons.castle),
+    Subject(id: 'art_history', name: 'Art History', icon: Icons.museum),
     Subject(id: 'psychology', name: 'Psychology', icon: Icons.psychology),
     Subject(id: 'sociology', name: 'Sociology', icon: Icons.groups),
     Subject(id: 'philosophy', name: 'Philosophy', icon: Icons.lightbulb),
-    Subject(id: 'art', name: 'Art & Design', icon: Icons.palette),
+
+    // Business & Economics category header
+    Subject(
+        id: 'business_header',
+        name: 'Business & Economics',
+        icon: Icons.business,
+        isHeader: true),
+    Subject(id: 'accounting', name: 'Accounting', icon: Icons.account_balance),
+    Subject(id: 'finance', name: 'Finance', icon: Icons.attach_money),
+    Subject(id: 'marketing', name: 'Marketing', icon: Icons.campaign),
+    Subject(
+        id: 'general_business',
+        name: 'General Business',
+        icon: Icons.business_center),
+    Subject(
+        id: 'microeconomics', name: 'Microeconomics', icon: Icons.trending_up),
+    Subject(
+        id: 'macroeconomics', name: 'Macroeconomics', icon: Icons.show_chart),
+
+    // Other category header
+    Subject(
+        id: 'other_header',
+        name: 'Other',
+        icon: Icons.more_horiz,
+        isHeader: true),
     Subject(id: 'music', name: 'Music', icon: Icons.music_note),
-    Subject(id: 'languages', name: 'Foreign Languages', icon: Icons.translate),
+    Subject(id: 'art_design', name: 'Art & Design', icon: Icons.palette),
+    Subject(
+        id: 'foreign_languages',
+        name: 'Foreign Languages',
+        icon: Icons.translate),
   ];
 
   @override
   void onInit() {
     super.onInit();
-    // Default to 'All Subjects'
+    // Default to 'All Subjects' (first item)
     selectedSubject.value = subjects.first;
   }
 
