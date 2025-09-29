@@ -41,6 +41,7 @@ dependencies:
   file_picker: ^6.1.1 # Add this line
   audioplayers: ^6.4.0
   image_picker: ^0.8.7
+  http: ^1.1.0
 
   
   # UI & Fonts
