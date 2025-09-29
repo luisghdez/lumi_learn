@@ -64,8 +64,8 @@ Future<void> scheduleStreakRiskReminderAfterLastCheckIn({
 
     await _localNotificationsService.scheduleNotification(
       delay: delay,
-      title: "⚠️ Don't lose your streak!",
-      body: 'Check in within the next 2 hours to keep your streak alive 🔥',
+      title: "Don't lose your streak!",
+      body: 'Check in within the next 2 hours to keep your streak alive',
       payload: 'streak_risk',
     );
   } else {

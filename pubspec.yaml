@@ -76,6 +76,8 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^29.1.38
   firebase_messaging: ^15.2.10
   flutter_local_notifications: ^19.4.1
+  video_player: ^2.10.0
+  lottie: ^3.3.2
 
 flutter_launcher_icons:
   android: true
@@ -132,6 +134,7 @@ flutter:
     - assets/splash/
     - assets/onboarding/
     - assets/icons/
+    - assets/videos/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
