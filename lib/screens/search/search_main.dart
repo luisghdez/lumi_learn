@@ -151,6 +151,7 @@ Widget _buildCourseList(
   if (filteredCourses.isEmpty) {
     if (searchController.showSavedOnly.value) {
       return Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
