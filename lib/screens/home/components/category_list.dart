@@ -118,8 +118,11 @@ class CategoryList extends StatelessWidget {
         return title.contains(query);
       }).toList();
 
+      // 3. Limit to 5 courses for home screen display
+      final displayCourses = filteredCourses.take(5).toList();
+
       return Column(
-        children: filteredCourses.map<Widget>((course) {
+        children: displayCourses.map<Widget>((course) {
           final galaxyImagePath = getGalaxyForCourse(course['id']);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
