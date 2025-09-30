@@ -55,14 +55,22 @@ class HorizontalCategoryList extends StatelessWidget {
                     onConfirm: () async {
                       if (course['loading'] == true) return;
 
-                      if (!courseController.checkCourseSlotAvailable()) {
-                        return;
+                      // Check if course is already saved
+                      bool isAlreadySaved = courseController.courses.any(
+                          (savedCourse) => savedCourse['id'] == course['id']);
+
+                      if (!isAlreadySaved) {
+                        // Only check slots and save if it's not already saved
+                        if (!courseController.checkCourseSlotAvailable()) {
+                          return;
+                        }
+
+                        bool saved = await courseController.saveSharedCourse(
+                            course['id'], course['title']);
+                        if (!saved) return;
                       }
 
-                      bool saved = await courseController.saveSharedCourse(
-                          course['id'], course['title']);
-                      if (!saved) return;
-
+                      // Always proceed to navigation regardless of save status
                       courseController.setSelectedCourseId(
                           course['id'], course['title']);
 

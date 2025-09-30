@@ -494,6 +494,8 @@ class CourseController extends GetxController {
           'id': courseId,
           'title': courseTitle,
           'totalLessons': responseData['lessonCount'] ?? 0,
+          'hasEmbeddings': responseData['hasEmbeddings'] ?? false,
+          'subject': responseData['subject'] ?? '',
         };
         courses.insert(0, newCourse);
         authController.courseSlotsUsed.value++;
