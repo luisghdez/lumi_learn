@@ -9,6 +9,7 @@ import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/widgets/base_screen_container.dart';
 import 'package:lumi_learn_app/widgets/custom_search_bar.dart';
 import 'package:lumi_learn_app/widgets/regular_category_card.dart';
+import 'package:lumi_learn_app/widgets/tag_chip.dart';
 
 //screens
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
@@ -29,7 +30,15 @@ class SearchMain extends StatelessWidget {
     }
 
     Future<void> handleRefresh() async {
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Refresh courses based on current mode
+      if (!searchController.showSavedOnly.value) {
+        final currentSubject = searchController.selectedSubject.value;
+        await searchController.fetchAllCourses(
+            subject: currentSubject?.id == 'all' ? null : currentSubject?.name);
+      } else {
+        // Refresh saved courses through course controller
+        await courseController.fetchCourses();
+      }
     }
 
     return BaseScreenContainer(
@@ -89,126 +98,309 @@ class SearchMain extends StatelessWidget {
 
 Widget _buildCourseList(
     LumiSearchController searchController, CourseController courseController) {
-  if (!searchController.showSavedOnly.value) {
-    // When saved is not selected, show placeholder message
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: const Column(
-        children: [
-          Icon(
-            Icons.explore,
-            size: 48,
-            color: Colors.white60,
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Select "Saved" to view your courses',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Toggle the saved filter to see all your saved courses',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+  // Show loading indicator when fetching courses
+  if (searchController.isLoading.value) {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
       ),
     );
   }
 
-  // Filter courses based on selected subject and saved status
-  List<Map<String, dynamic>> filteredCourses =
-      List<Map<String, dynamic>>.from(courseController.courses.where((course) {
-    // Subject filter
-    if (searchController.selectedSubject.value?.id != 'all') {
-      final courseSubject = course['subject']?.toString().toLowerCase() ?? '';
-      final selectedSubjectName =
-          searchController.selectedSubject.value?.name.toLowerCase() ?? '';
-      if (!courseSubject.contains(selectedSubjectName) &&
-          !selectedSubjectName.contains(courseSubject)) {
-        return false;
+  List<Map<String, dynamic>> filteredCourses = [];
+
+  if (searchController.showSavedOnly.value) {
+    // When showing saved courses, use existing logic from CourseController
+    filteredCourses = List<Map<String, dynamic>>.from(
+        courseController.courses.where((course) {
+      // Subject filter for saved courses
+      if (searchController.selectedSubject.value?.id != 'all') {
+        final courseSubject = course['subject']?.toString().toLowerCase() ?? '';
+        final selectedSubjectName =
+            searchController.selectedSubject.value?.name.toLowerCase() ?? '';
+        if (!courseSubject.contains(selectedSubjectName) &&
+            !selectedSubjectName.contains(courseSubject)) {
+          return false;
+        }
       }
-    }
-    return true;
-  }));
 
-  if (filteredCourses.isEmpty) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.bookmark_border,
-            size: 48,
-            color: Colors.white60,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            searchController.selectedSubject.value?.id == 'all'
-                ? 'No saved courses found'
-                : 'No saved ${searchController.selectedSubject.value?.name.toLowerCase()} courses',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Create or save some courses to see them here',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+      // Search query filter for saved courses
+      if (searchController.searchQuery.value.isNotEmpty) {
+        final title = course['title']?.toString().toLowerCase() ?? '';
+        final subject = course['subject']?.toString().toLowerCase() ?? '';
+        final tags = List<String>.from(course['tags'] ?? [])
+            .map((tag) => tag.toLowerCase())
+            .join(' ');
+        final query = searchController.searchQuery.value.toLowerCase();
+
+        if (!title.contains(query) &&
+            !subject.contains(query) &&
+            !tags.contains(query)) {
+          return false;
+        }
+      }
+
+      return true;
+    }));
+  } else {
+    // When showing all courses, use the new filteredCourses getter
+    filteredCourses = searchController.filteredCourses;
   }
 
+  // Handle empty states
+  if (filteredCourses.isEmpty) {
+    if (searchController.showSavedOnly.value) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.bookmark_border,
+              size: 48,
+              color: Colors.white60,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              searchController.selectedSubject.value?.id == 'all'
+                  ? 'No saved courses found'
+                  : 'No saved ${searchController.selectedSubject.value?.name.toLowerCase()} courses',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create or save some courses to see them here',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    } else {
+      // No courses found in explore mode
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.explore_off,
+              size: 48,
+              color: Colors.white60,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              searchController.selectedSubject.value?.id == 'all'
+                  ? 'No courses found'
+                  : 'No ${searchController.selectedSubject.value?.name.toLowerCase()} courses found',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Try adjusting your search or subject filter',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  // Display the filtered courses
   return Column(
     children: filteredCourses.map<Widget>((course) {
       final galaxyImagePath = getGalaxyForCourse(course['id']);
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: RegularCategoryCard(
-          imagePath: galaxyImagePath,
-          courseName: course['title'] ?? 'Untitled',
-          tags: List<String>.from(course['tags'] ?? []),
-          bookmarkCount: course['totalSaves'] ?? 0,
-          lessonCount: course['totalLessons'] ?? 0,
-          subject: course['subject'],
-          hasEmbeddings: course['hasEmbeddings'] ?? false,
-          onStartLearning: () => _navigateToCourse(course, courseController),
+        child: Builder(
+          builder: (context) => RegularCategoryCard(
+            imagePath: galaxyImagePath,
+            courseName: course['title'] ?? 'Untitled',
+            tags: List<String>.from(course['tags'] ?? []),
+            bookmarkCount: course['totalSaves'] ?? 0,
+            lessonCount: course['lessonCount'] ?? course['totalLessons'] ?? 0,
+            subject: course['subject'],
+            hasEmbeddings: course['hasEmbeddings'] ?? false,
+            onStartLearning: () => _showCourseConfirmationDialog(
+                context, course, courseController),
+          ),
         ),
       );
     }).toList(),
   );
 }
 
+void _showCourseConfirmationDialog(BuildContext context,
+    Map<String, dynamic> course, CourseController courseController) {
+  List<String> displayTags = List<String>.from(course['tags'] ?? []);
+  final String title = course['title'] ?? 'Untitled Course';
+  final String? subject = course['subject'];
+  final bool hasEmbeddings = course['hasEmbeddings'] ?? false;
+  final int totalSaves = course['totalSaves'] ?? 0;
+  final int totalLessons = course['lessonCount'] ?? course['totalLessons'] ?? 0;
+
+  // Add subject tag if hasEmbeddings is true and subject is available
+  if (hasEmbeddings && subject != null && subject.isNotEmpty) {
+    displayTags.insert(0, subject);
+  } else if (displayTags.isEmpty) {
+    // Only show default tags when no subject and no other tags
+    displayTags = ['#Classic'];
+  }
+
+  Get.generalDialog(
+    barrierDismissible: true,
+    barrierLabel: "Course Confirm",
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (_, __, ___) {
+      return const SizedBox.shrink(); // required but unused
+    },
+    transitionBuilder: (context, animation, _, __) {
+      final offsetAnimation = Tween<Offset>(
+        begin: const Offset(0, 1),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      ));
+
+      return SlideTransition(
+        position: offsetAnimation,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: GestureDetector(
+            onTap: () {}, // Prevent outside tap
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8, right: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Created by: Anonymous',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white54,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: -6,
+                        children: displayTags
+                            .map((tag) => TagChip(label: tag))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.bookmark_border,
+                              color: Colors.white60, size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$totalSaves',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.menu_book_rounded,
+                              color: Colors.white60, size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$totalLessons lesson${totalLessons != 1 ? 's' : ''}',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 42,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Get.back(); // Close dialog
+                            _navigateToCourse(
+                                course, courseController); // Proceed
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('Start Learning'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
 Future<void> _navigateToCourse(
     Map<String, dynamic> course, CourseController courseController) async {
-  // Navigate to course details - same logic as CategoryCard
+  if (course['loading'] == true) return;
+
+  if (!courseController.checkCourseSlotAvailable()) {
+    return;
+  }
+
+  bool saved =
+      await courseController.saveSharedCourse(course['id'], course['title']);
+  if (!saved) return;
+
   courseController.setSelectedCourseId(
-      course['id'], course['title'], course['hasEmbeddings']);
+      course['id'], course['title'], course['hasEmbeddings'] ?? false);
 
   Get.to(
     () => LoadingScreen(),
@@ -228,7 +420,6 @@ Future<void> _navigateToCourse(
     await Future.delayed(const Duration(milliseconds: 100));
   }
 
-  // Navigate to CourseOverviewScreen
   Get.offAll(
     () => const CourseOverviewScreen(),
     transition: Transition.fadeIn,

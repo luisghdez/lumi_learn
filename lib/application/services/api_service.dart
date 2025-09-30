@@ -96,6 +96,29 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> getAllCourses({
+    required String token,
+    String? subject,
+  }) async {
+    print(
+        "getting all courses${subject != null ? ' for subject: $subject' : ''}");
+
+    String url = '$_baseUrl/courses/all';
+    if (subject != null && subject.isNotEmpty && subject != 'all') {
+      url += '?subject=$subject';
+    }
+
+    final uri = Uri.parse(url);
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
   Future<http.Response> getLessons({
     required String token,
     required String courseId,

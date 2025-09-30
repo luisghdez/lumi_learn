@@ -33,7 +33,7 @@ class HorizontalCategoryCard extends StatelessWidget {
       displayTags.insert(0, subject!);
     } else if (tags.isEmpty) {
       // Only show default tags when no subject and no other tags
-      displayTags = ['#LumiOG', '#classic'];
+      displayTags = ['#Classic'];
     }
 
     Get.generalDialog(
@@ -166,7 +166,7 @@ class HorizontalCategoryCard extends StatelessWidget {
       displayTags.insert(0, subject!);
     } else if (tags.isEmpty) {
       // Only show default tags when no subject and no other tags
-      displayTags = ['#LumiOG', '#classic'];
+      displayTags = ['#Classic'];
     }
 
     return SizedBox(

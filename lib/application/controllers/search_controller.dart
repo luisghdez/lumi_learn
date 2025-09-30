@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:lumi_learn_app/application/services/api_service.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 
 class Subject {
   final String id;
@@ -20,6 +23,12 @@ class LumiSearchController extends GetxController {
   final Rx<Subject?> selectedSubject = Rx<Subject?>(null);
   final RxBool showSavedOnly = false.obs;
   final RxString searchQuery = ''.obs;
+  final RxList<Map<String, dynamic>> allCourses = <Map<String, dynamic>>[].obs;
+  final RxBool isLoading = false.obs;
+
+  // Dependencies
+  final AuthController authController = Get.find();
+  final ApiService apiService = ApiService();
 
   // Available subjects organized by categories
   final List<Subject> subjects = const [
@@ -101,19 +110,78 @@ class LumiSearchController extends GetxController {
     super.onInit();
     // Default to 'All Subjects' (first item)
     selectedSubject.value = subjects.first;
+    // Fetch all courses when controller initializes
+    fetchAllCourses();
+  }
+
+  // Method to fetch all courses with optional subject filtering
+  Future<void> fetchAllCourses({String? subject}) async {
+    if (showSavedOnly.value) {
+      // Don't fetch all courses when showing saved only
+      return;
+    }
+
+    isLoading.value = true;
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return;
+      }
+
+      final response = await apiService.getAllCourses(
+        token: token,
+        subject: subject,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        allCourses.value =
+            List<Map<String, dynamic>>.from(data['courses'] ?? []);
+        print('Fetched ${allCourses.length} courses');
+      } else {
+        print('Failed to fetch all courses: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to fetch courses.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error fetching all courses: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Methods to update state
   void setSelectedSubject(Subject subject) {
     selectedSubject.value = subject;
+    // Fetch courses for new subject when not showing saved only
+    if (!showSavedOnly.value) {
+      fetchAllCourses(subject: subject.id == 'all' ? null : subject.name);
+    }
   }
 
   void toggleSavedFilter() {
     showSavedOnly.value = !showSavedOnly.value;
+
+    // When switching to "all courses" mode, fetch courses for current subject
+    if (!showSavedOnly.value) {
+      final currentSubject = selectedSubject.value;
+      fetchAllCourses(
+          subject: currentSubject?.id == 'all' ? null : currentSubject?.name);
+    }
   }
 
   void setSavedFilter(bool enabled) {
     showSavedOnly.value = enabled;
+
+    // When switching to "all courses" mode, fetch courses for current subject
+    if (!enabled) {
+      final currentSubject = selectedSubject.value;
+      fetchAllCourses(
+          subject: currentSubject?.id == 'all' ? null : currentSubject?.name);
+    }
   }
 
   void setSearchQuery(String query) {
@@ -130,6 +198,8 @@ class LumiSearchController extends GetxController {
     final subject = subjects.firstWhereOrNull((s) => s.id == subjectId);
     if (subject != null) {
       selectedSubject.value = subject;
+      // Fetch courses for the selected subject
+      fetchAllCourses(subject: subject.id == 'all' ? null : subject.name);
     }
     showSavedOnly.value = false;
   }
@@ -138,6 +208,40 @@ class LumiSearchController extends GetxController {
     selectedSubject.value = subjects.first;
     showSavedOnly.value = false;
     searchQuery.value = '';
+    // Fetch all courses when resetting
+    fetchAllCourses();
+  }
+
+  // Getter for filtered courses that can be used by the UI
+  List<Map<String, dynamic>> get filteredCourses {
+    List<Map<String, dynamic>> courses = [];
+
+    if (showSavedOnly.value) {
+      // When showing saved courses, use the existing logic from CourseController
+      // This will be handled in the UI layer
+      return [];
+    } else {
+      // When showing all courses, use the fetched allCourses
+      courses = allCourses.toList();
+    }
+
+    // Apply search query filter if any
+    if (searchQuery.value.isNotEmpty) {
+      courses = courses.where((course) {
+        final title = course['title']?.toString().toLowerCase() ?? '';
+        final subject = course['subject']?.toString().toLowerCase() ?? '';
+        final tags = List<String>.from(course['tags'] ?? [])
+            .map((tag) => tag.toLowerCase())
+            .join(' ');
+        final query = searchQuery.value.toLowerCase();
+
+        return title.contains(query) ||
+            subject.contains(query) ||
+            tags.contains(query);
+      }).toList();
+    }
+
+    return courses;
   }
 
   // Getter for status text
