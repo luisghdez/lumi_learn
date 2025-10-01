@@ -71,7 +71,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
   void _shareFollowLink() {
     final user = AuthController.instance.firebaseUser.value;
     if (user != null) {
-      final link = "https://lumilearn.app/user/${user.uid}";
+      final link = "https://www.lumilearnapp.com/invite/${user.uid}";
       Share.share("Follow ${user.displayName ?? "me"} on Lumi Learn! $link");
     } else {
       Get.snackbar("Not Logged In", "Sign in to share your profile.");
