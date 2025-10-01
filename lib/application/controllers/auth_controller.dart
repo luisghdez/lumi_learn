@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/services/deeplink.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lumi_learn_app/application/services/api_service.dart';
@@ -285,6 +286,9 @@ class AuthController extends GetxController {
   Future<void> signOut() async {
     await _auth.signOut();
     await Purchases.logOut();
+
+    // Clean up deep link handler
+    DeepLinkHandler.instance.dispose();
 
     if (Get.isRegistered<CourseController>()) {
       Get.delete<CourseController>(force: true);

@@ -7,6 +7,7 @@ import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/application/services/deeplink.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/auth/splash_screen.dart';
@@ -75,6 +76,9 @@ class AuthGate extends StatelessWidget {
           permanent: true,
         );
       }
+
+      // Initialize deep link handler now that all controllers are registered
+      DeepLinkHandler.instance.reinitialize();
 
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 
