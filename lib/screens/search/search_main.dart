@@ -132,35 +132,22 @@ class SearchMain extends StatelessWidget {
 Widget _buildCourseList(
     LumiSearchController searchController, CourseController courseController) {
   // Show loading indicator only for initial load (not pagination)
-  if (searchController.showSavedOnly.value) {
-    // For saved courses, show loading only for initial load, not pagination
-    if (courseController.isLoading.value &&
-        !courseController.isPaginating.value) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-        ),
-      );
-    }
-  } else {
-    // For all courses, show loading only for initial load, not pagination
-    if (searchController.isLoading.value &&
-        !searchController.isPaginating.value) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-        ),
-      );
-    }
+  if (searchController.isLoading.value &&
+      !searchController.isPaginating.value) {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      ),
+    );
   }
 
   List<Map<String, dynamic>> filteredCourses = [];
 
   if (searchController.showSavedOnly.value) {
-    // When showing saved courses, use courses from CourseController (already filtered by backend)
+    // When showing saved courses, use saved courses from SearchController (already filtered by backend)
     // Only apply client-side search query filtering since backend handles subject filtering
     filteredCourses = List<Map<String, dynamic>>.from(
-        courseController.courses.where((course) {
+        searchController.savedCourses.where((course) {
       // Search query filter for saved courses (backend handles subject filtering)
       if (searchController.searchQuery.value.isNotEmpty) {
         final title = course['title']?.toString().toLowerCase() ?? '';
@@ -298,20 +285,18 @@ Widget _buildPaginationControls(
     // Determine which controller to use based on the current mode
     final bool showSavedOnly = searchController.showSavedOnly.value;
     final bool hasPreviousPage = showSavedOnly
-        ? courseController.hasPreviousPage.value
+        ? searchController.savedHasPreviousPage.value
         : searchController.hasPreviousPage.value;
     final bool hasNextPage = showSavedOnly
-        ? courseController.hasNextPage.value
+        ? searchController.savedHasNextPage.value
         : searchController.hasNextPage.value;
     final int currentPage = showSavedOnly
-        ? courseController.currentPage.value
+        ? searchController.savedCurrentPage.value
         : searchController.currentPage.value;
     final int totalPages = showSavedOnly
-        ? courseController.totalPages.value
+        ? searchController.savedTotalPages.value
         : searchController.totalPages.value;
-    final bool isPaginating = showSavedOnly
-        ? courseController.isPaginating.value
-        : searchController.isPaginating.value;
+    final bool isPaginating = searchController.isPaginating.value;
 
     // Only show pagination if there are multiple pages
     if (totalPages <= 1) {
@@ -326,9 +311,7 @@ Widget _buildPaginationControls(
           // Previous button
           GestureDetector(
             onTap: hasPreviousPage && !isPaginating
-                ? () => showSavedOnly
-                    ? courseController.fetchPreviousPage()
-                    : searchController.fetchPreviousPage()
+                ? () => searchController.fetchPreviousPage()
                 : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -400,9 +383,7 @@ Widget _buildPaginationControls(
           // Next button
           GestureDetector(
             onTap: hasNextPage && !isPaginating
-                ? () => showSavedOnly
-                    ? courseController.fetchNextPage()
-                    : searchController.fetchNextPage()
+                ? () => searchController.fetchNextPage()
                 : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

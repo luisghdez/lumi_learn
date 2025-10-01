@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 
 class Subject {
   final String id;
@@ -25,6 +24,8 @@ class LumiSearchController extends GetxController {
   final RxBool showSavedOnly = false.obs;
   final RxString searchQuery = ''.obs;
   final RxList<Map<String, dynamic>> allCourses = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> savedCourses =
+      <Map<String, dynamic>>[].obs; // Separate list for saved courses
   final RxBool isLoading = false.obs;
   final RxBool isPaginating =
       false.obs; // Separate loading state for pagination
@@ -35,6 +36,13 @@ class LumiSearchController extends GetxController {
   var hasNextPage = false.obs;
   var hasPreviousPage = false.obs;
   var totalCount = 0.obs;
+
+  // Pagination state for saved courses
+  var savedCurrentPage = 1.obs;
+  var savedTotalPages = 1.obs;
+  var savedHasNextPage = false.obs;
+  var savedHasPreviousPage = false.obs;
+  var savedTotalCount = 0.obs;
 
   // Dependencies
   final AuthController authController = Get.find();
@@ -197,47 +205,148 @@ class LumiSearchController extends GetxController {
     }
   }
 
+  // Method to fetch saved courses with pagination (separate from home screen)
+  Future<void> fetchSavedCourses({
+    String? subject,
+    int page = 1,
+    int limit = 10,
+    bool isPagination = false,
+  }) async {
+    print(
+        'Fetching saved courses for search... page: $page, limit: $limit${subject != null ? ', subject: $subject' : ''}');
+
+    // Use appropriate loading state based on operation type
+    if (isPagination) {
+      isPaginating.value = true;
+    } else {
+      isLoading.value = true;
+    }
+
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        if (isPagination) {
+          isPaginating.value = false;
+        } else {
+          isLoading.value = false;
+        }
+        return;
+      }
+
+      final response = await apiService.getCourses(
+        token: token,
+        page: page,
+        limit: limit,
+        subject: subject,
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response and store the courses
+        final data = jsonDecode(response.body);
+        savedCourses.value = List<Map<String, dynamic>>.from(data['courses']);
+
+        // Update pagination state for saved courses
+        final pagination = data['pagination'];
+        if (pagination != null) {
+          savedCurrentPage.value = pagination['page'] ?? 1;
+          savedTotalPages.value = pagination['totalPages'] ?? 1;
+          savedHasNextPage.value = pagination['hasNextPage'] ?? false;
+          savedHasPreviousPage.value = pagination['hasPreviousPage'] ?? false;
+          savedTotalCount.value = pagination['totalCount'] ?? 0;
+        }
+
+        print(
+            'Fetched ${savedCourses.length} saved courses (page $savedCurrentPage of $savedTotalPages)');
+      } else {
+        print('Failed to fetch saved courses: ${response.statusCode}');
+        Get.snackbar("Error", "Failed to fetch saved courses.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      print('Error fetching saved courses: $e');
+      Get.snackbar("Error", "Something went wrong. Please try again.",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      // Reset appropriate loading state
+      if (isPagination) {
+        isPaginating.value = false;
+      } else {
+        isLoading.value = false;
+      }
+    }
+  }
+
   // Convenience methods for pagination
   Future<void> fetchNextPage() async {
-    if (hasNextPage.value && !isPaginating.value) {
-      final currentSubject = selectedSubject.value;
-      await fetchAllCourses(
-        subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
-        page: currentPage.value + 1,
-        limit: 10,
-        isPagination: true,
-      );
+    if (showSavedOnly.value) {
+      // Use saved courses pagination
+      if (savedHasNextPage.value && !isPaginating.value) {
+        final currentSubject = selectedSubject.value;
+        await fetchSavedCourses(
+          subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+          page: savedCurrentPage.value + 1,
+          limit: 10,
+          isPagination: true,
+        );
+      }
+    } else {
+      // Use all courses pagination
+      if (hasNextPage.value && !isPaginating.value) {
+        final currentSubject = selectedSubject.value;
+        await fetchAllCourses(
+          subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+          page: currentPage.value + 1,
+          limit: 10,
+          isPagination: true,
+        );
+      }
     }
   }
 
   Future<void> fetchPreviousPage() async {
-    if (hasPreviousPage.value && !isPaginating.value) {
-      final currentSubject = selectedSubject.value;
-      await fetchAllCourses(
-        subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
-        page: currentPage.value - 1,
-        limit: 10,
-        isPagination: true,
-      );
+    if (showSavedOnly.value) {
+      // Use saved courses pagination
+      if (savedHasPreviousPage.value && !isPaginating.value) {
+        final currentSubject = selectedSubject.value;
+        await fetchSavedCourses(
+          subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+          page: savedCurrentPage.value - 1,
+          limit: 10,
+          isPagination: true,
+        );
+      }
+    } else {
+      // Use all courses pagination
+      if (hasPreviousPage.value && !isPaginating.value) {
+        final currentSubject = selectedSubject.value;
+        await fetchAllCourses(
+          subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+          page: currentPage.value - 1,
+          limit: 10,
+          isPagination: true,
+        );
+      }
     }
   }
 
   // Methods to update state
   void setSelectedSubject(Subject subject) {
     selectedSubject.value = subject;
-    // Reset pagination when changing subjects
-    currentPage.value = 1;
 
     if (!showSavedOnly.value) {
+      // Reset pagination when changing subjects
+      currentPage.value = 1;
       // Fetch all courses for new subject
       fetchAllCourses(
           subject: subject.id == 'all' ? null : subject.name,
           page: 1,
           limit: 10);
     } else {
+      // Reset saved courses pagination when changing subjects
+      savedCurrentPage.value = 1;
       // Fetch saved courses for new subject using backend filtering
-      final courseController = Get.find<CourseController>();
-      courseController.fetchSavedCoursesForSubject(
+      fetchSavedCourses(
         subject: subject.id == 'all' ? null : subject.name,
         page: 1,
         limit: 10,
@@ -250,9 +359,9 @@ class LumiSearchController extends GetxController {
 
     if (showSavedOnly.value) {
       // When switching to "saved courses" mode, fetch courses with current subject filter
-      final courseController = Get.find<CourseController>();
+      savedCurrentPage.value = 1;
       final currentSubject = selectedSubject.value;
-      courseController.fetchSavedCoursesForSubject(
+      fetchSavedCourses(
         subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
         page: 1,
         limit: 10,
@@ -273,9 +382,9 @@ class LumiSearchController extends GetxController {
 
     if (enabled) {
       // When switching to "saved courses" mode, fetch courses with current subject filter
-      final courseController = Get.find<CourseController>();
+      savedCurrentPage.value = 1;
       final currentSubject = selectedSubject.value;
-      courseController.fetchSavedCoursesForSubject(
+      fetchSavedCourses(
         subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
         page: 1,
         limit: 10,
@@ -301,8 +410,8 @@ class LumiSearchController extends GetxController {
     selectedSubject.value = subjects.first; // All subjects
 
     // Fetch courses with subject filter when navigating from "view all"
-    final courseController = Get.find<CourseController>();
-    courseController.fetchSavedCoursesForSubject(page: 1, limit: 10);
+    savedCurrentPage.value = 1;
+    fetchSavedCourses(page: 1, limit: 10);
   }
 
   void showCoursesForSubject(String subjectId) {
