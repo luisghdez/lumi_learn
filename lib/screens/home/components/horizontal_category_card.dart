@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 
 class HorizontalCategoryCard extends StatelessWidget {
   final String title;
@@ -11,6 +13,8 @@ class HorizontalCategoryCard extends StatelessWidget {
   final List<String> tags;
   final String? subject;
   final bool hasEmbeddings;
+  final String? createdByName;
+  final String? createdById;
 
   const HorizontalCategoryCard({
     Key? key,
@@ -21,9 +25,31 @@ class HorizontalCategoryCard extends StatelessWidget {
     required this.tags,
     this.subject,
     this.hasEmbeddings = false,
+    this.createdByName,
+    this.createdById,
   }) : super(key: key);
 
   static const double _aspectRatio = 220 / 140;
+
+  Future<void> _navigateToUserProfile(String userId) async {
+    try {
+      final friendsController = Get.find<FriendsController>();
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      await friendsController.setActiveFriend(userId);
+      Get.back(); // Close loading dialog
+      Get.to(
+        () => const FriendProfile(),
+        transition: Transition.fadeIn,
+      );
+    } catch (e) {
+      Get.back(); // Close loading dialog
+      Get.snackbar("Error", "Could not load profile: $e");
+    }
+  }
 
   void _showConfirmationDialog(BuildContext context) {
     List<String> displayTags = List.from(tags);
@@ -33,7 +59,7 @@ class HorizontalCategoryCard extends StatelessWidget {
       displayTags.insert(0, subject!);
     } else if (tags.isEmpty) {
       // Only show default tags when no subject and no other tags
-      displayTags = ['#LumiOG', '#classic'];
+      displayTags = ['#Classic'];
     }
 
     Get.generalDialog(
@@ -82,12 +108,24 @@ class HorizontalCategoryCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Created by: Anonymous',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white54,
+                        GestureDetector(
+                          onTap: () {
+                            if (createdById != null) {
+                              _navigateToUserProfile(createdById!);
+                            }
+                          },
+                          child: Text(
+                            'Created by: ${createdByName ?? 'Anonymous'}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: createdById != null
+                                  ? Colors.white70
+                                  : Colors.white54,
+                              decoration: createdById != null
+                                  ? TextDecoration.underline
+                                  : null,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -166,7 +204,7 @@ class HorizontalCategoryCard extends StatelessWidget {
       displayTags.insert(0, subject!);
     } else if (tags.isEmpty) {
       // Only show default tags when no subject and no other tags
-      displayTags = ['#LumiOG', '#classic'];
+      displayTags = ['#Classic'];
     }
 
     return SizedBox(

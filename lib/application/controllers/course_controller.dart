@@ -26,8 +26,17 @@ class CourseController extends GetxController {
   final activeLessonIndex = 0.obs; // example lesson index
   final activeQuestionIndex = 0.obs;
   var isLoading = false.obs;
+  var isPaginating = false.obs; // Separate loading state for pagination
   var courses = [].obs;
   var featuredCourses = [].obs;
+
+  // Pagination state for saved courses
+  var currentPage = 1.obs;
+  var totalPages = 1.obs;
+  var hasNextPage = false.obs;
+  var hasPreviousPage = false.obs;
+  var totalCount = 0.obs;
+  var currentSubject = ''.obs; // Track current subject filter
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   var selectedCourseHasEmbeddings = false.obs;
@@ -47,7 +56,7 @@ class CourseController extends GetxController {
   void onInit() {
     super.onInit();
     // Fetch courses when the controller is initialized
-    fetchCourses();
+    fetchCoursesForHome(); // Limit to 5 for home screen
     fetchFeaturedCourses();
   }
 
@@ -292,7 +301,7 @@ class CourseController extends GetxController {
     if (questions.length == 1 &&
         questions[0].lessonType == LessonType.flashcards) {
       final flashcards = questions[0].flashcards;
-      if (flashcards != null && flashcards.isNotEmpty) {
+      if (flashcards.isNotEmpty) {
         const int chunkSize = 4;
         final List<Question> matchQuestions = [];
         for (int i = 0; i < flashcards.length; i += chunkSize) {
@@ -316,7 +325,7 @@ class CourseController extends GetxController {
           questions.indexWhere((q) => q.lessonType == LessonType.flashcards);
       if (flashcardsIndex != -1) {
         final flashcards = questions[flashcardsIndex].flashcards;
-        if (flashcards != null && flashcards.isNotEmpty) {
+        if (flashcards.isNotEmpty) {
           const int chunkSize = 4;
           final List<Question> matchQuestions = [];
           for (int i = 0; i < flashcards.length; i += chunkSize) {
@@ -434,6 +443,7 @@ class CourseController extends GetxController {
         final courseTitle = responseData['title'] ?? 'New Course';
         final courseDescription =
             responseData['description'] ?? 'Course description';
+        final courseSubject = responseData['subject'] ?? '';
 
         final newCourse = {
           'id': courseId,
@@ -442,6 +452,7 @@ class CourseController extends GetxController {
           'createdBy': authController.firebaseUser.value?.uid ?? 'unknown',
           'totalLessons': lessonCount,
           'hasEmbeddings': hasEmbeddings,
+          'subject': courseSubject,
           'loading': false,
         };
 
@@ -511,6 +522,8 @@ class CourseController extends GetxController {
           'id': courseId,
           'title': courseTitle,
           'totalLessons': responseData['lessonCount'] ?? 0,
+          'hasEmbeddings': responseData['hasEmbeddings'] ?? false,
+          'subject': responseData['subject'] ?? '',
         };
         courses.insert(0, newCourse);
         authController.courseSlotsUsed.value++;
@@ -526,25 +539,62 @@ class CourseController extends GetxController {
     }
   }
 
-  // New method to fetch courses from the backend
-  Future<void> fetchCourses() async {
-    print('Fetching courses...');
-    isLoading.value = true; // Start loading
+  // New method to fetch courses from the backend with pagination
+  Future<void> fetchCourses(
+      {int page = 1,
+      int limit = 10,
+      bool isPagination = false,
+      String? subject}) async {
+    print(
+        'Fetching courses... page: $page, limit: $limit${subject != null ? ', subject: $subject' : ''}');
+
+    // Store current subject filter
+    if (!isPagination) {
+      currentSubject.value = subject ?? '';
+    }
+
+    // Use appropriate loading state based on operation type
+    if (isPagination) {
+      isPaginating.value = true;
+    } else {
+      isLoading.value = true;
+    }
+
     try {
       final token = await authController.getIdToken();
       if (token == null) {
         print('No user token found.');
-        isLoading.value = false;
+        if (isPagination) {
+          isPaginating.value = false;
+        } else {
+          isLoading.value = false;
+        }
         return;
       }
 
       final apiService = ApiService();
-      final response = await apiService.getCourses(token: token);
+      final response = await apiService.getCourses(
+          token: token,
+          page: page,
+          limit: limit,
+          subject: isPagination
+              ? (currentSubject.value.isEmpty ? null : currentSubject.value)
+              : subject);
 
       if (response.statusCode == 200) {
         // Parse the JSON response and store the courses in our RxList
         final data = jsonDecode(response.body);
         courses.value = data['courses'];
+
+        // Update pagination state
+        final pagination = data['pagination'];
+        if (pagination != null) {
+          currentPage.value = pagination['page'] ?? 1;
+          totalPages.value = pagination['totalPages'] ?? 1;
+          hasNextPage.value = pagination['hasNextPage'] ?? false;
+          hasPreviousPage.value = pagination['hasPreviousPage'] ?? false;
+          totalCount.value = pagination['totalCount'] ?? 0;
+        }
       } else {
         print('Failed to fetch courses: ${response.statusCode}');
         Get.snackbar("Error", "Failed to fetch courses.",
@@ -555,9 +605,40 @@ class CourseController extends GetxController {
       Get.snackbar("Error", "Something went wrong. Please try again.",
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
-      isLoading.value = false; // Stop loading
-      isInitialized.value = true;
+      // Reset appropriate loading state
+      if (isPagination) {
+        isPaginating.value = false;
+      } else {
+        isLoading.value = false;
+        isInitialized.value = true;
+      }
     }
+  }
+
+  // Convenience methods for pagination
+  Future<void> fetchNextPage() async {
+    if (hasNextPage.value && !isPaginating.value) {
+      await fetchCourses(
+          page: currentPage.value + 1, limit: 10, isPagination: true);
+    }
+  }
+
+  Future<void> fetchPreviousPage() async {
+    if (hasPreviousPage.value && !isPaginating.value) {
+      await fetchCourses(
+          page: currentPage.value - 1, limit: 10, isPagination: true);
+    }
+  }
+
+  // Method to fetch saved courses with subject filtering
+  Future<void> fetchSavedCoursesForSubject(
+      {String? subject, int page = 1, int limit = 10}) async {
+    await fetchCourses(page: page, limit: limit, subject: subject);
+  }
+
+  // Method for home screen to fetch limited courses
+  Future<void> fetchCoursesForHome() async {
+    await fetchCourses(page: 1, limit: 5);
   }
 
   Future<void> fetchFeaturedCourses() async {

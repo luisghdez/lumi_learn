@@ -69,8 +69,16 @@ class ApiService {
 
   Future<http.Response> getCourses({
     required String token,
+    int page = 1,
+    int limit = 10,
+    String? subject,
   }) async {
-    final uri = Uri.parse('$_baseUrl/courses');
+    String url = '$_baseUrl/courses?page=$page&limit=$limit';
+    if (subject != null && subject.isNotEmpty && subject != 'all') {
+      url += '&subject=$subject';
+    }
+
+    final uri = Uri.parse(url);
     final response = await http.get(
       uri,
       headers: {
@@ -86,6 +94,31 @@ class ApiService {
   }) async {
     print("getting featured courses");
     final uri = Uri.parse('$_baseUrl/courses/featured');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
+  Future<http.Response> getAllCourses({
+    required String token,
+    String? subject,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    print(
+        "getting all courses${subject != null ? ' for subject: $subject' : ''} (page: $page, limit: $limit)");
+
+    String url = '$_baseUrl/courses/all?page=$page&limit=$limit';
+    if (subject != null && subject.isNotEmpty && subject != 'all') {
+      url += '&subject=$subject';
+    }
+
+    final uri = Uri.parse(url);
     final response = await http.get(
       uri,
       headers: {
