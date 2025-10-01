@@ -7,8 +7,6 @@ import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 
 //widgets
-import 'package:lumi_learn_app/widgets/base_screen_container.dart';
-import 'package:lumi_learn_app/widgets/custom_search_bar.dart';
 import 'package:lumi_learn_app/widgets/regular_category_card.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
 
@@ -31,78 +29,102 @@ class SearchMain extends StatelessWidget {
       return screenWidth > 800 ? 32.0 : 16.0;
     }
 
-    Future<void> handleRefresh() async {
-      // Refresh courses based on current mode
-      if (!searchController.showSavedOnly.value) {
-        final currentSubject = searchController.selectedSubject.value;
-        // Refresh all courses with current pagination state
-        await searchController.fetchAllCourses(
-            subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
-            page: searchController.currentPage.value,
-            limit: 10);
-      } else {
-        // Refresh saved courses through course controller with current subject and pagination state
-        final currentSubject = searchController.selectedSubject.value;
-        await courseController.fetchSavedCoursesForSubject(
-            subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
-            page: courseController.currentPage.value,
-            limit: 10);
-      }
-    }
+    final double horizontalPadding = getHorizontalPadding();
+    final double topScrollViewPadding =
+        MediaQuery.of(context).padding.top + horizontalPadding;
+    const double bottomScrollViewPadding = 40.0;
 
-    return BaseScreenContainer(
-      onRefresh: handleRefresh,
-      builder: (context) {
-        return Material(
-          color: Colors.transparent,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: getHorizontalPadding()),
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // CustomSearchBar(
-                  //   controller: TextEditingController(
-                  //       text: searchController.searchQuery.value),
-                  //   hintText: 'Search courses, topics or tags...',
-                  //   onChanged: (query) {
-                  //     searchController.setSearchQuery(query);
-                  //   },
-                  // ),
-                  // const SizedBox(height: 20),
-                  // Subject and Saved Filters
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SubjectSelector(
-                          selectedSubject:
-                              searchController.selectedSubject.value,
-                          subjects: searchController.subjects,
-                          onSubjectSelected: (subject) {
-                            searchController.setSelectedSubject(subject);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _SavedCoursesToggle(
-                        isSelected: searchController.showSavedOnly.value,
-                        onToggle: () {
-                          searchController.toggleSavedFilter();
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Course List
-                  _buildCourseList(searchController, courseController),
-                  // Pagination Controls (for both saved and all courses)
-                  _buildPaginationControls(searchController, courseController),
-                ],
+    return Scaffold(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/black_moons_lighter.png',
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-        );
-      },
+            SafeArea(
+              top: false,
+              bottom: false,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      top: topScrollViewPadding,
+                      bottom: bottomScrollViewPadding,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight -
+                            topScrollViewPadding -
+                            bottomScrollViewPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: Obx(
+                              () => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // CustomSearchBar(
+                                  //   controller: TextEditingController(
+                                  //       text: searchController.searchQuery.value),
+                                  //   hintText: 'Search courses, topics or tags...',
+                                  //   onChanged: (query) {
+                                  //     searchController.setSearchQuery(query);
+                                  //   },
+                                  // ),
+                                  // const SizedBox(height: 20),
+                                  // Subject and Saved Filters
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _SubjectSelector(
+                                          selectedSubject: searchController
+                                              .selectedSubject.value,
+                                          subjects: searchController.subjects,
+                                          onSubjectSelected: (subject) {
+                                            searchController
+                                                .setSelectedSubject(subject);
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _SavedCoursesToggle(
+                                        isSelected: searchController
+                                            .showSavedOnly.value,
+                                        onToggle: () {
+                                          searchController.toggleSavedFilter();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  // Course List
+                                  _buildCourseList(
+                                      searchController, courseController),
+                                  // Pagination Controls (for both saved and all courses)
+                                  _buildPaginationControls(
+                                      searchController, courseController),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -499,7 +521,7 @@ void _showCourseConfirmationDialog(BuildContext context,
                       GestureDetector(
                         onTap: () {
                           if (createdById != null) {
-                            _navigateToUserProfile(createdById!);
+                            _navigateToUserProfile(createdById);
                           }
                         },
                         child: Text(
