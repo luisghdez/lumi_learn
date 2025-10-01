@@ -148,6 +148,7 @@ class TutorController extends GetxController {
               content: accumulated,
               timestamp: DateTime.now(),
               sources: sources,
+              isStreaming: true
             );
             messages.refresh();
           }
@@ -159,23 +160,32 @@ class TutorController extends GetxController {
           } catch (_) {
             // ignore parse issues
           }
-        } else if (type == 'message') {
-          // Final persisted message: replace the placeholder with real one
-          try {
-            final persisted = Message.fromJson(event);
-            final int index = messages.lastIndexWhere((m) =>
-                m.messageId == assistantTempId &&
-                m.role == MessageRole.assistant);
-            if (index != -1) {
-              messages[index] = persisted;
-              messages.refresh();
-            } else {
-              messages.add(persisted);
-            }
-          } catch (_) {
-            // ignore parse issues
+        } 
+        else if (type == 'message') {
+        // Final persisted message: replace the placeholder with real one
+        try {
+          final persisted = Message.fromJson(event);
+          final int index = messages.lastIndexWhere((m) =>
+              m.messageId == assistantTempId &&
+              m.role == MessageRole.assistant);
+          if (index != -1) {
+            messages[index] = Message(
+              messageId: persisted.messageId,
+              role: persisted.role,
+              content: persisted.content,
+              timestamp: persisted.timestamp,
+              sources: persisted.sources,
+              isStreaming: false, // Mark as complete
+            );
+            messages.refresh();
+          } else {
+            messages.add(persisted);
           }
-        } else if (type == 'error' || type == 'http_error') {
+        } catch (_) {
+          // ignore parse issues
+        }
+      }
+        else if (type == 'error' || type == 'http_error') {
           errorMessage.value = 'Failed to create thread';
           // Remove the placeholder messages on error
           messages.removeWhere(
@@ -202,103 +212,111 @@ class TutorController extends GetxController {
     }
   }
 
-  Future<void> sendMessage(String message) async {
-    if (activeThread.value == null) {
-      errorMessage.value = 'No active thread';
+Future<void> sendMessage(String message) async {
+  if (activeThread.value == null) {
+    errorMessage.value = 'No active thread';
+    return;
+  }
+
+  try {
+    final token = await _authController.getIdToken();
+    if (token == null) {
+      errorMessage.value = 'Authentication required';
       return;
     }
 
-    try {
-      final token = await _authController.getIdToken();
-      if (token == null) {
-        errorMessage.value = 'Authentication required';
-        return;
-      }
+    // Optimistically append the user message
+    final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    messages.add(
+      Message(
+        messageId: tempId,
+        role: MessageRole.user,
+        content: message,
+        timestamp: DateTime.now(),
+      ),
+    );
 
-      // Optimistically append the user message
-      final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
-      messages.add(
-        Message(
-          messageId: tempId,
-          role: MessageRole.user,
-          content: message,
-          timestamp: DateTime.now(),
-        ),
-      );
+    // Placeholder assistant message that we will stream-update
+    final String assistantTempId = '${tempId}_assistant';
+    messages.add(
+      Message(
+        messageId: assistantTempId,
+        role: MessageRole.assistant,
+        content: '',
+        timestamp: DateTime.now(),
+        isStreaming: true  // ✅ Set to true initially
+      ),
+    );
 
-      // Placeholder assistant message that we will stream-update
-      final String assistantTempId = '${tempId}_assistant';
-      messages.add(
-        Message(
-          messageId: assistantTempId,
-          role: MessageRole.assistant,
-          content: '',
-          timestamp: DateTime.now(),
-        ),
-      );
+    final stream = _tutorService.sendMessageStream(
+      token: token,
+      threadId: activeThread.value!.threadId,
+      message: message,
+      courseId: activeThread.value!.courseId,
+    );
 
-      final stream = _tutorService.sendMessageStream(
-        token: token,
-        threadId: activeThread.value!.threadId,
-        message: message,
-        courseId: activeThread.value!.courseId,
-      );
-
-      String accumulated = '';
-      List<Map<String, dynamic>>? sources;
-      await for (final event in stream) {
-        final type = event['type'] as String?;
-        if (type == 'start') {
-          // Stream started, sources might be included
-          sources = event['sources'] != null
-              ? List<Map<String, dynamic>>.from(event['sources'])
-              : null;
-        } else if (type == 'delta') {
-          final delta = (event['delta'] as String?) ?? '';
-          if (delta.isEmpty) continue;
-          accumulated += delta;
-          // Update the last assistant message content progressively
+    String accumulated = '';
+    List<Map<String, dynamic>>? sources;
+    await for (final event in stream) {
+      final type = event['type'] as String?;
+      if (type == 'start') {
+        // Stream started, sources might be included
+        sources = event['sources'] != null
+            ? List<Map<String, dynamic>>.from(event['sources'])
+            : null;
+      } else if (type == 'delta') {
+        final delta = (event['delta'] as String?) ?? '';
+        if (delta.isEmpty) continue;
+        accumulated += delta;
+        // Update the last assistant message content progressively
+        final int index = messages.lastIndexWhere((m) =>
+            m.messageId == assistantTempId &&
+            m.role == MessageRole.assistant);
+        if (index != -1) {
+          messages[index] = Message(
+            messageId: assistantTempId,
+            role: MessageRole.assistant,
+            content: accumulated,
+            timestamp: DateTime.now(),
+            sources: sources,
+            isStreaming: true  // ✅ Keep it true while streaming
+          );
+          messages.refresh();
+        }
+      } else if (type == 'message') {
+        // Final persisted message: replace the placeholder with real one
+        try {
+          final persisted = Message.fromJson(event);
           final int index = messages.lastIndexWhere((m) =>
               m.messageId == assistantTempId &&
               m.role == MessageRole.assistant);
           if (index != -1) {
             messages[index] = Message(
-              messageId: assistantTempId,
-              role: MessageRole.assistant,
-              content: accumulated,
-              timestamp: DateTime.now(),
-              sources: sources,
+              messageId: persisted.messageId,
+              role: persisted.role,
+              content: persisted.content,
+              timestamp: persisted.timestamp,
+              sources: persisted.sources,
+              isStreaming: false,  // ✅ Mark as complete
             );
             messages.refresh();
+          } else {
+            messages.add(persisted);
           }
-        } else if (type == 'message') {
-          // Final persisted message: replace the placeholder with real one
-          try {
-            final persisted = Message.fromJson(event);
-            final int index = messages.lastIndexWhere((m) =>
-                m.messageId == assistantTempId &&
-                m.role == MessageRole.assistant);
-            if (index != -1) {
-              messages[index] = persisted;
-              messages.refresh();
-            } else {
-              messages.add(persisted);
-            }
-          } catch (_) {
-            // ignore parse issues
-          }
-        } else if (type == 'error' || type == 'http_error') {
-          errorMessage.value = 'Failed to send message';
-        } else if (type == 'done') {
-          // Stream finished
+        } catch (_) {
+          // ignore parse issues
         }
+      } else if (type == 'error' || type == 'http_error') {
+        errorMessage.value = 'Failed to send message';
+      } else if (type == 'done') {
+        // Stream finished
       }
-    } catch (e) {
-      errorMessage.value = 'Error sending message: $e';
-      print('Error sending message: $e');
     }
+  } catch (e) {
+    errorMessage.value = 'Error sending message: $e';
+    print('Error sending message: $e');
   }
-
+}
   Future<void> refreshThreads() async {
     // Reset pagination state when refreshing
     nextCursor.value = null;

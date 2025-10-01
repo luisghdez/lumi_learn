@@ -175,23 +175,29 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
 
   @override
   Widget build(BuildContext context) {
-
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
       child: GestureDetector(
-        onTap: () =>
-            FocusScope.of(context).unfocus(), // dismiss keyboard on outside tap
+        onTap: () {
+          final currentFocus = FocusScope.of(context);
+          if (!currentFocus.hasPrimaryFocus &&
+              currentFocus.focusedChild != null) {
+            FocusScope.of(context).unfocus();
+          }
+        },
         child: Scaffold(
           endDrawer: const LumiDrawer(),
           backgroundColor: Colors.black,
-          resizeToAvoidBottomInset: true,
+          resizeToAvoidBottomInset: false,
           body: BaseScreenContainer(
             includeSafeArea: true,
             enableScroll: false,
             onRefresh: null,
-            builder: (context) => Padding(
-              padding:
-                  const EdgeInsets.only(bottom: 8), // avoids keyboard gap
+            builder: (context) => AnimatedPadding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+              ),
+              duration: const Duration(milliseconds: 100), // Smooth animation
+              curve: Curves.easeOut, // Natural easing curve
               child: Column(
                 children: [
                   Obx(() {
@@ -226,12 +232,11 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                       }
 
                       if (!_tutorController.hasActiveThread) {
-                        // If opened from a course (title provided), show an empty chat area ready for first message
                         if (widget.courseTitle != null ||
                             widget.courseId != null) {
                           return ListView.builder(
                             controller: _scrollController,
-                            reverse: true, // keep behavior consistent
+                            reverse: true,
                             itemCount: 0,
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
@@ -243,32 +248,25 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.chat_bubble_outline,
-                                color: Colors.white54,
-                                size: 64,
-                              ),
+                              Icon(Icons.chat_bubble_outline,
+                                  color: Colors.white54, size: 64),
                               SizedBox(height: 16),
                               Text(
                                 'Select a chat from the menu\nor start a new conversation',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 16,
-                                ),
+                                    color: Colors.white54, fontSize: 16),
                               ),
                             ],
                           ),
                         );
                       }
 
-                      // Main chat list + top overlay loader for lazy loading
                       return Stack(
                         children: [
                           ListView.builder(
                             controller: _scrollController,
-                            reverse:
-                                true, // show latest at "top" of the viewport (bottom visually)
+                            reverse: true,
                             itemCount: _tutorController.messages.length,
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
@@ -277,17 +275,19 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                                   _tutorController.messages.length - 1 - index;
                               final message =
                                   _tutorController.messages[reversedIndex];
-
-                              return ChatBubble(
-                                message: message.content,
-                                sender: message.role == MessageRole.user
-                                    ? ChatSender.user
-                                    : ChatSender.tutor,
-                                sources: message.sources,
-                              );
-                            },
+                                return SizedBox(
+                                  width: double.infinity, // ✅ This ensures full width for proper alignment
+                                  child: ChatBubble(
+                                    message: message.content,
+                                    sender: message.role == MessageRole.user
+                                        ? ChatSender.user
+                                        : ChatSender.tutor,
+                                    sources: message.sources,
+                                    isStreaming: message.isStreaming,
+                                  ),
+                                );
+                              },
                           ),
-                          // Subtle loader that appears at the top when fetching older messages
                           if (_tutorController.isLoadingMoreMessages.value)
                             Positioned(
                               top: 8,
@@ -319,14 +319,10 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                     suggestions: _suggestions,
                     onSend: _handleSend,
                     onImagePicked: (imageFile) {
-                      // TODO: Handle image upload to active thread
-                      // ignore: avoid_print
                       print('Image picked: ${imageFile.path}');
                       _animateToBottom();
                     },
                     onFilePicked: (file) {
-                      // TODO: Handle file upload to active thread
-                      // ignore: avoid_print
                       print('File picked: ${file.path}');
                       _animateToBottom();
                     },

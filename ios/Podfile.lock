@@ -192,8 +192,13 @@ PODS:
     - Flutter
   - TOCropViewController (2.6.1)
   - Try (2.1.1)
+  - uni_links (0.0.1):
+    - Flutter
   - url_launcher_ios (0.0.1):
     - Flutter
+  - video_player_avfoundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
 
 DEPENDENCIES:
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
@@ -219,7 +224,9 @@ DEPENDENCIES:
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - speech_to_text (from `.symlinks/plugins/speech_to_text/darwin`)
   - syncfusion_flutter_pdfviewer (from `.symlinks/plugins/syncfusion_flutter_pdfviewer/ios`)
+  - uni_links (from `.symlinks/plugins/uni_links/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -297,8 +304,12 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/speech_to_text/darwin"
   syncfusion_flutter_pdfviewer:
     :path: ".symlinks/plugins/syncfusion_flutter_pdfviewer/ios"
+  uni_links:
+    :path: ".symlinks/plugins/uni_links/ios"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
+  video_player_avfoundation:
+    :path: ".symlinks/plugins/video_player_avfoundation/darwin"
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
@@ -350,7 +361,9 @@ SPEC CHECKSUMS:
   syncfusion_flutter_pdfviewer: cfcf23c03816192575902e615fa50adc9f95b724
   TOCropViewController: edfd4f25713d56905ad1e0b9f5be3fbe0f59c863
   Try: 5ef669ae832617b3cee58cb2c6f99fb767a4ff96
-  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
+  uni_links: ed8c961e47ed9ce42b6d91e1de8049e38a4b3152
+  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
+  video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
 
 PODFILE CHECKSUM: a57f30d18f102dd3ce366b1d62a55ecbef2158e5
 

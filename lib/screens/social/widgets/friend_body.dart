@@ -25,7 +25,7 @@ class FriendProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final FriendsController controller = Get.find<FriendsController>();
+    final FriendsController controller = Get.put<FriendsController>(FriendsController());
     final bool deviceHasNotch = hasNotch(context);
     final double topPadding = deviceHasNotch ? 0.0 : 20.0;
 

@@ -6,6 +6,8 @@ class Message {
   final String content;
   final DateTime timestamp;
   final List<Map<String, dynamic>>? sources;
+  final bool isStreaming; // Add this
+  
 
   Message({
     required this.messageId,
@@ -13,6 +15,7 @@ class Message {
     required this.content,
     required this.timestamp,
     this.sources,
+    this.isStreaming = false,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {

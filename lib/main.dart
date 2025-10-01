@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:camera/camera.dart';
@@ -19,6 +20,11 @@ import 'notifications/local_notifications.dart';
 // <<< NEW: Keyboard utils
 import 'utils/keyboard.dart';
 import 'utils/keyboard_dismiss_observer.dart';
+
+// <<< NEW: Deep link handler
+
+import 'application/services/deeplink.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,16 +51,22 @@ Future<void> main() async {
   // GetX controllers
   Get.put(AuthController());
   Get.put(NavigationController());
+  Get.put(FriendsController());
 
   // Camera initialization
   final cameras = await availableCameras();
 
-  runApp(MyApp(cameras: cameras));
+  // <<< NEW: Init deep link handler
+  final deepLinkHandler = DeepLinkHandler();
+  deepLinkHandler.init();
+
+  runApp(MyApp(cameras: cameras, deepLinkHandler: deepLinkHandler));
 }
 
 class MyApp extends StatelessWidget {
   final List<CameraDescription> cameras;
-  const MyApp({super.key, required this.cameras});
+  final DeepLinkHandler deepLinkHandler;
+  const MyApp({super.key, required this.cameras, required this.deepLinkHandler});
 
   @override
   Widget build(BuildContext context) {

@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:lumi_learn_app/application/models/chat_sender.dart'; // ✅ Shared enum
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/source_viewer_modal.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/widgets/copyIcon.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
   final ChatSender sender;
   final List<Map<String, dynamic>>? sources;
+  final bool isStreaming; // Add this
 
   const ChatBubble({
     Key? key,
     required this.message,
     required this.sender,
     this.sources,
+    this.isStreaming = false,
   }) : super(key: key);
 
   String truncateWithEllipsis(String text, {int maxLength = 40}) {
@@ -46,14 +50,16 @@ class ChatBubble extends StatelessWidget {
             ),
             border: Border.all(color: Colors.white12),
           ),
-          child: Text(
-            message,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              height: 1.4,
-            ),
-          ),
+child: IntrinsicWidth(
+  child: Text(
+    message,
+    style: const TextStyle(
+      fontSize: 16,
+      color: Colors.white,
+      height: 1.4,
+    ),
+  ),
+),
         ),
       );
     } else {
@@ -119,110 +125,58 @@ class ChatBubble extends StatelessWidget {
       //     : orderedFiles.where((f) => citedFiles.contains(f)).toList();
 
       List<Widget> children = [
+
         Container(
           width: double.infinity,
           padding: const EdgeInsets.only(top: 12),
-          child: MarkdownBody(
-            data: message,
-            // ✅ Teach the parser LaTeX delimiters so it emits <math> nodes
-            inlineSyntaxes: [
-              MathSyntax(),
-              SourceIndexRefSyntax(),
-              NumberRefSyntax()
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: [
+              // ✅ Markdown body
+              MarkdownBody(
+                data: message,
+                inlineSyntaxes: [
+                  MathSyntax(),
+                  SourceIndexRefSyntax(),
+                  NumberRefSyntax()
+                ],
+                extensionSet: md.ExtensionSet.gitHubFlavored,
+                builders: {
+                  'math': MathBuilder(),
+                  'sourceIndexRef': SourceIndexRefBuilder(srcList, fileNameToIndex, fileNameToPages),
+                  'numberRef': NumberRefBuilder(srcList, fileNameToIndex, fileNameToPages),
+                  'pre': CopyableCodeBlockBuilder(),
+                },
+                styleSheet: MarkdownStyleSheet(
+                  p: const TextStyle(color: Colors.white, fontSize: 16, height: 1.6),
+                  h1: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, height: 1.4),
+                  h2: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, height: 1.4),
+                  h3: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, height: 1.4),
+                  h4: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1.4),
+                  h5: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, height: 1.4),
+                  h6: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, height: 1.4),
+                  strong: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  em: const TextStyle(color: Colors.white, fontStyle: FontStyle.italic),
+                  code: const TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontFamily: 'monospace'),
+                  codeblockDecoration: const BoxDecoration(),
+                  blockquote: const TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
+                  blockquoteDecoration: const BoxDecoration(
+                    border: Border(left: BorderSide(color: Colors.cyanAccent, width: 4)),
+                  ),
+                  listBullet: const TextStyle(color: Colors.white),
+                  tableBorder: TableBorder.all(color: Colors.white24),
+                  tableColumnWidth: const FlexColumnWidth(),
+                  tableCellsDecoration: BoxDecoration(color: Colors.white.withOpacity(0.02)),
+                  horizontalRuleDecoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: Colors.white24, width: 1)),
+                  ),
+                ),
+                selectable: true,
+              ),
             ],
-            // Keep GitHub extensions (tables, strikethrough, etc.)
-            extensionSet: md.ExtensionSet.gitHubFlavored,
-            builders: {
-              'math': MathBuilder(),
-              'sourceIndexRef': SourceIndexRefBuilder(
-                  srcList, fileNameToIndex, fileNameToPages),
-              'numberRef':
-                  NumberRefBuilder(srcList, fileNameToIndex, fileNameToPages),
-            },
-            styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                height: 1.6,
-              ),
-              h1: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-              ),
-              h2: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-              ),
-              h3: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-              ),
-              h4: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-              ),
-              h5: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-              ),
-              h6: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                height: 1.4,
-              ),
-              strong: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              em: const TextStyle(
-                color: Colors.white,
-                fontStyle: FontStyle.italic,
-              ),
-              // code: TextStyle(
-              //   color: Colors.cyanAccent,
-              //   backgroundColor: Colors.white.withOpacity(0.1),
-              //   fontFamily: 'monospace',
-              // ),
-              codeblockDecoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white12),
-              ),
-              blockquote: const TextStyle(
-                color: Colors.white70,
-                fontStyle: FontStyle.italic,
-              ),
-              blockquoteDecoration: const BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: Colors.cyanAccent, width: 4),
-                ),
-              ),
-              listBullet: const TextStyle(color: Colors.white),
-              tableBorder: TableBorder.all(color: Colors.white24),
-              tableColumnWidth: const FlexColumnWidth(),
-              tableCellsDecoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.02),
-              ),
-              horizontalRuleDecoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: Colors.white24, width: 1),
-                ),
-              ),
-            ),
-            selectable: true,
           ),
         ),
+
       ];
 
       // DONT DELETE I MIGHT USE LATER!!!!
@@ -299,11 +253,27 @@ class ChatBubble extends StatelessWidget {
       //     );
       //   }
       // }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...children,
+            if (!isStreaming)
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: InkWell(
+                  onTap: () => Clipboard.setData(ClipboardData(text: message)),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                    CopyButton(text: message, label: "Copy all"),
+                    ],
+                  ),
+                ),
+              ),
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      );
+          ],
+        );
     }
   }
 }
@@ -359,43 +329,81 @@ class MathSyntax extends md.InlineSyntax {
 class MathBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
-    final tex = element.textContent; // pure LaTeX (delimiters already stripped)
+    final tex = element.textContent;
     final isBlock = element.attributes['display'] == 'block';
 
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        vertical: isBlock ? 12.0 : 4.0,
-        horizontal: isBlock ? 8.0 : 0.0,
-      ),
-      child: isBlock
-          ? Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Math.tex(
-                  tex,
-                  textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  mathStyle: MathStyle.display,
-                ),
-              ),
-            )
-          : Math.tex(
-              tex,
-              textStyle: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-              mathStyle: MathStyle.text,
+    if (isBlock) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ✅ Copy controls ABOVE the box
+          Align(
+            alignment: Alignment.centerRight,
+            child: CopyButton(text: tex, label: "Copy math"),
+          ),
+          // ✅ Math container
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white12),
             ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Math.tex(
+                tex,
+                textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+                mathStyle: MathStyle.display,
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Math.tex(
+        tex,
+        textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+        mathStyle: MathStyle.text,
+      );
+    }
+  }
+}
+
+class CopyableCodeBlockBuilder extends MarkdownElementBuilder {
+  @override
+  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    final String code = element.textContent;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ✅ Copy controls ABOVE the box
+        Align(
+          alignment: Alignment.centerRight,
+          child: CopyButton(text: code, label: "Copy code"),
+        ),
+        // ✅ Code container
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Text(code,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

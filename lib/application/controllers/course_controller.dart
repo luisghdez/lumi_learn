@@ -12,6 +12,10 @@ import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart
 import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
+import 'package:lumi_learn_app/notifications/notification_campaigns.dart';
+import 'package:lumi_learn_app/screens/streak/streakScreen.dart';
+
+
 
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
@@ -92,23 +96,36 @@ class CourseController extends GetxController {
     courses.removeWhere((course) => course['id'] == tempId);
   }
 
-  void nextQuestion() {
+  void nextQuestion() async {
     if (activeQuestionIndex.value < computedQuestions.length - 1) {
       activeQuestionIndex.value++;
     } else {
-      // Last question reached
-      completeCurrentLesson();
+      // Last question → complete lesson
+      final streakInfo = await completeCurrentLesson();
 
-      // Navigate to LessonResultScreen from controller
-      Future.delayed(const Duration(milliseconds: 300), () {
-        playLessonCompleteSound();
-        Get.offAll(() => LessonResultScreen(
-              backgroundImage: activePlanet.value!.backgroundPaths.first,
-              xp: totalXP, // Pass the accumulated XP here
-            ));
-      });
+      // Show LessonResultScreen first (stars)
+      playLessonCompleteSound();
+      await Get.offAll(() => LessonResultScreen(
+            backgroundImage: activePlanet.value!.backgroundPaths.first,
+            xp: totalXP,
+          ));
+
+      // 🔥 Always update local streak, even if not extended
+      if (streakInfo != null) {
+        final int newStreak = streakInfo['newStreak'];
+        authController.streakCount.value = newStreak;
+
+        // 🎬 Show cutscene only if streakExtended
+        if (streakInfo['streakExtended'] == true) {
+          await Get.to(() => StreakCelebrationScreen(newStreak: newStreak));
+        }
+      }
     }
   }
+
+
+
+
 
   // test questions
   // List<Question> getQuestions() {
@@ -133,72 +150,72 @@ class CourseController extends GetxController {
   //       ],
   //       lessonType: LessonType.speakAll,
   //     ),
-  //     // Question(
-  //     //   questionText:
-  //     //       'Q1 What is the answer to this question if this was a long question of the question and a question?',
-  //     //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
-  //     //   correctAnswer: 'Paris',
-  //     //   lessonType: LessonType.multipleChoice,
-  //     // ),
-  //     // Question(
-  //     //   questionText:
-  //     //       'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
-  //     //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
-  //     //   correctAnswer: 'Paris',
-  //     //   lessonType: LessonType.multipleChoice,
-  //     // ),
-  //     // Question(
-  //     //   questionText:
-  //     //       'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
-  //     //   options: [
-  //     //     'Italy',
-  //     //     'Paris',
-  //     //     'Berlin',
-  //     //     'Madrid',
-  //     //     'London',
-  //     //     'Tokyo',
-  //     //     'New York City'
-  //     //   ],
-  //     //   correctAnswer: 'Italy',
-  //     //   lessonType: LessonType.fillInTheBlank,
-  //     // ),
-  //     // // Type in everything you learned
-  //     // Question(
-  //     //   questionText:
-  //     //       'Type in everything you learned up to this point in one minute!',
-  //     //   options: [],
-  //     //   lessonType: LessonType.writeAll,
-  //     // ),
-  //     // Question(
-  //     //   questionText: 'Match the Terms',
-  //     //   options: [],
-  //     //   flashcards: [
-  //     //     Flashcard(
-  //     //         term: 'Term 1',
-  //     //         definition: 'Definition of term 1 which shuld be long like this'),
-  //     //     Flashcard(
-  //     //         term: 'Term 2',
-  //     //         definition: 'Definition of term 2 which shuld be long like this'),
-  //     //     Flashcard(
-  //     //         term: 'Term 3',
-  //     //         definition: 'Definition of term 3 which shuld be long like this'),
-  //     //     Flashcard(
-  //     //         term: 'Term 4',
-  //     //         definition: 'Definition of term 4 which shuld be long like this'),
-  //     //   ],
-  //     //   lessonType: LessonType.matchTheTerms,
-  //     // ),
-  //     // Question(
-  //     //   questionText: 'Flashcards',
-  //     //   options: [],
-  //     //   flashcards: [
-  //     //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-  //     //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-  //     //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-  //     //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-  //     //   ],
-  //     //   lessonType: LessonType.flashcards,
-  //     // ),
+      // Question(
+      //   questionText:
+      //       'Q1 What is the answer to this question if this was a long question of the question and a question?',
+      //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+      //   correctAnswer: 'Paris',
+      //   lessonType: LessonType.multipleChoice,
+      // ),
+      // Question(
+      //   questionText:
+      //       'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
+      //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+      //   correctAnswer: 'Paris',
+      //   lessonType: LessonType.multipleChoice,
+      // ),
+      // Question(
+      //   questionText:
+      //       'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
+      //   options: [
+      //     'Italy',
+      //     'Paris',
+      //     'Berlin',
+      //     'Madrid',
+      //     'London',
+      //     'Tokyo',
+      //     'New York City'
+      //   ],
+      //   correctAnswer: 'Italy',
+      //   lessonType: LessonType.fillInTheBlank,
+      // ),
+      // // Type in everything you learned
+      // Question(
+      //   questionText:
+      //       'Type in everything you learned up to this point in one minute!',
+      //   options: [],
+      //   lessonType: LessonType.writeAll,
+      // ),
+      // Question(
+      //   questionText: 'Match the Terms',
+      //   options: [],
+      //   flashcards: [
+      //     Flashcard(
+      //         term: 'Term 1',
+      //         definition: 'Definition of term 1 which shuld be long like this'),
+      //     Flashcard(
+      //         term: 'Term 2',
+      //         definition: 'Definition of term 2 which shuld be long like this'),
+      //     Flashcard(
+      //         term: 'Term 3',
+      //         definition: 'Definition of term 3 which shuld be long like this'),
+      //     Flashcard(
+      //         term: 'Term 4',
+      //         definition: 'Definition of term 4 which shuld be long like this'),
+      //   ],
+      //   lessonType: LessonType.matchTheTerms,
+      // ),
+      // Question(
+      //   questionText: 'Flashcards',
+      //   options: [],
+      //   flashcards: [
+      //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+      //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+      //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+      //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+      //   ],
+      //   lessonType: LessonType.flashcards,
+      // ),
   //   ];
   // }
 
@@ -709,81 +726,80 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<void> completeCurrentLesson() async {
-    try {
-      final lessonId = lessons[activeLessonIndex.value]['id'];
-      isLoading.value = true; // Start loading
-      final token = await authController.getIdToken();
-      if (token == null) {
-        print('No user token found.');
-        isLoading.value = false;
-        return;
-      }
+Future<Map<String, dynamic>?> completeCurrentLesson() async {
+  try {
+    final lessonId = lessons[activeLessonIndex.value]['id'];
+    isLoading.value = true;
 
-      final apiService = ApiService();
-      final response = await apiService.completeLesson(
-        token: token,
-        courseId: selectedCourseId.value,
-        lessonId: lessonId,
-        xp: totalXP,
+    final token = await authController.getIdToken();
+    if (token == null) {
+      print('No user token found.');
+      isLoading.value = false;
+      return null;
+    }
+
+    final apiService = ApiService();
+    final response = await apiService.completeLesson(
+      token: token,
+      courseId: selectedCourseId.value,
+      lessonId: lessonId,
+      xp: totalXP,
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      print('Lesson completed successfully: $responseData');
+
+      // Update local XP + mark lesson completed locally
+      authController.xpCount.value += totalXP;
+      lessons[activeLessonIndex.value]['completed'] = true;
+
+      // ✅ Schedule risk reminder at +22h
+      await NotificationCampaigns.instance()
+          .scheduleStreakRiskReminderAfterLastCheckIn(
+        lastCheckIn: DateTime.now(),
       );
 
-      if (response.statusCode == 200) {
-        // Parse JSON
-        final responseData = jsonDecode(response.body);
-        print('Lesson completed successfully: $responseData');
+      // --- Streak handling ---
+      final streakInfo = responseData['streakInfo'];
+      if (streakInfo != null) {
+        final int newStreak = streakInfo['newStreak'];
+        final bool streakExtended = streakInfo['streakExtended'] == true;
 
-        authController.xpCount.value += totalXP;
+        // 🔥 Update local streak state
+        authController.streakCount.value = newStreak;
 
-        // Mark this lesson as completed in local state
-        lessons[activeLessonIndex.value]['completed'] = true;
-
-        // Extract streak info (if present)
-        final streakInfo = responseData['streakInfo'];
-        if (streakInfo != null) {
-          final newStreak = streakInfo['newStreak'];
-          final previousStreak = streakInfo['previousStreak'];
-          final streakExtended = streakInfo['streakExtended'];
-
-          authController.streakCount.value = newStreak;
-
-          // If the streak was incremented
-          if (streakExtended == true) {
-            // You can show a toast/snackbar, or store it in a variable to display on the next screen
-            print(
-                'Your streak has increased from $previousStreak to $newStreak!');
-
-            // For instance, show a snackbar
-            Get.snackbar(
-              "🔥 Streak Extended!",
-              "Your streak is now $newStreak days long!",
-              backgroundColor: const Color.fromARGB(255, 72, 44, 0),
-              colorText: Colors.white,
-              duration: const Duration(seconds: 3),
-            );
-          }
+        if (streakExtended) {
+          await NotificationCampaigns.instance()
+              .scheduleStreakMilestoneNotification(newStreak);
         }
-      } else {
-        print('Failed to complete lesson: ${response.statusCode}');
-        Get.snackbar(
-          "Error",
-          "Failed to complete lesson.",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
       }
-    } catch (e) {
-      print('Error completing lesson: $e');
+
+      return responseData['streakInfo'];
+    } else {
+      print('Failed to complete lesson: ${response.statusCode}');
       Get.snackbar(
         "Error",
-        "Something went wrong. Please try again.",
+        "Failed to complete lesson.",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-    } finally {
-      isLoading.value = false; // Stop loading
+      return null;
     }
+  } catch (e) {
+    print('Error completing lesson: $e');
+    Get.snackbar(
+      "Error",
+      "Something went wrong. Please try again.",
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+    return null;
+  } finally {
+    isLoading.value = false;
   }
+}
+
 
   void submitAnswerForQuestion({
     required Question question,
@@ -797,7 +813,7 @@ class CourseController extends GetxController {
       totalXP += 6;
 
       // Wait 300 milliseconds before moving on (adjust duration as needed)
-      Future.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(milliseconds: 300), () {
         showGreenGlow.value = false;
         nextQuestion();
       });
