@@ -39,9 +39,12 @@ class SearchMain extends StatelessWidget {
             page: searchController.currentPage.value,
             limit: 10);
       } else {
-        // Refresh saved courses through course controller with current pagination state
-        await courseController.fetchCourses(
-            page: courseController.currentPage.value, limit: 10);
+        // Refresh saved courses through course controller with current subject and pagination state
+        final currentSubject = searchController.selectedSubject.value;
+        await courseController.fetchSavedCoursesForSubject(
+            subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+            page: courseController.currentPage.value,
+            limit: 10);
       }
     }
 
@@ -130,21 +133,11 @@ Widget _buildCourseList(
   List<Map<String, dynamic>> filteredCourses = [];
 
   if (searchController.showSavedOnly.value) {
-    // When showing saved courses, use existing logic from CourseController
+    // When showing saved courses, use courses from CourseController (already filtered by backend)
+    // Only apply client-side search query filtering since backend handles subject filtering
     filteredCourses = List<Map<String, dynamic>>.from(
         courseController.courses.where((course) {
-      // Subject filter for saved courses
-      if (searchController.selectedSubject.value?.id != 'all') {
-        final courseSubject = course['subject']?.toString().toLowerCase() ?? '';
-        final selectedSubjectName =
-            searchController.selectedSubject.value?.name.toLowerCase() ?? '';
-        if (!courseSubject.contains(selectedSubjectName) &&
-            !selectedSubjectName.contains(courseSubject)) {
-          return false;
-        }
-      }
-
-      // Search query filter for saved courses
+      // Search query filter for saved courses (backend handles subject filtering)
       if (searchController.searchQuery.value.isNotEmpty) {
         final title = course['title']?.toString().toLowerCase() ?? '';
         final subject = course['subject']?.toString().toLowerCase() ?? '';

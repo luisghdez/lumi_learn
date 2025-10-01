@@ -227,12 +227,21 @@ class LumiSearchController extends GetxController {
     selectedSubject.value = subject;
     // Reset pagination when changing subjects
     currentPage.value = 1;
-    // Fetch courses for new subject when not showing saved only
+
     if (!showSavedOnly.value) {
+      // Fetch all courses for new subject
       fetchAllCourses(
           subject: subject.id == 'all' ? null : subject.name,
           page: 1,
           limit: 10);
+    } else {
+      // Fetch saved courses for new subject using backend filtering
+      final courseController = Get.find<CourseController>();
+      courseController.fetchSavedCoursesForSubject(
+        subject: subject.id == 'all' ? null : subject.name,
+        page: 1,
+        limit: 10,
+      );
     }
   }
 
@@ -240,9 +249,14 @@ class LumiSearchController extends GetxController {
     showSavedOnly.value = !showSavedOnly.value;
 
     if (showSavedOnly.value) {
-      // When switching to "saved courses" mode, fetch 10 courses for search screen
+      // When switching to "saved courses" mode, fetch courses with current subject filter
       final courseController = Get.find<CourseController>();
-      courseController.fetchCourses(page: 1, limit: 10);
+      final currentSubject = selectedSubject.value;
+      courseController.fetchSavedCoursesForSubject(
+        subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+        page: 1,
+        limit: 10,
+      );
     } else {
       // When switching to "all courses" mode, reset pagination and fetch courses for current subject
       currentPage.value = 1;
@@ -258,9 +272,14 @@ class LumiSearchController extends GetxController {
     showSavedOnly.value = enabled;
 
     if (enabled) {
-      // When switching to "saved courses" mode, fetch 10 courses for search screen
+      // When switching to "saved courses" mode, fetch courses with current subject filter
       final courseController = Get.find<CourseController>();
-      courseController.fetchCourses(page: 1, limit: 10);
+      final currentSubject = selectedSubject.value;
+      courseController.fetchSavedCoursesForSubject(
+        subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+        page: 1,
+        limit: 10,
+      );
     } else {
       // When switching to "all courses" mode, reset pagination and fetch courses for current subject
       currentPage.value = 1;
@@ -281,9 +300,9 @@ class LumiSearchController extends GetxController {
     showSavedOnly.value = true;
     selectedSubject.value = subjects.first; // All subjects
 
-    // Fetch 10 courses for search screen when navigating from "view all"
+    // Fetch courses with subject filter when navigating from "view all"
     final courseController = Get.find<CourseController>();
-    courseController.fetchCourses(page: 1, limit: 10);
+    courseController.fetchSavedCoursesForSubject(page: 1, limit: 10);
   }
 
   void showCoursesForSubject(String subjectId) {

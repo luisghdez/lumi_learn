@@ -32,6 +32,7 @@ class CourseController extends GetxController {
   var hasNextPage = false.obs;
   var hasPreviousPage = false.obs;
   var totalCount = 0.obs;
+  var currentSubject = ''.obs; // Track current subject filter
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   var selectedCourseHasEmbeddings = false.obs;
@@ -521,8 +522,17 @@ class CourseController extends GetxController {
 
   // New method to fetch courses from the backend with pagination
   Future<void> fetchCourses(
-      {int page = 1, int limit = 10, bool isPagination = false}) async {
-    print('Fetching courses... page: $page, limit: $limit');
+      {int page = 1,
+      int limit = 10,
+      bool isPagination = false,
+      String? subject}) async {
+    print(
+        'Fetching courses... page: $page, limit: $limit${subject != null ? ', subject: $subject' : ''}');
+
+    // Store current subject filter
+    if (!isPagination) {
+      currentSubject.value = subject ?? '';
+    }
 
     // Use appropriate loading state based on operation type
     if (isPagination) {
@@ -544,8 +554,13 @@ class CourseController extends GetxController {
       }
 
       final apiService = ApiService();
-      final response =
-          await apiService.getCourses(token: token, page: page, limit: limit);
+      final response = await apiService.getCourses(
+          token: token,
+          page: page,
+          limit: limit,
+          subject: isPagination
+              ? (currentSubject.value.isEmpty ? null : currentSubject.value)
+              : subject);
 
       if (response.statusCode == 200) {
         // Parse the JSON response and store the courses in our RxList
@@ -594,6 +609,12 @@ class CourseController extends GetxController {
       await fetchCourses(
           page: currentPage.value - 1, limit: 10, isPagination: true);
     }
+  }
+
+  // Method to fetch saved courses with subject filtering
+  Future<void> fetchSavedCoursesForSubject(
+      {String? subject, int page = 1, int limit = 10}) async {
+    await fetchCourses(page: page, limit: limit, subject: subject);
   }
 
   // Method for home screen to fetch limited courses

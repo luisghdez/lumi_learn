@@ -71,8 +71,14 @@ class ApiService {
     required String token,
     int page = 1,
     int limit = 10,
+    String? subject,
   }) async {
-    final uri = Uri.parse('$_baseUrl/courses?page=$page&limit=$limit');
+    String url = '$_baseUrl/courses?page=$page&limit=$limit';
+    if (subject != null && subject.isNotEmpty && subject != 'all') {
+      url += '&subject=$subject';
+    }
+
+    final uri = Uri.parse(url);
     final response = await http.get(
       uri,
       headers: {
