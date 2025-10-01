@@ -92,11 +92,17 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
       appBar: AppBar(
         title: const Text(
           'Add Friends',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+          icon: const Icon(Icons.share, color: Colors.red),
+            onPressed: _shareFollowLink,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -106,17 +112,27 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
           indicatorColor: Colors.white,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
         children: [
-          Obx(() => AddFriendsTab(
-                emailController: _searchController,
-                onCheckContactsPermission: _checkContactsPermission,
-                onShareLink: _shareFollowLink,
-                contactsPermissionGranted: _contactsPermissionGranted.value,
-                onSearch: _performSearch, // 👈 Hook up search logic
-              )),
-          const FriendRequestsTab(),
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/black_moons_lighter.png",
+              fit: BoxFit.cover,
+            ),
+          ),
+          TabBarView(
+            controller: _tabController,
+            children: [
+              Obx(() => AddFriendsTab(
+                    emailController: _searchController,
+                    onCheckContactsPermission: _checkContactsPermission,
+                    onShareLink: _shareFollowLink,
+                    contactsPermissionGranted: _contactsPermissionGranted.value,
+                    onSearch: _performSearch,
+                  )),
+              const FriendRequestsTab(),
+            ],
+          ),
         ],
       ),
     );

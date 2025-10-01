@@ -12,7 +12,7 @@ class FriendsService {
     required String token,
   }) async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/friends'),
+      Uri.parse('$_baseUrl/friends?order=xp'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
