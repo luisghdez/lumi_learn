@@ -18,8 +18,12 @@ class FriendTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
-        backgroundImage: AssetImage(friend.avatarUrl ?? 'assets/pfp/pfp1.png'),
-        backgroundColor: Colors.transparent,
+        backgroundImage:
+AssetImage(
+  friend.avatarUrl != null && friend.avatarUrl!.isNotEmpty && friend.avatarUrl != "default"
+    ? 'assets/pfp/pfp${friend.avatarUrl}.png'
+    : 'assets/pfp/pfp1.png',
+),        backgroundColor: Colors.transparent,
       ),
       title: Text(
         friend.name ?? 'Unknown',
@@ -31,7 +35,7 @@ class FriendTile extends StatelessWidget {
         ),
       ),
       trailing: Text(
-        '${friend.points} pts',
+        '${friend.totalXP} pts',
         style: const TextStyle(
           color: Color(0xFFB4B2FF),
           fontFamily: 'Inter',

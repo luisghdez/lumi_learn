@@ -30,7 +30,8 @@ class _LumiTextInputFieldState extends State<LumiTextInputField> {
     if (text.isNotEmpty) {
       widget.onSend(text);
       _controller.clear();
-      _focusNode.unfocus();
+      // ❌ Remove this line entirely: _focusNode.unfocus();
+      // The keyboard will stay open for rapid messaging
     }
   }
 
