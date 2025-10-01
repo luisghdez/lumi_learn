@@ -52,6 +52,8 @@ class HorizontalCategoryList extends StatelessWidget {
                     tags: course['tags'] ?? [],
                     subject: course['subject'],
                     hasEmbeddings: course['hasEmbeddings'] ?? false,
+                    createdByName: course['createdByName'],
+                    createdById: course['createdById'] ?? course['createdBy'],
                     onConfirm: () async {
                       if (course['loading'] == true) return;
 

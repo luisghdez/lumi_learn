@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 //controllers
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 
 //widgets
 import 'package:lumi_learn_app/widgets/base_screen_container.dart';
@@ -14,6 +15,7 @@ import 'package:lumi_learn_app/widgets/tag_chip.dart';
 //screens
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
+import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 
 class SearchMain extends StatelessWidget {
   const SearchMain({Key? key}) : super(key: key);
@@ -59,15 +61,15 @@ class SearchMain extends StatelessWidget {
               () => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomSearchBar(
-                    controller: TextEditingController(
-                        text: searchController.searchQuery.value),
-                    hintText: 'Search courses, topics or tags...',
-                    onChanged: (query) {
-                      searchController.setSearchQuery(query);
-                    },
-                  ),
-                  const SizedBox(height: 20),
+                  // CustomSearchBar(
+                  //   controller: TextEditingController(
+                  //       text: searchController.searchQuery.value),
+                  //   hintText: 'Search courses, topics or tags...',
+                  //   onChanged: (query) {
+                  //     searchController.setSearchQuery(query);
+                  //   },
+                  // ),
+                  // const SizedBox(height: 20),
                   // Subject and Saved Filters
                   Row(
                     children: [
@@ -255,7 +257,7 @@ Widget _buildCourseList(
             imagePath: galaxyImagePath,
             courseName: course['title'] ?? 'Untitled',
             tags: List<String>.from(course['tags'] ?? []),
-            bookmarkCount: course['totalSaves'] ?? 0,
+            bookmarkCount: course['savedCount'] ?? 0,
             lessonCount: course['lessonCount'] ?? course['totalLessons'] ?? 0,
             subject: course['subject'],
             hasEmbeddings: course['hasEmbeddings'] ?? false,
@@ -409,14 +411,36 @@ Widget _buildPaginationControls(
   });
 }
 
+Future<void> _navigateToUserProfile(String userId) async {
+  try {
+    final friendsController = Get.find<FriendsController>();
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    await friendsController.setActiveFriend(userId);
+    Get.back(); // Close loading dialog
+    Get.to(
+      () => const FriendProfile(),
+      transition: Transition.fadeIn,
+    );
+  } catch (e) {
+    Get.back(); // Close loading dialog
+    Get.snackbar("Error", "Could not load profile: $e");
+  }
+}
+
 void _showCourseConfirmationDialog(BuildContext context,
     Map<String, dynamic> course, CourseController courseController) {
   List<String> displayTags = List<String>.from(course['tags'] ?? []);
   final String title = course['title'] ?? 'Untitled Course';
   final String? subject = course['subject'];
   final bool hasEmbeddings = course['hasEmbeddings'] ?? false;
-  final int totalSaves = course['totalSaves'] ?? 0;
+  final int totalSaves = course['savedCount'] ?? 0;
   final int totalLessons = course['lessonCount'] ?? course['totalLessons'] ?? 0;
+  final String createdByName = course['createdByName'] ?? 'Anonymous';
+  final String? createdById = course['createdById'] ?? course['createdBy'];
 
   // Add subject tag if hasEmbeddings is true and subject is available
   if (hasEmbeddings && subject != null && subject.isNotEmpty) {
@@ -472,12 +496,24 @@ void _showCourseConfirmationDialog(BuildContext context,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Created by: Anonymous',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white54,
+                      GestureDetector(
+                        onTap: () {
+                          if (createdById != null) {
+                            _navigateToUserProfile(createdById!);
+                          }
+                        },
+                        child: Text(
+                          'Created by: $createdByName',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: createdById != null
+                                ? Colors.white70
+                                : Colors.white54,
+                            decoration: createdById != null
+                                ? TextDecoration.underline
+                                : null,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
