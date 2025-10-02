@@ -338,6 +338,20 @@ class ApiService {
     } catch (_) {/* ignore parse errors */}
   }
 
+  static Future<void> updateUserName(String token, String newName) async {
+    final uri = Uri.parse('$_baseUrl/users/me');
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': newName,
+      }),
+    );
+  }
+
   static Future<void> deleteUserData(String token) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/users/me'),

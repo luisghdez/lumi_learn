@@ -132,11 +132,8 @@ class _ProfileBodyState extends State<ProfileBody> {
                                           child: Column(
                                             children: [
                                               Obx(() {
-                                                final name = authController
-                                                        .firebaseUser
-                                                        .value
-                                                        ?.displayName ??
-                                                    'User';
+                                                final name =
+                                                    authController.name.value;
                                                 if (!isEditingName) {
                                                   return Text(
                                                     name,
@@ -174,6 +171,36 @@ class _ProfileBodyState extends State<ProfileBody> {
                                                             Colors.white,
                                                         autofocus: true,
                                                         maxLines: 1,
+                                                        textInputAction:
+                                                            TextInputAction
+                                                                .done,
+                                                        onSubmitted:
+                                                            (value) async {
+                                                          final newName =
+                                                              value.trim();
+                                                          if (newName
+                                                                  .isNotEmpty &&
+                                                              newName !=
+                                                                  authController
+                                                                      .name
+                                                                      .value) {
+                                                            await authController
+                                                                .updateDisplayName(
+                                                                    newName);
+                                                          }
+                                                          setState(() =>
+                                                              isEditingName =
+                                                                  false);
+                                                        },
+                                                        onTapOutside: (event) {
+                                                          // Reset to original name and exit editing mode
+                                                          nameController.text =
+                                                              authController
+                                                                  .name.value;
+                                                          setState(() =>
+                                                              isEditingName =
+                                                                  false);
+                                                        },
                                                         decoration:
                                                             const InputDecoration(
                                                           isDense: true,
@@ -246,38 +273,23 @@ class _ProfileBodyState extends State<ProfileBody> {
                                             ],
                                           ),
                                         ),
-                                        Positioned(
-                                          top: 8,
-                                          right: 12,
-                                          child: GestureDetector(
-                                            onTap: () async {
-                                              if (isEditingName) {
-                                                final newName =
-                                                    nameController.text.trim();
-                                                if (newName.isNotEmpty &&
-                                                    newName !=
-                                                        authController
-                                                            .firebaseUser
-                                                            .value
-                                                            ?.displayName) {
-                                                  await authController
-                                                      .updateDisplayName(
-                                                          newName);
-                                                }
-                                              }
-                                              setState(() => isEditingName =
-                                                  !isEditingName);
-                                            },
-                                            child: Icon(
-                                              isEditingName
-                                                  ? Icons.check
-                                                  : Icons.edit,
-                                              color: Colors.white
-                                                  .withOpacity(0.85),
-                                              size: 20,
+                                        if (!isEditingName)
+                                          Positioned(
+                                            top: 8,
+                                            right: 12,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(
+                                                    () => isEditingName = true);
+                                              },
+                                              child: Icon(
+                                                Icons.edit,
+                                                color: Colors.white
+                                                    .withOpacity(0.85),
+                                                size: 20,
+                                              ),
                                             ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 20),
