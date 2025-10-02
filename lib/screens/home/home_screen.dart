@@ -14,7 +14,6 @@ import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
-import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 
 import 'components/category_list.dart';
 import 'components/top_picks_header.dart';
@@ -168,18 +167,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     title: 'LumiTutor',
                                     subtitle: 'AI study companion',
                                     onTap: () {
-                                      Navigator.of(context).push(
-                                        NoSwipePageRoute(
-                                          builder: (_) => const LumiTutorMain(
-                                            initialArgs: {
-                                              'type': 'text',
-                                              'paths': [],
-                                              'category': 'Anything',
-                                            },
-                                          ),
-                                          duration:
-                                              const Duration(milliseconds: 300),
+                                      Get.to(
+                                        () => const LumiTutorMain(
+                                          initialArgs: {
+                                            'type': 'text',
+                                            'paths': [],
+                                            'category': 'Anything',
+                                          },
                                         ),
+                                        transition: Transition.fadeIn,
+                                        duration:
+                                            const Duration(milliseconds: 300),
                                       );
                                     },
                                   ),

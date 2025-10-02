@@ -76,7 +76,6 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                             () => const LumiTutorMain(),
                             transition: Transition.fadeIn,
                             duration: const Duration(milliseconds: 400),
-                            fullscreenDialog: true,
                           );
                         } else {
                           navigationController.updateIndex(index);

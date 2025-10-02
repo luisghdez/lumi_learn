@@ -60,7 +60,8 @@ class _AiScannerMainState extends State<AiScannerMain> {
   }
 
   Future<void> _captureImage() async {
-    if (!_controller.value.isInitialized || _controller.value.isTakingPicture) return;
+    if (!_controller.value.isInitialized || _controller.value.isTakingPicture)
+      return;
 
     try {
       final XFile rawImage = await _controller.takePicture();
@@ -111,16 +112,16 @@ class _AiScannerMainState extends State<AiScannerMain> {
       _imageBytes = null;
     });
 
-    Navigator.of(context).push(
-      NoSwipePageRoute(
-        builder: (_) => LumiTutorMain(
-          initialArgs: {
-            'type': 'image',
-            'paths': [filePath],
-            'category': _categories[_selectedIndex]['name'],
-          },
-        ),
+    Get.to(
+      () => LumiTutorMain(
+        initialArgs: {
+          'type': 'image',
+          'paths': [filePath],
+          'category': _categories[_selectedIndex]['name'],
+        },
       ),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 300),
     );
   }
 
