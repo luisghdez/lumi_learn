@@ -4,8 +4,10 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
+import 'package:share/share.dart';
 
 class HorizontalCategoryCard extends StatelessWidget {
+  final String? courseId;
   final String title;
   final String imagePath;
   final VoidCallback onConfirm;
@@ -18,6 +20,7 @@ class HorizontalCategoryCard extends StatelessWidget {
 
   const HorizontalCategoryCard({
     Key? key,
+    this.courseId,
     required this.title,
     required this.imagePath,
     required this.onConfirm,
@@ -30,6 +33,15 @@ class HorizontalCategoryCard extends StatelessWidget {
   }) : super(key: key);
 
   static const double _aspectRatio = 220 / 140;
+
+  void _shareCourse() {
+    if (courseId != null) {
+      final shareLink = 'https://www.lumilearnapp.com/course/$courseId';
+      Share.share(
+        "🚀 Check out $title on Lumi Learn: \n$shareLink",
+      );
+    }
+  }
 
   Future<void> _navigateToUserProfile(String userId) async {
     try {
@@ -268,17 +280,32 @@ class HorizontalCategoryCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Arrow icon
+                  // Top right icons (share and arrow)
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        size: 14,
-                        color: Colors.white,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Share icon
+                        if (courseId != null)
+                          GestureDetector(
+                            onTap: _shareCourse,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              margin: const EdgeInsets.only(right: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.share,
+                                size: 14,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],

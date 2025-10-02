@@ -46,6 +46,7 @@ class HorizontalCategoryList extends StatelessWidget {
               child: Stack(
                 children: [
                   HorizontalCategoryCard(
+                    courseId: course['id'],
                     height: responsiveHeight,
                     title: course['title'] ?? 'Untitled',
                     imagePath: galaxyImagePath,

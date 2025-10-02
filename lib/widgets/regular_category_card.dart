@@ -82,7 +82,7 @@ class RegularCategoryCard extends StatelessWidget {
           ),
           child: const Icon(
             Icons.share,
-            size: 16,
+            size: 14,
             color: Colors.white54,
           ),
         ),
