@@ -129,6 +129,7 @@ class CategoryList extends StatelessWidget {
             child: Stack(
               children: [
                 CategoryCard(
+                  courseId: course['id'] ?? '',
                   title: course['title'] ?? 'Untitled',
                   completedLessons: course['completedLessons'] ?? 0,
                   totalLessons: course['totalLessons'] ?? 0,

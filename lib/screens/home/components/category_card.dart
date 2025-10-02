@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
+import 'package:lumi_learn_app/widgets/course_options_dialog.dart';
 
 class CategoryCard extends StatelessWidget {
+  final String courseId;
   final String title;
   final int completedLessons;
   final int totalLessons;
@@ -14,6 +16,7 @@ class CategoryCard extends StatelessWidget {
 
   const CategoryCard({
     Key? key,
+    required this.courseId,
     required this.title,
     required this.completedLessons,
     required this.totalLessons,
@@ -140,12 +143,29 @@ class CategoryCard extends StatelessWidget {
             Positioned(
               top: 8,
               right: 8,
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                child: const Icon(
-                  Icons.arrow_forward,
-                  size: 14,
-                  color: Colors.white,
+              child: GestureDetector(
+                onTap: () {
+                  showCourseOptionsDialog(
+                    context: context,
+                    courseId: courseId,
+                    courseTitle: title,
+                    onDelete: () {
+                      // TODO: Implement delete functionality
+                      Navigator.of(context).pop();
+                    },
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    size: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

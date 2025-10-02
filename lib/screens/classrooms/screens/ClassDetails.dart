@@ -109,6 +109,7 @@ class _ClassroomDetailsState extends State<ClassroomDetails> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 20),
                               child: CategoryCard(
+                                courseId: course.id,
                                 title: course.title,
                                 completedLessons: 0,
                                 totalLessons: 0,
