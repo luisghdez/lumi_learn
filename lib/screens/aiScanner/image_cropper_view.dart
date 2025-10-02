@@ -46,23 +46,49 @@ class _ImageCropperViewState extends State<ImageCropperView> {
   }
 
   void _handleSubmit() {
-  if (!widget.isCroppingInProgress) {
-    widget.onCropPressed();        // Set loading flag
-    _controller.crop();            // Start the actual crop
+    if (!widget.isCroppingInProgress) {
+      widget.onCropPressed(); // Set loading flag
+      _controller.crop(); // Start the actual crop
+    }
   }
-}
-
 
   Future<void> _resizeImageToScreen() async {
     final screenSize = ui.window.physicalSize / ui.window.devicePixelRatio;
 
-    final codec = await ui.instantiateImageCodec(
-      widget.imageBytes,
-      targetWidth: screenSize.width.toInt(),
-      targetHeight: screenSize.height.toInt(),
-    );
+    // Get original image dimensions
+    final codec = await ui.instantiateImageCodec(widget.imageBytes);
     final frame = await codec.getNextFrame();
-    final byteData = await frame.image.toByteData(format: ui.ImageByteFormat.png);
+    final originalImage = frame.image;
+
+    // Calculate scaling to fill screen (like BoxFit.cover in camera preview)
+    final scaleX = screenSize.width / originalImage.width;
+    final scaleY = screenSize.height / originalImage.height;
+    final scale = scaleX > scaleY ? scaleX : scaleY; // Use larger scale to fill
+
+    final scaledWidth = (originalImage.width * scale).round();
+    final scaledHeight = (originalImage.height * scale).round();
+
+    // Center crop to screen size
+    final cropX = ((scaledWidth - screenSize.width) / 2).round();
+    final cropY = ((scaledHeight - screenSize.height) / 2).round();
+
+    // Create a picture recorder to draw the cropped image
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    // Scale and position the image to match camera preview behavior
+    canvas.scale(scale);
+    canvas.translate(-cropX / scale, -cropY / scale);
+    canvas.drawImage(originalImage, Offset.zero, Paint());
+
+    final picture = recorder.endRecording();
+    final croppedImage = await picture.toImage(
+      screenSize.width.toInt(),
+      screenSize.height.toInt(),
+    );
+
+    final byteData =
+        await croppedImage.toByteData(format: ui.ImageByteFormat.png);
     final resized = byteData!.buffer.asUint8List();
 
     setState(() {
@@ -137,8 +163,7 @@ class _ImageCropperViewState extends State<ImageCropperView> {
             left: 0,
             right: 0,
             child: Center(
-              child: 
-              GestureDetector(
+              child: GestureDetector(
                 onTap: _handleSubmit,
                 child: Column(
                   children: [
@@ -149,7 +174,8 @@ class _ImageCropperViewState extends State<ImageCropperView> {
                         shape: BoxShape.circle,
                         border: Border.all(color: widget.dotColor, width: 2),
                       ),
-                      child: Icon(Icons.check, color: widget.dotColor, size: 28),
+                      child:
+                          Icon(Icons.check, color: widget.dotColor, size: 28),
                     ),
                     const SizedBox(height: 6),
                     const Text(
@@ -163,7 +189,6 @@ class _ImageCropperViewState extends State<ImageCropperView> {
                   ],
                 ),
               ),
-
             ),
           ),
 
