@@ -393,6 +393,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           duration: const Duration(milliseconds: 1000),
                         ),
                         courseTitle: courseController.selectedCourseTitle.value,
+                        courseId: courseId.value,
                         progress: progress,
                         onViewFlashcards: () {
                           Get.to(
