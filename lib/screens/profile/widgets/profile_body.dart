@@ -5,7 +5,6 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
-import '../components/xp_chart_box.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
@@ -367,27 +366,6 @@ class _ProfileBodyState extends State<ProfileBody> {
                         Icons.settings,
                         color: widget.isEditingPfp ? Colors.grey : Colors.white,
                         size: 28,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(top: topPadding, left: 16),
-                  child: AbsorbPointer(
-                    absorbing: widget.isEditingPfp,
-                    child: GestureDetector(
-                      onTap: () {
-                        toggleEditMode(true); // Trigger PFP edit mode
-                      },
-                      child: Icon(
-                        Icons.edit,
-                        color: widget.isEditingPfp ? Colors.grey : Colors.white,
-                        size: 26,
                       ),
                     ),
                   ),
