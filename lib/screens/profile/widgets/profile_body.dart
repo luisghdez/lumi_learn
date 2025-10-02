@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:share/share.dart';
 import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
@@ -65,6 +66,17 @@ class _ProfileBodyState extends State<ProfileBody> {
     return topInset > 20;
   }
 
+  void _shareProfileLink() {
+    final authController = Get.find<AuthController>();
+    final user = authController.firebaseUser.value;
+    if (user != null) {
+      final link = "https://www.lumilearnapp.com/invite/${user.uid}";
+      Share.share("Follow ${authController.name.value} on Lumi Learn! $link");
+    } else {
+      Get.snackbar("Not Logged In", "Sign in to share your profile.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
@@ -103,6 +115,19 @@ class _ProfileBodyState extends State<ProfileBody> {
                               setState(() {
                                 selectedAvatarId = newId;
                               });
+                            },
+                            onDone: () async {
+                              toggleEditMode(false);
+                              final currentPfpId = int.tryParse(
+                                    authController
+                                            .firebaseUser.value?.photoURL ??
+                                        '',
+                                  ) ??
+                                  1;
+                              if (selectedAvatarId != currentPfpId) {
+                                await authController
+                                    .updateProfilePicture(selectedAvatarId);
+                              }
                             },
                           ),
                         ),
@@ -282,10 +307,9 @@ class _ProfileBodyState extends State<ProfileBody> {
                                                 setState(
                                                     () => isEditingName = true);
                                               },
-                                              child: Icon(
+                                              child: const Icon(
                                                 Icons.edit,
-                                                color: Colors.white
-                                                    .withOpacity(0.85),
+                                                color: Colors.white54,
                                                 size: 20,
                                               ),
                                             ),
@@ -365,6 +389,27 @@ class _ProfileBodyState extends State<ProfileBody> {
             ),
             SafeArea(
               child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(top: topPadding, left: 16),
+                  child: AbsorbPointer(
+                    absorbing: widget.isEditingPfp,
+                    child: GestureDetector(
+                      onTap: _shareProfileLink,
+                      child: Icon(
+                        Icons.share,
+                        color: widget.isEditingPfp
+                            ? const Color.fromARGB(63, 158, 158, 158)
+                            : Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Align(
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: EdgeInsets.only(top: topPadding, right: 16),
@@ -376,7 +421,9 @@ class _ProfileBodyState extends State<ProfileBody> {
                       },
                       child: Icon(
                         Icons.settings,
-                        color: widget.isEditingPfp ? Colors.grey : Colors.white,
+                        color: widget.isEditingPfp
+                            ? const Color.fromARGB(63, 158, 158, 158)
+                            : Colors.white,
                         size: 28,
                       ),
                     ),
@@ -384,31 +431,6 @@ class _ProfileBodyState extends State<ProfileBody> {
                 ),
               ),
             ),
-            if (widget.isEditingPfp)
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 104, right: 12),
-                  child: TextButton(
-                    onPressed: () async {
-                      toggleEditMode(false);
-                      final currentPfpId = int.tryParse(
-                            authController.firebaseUser.value?.photoURL ?? '',
-                          ) ??
-                          1;
-                      if (selectedAvatarId != currentPfpId) {
-                        await authController
-                            .updateProfilePicture(selectedAvatarId);
-                      }
-                    },
-                    child: const Text(
-                      "Done",
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),

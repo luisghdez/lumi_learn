@@ -5,6 +5,7 @@ class PfpViewer extends StatefulWidget {
   final bool isEditing;
   final Function(bool)? onEditModeChange;
   final Function(int)? onAvatarChanged;
+  final Function()? onDone;
   final int selectedIndex; //pfp id
 
   const PfpViewer({
@@ -13,6 +14,7 @@ class PfpViewer extends StatefulWidget {
     this.isEditing = false,
     this.onEditModeChange,
     this.onAvatarChanged,
+    this.onDone,
     this.selectedIndex = 0,
   });
 
@@ -86,6 +88,32 @@ class _PfpViewerState extends State<PfpViewer> {
                   ),
                 ),
               ),
+              // Done button - appears when editing
+              if (widget.isEditing)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () => widget.onDone?.call(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 91, 91, 91)
+                            .withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Text(
+                        "Done",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               if (widget.isEditing)
                 Positioned(
                   left: 10,
