@@ -164,7 +164,7 @@ class CategoryCard extends StatelessWidget {
                   child: const Icon(
                     Icons.more_horiz,
                     size: 16,
-                    color: Colors.white,
+                    color: Colors.white54,
                   ),
                 ),
               ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
+import 'package:lumi_learn_app/widgets/course_options_dialog.dart';
+import 'package:share/share.dart';
 
 class RegularCategoryCard extends StatelessWidget {
+  final String? courseId;
   final String imagePath;
   final String courseName;
   final List<String> tags;
@@ -11,9 +14,12 @@ class RegularCategoryCard extends StatelessWidget {
   final VoidCallback? onStartLearning;
   final String? subject;
   final bool hasEmbeddings;
+  final bool showOptionsMenu;
+  final bool showShareIcon;
 
   const RegularCategoryCard({
     Key? key,
+    this.courseId,
     required this.imagePath,
     required this.courseName,
     required this.tags,
@@ -22,7 +28,77 @@ class RegularCategoryCard extends StatelessWidget {
     this.onStartLearning,
     this.subject,
     this.hasEmbeddings = false,
+    this.showOptionsMenu = false,
+    this.showShareIcon = false,
   }) : super(key: key);
+
+  void _shareCourse() {
+    if (courseId != null) {
+      final shareLink = 'https://www.lumilearnapp.com/course/$courseId';
+      Share.share(
+        "🚀 Check out $courseName on Lumi Learn: \n$shareLink",
+      );
+    }
+  }
+
+  Widget _buildTopRightIcon(BuildContext context) {
+    // Priority: Options menu > Share icon > Arrow icon
+    if (showOptionsMenu && courseId != null) {
+      // Saved courses: Show options menu
+      return GestureDetector(
+        onTap: () {
+          showCourseOptionsDialog(
+            context: context,
+            courseId: courseId!,
+            courseTitle: courseName,
+            onDelete: () {
+              // TODO: Implement delete functionality
+              Navigator.of(context).pop();
+            },
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.more_horiz,
+            size: 16,
+            color: Colors.white54,
+          ),
+        ),
+      );
+    } else if (showShareIcon && courseId != null) {
+      // Browsable courses: Show direct share icon
+      return GestureDetector(
+        onTap: _shareCourse,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.share,
+            size: 16,
+            color: Colors.white54,
+          ),
+        ),
+      );
+    } else {
+      // Default: Show arrow icon
+      return Container(
+        padding: const EdgeInsets.all(6),
+        child: const Icon(
+          Icons.arrow_forward,
+          size: 14,
+          color: Colors.white,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,14 +192,7 @@ class RegularCategoryCard extends StatelessWidget {
             Positioned(
               top: 8,
               right: 8,
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                child: const Icon(
-                  Icons.arrow_forward,
-                  size: 14,
-                  color: Colors.white,
-                ),
-              ),
+              child: _buildTopRightIcon(context),
             ),
           ],
         ),

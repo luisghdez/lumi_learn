@@ -259,10 +259,13 @@ Widget _buildCourseList(
   return Column(
     children: filteredCourses.map<Widget>((course) {
       final galaxyImagePath = getGalaxyForCourse(course['id']);
+      final bool isSavedCourse = searchController.showSavedOnly.value;
+
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Builder(
           builder: (context) => RegularCategoryCard(
+            courseId: course['id'],
             imagePath: galaxyImagePath,
             courseName: course['title'] ?? 'Untitled',
             tags: List<String>.from(course['tags'] ?? []),
@@ -270,6 +273,9 @@ Widget _buildCourseList(
             lessonCount: course['lessonCount'] ?? course['totalLessons'] ?? 0,
             subject: course['subject'],
             hasEmbeddings: course['hasEmbeddings'] ?? false,
+            showOptionsMenu: isSavedCourse,
+            showShareIcon:
+                !isSavedCourse, // Show share icon for browsable courses
             onStartLearning: () => _showCourseConfirmationDialog(
                 context, course, courseController),
           ),
