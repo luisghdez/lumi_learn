@@ -5,11 +5,14 @@ import 'package:flutter/services.dart';
 
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/utils/course_dialog_helper.dart';
 
 class DeepLinkHandler {
   static DeepLinkHandler? _instance;
   StreamSubscription? _sub;
-  FriendsController? _controller;
+  FriendsController? _friendsController;
+  CourseController? _courseController;
   String?
       _lastProcessedUri; // Track the last processed URI to prevent duplicates
   bool _isNavigating = false; // Prevent navigation while already navigating
@@ -27,14 +30,16 @@ class DeepLinkHandler {
   factory DeepLinkHandler() => instance;
 
   void init() async {
-    // Ensure we have the FriendsController before initializing
-    if (!Get.isRegistered<FriendsController>()) {
+    // Ensure we have the required controllers before initializing
+    if (!Get.isRegistered<FriendsController>() ||
+        !Get.isRegistered<CourseController>()) {
       print(
-          "DeepLinkHandler: FriendsController not registered yet, skipping initialization");
+          "DeepLinkHandler: Required controllers not registered yet, skipping initialization");
       return;
     }
 
-    _controller = Get.find<FriendsController>();
+    _friendsController = Get.find<FriendsController>();
+    _courseController = Get.find<CourseController>();
 
     // Handle cold start (app launched from a link)
     try {
@@ -68,10 +73,10 @@ class DeepLinkHandler {
       return;
     }
 
-    // Ensure we have the controller before handling the URI
-    if (_controller == null) {
+    // Ensure we have the controllers before handling the URI
+    if (_friendsController == null || _courseController == null) {
       print(
-          "DeepLinkHandler: Controller not available, cannot handle deep link");
+          "DeepLinkHandler: Controllers not available, cannot handle deep link");
       return;
     }
 
@@ -90,11 +95,14 @@ class DeepLinkHandler {
       return;
     }
 
-    // ✅ Only handle www.lumilearnapp.com/invite/<uid>
-    if (uri.host == "www.lumilearnapp.com" &&
-        uri.pathSegments.isNotEmpty &&
-        uri.pathSegments.first == "invite" &&
-        uri.pathSegments.length > 1) {
+    if (uri.host != "www.lumilearnapp.com" || uri.pathSegments.isEmpty) {
+      return;
+    }
+
+    final String firstSegment = uri.pathSegments.first;
+
+    // ✅ Handle friend invite links: www.lumilearnapp.com/invite/<uid>
+    if (firstSegment == "invite" && uri.pathSegments.length > 1) {
       final uid = uri.pathSegments[1];
       print("Processing FriendProfile navigation with UID: $uid");
 
@@ -102,7 +110,7 @@ class DeepLinkHandler {
       _lastProcessedUri = uriString;
       _isNavigating = true;
 
-      _controller!.setActiveFriend(uid);
+      _friendsController!.setActiveFriend(uid);
 
       // Navigate and pass userId
       Get.to(() => const FriendProfile())?.then((_) {
@@ -112,6 +120,34 @@ class DeepLinkHandler {
         print("Navigation completed, reset navigation flag and processed URI");
       });
     }
+    // ✅ Handle course share links: www.lumilearnapp.com/course/<courseId>
+    else if (firstSegment == "course" && uri.pathSegments.length > 1) {
+      final courseId = uri.pathSegments[1];
+      print("Processing Course dialog with courseId: $courseId");
+
+      // Mark this URI as processed and set navigation flag
+      _lastProcessedUri = uriString;
+      _isNavigating = true;
+
+      // Fetch course data and show dialog
+      _courseController!.fetchCourseById(courseId).then((courseData) {
+        if (courseData != null && Get.context != null) {
+          showCourseConfirmationDialog(
+            Get.context!,
+            courseData,
+            _courseController!,
+          );
+        }
+        // Reset navigation flag and processed URI
+        _isNavigating = false;
+        _lastProcessedUri = null; // Allow the same link to be processed again
+        print("Course dialog shown, reset navigation flag and processed URI");
+      }).catchError((error) {
+        print("Error fetching course: $error");
+        _isNavigating = false;
+        _lastProcessedUri = null;
+      });
+    }
   }
 
   void dispose() {
@@ -119,7 +155,8 @@ class DeepLinkHandler {
     _debounceTimer = null;
     _sub?.cancel();
     _sub = null;
-    _controller = null;
+    _friendsController = null;
+    _courseController = null;
     _lastProcessedUri = null; // Reset processed URI tracking
     _isNavigating = false; // Reset navigation flag
   }

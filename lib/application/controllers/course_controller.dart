@@ -15,8 +15,6 @@ import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 import 'package:lumi_learn_app/notifications/notification_campaigns.dart';
 import 'package:lumi_learn_app/screens/streak/streakScreen.dart';
 
-
-
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
   RxBool isInitialized = false.obs;
@@ -123,10 +121,6 @@ class CourseController extends GetxController {
     }
   }
 
-
-
-
-
   // test questions
   // List<Question> getQuestions() {
   //   // return questions based on activeCourseId and activeLessonIndex
@@ -150,72 +144,72 @@ class CourseController extends GetxController {
   //       ],
   //       lessonType: LessonType.speakAll,
   //     ),
-      // Question(
-      //   questionText:
-      //       'Q1 What is the answer to this question if this was a long question of the question and a question?',
-      //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
-      //   correctAnswer: 'Paris',
-      //   lessonType: LessonType.multipleChoice,
-      // ),
-      // Question(
-      //   questionText:
-      //       'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
-      //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
-      //   correctAnswer: 'Paris',
-      //   lessonType: LessonType.multipleChoice,
-      // ),
-      // Question(
-      //   questionText:
-      //       'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
-      //   options: [
-      //     'Italy',
-      //     'Paris',
-      //     'Berlin',
-      //     'Madrid',
-      //     'London',
-      //     'Tokyo',
-      //     'New York City'
-      //   ],
-      //   correctAnswer: 'Italy',
-      //   lessonType: LessonType.fillInTheBlank,
-      // ),
-      // // Type in everything you learned
-      // Question(
-      //   questionText:
-      //       'Type in everything you learned up to this point in one minute!',
-      //   options: [],
-      //   lessonType: LessonType.writeAll,
-      // ),
-      // Question(
-      //   questionText: 'Match the Terms',
-      //   options: [],
-      //   flashcards: [
-      //     Flashcard(
-      //         term: 'Term 1',
-      //         definition: 'Definition of term 1 which shuld be long like this'),
-      //     Flashcard(
-      //         term: 'Term 2',
-      //         definition: 'Definition of term 2 which shuld be long like this'),
-      //     Flashcard(
-      //         term: 'Term 3',
-      //         definition: 'Definition of term 3 which shuld be long like this'),
-      //     Flashcard(
-      //         term: 'Term 4',
-      //         definition: 'Definition of term 4 which shuld be long like this'),
-      //   ],
-      //   lessonType: LessonType.matchTheTerms,
-      // ),
-      // Question(
-      //   questionText: 'Flashcards',
-      //   options: [],
-      //   flashcards: [
-      //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
-      //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
-      //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
-      //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
-      //   ],
-      //   lessonType: LessonType.flashcards,
-      // ),
+  // Question(
+  //   questionText:
+  //       'Q1 What is the answer to this question if this was a long question of the question and a question?',
+  //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //   correctAnswer: 'Paris',
+  //   lessonType: LessonType.multipleChoice,
+  // ),
+  // Question(
+  //   questionText:
+  //       'Q2 What is the 3333 to this question if this was a long question of the question and a question?',
+  //   options: ['Paris', 'London', 'Berlin', 'Madrid'],
+  //   correctAnswer: 'Paris',
+  //   lessonType: LessonType.multipleChoice,
+  // ),
+  // Question(
+  //   questionText:
+  //       'The capital of _____ is Rome and tmore questions an ksdfkasdfkad dfhasd fhsa d dfh  .',
+  //   options: [
+  //     'Italy',
+  //     'Paris',
+  //     'Berlin',
+  //     'Madrid',
+  //     'London',
+  //     'Tokyo',
+  //     'New York City'
+  //   ],
+  //   correctAnswer: 'Italy',
+  //   lessonType: LessonType.fillInTheBlank,
+  // ),
+  // // Type in everything you learned
+  // Question(
+  //   questionText:
+  //       'Type in everything you learned up to this point in one minute!',
+  //   options: [],
+  //   lessonType: LessonType.writeAll,
+  // ),
+  // Question(
+  //   questionText: 'Match the Terms',
+  //   options: [],
+  //   flashcards: [
+  //     Flashcard(
+  //         term: 'Term 1',
+  //         definition: 'Definition of term 1 which shuld be long like this'),
+  //     Flashcard(
+  //         term: 'Term 2',
+  //         definition: 'Definition of term 2 which shuld be long like this'),
+  //     Flashcard(
+  //         term: 'Term 3',
+  //         definition: 'Definition of term 3 which shuld be long like this'),
+  //     Flashcard(
+  //         term: 'Term 4',
+  //         definition: 'Definition of term 4 which shuld be long like this'),
+  //   ],
+  //   lessonType: LessonType.matchTheTerms,
+  // ),
+  // Question(
+  //   questionText: 'Flashcards',
+  //   options: [],
+  //   flashcards: [
+  //     Flashcard(term: 'Term 1', definition: 'Definition of term 1'),
+  //     Flashcard(term: 'Term 2', definition: 'Definition of term 2'),
+  //     Flashcard(term: 'Term 3', definition: 'Definition of term 3'),
+  //     Flashcard(term: 'Term 4', definition: 'Definition of term 4'),
+  //   ],
+  //   lessonType: LessonType.flashcards,
+  // ),
   //   ];
   // }
 
@@ -726,80 +720,111 @@ class CourseController extends GetxController {
     }
   }
 
-Future<Map<String, dynamic>?> completeCurrentLesson() async {
-  try {
-    final lessonId = lessons[activeLessonIndex.value]['id'];
-    isLoading.value = true;
-
-    final token = await authController.getIdToken();
-    if (token == null) {
-      print('No user token found.');
-      isLoading.value = false;
-      return null;
-    }
-
-    final apiService = ApiService();
-    final response = await apiService.completeLesson(
-      token: token,
-      courseId: selectedCourseId.value,
-      lessonId: lessonId,
-      xp: totalXP,
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      print('Lesson completed successfully: $responseData');
-
-      // Update local XP + mark lesson completed locally
-      authController.xpCount.value += totalXP;
-      lessons[activeLessonIndex.value]['completed'] = true;
-
-      // ✅ Schedule risk reminder at +22h
-      await NotificationCampaigns.instance()
-          .scheduleStreakRiskReminderAfterLastCheckIn(
-        lastCheckIn: DateTime.now(),
-      );
-
-      // --- Streak handling ---
-      final streakInfo = responseData['streakInfo'];
-      if (streakInfo != null) {
-        final int newStreak = streakInfo['newStreak'];
-        final bool streakExtended = streakInfo['streakExtended'] == true;
-
-        // 🔥 Update local streak state
-        authController.streakCount.value = newStreak;
-
-        if (streakExtended) {
-          await NotificationCampaigns.instance()
-              .scheduleStreakMilestoneNotification(newStreak);
-        }
+  /// Fetch a course by ID and return its data (for deeplink sharing)
+  Future<Map<String, dynamic>?> fetchCourseById(String courseId) async {
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        Get.snackbar("Error", "Please log in to view this course.");
+        return null;
       }
 
-      return responseData['streakInfo'];
-    } else {
-      print('Failed to complete lesson: ${response.statusCode}');
+      final apiService = ApiService();
+      final response = await apiService.getCourseById(
+        token: token,
+        courseId: courseId,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['course'] as Map<String, dynamic>;
+      } else {
+        print(
+            'Error fetching course: ${response.statusCode} - ${response.body}');
+        Get.snackbar("Error", "Failed to load course details.");
+        return null;
+      }
+    } catch (e) {
+      print('Exception while fetching course by ID: $e');
+      Get.snackbar("Error", "Could not load course: $e");
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> completeCurrentLesson() async {
+    try {
+      final lessonId = lessons[activeLessonIndex.value]['id'];
+      isLoading.value = true;
+
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        isLoading.value = false;
+        return null;
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.completeLesson(
+        token: token,
+        courseId: selectedCourseId.value,
+        lessonId: lessonId,
+        xp: totalXP,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        print('Lesson completed successfully: $responseData');
+
+        // Update local XP + mark lesson completed locally
+        authController.xpCount.value += totalXP;
+        lessons[activeLessonIndex.value]['completed'] = true;
+
+        // ✅ Schedule risk reminder at +22h
+        await NotificationCampaigns.instance()
+            .scheduleStreakRiskReminderAfterLastCheckIn(
+          lastCheckIn: DateTime.now(),
+        );
+
+        // --- Streak handling ---
+        final streakInfo = responseData['streakInfo'];
+        if (streakInfo != null) {
+          final int newStreak = streakInfo['newStreak'];
+          final bool streakExtended = streakInfo['streakExtended'] == true;
+
+          // 🔥 Update local streak state
+          authController.streakCount.value = newStreak;
+
+          if (streakExtended) {
+            await NotificationCampaigns.instance()
+                .scheduleStreakMilestoneNotification(newStreak);
+          }
+        }
+
+        return responseData['streakInfo'];
+      } else {
+        print('Failed to complete lesson: ${response.statusCode}');
+        Get.snackbar(
+          "Error",
+          "Failed to complete lesson.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return null;
+      }
+    } catch (e) {
+      print('Error completing lesson: $e');
       Get.snackbar(
         "Error",
-        "Failed to complete lesson.",
+        "Something went wrong. Please try again.",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
       return null;
+    } finally {
+      isLoading.value = false;
     }
-  } catch (e) {
-    print('Error completing lesson: $e');
-    Get.snackbar(
-      "Error",
-      "Something went wrong. Please try again.",
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-    );
-    return null;
-  } finally {
-    isLoading.value = false;
   }
-}
-
 
   void submitAnswerForQuestion({
     required Question question,
