@@ -2,10 +2,12 @@
 
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/widgets/course_options_dialog.dart';
 
 class CourseOverviewHeader extends StatelessWidget {
   final Function onBack;
   final String courseTitle;
+  final String courseId;
   final double progress;
   final VoidCallback onViewFlashcards;
   final VoidCallback onViewNotes;
@@ -16,6 +18,7 @@ class CourseOverviewHeader extends StatelessWidget {
     Key? key,
     required this.onBack,
     required this.courseTitle,
+    required this.courseId,
     required this.progress,
     required this.onViewFlashcards,
     required this.onViewNotes,
@@ -42,6 +45,7 @@ class CourseOverviewHeader extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Stack(
                     alignment: Alignment.topCenter,
@@ -74,6 +78,35 @@ class CourseOverviewHeader extends StatelessWidget {
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -1),
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: Transform.translate(
+                          offset: const Offset(
+                              0, -2), // Move up slightly to visually center
+                          child: SizedBox(
+                            width: 30,
+                            height: 20,
+                            child: IconButton(
+                                iconSize: 20,
+                                icon: const Icon(Icons.more_horiz),
+                                padding:
+                                    EdgeInsets.zero, // Remove default padding
+                                constraints:
+                                    const BoxConstraints(), // Remove default minimum size
+                                onPressed: () {
+                                  showCourseOptionsDialog(
+                                    context: context,
+                                    courseId: courseId,
+                                    courseTitle: courseTitle,
+                                    onDelete: () {
+                                      // TODO: Implement delete functionality
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                }),
                           ),
                         ),
                       ),

@@ -7,7 +7,6 @@ class Message {
   final DateTime timestamp;
   final List<Map<String, dynamic>>? sources;
   final bool isStreaming; // Add this
-  
 
   Message({
     required this.messageId,

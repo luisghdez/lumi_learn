@@ -106,7 +106,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
       if (args['type'] == 'image') {
         final List<String> paths = List<String>.from(args['paths']);
         for (var path in paths) {
-          // TODO: Handle image upload to active thread
+          // TODO: Handle image upload to a new thread
           // ignore: avoid_print
           print('Image uploaded: $path');
         }
@@ -275,18 +275,19 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                                   _tutorController.messages.length - 1 - index;
                               final message =
                                   _tutorController.messages[reversedIndex];
-                                return SizedBox(
-                                  width: double.infinity, // ✅ This ensures full width for proper alignment
-                                  child: ChatBubble(
-                                    message: message.content,
-                                    sender: message.role == MessageRole.user
-                                        ? ChatSender.user
-                                        : ChatSender.tutor,
-                                    sources: message.sources,
-                                    isStreaming: message.isStreaming,
-                                  ),
-                                );
-                              },
+                              return SizedBox(
+                                width: double
+                                    .infinity, // ✅ This ensures full width for proper alignment
+                                child: ChatBubble(
+                                  message: message.content,
+                                  sender: message.role == MessageRole.user
+                                      ? ChatSender.user
+                                      : ChatSender.tutor,
+                                  sources: message.sources,
+                                  isStreaming: message.isStreaming,
+                                ),
+                              );
+                            },
                           ),
                           if (_tutorController.isLoadingMoreMessages.value)
                             Positioned(

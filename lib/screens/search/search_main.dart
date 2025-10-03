@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,8 +16,36 @@ import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 
-class SearchMain extends StatelessWidget {
+class SearchMain extends StatefulWidget {
   const SearchMain({Key? key}) : super(key: key);
+
+  @override
+  State<SearchMain> createState() => _SearchMainState();
+}
+
+class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late AnimationController _paginationLoadingController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _paginationLoadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _paginationLoadingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +53,32 @@ class SearchMain extends StatelessWidget {
         Get.find<LumiSearchController>();
     final CourseController courseController = Get.find<CourseController>();
 
+    // Listen to loading state changes and trigger animation when loading finishes
+    return Obx(() {
+      // Trigger animation when loading finishes (but not during pagination)
+      if (!searchController.isLoading.value &&
+          !searchController.isPaginating.value) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_animationController.status != AnimationStatus.completed) {
+            _animationController.forward();
+          }
+        });
+      } else if (searchController.isLoading.value &&
+          !searchController.isPaginating.value) {
+        // Reset animation when starting a new search
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _animationController.reset();
+        });
+      }
+
+      return _buildSearchContent(context, searchController, courseController);
+    });
+  }
+
+  Widget _buildSearchContent(
+      BuildContext context,
+      LumiSearchController searchController,
+      CourseController courseController) {
     double getHorizontalPadding() {
       final screenWidth = MediaQuery.of(context).size.width;
       return screenWidth > 800 ? 32.0 : 16.0;
@@ -67,52 +122,52 @@ class SearchMain extends StatelessWidget {
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
-                            child: Obx(
-                              () => Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // CustomSearchBar(
-                                  //   controller: TextEditingController(
-                                  //       text: searchController.searchQuery.value),
-                                  //   hintText: 'Search courses, topics or tags...',
-                                  //   onChanged: (query) {
-                                  //     searchController.setSearchQuery(query);
-                                  //   },
-                                  // ),
-                                  // const SizedBox(height: 20),
-                                  // Subject and Saved Filters
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _SubjectSelector(
-                                          selectedSubject: searchController
-                                              .selectedSubject.value,
-                                          subjects: searchController.subjects,
-                                          onSubjectSelected: (subject) {
-                                            searchController
-                                                .setSelectedSubject(subject);
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _SavedCoursesToggle(
-                                        isSelected: searchController
-                                            .showSavedOnly.value,
-                                        onToggle: () {
-                                          searchController.toggleSavedFilter();
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // CustomSearchBar(
+                                //   controller: TextEditingController(
+                                //       text: searchController.searchQuery.value),
+                                //   hintText: 'Search courses, topics or tags...',
+                                //   onChanged: (query) {
+                                //     searchController.setSearchQuery(query);
+                                //   },
+                                // ),
+                                // const SizedBox(height: 20),
+                                // Subject and Saved Filters
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _SubjectSelector(
+                                        selectedSubject: searchController
+                                            .selectedSubject.value,
+                                        subjects: searchController.subjects,
+                                        onSubjectSelected: (subject) {
+                                          searchController
+                                              .setSelectedSubject(subject);
                                         },
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  // Course List
-                                  _buildCourseList(
-                                      searchController, courseController),
-                                  // Pagination Controls (for both saved and all courses)
-                                  _buildPaginationControls(
-                                      searchController, courseController),
-                                ],
-                              ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _SavedCoursesToggle(
+                                      isSelected:
+                                          searchController.showSavedOnly.value,
+                                      onToggle: () {
+                                        searchController.toggleSavedFilter();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                // Course List
+                                _buildCourseList(searchController,
+                                    courseController, _animationController),
+                                // Pagination Controls (for both saved and all courses)
+                                _buildPaginationControls(
+                                    searchController,
+                                    courseController,
+                                    _paginationLoadingController),
+                              ],
                             ),
                           ),
                         ],
@@ -130,7 +185,9 @@ class SearchMain extends StatelessWidget {
 }
 
 Widget _buildCourseList(
-    LumiSearchController searchController, CourseController courseController) {
+    LumiSearchController searchController,
+    CourseController courseController,
+    AnimationController animationController) {
   // Show loading indicator only for initial load (not pagination)
   if (searchController.isLoading.value &&
       !searchController.isPaginating.value) {
@@ -174,82 +231,94 @@ Widget _buildCourseList(
   // Handle empty states
   if (filteredCourses.isEmpty) {
     if (searchController.showSavedOnly.value) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white24),
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animationController,
+          curve: Curves.easeOut,
         ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.bookmark_border,
-              size: 48,
-              color: Colors.white60,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              searchController.selectedSubject.value?.id == 'all'
-                  ? 'No saved courses found'
-                  : 'No saved ${searchController.selectedSubject.value?.name.toLowerCase()} courses',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Create or save some courses to see them here',
-              style: TextStyle(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Column(
+            children: [
+              const Icon(
+                Icons.bookmark_border,
+                size: 48,
                 color: Colors.white60,
-                fontSize: 14,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                searchController.selectedSubject.value?.id == 'all'
+                    ? 'No saved courses found'
+                    : 'No saved ${searchController.selectedSubject.value?.name.toLowerCase()} courses',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Create or save some courses to see them here',
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     } else {
       // No courses found in explore mode
-      return Container(
-        padding: const EdgeInsets.all(20),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white24),
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animationController,
+          curve: Curves.easeOut,
         ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.explore_off,
-              size: 48,
-              color: Colors.white60,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              searchController.selectedSubject.value?.id == 'all'
-                  ? 'No courses found'
-                  : 'No ${searchController.selectedSubject.value?.name.toLowerCase()} courses found',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Try adjusting your search or subject filter',
-              style: TextStyle(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Column(
+            children: [
+              const Icon(
+                Icons.explore_off,
+                size: 48,
                 color: Colors.white60,
-                fontSize: 14,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                searchController.selectedSubject.value?.id == 'all'
+                    ? 'No courses found'
+                    : 'No ${searchController.selectedSubject.value?.name.toLowerCase()} courses found',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Try adjusting your search or subject filter',
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -257,21 +326,36 @@ Widget _buildCourseList(
 
   // Display the filtered courses
   return Column(
-    children: filteredCourses.map<Widget>((course) {
+    children: filteredCourses.asMap().entries.map<Widget>((entry) {
+      final int index = entry.key;
+      final Map<String, dynamic> course = entry.value;
       final galaxyImagePath = getGalaxyForCourse(course['id']);
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Builder(
-          builder: (context) => RegularCategoryCard(
-            imagePath: galaxyImagePath,
-            courseName: course['title'] ?? 'Untitled',
-            tags: List<String>.from(course['tags'] ?? []),
-            bookmarkCount: course['savedCount'] ?? 0,
-            lessonCount: course['lessonCount'] ?? course['totalLessons'] ?? 0,
-            subject: course['subject'],
-            hasEmbeddings: course['hasEmbeddings'] ?? false,
-            onStartLearning: () => _showCourseConfirmationDialog(
-                context, course, courseController),
+      final bool isSavedCourse = searchController.showSavedOnly.value;
+
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animationController,
+          curve: Interval((index * 0.1).clamp(0.0, 0.8), 1.0,
+              curve: Curves.easeOut),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Builder(
+            builder: (context) => RegularCategoryCard(
+              courseId: course['id'],
+              imagePath: galaxyImagePath,
+              courseName: course['title'] ?? 'Untitled',
+              tags: List<String>.from(course['tags'] ?? []),
+              bookmarkCount: course['savedCount'] ?? 0,
+              lessonCount: course['lessonCount'] ?? course['totalLessons'] ?? 0,
+              subject: course['subject'],
+              hasEmbeddings: course['hasEmbeddings'] ?? false,
+              showOptionsMenu: isSavedCourse,
+              showShareIcon:
+                  !isSavedCourse, // Show share icon for browsable courses
+              onStartLearning: () => _showCourseConfirmationDialog(
+                  context, course, courseController),
+            ),
           ),
         ),
       );
@@ -280,8 +364,16 @@ Widget _buildCourseList(
 }
 
 Widget _buildPaginationControls(
-    LumiSearchController searchController, CourseController courseController) {
+    LumiSearchController searchController,
+    CourseController courseController,
+    AnimationController paginationLoadingController) {
   return Obx(() {
+    // Hide pagination controls during initial loading (but not during pagination)
+    if (searchController.isLoading.value &&
+        !searchController.isPaginating.value) {
+      return const SizedBox.shrink();
+    }
+
     // Determine which controller to use based on the current mode
     final bool showSavedOnly = searchController.showSavedOnly.value;
     final bool hasPreviousPage = showSavedOnly
@@ -339,42 +431,17 @@ Widget _buildPaginationControls(
 
           const SizedBox(width: 16),
 
-          // Page indicator with subtle loading animation
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isPaginating
-                  ? Colors.white.withOpacity(0.15)
-                  : Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isPaginating ? Colors.white38 : Colors.white24,
+          // Page indicator with animated border loading
+          _AnimatedBorderContainer(
+            isPaginating: isPaginating,
+            animationController: paginationLoadingController,
+            child: Text(
+              '$currentPage / $totalPages',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isPaginating) ...[
-                  const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  '$currentPage / $totalPages',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
             ),
           ),
 
@@ -628,6 +695,52 @@ Future<void> _navigateToCourse(
     transition: Transition.fadeIn,
     duration: const Duration(milliseconds: 500),
   );
+}
+
+class _AnimatedBorderContainer extends StatelessWidget {
+  final bool isPaginating;
+  final AnimationController animationController;
+  final Widget child;
+
+  const _AnimatedBorderContainer({
+    Key? key,
+    required this.isPaginating,
+    required this.animationController,
+    required this.child,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animationController,
+      builder: (context, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isPaginating
+                ? Colors.white.withOpacity(0.15)
+                : Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: isPaginating
+                ? _createAnimatedBorder()
+                : Border.all(color: Colors.white24),
+          ),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Border _createAnimatedBorder() {
+    // Create a smooth pulsing effect with opacity
+    final double opacity = (0.3 +
+        (0.4 * (1 + math.sin(animationController.value * 2 * math.pi)) / 2));
+
+    return Border.all(
+      color: Colors.white.withOpacity(opacity),
+      width: 1.5,
+    );
+  }
 }
 
 // Galaxy assignment function (copied from category_list.dart)

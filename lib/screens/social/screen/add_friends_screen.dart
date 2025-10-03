@@ -99,7 +99,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-          icon: const Icon(Icons.share, color: Colors.red),
+            icon: const Icon(Icons.share, color: Colors.white),
             onPressed: _shareFollowLink,
           ),
         ],

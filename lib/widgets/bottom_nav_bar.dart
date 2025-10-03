@@ -69,14 +69,12 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                             () => const CourseCreation(),
                             transition: Transition.fadeIn,
                             duration: const Duration(milliseconds: 400),
-                            fullscreenDialog: true,
                           );
                         } else if (index == 3) {
                           Get.to(
                             () => const LumiTutorMain(),
                             transition: Transition.fadeIn,
                             duration: const Duration(milliseconds: 400),
-                            fullscreenDialog: true,
                           );
                         } else {
                           navigationController.updateIndex(index);

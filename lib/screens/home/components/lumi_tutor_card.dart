@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
-import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 
 class LumiTutorCard extends StatelessWidget {
   const LumiTutorCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final navigationController = Get.find<NavigationController>();
-
     final popularQuestions = [
       'What is photosynthesis?',
       'Solve quadratic equations',
@@ -45,18 +41,17 @@ class LumiTutorCard extends StatelessWidget {
                           child: _TransparentTag(
                             label: q,
                             onTap: () {
-                              Navigator.of(context).push(
-                                NoSwipePageRoute(
-                                  builder: (_) => LumiTutorMain(
-                                    initialArgs: {
-                                      'type': 'text',
-                                      'paths': [],
-                                      'category': 'Anything',
-                                      'initialMessage': q,
-                                    },
-                                  ),
-                                  duration: const Duration(milliseconds: 300),
+                              Get.to(
+                                () => LumiTutorMain(
+                                  initialArgs: {
+                                    'type': 'text',
+                                    'paths': [],
+                                    'category': 'Anything',
+                                    'initialMessage': q,
+                                  },
                                 ),
+                                transition: Transition.fadeIn,
+                                duration: const Duration(milliseconds: 300),
                               );
                             },
                           ),
@@ -71,18 +66,17 @@ class LumiTutorCard extends StatelessWidget {
                           child: _TransparentTag(
                             label: q,
                             onTap: () {
-                              Navigator.of(context).push(
-                                NoSwipePageRoute(
-                                  builder: (_) => LumiTutorMain(
-                                    initialArgs: {
-                                      'type': 'text',
-                                      'paths': [],
-                                      'category': 'Anything',
-                                      'initialMessage': q,
-                                    },
-                                  ),
-                                  duration: const Duration(milliseconds: 300),
+                              Get.to(
+                                () => LumiTutorMain(
+                                  initialArgs: {
+                                    'type': 'text',
+                                    'paths': [],
+                                    'category': 'Anything',
+                                    'initialMessage': q,
+                                  },
                                 ),
+                                transition: Transition.fadeIn,
+                                duration: const Duration(milliseconds: 300),
                               );
                             },
                           ),
@@ -139,17 +133,16 @@ class LumiTutorCard extends StatelessWidget {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                NoSwipePageRoute(
-                                  builder: (_) => const LumiTutorMain(
-                                    initialArgs: {
-                                      'type': 'text',
-                                      'paths': [],
-                                      'category': 'Anything',
-                                    },
-                                  ),
-                                  duration: const Duration(milliseconds: 300),
+                              Get.to(
+                                () => const LumiTutorMain(
+                                  initialArgs: {
+                                    'type': 'text',
+                                    'paths': [],
+                                    'category': 'Anything',
+                                  },
                                 ),
+                                transition: Transition.fadeIn,
+                                duration: const Duration(milliseconds: 300),
                               );
                             },
                             style: ElevatedButton.styleFrom(

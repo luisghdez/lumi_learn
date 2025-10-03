@@ -129,6 +129,20 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> getCourseById({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses/$courseId');
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
   Future<http.Response> getLessons({
     required String token,
     required String courseId,
@@ -322,6 +336,20 @@ class ApiService {
       final Map<String, dynamic> payload = jsonDecode(response.body);
       message = payload['error'] ?? payload['message'] ?? message;
     } catch (_) {/* ignore parse errors */}
+  }
+
+  static Future<void> updateUserName(String token, String newName) async {
+    final uri = Uri.parse('$_baseUrl/users/me');
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': newName,
+      }),
+    );
   }
 
   static Future<void> deleteUserData(String token) async {

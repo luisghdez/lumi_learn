@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class TutorService {
   //LOCAL
@@ -260,5 +261,108 @@ class TutorService {
     });
 
     return controller.stream;
+  }
+
+  /// Creates a new thread with an image input using streaming response
+  Stream<Map<String, dynamic>> createImageThreadStream({
+    required String token,
+    required String imagePath,
+  }) {
+    final uri = Uri.parse('$_baseUrl/threads/image');
+    final client = http.Client();
+
+    final controller = StreamController<Map<String, dynamic>>();
+
+    // Create multipart request for image upload
+    _createImageMultipartRequest(uri, token, imagePath).then((request) {
+      client.send(request).then((streamedResponse) async {
+        // Non-200: surface as an error-type event and close
+        if (streamedResponse.statusCode != 200) {
+          // Read the response body to get error details
+          final responseBody =
+              await streamedResponse.stream.transform(utf8.decoder).join();
+
+          controller.add({
+            'type': 'http_error',
+            'status': streamedResponse.statusCode,
+            'body': responseBody,
+          });
+          controller.close();
+          client.close();
+          return;
+        }
+
+        streamedResponse.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen(
+          (line) {
+            if (line.trim().isNotEmpty) {
+              try {
+                final Map<String, dynamic> event = jsonDecode(line);
+                controller.add(event);
+              } catch (e) {
+                controller.add({
+                  'type': 'parse_error',
+                  'error': e.toString(),
+                });
+              }
+            }
+          },
+          onError: (error) {
+            controller.add({
+              'type': 'stream_error',
+              'error': error.toString(),
+            });
+            controller.close();
+            client.close();
+          },
+          onDone: () {
+            controller.close();
+            client.close();
+          },
+        );
+      }).catchError((error) {
+        controller.add({
+          'type': 'request_error',
+          'error': error.toString(),
+        });
+        controller.close();
+        client.close();
+      });
+    }).catchError((error) {
+      controller.add({
+        'type': 'multipart_error',
+        'error': error.toString(),
+      });
+      controller.close();
+      client.close();
+    });
+
+    return controller.stream;
+  }
+
+  /// Helper method to create multipart request for image upload
+  Future<http.MultipartRequest> _createImageMultipartRequest(
+    Uri uri,
+    String token,
+    String imagePath,
+  ) async {
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/x-ndjson',
+    });
+
+    // Add image file
+    final imageFile = await http.MultipartFile.fromPath(
+      'image',
+      imagePath,
+      contentType: MediaType('image', 'png'),
+    );
+    request.files.add(imageFile);
+
+    return request;
   }
 }

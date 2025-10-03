@@ -6,16 +6,18 @@ class InstructionText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Positioned(
-      top: 60,
+      top: 80,
       left: 0,
       right: 0,
-      child: Center(
-        child: Text(
-          'Align your question within the frame',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
+      child: SafeArea(
+        child: Center(
+          child: Text(
+            'Align your question within the frame',
+            style: TextStyle(
+              color: Color.fromARGB(216, 255, 255, 255),
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),

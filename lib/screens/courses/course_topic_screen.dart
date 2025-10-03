@@ -174,9 +174,8 @@ class _CourseTopicScreenState extends State<CourseTopicScreen> {
                     onTap: () {
                       Get.to(
                         () => const CourseCreation(),
-                        transition: Transition.downToUp,
+                        transition: Transition.fadeIn,
                         duration: const Duration(milliseconds: 400),
-                        fullscreenDialog: true,
                       );
                     },
                     child: Container(

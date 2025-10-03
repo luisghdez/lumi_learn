@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/services/deeplink.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lumi_learn_app/application/services/api_service.dart';
@@ -28,6 +29,7 @@ class AuthController extends GetxController {
   RxInt courseSlotsUsed = 0.obs;
   RxInt maxCourseSlots = 2.obs;
   RxInt friendCount = 0.obs;
+  RxString name = 'User'.obs;
 
   RxBool isPremium = false.obs;
 
@@ -82,6 +84,7 @@ class AuthController extends GetxController {
       courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
       maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
       friendCount.value = data['user']['friendCount'] ?? 0;
+      name.value = data['user']['name'] ?? '';
     } catch (e) {
       print('Error fetching user data: $e');
     }
@@ -286,6 +289,9 @@ class AuthController extends GetxController {
     await _auth.signOut();
     await Purchases.logOut();
 
+    // Clean up deep link handler
+    DeepLinkHandler.instance.dispose();
+
     if (Get.isRegistered<CourseController>()) {
       Get.delete<CourseController>(force: true);
     }
@@ -331,20 +337,16 @@ class AuthController extends GetxController {
 
   Future<void> updateDisplayName(String newName) async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return;
-
-      await user.updateDisplayName(newName);
-      await user.reload();
-      firebaseUser.value = _auth.currentUser;
-
       final token = await getIdToken();
       if (token == null) {
-        print('No user token found.');
         return;
       }
 
-      Get.snackbar("Success", "Display name updated!");
+      name.value = newName;
+
+      await ApiService.updateUserName(token, newName);
+
+      Get.snackbar("Success", "Username updated!");
     } catch (e) {
       Get.snackbar("Error", "Failed to update display name: $e");
     }
