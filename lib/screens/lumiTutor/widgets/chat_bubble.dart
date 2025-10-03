@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:lumi_learn_app/application/models/chat_sender.dart'; // ✅ Shared enum
+import 'package:lumi_learn_app/application/models/message_model.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/source_viewer_modal.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/copyIcon.dart';
 
@@ -12,6 +14,7 @@ class ChatBubble extends StatelessWidget {
   final ChatSender sender;
   final List<Map<String, dynamic>>? sources;
   final bool isStreaming; // Add this
+  final MessageImage? image; // Add image support
 
   const ChatBubble({
     Key? key,
@@ -19,6 +22,7 @@ class ChatBubble extends StatelessWidget {
     required this.sender,
     this.sources,
     this.isStreaming = false,
+    this.image,
   }) : super(key: key);
 
   String truncateWithEllipsis(String text, {int maxLength = 40}) {
@@ -26,12 +30,100 @@ class ChatBubble extends StatelessWidget {
     return '${text.substring(0, maxLength)}...';
   }
 
+  Widget _buildImageWidget(MessageImage image) {
+    final isLocalFile = image.fileUrl.startsWith('file://');
+
+    if (isLocalFile) {
+      // Display local file image
+      final filePath = image.fileUrl.replaceFirst('file://', '');
+      return Image.file(
+        File(filePath),
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          height: 150,
+          color: Colors.white.withOpacity(0.1),
+          child: const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.white54,
+              size: 32,
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Display network image
+      return Image.network(
+        image.fileUrl,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 150,
+            color: Colors.white.withOpacity(0.1),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white54,
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => Container(
+          height: 150,
+          color: Colors.white.withOpacity(0.1),
+          child: const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.white54,
+              size: 32,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showImageFullScreen(BuildContext context, MessageImage image) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: _buildImageWidget(image),
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isUser = sender == ChatSender.user;
 
     if (isUser) {
-      // User message - keep existing design
+      // User message - keep existing design with image support
       return Align(
         alignment: Alignment.centerRight,
         child: Container(
@@ -50,16 +142,34 @@ class ChatBubble extends StatelessWidget {
             ),
             border: Border.all(color: Colors.white12),
           ),
-child: IntrinsicWidth(
-  child: Text(
-    message,
-    style: const TextStyle(
-      fontSize: 16,
-      color: Colors.white,
-      height: 1.4,
-    ),
-  ),
-),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Display image if present
+              if (image != null) ...[
+                GestureDetector(
+                  onTap: () => _showImageFullScreen(context, image!),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: _buildImageWidget(image!),
+                  ),
+                ),
+              ],
+              // Display text message only if no image is present
+              if (image == null && message.isNotEmpty)
+                IntrinsicWidth(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       );
     } else {
@@ -125,7 +235,6 @@ child: IntrinsicWidth(
       //     : orderedFiles.where((f) => citedFiles.contains(f)).toList();
 
       List<Widget> children = [
-
         Container(
           width: double.infinity,
           padding: const EdgeInsets.only(top: 12),
@@ -143,32 +252,67 @@ child: IntrinsicWidth(
                 extensionSet: md.ExtensionSet.gitHubFlavored,
                 builders: {
                   'math': MathBuilder(),
-                  'sourceIndexRef': SourceIndexRefBuilder(srcList, fileNameToIndex, fileNameToPages),
-                  'numberRef': NumberRefBuilder(srcList, fileNameToIndex, fileNameToPages),
+                  'sourceIndexRef': SourceIndexRefBuilder(
+                      srcList, fileNameToIndex, fileNameToPages),
+                  'numberRef': NumberRefBuilder(
+                      srcList, fileNameToIndex, fileNameToPages),
                   'pre': CopyableCodeBlockBuilder(),
                 },
                 styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(color: Colors.white, fontSize: 16, height: 1.6),
-                  h1: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, height: 1.4),
-                  h2: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, height: 1.4),
-                  h3: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, height: 1.4),
-                  h4: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1.4),
-                  h5: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, height: 1.4),
-                  h6: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, height: 1.4),
-                  strong: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  em: const TextStyle(color: Colors.white, fontStyle: FontStyle.italic),
-                  code: const TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontFamily: 'monospace'),
+                  p: const TextStyle(
+                      color: Colors.white, fontSize: 16, height: 1.6),
+                  h1: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4),
+                  h2: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4),
+                  h3: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4),
+                  h4: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4),
+                  h5: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4),
+                  h6: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4),
+                  strong: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                  em: const TextStyle(
+                      color: Colors.white, fontStyle: FontStyle.italic),
+                  code: const TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontFamily: 'monospace'),
                   codeblockDecoration: const BoxDecoration(),
-                  blockquote: const TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
+                  blockquote: const TextStyle(
+                      color: Colors.white70, fontStyle: FontStyle.italic),
                   blockquoteDecoration: const BoxDecoration(
-                    border: Border(left: BorderSide(color: Colors.cyanAccent, width: 4)),
+                    border: Border(
+                        left: BorderSide(color: Colors.cyanAccent, width: 4)),
                   ),
                   listBullet: const TextStyle(color: Colors.white),
                   tableBorder: TableBorder.all(color: Colors.white24),
                   tableColumnWidth: const FlexColumnWidth(),
-                  tableCellsDecoration: BoxDecoration(color: Colors.white.withOpacity(0.02)),
+                  tableCellsDecoration:
+                      BoxDecoration(color: Colors.white.withOpacity(0.02)),
                   horizontalRuleDecoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.white24, width: 1)),
+                    border: Border(
+                        top: BorderSide(color: Colors.white24, width: 1)),
                   ),
                 ),
                 selectable: true,
@@ -176,7 +320,6 @@ child: IntrinsicWidth(
             ],
           ),
         ),
-
       ];
 
       // DONT DELETE I MIGHT USE LATER!!!!
@@ -253,27 +396,26 @@ child: IntrinsicWidth(
       //     );
       //   }
       // }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ...children,
-            if (!isStreaming)
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: InkWell(
-                  onTap: () => Clipboard.setData(ClipboardData(text: message)),
-                  borderRadius: BorderRadius.circular(4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...children,
+          if (!isStreaming)
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: InkWell(
+                onTap: () => Clipboard.setData(ClipboardData(text: message)),
+                borderRadius: BorderRadius.circular(4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     CopyButton(text: message, label: "Copy all"),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-
-          ],
-        );
+            ),
+        ],
+      );
     }
   }
 }
@@ -395,7 +537,8 @@ class CopyableCodeBlockBuilder extends MarkdownElementBuilder {
           ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Text(code,
+            child: Text(
+              code,
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.white,

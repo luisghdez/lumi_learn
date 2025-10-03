@@ -163,107 +163,110 @@ class LumiDrawer extends StatelessWidget {
     );
   }
 
-Widget _buildThreadTile(
-    BuildContext context, Thread thread, TutorController controller) {
-  final RxString loadingThreadId = ''.obs;
+  Widget _buildThreadTile(
+      BuildContext context, Thread thread, TutorController controller) {
+    final RxString loadingThreadId = ''.obs;
 
-  return Obx(() {
-    final isLoading = loadingThreadId.value == thread.threadId;
+    return Obx(() {
+      final isLoading = loadingThreadId.value == thread.threadId;
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  thread.initialMessage.length > 50
-                      ? '${thread.initialMessage.substring(0, 50)}...'
-                      : thread.initialMessage,
-                  style: const TextStyle(color: Colors.white),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    thread.initialMessage.length > 50
+                        ? '${thread.initialMessage.substring(0, 50)}...'
+                        : thread.initialMessage,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _formatDate(thread.lastMessageAt),
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-            ],
-          ),
-          subtitle: (thread.courseTitle ?? '').trim().isNotEmpty
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: ColorUtils.getCourseColor(thread.courseId),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            thread.courseTitle!.trim(),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              height: 0.8,
+                const SizedBox(width: 8),
+                Text(
+                  _formatDate(thread.lastMessageAt),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
+            subtitle: (thread.courseTitle ?? '').trim().isNotEmpty
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: ColorUtils.getCourseColor(thread.courseId),
+                              shape: BoxShape.circle,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                )
-              : null,
-          onTap: () async {
-            loadingThreadId.value = thread.threadId;
-            await controller.setActiveThread(thread);
-            // small delay to let the fade-out play before removing
-            await Future.delayed(const Duration(milliseconds: 200));
-            loadingThreadId.value = '';
-            FocusScope.of(context).unfocus();
-            Get.back();
-          },
-        ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              thread.courseTitle!.trim(),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                height: 0.8,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : null,
+            onTap: () async {
+              loadingThreadId.value = thread.threadId;
+              await controller.setActiveThread(thread);
+              // small delay to let the fade-out play before removing
+              await Future.delayed(const Duration(milliseconds: 200));
+              loadingThreadId.value = '';
 
-        // 🔥 Loader overlay with fade
-        AnimatedOpacity(
-          opacity: isLoading ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          child: IgnorePointer(
-            ignoring: !isLoading,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(23, 0, 0, 0).withOpacity(0.5),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              height: 60,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
+              // Check if the context is still valid before using it
+              if (context.mounted) {
+                FocusScope.of(context).unfocus();
+                Get.back();
+              }
+            },
+          ),
+
+          // 🔥 Loader overlay with fade
+          AnimatedOpacity(
+            opacity: isLoading ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: IgnorePointer(
+              ignoring: !isLoading,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(23, 0, 0, 0).withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                height: 60,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    );
-  });
-}
-
+        ],
+      );
+    });
+  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
