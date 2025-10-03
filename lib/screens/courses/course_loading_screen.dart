@@ -424,69 +424,73 @@ class _CourseLoadingScreenState extends State<CourseLoadingScreen>
     );
   }
 
-  Widget _buildStepsList() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final screenHeight = MediaQuery.of(context).size.height;
-        
-        // Check if device is in landscape mode (width > height)
-        final isLandscape = screenWidth > screenHeight;
-        
-        final maxWidth = screenWidth > 600 
-            ? (screenWidth * 0.6).clamp(400.0, 600.0)
-            : (screenWidth * 0.85).clamp(280.0, 400.0);
-        final stepTextSize = _getStepTextSize(context);
-        final spacing = screenWidth > 600 ? 24.0 : (screenWidth < 360 ? 12.0 : 16.0);
-        
-        // Reduce vertical padding in landscape mode, especially on tablets
-        final verticalPadding = isLandscape 
-            ? (screenWidth > 600 ? 8.0 : 10.0)  // Smaller padding in landscape
-            : (screenWidth > 600 ? 16.0 : (screenWidth < 360 ? 10.0 : 12.0));
+Widget _buildStepsList() {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final screenHeight = MediaQuery.of(context).size.height;
+      
+      // Check if device is in landscape mode (width > height)
+      final isLandscape = screenWidth > screenHeight;
+      
+      final maxWidth = screenWidth > 600 
+          ? (screenWidth * 0.6).clamp(400.0, 600.0)
+          : (screenWidth * 0.85).clamp(280.0, 400.0);
+      final stepTextSize = _getStepTextSize(context);
+      final spacing = screenWidth > 600 ? 24.0 : (screenWidth < 360 ? 12.0 : 16.0);
+      
+      // Reduce vertical padding in landscape mode, especially on tablets
+      final verticalPadding = isLandscape 
+          ? (screenWidth > 600 ? 8.0 : 10.0)  // Smaller padding in landscape
+          : (screenWidth > 600 ? 16.0 : (screenWidth < 360 ? 10.0 : 12.0));
 
-        return Center(
-          child: Container(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: _steps.asMap().entries.map((entry) {
-                int index = entry.key;
-                String step = entry.value;
-                bool isActive = index == _currentStep;
-                bool isCompleted = index < _currentStep || _isCompleted;
+      // Add left padding to shift content right on iPhone
+      final leftPadding = screenWidth < 600 ? 20.0 : 0.0;
 
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: verticalPadding),
-                  child: Row(
-                    children: [
-                      // Step circle with individual loading
-                      _buildStepCircle(index, isActive, isCompleted),
-                      SizedBox(width: spacing),
-                      // Step text
-                      Expanded(
-                        child: Text(
-                          step,
-                          style: GoogleFonts.poppins(
-                            fontSize: stepTextSize,
-                            fontWeight: FontWeight.w400,
-                            color: isActive || isCompleted
-                                ? Colors.white
-                                : Colors.white54,
-                            height: 1.3,
-                          ),
+      return Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          padding: EdgeInsets.only(left: leftPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _steps.asMap().entries.map((entry) {
+              int index = entry.key;
+              String step = entry.value;
+              bool isActive = index == _currentStep;
+              bool isCompleted = index < _currentStep || _isCompleted;
+
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: verticalPadding),
+                child: Row(
+                  children: [
+                    // Step circle with individual loading
+                    _buildStepCircle(index, isActive, isCompleted),
+                    SizedBox(width: spacing),
+                    // Step text
+                    Expanded(
+                      child: Text(
+                        step,
+                        style: GoogleFonts.poppins(
+                          fontSize: stepTextSize,
+                          fontWeight: FontWeight.w400,
+                          color: isActive || isCompleted
+                              ? Colors.white
+                              : Colors.white54,
+                          height: 1.3,
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
-        );
-      },
-    );
-  }
-
+        ),
+      );
+    },
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
