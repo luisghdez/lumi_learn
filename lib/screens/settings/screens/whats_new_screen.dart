@@ -1,7 +1,8 @@
+// whats_new_screen.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'whats_new_detail_screen.dart';
+import '../data/updateData.dart';
 
 class WhatsNewScreen extends StatefulWidget {
   const WhatsNewScreen({super.key});
@@ -11,14 +12,14 @@ class WhatsNewScreen extends StatefulWidget {
 }
 
 class _WhatsNewScreenState extends State<WhatsNewScreen> {
-  List<Map<String, dynamic>> updates = [
-    {
-      'title': "New Update - Version 1.0.0",
-      'subtitle': "Welcome!",
-      'image': "assets/images/welcome.png",
-      'showImage': true,
-    },
-  ];
+  late List<UpdateData> updates;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load all updates from the data file
+    updates = List.from(allUpdates);
+  }
 
   void _removeUpdate(int index) {
     setState(() {
@@ -30,61 +31,78 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text("What's New", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: updates.isEmpty
-            ? const Center(
-                child: Text(
-                  "You're all caught up!",
-                  style: TextStyle(color: Colors.white54, fontSize: 16),
-                ),
-              )
-            : ListView.separated(
-                itemCount: updates.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 20),
-                itemBuilder: (context, index) {
-                  final item = updates[index];
-                  return Dismissible(
-                    key: ValueKey(index),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    onDismissed: (_) => _removeUpdate(index),
-                    child: _buildUpdateCard(
-                      context: context,
-                      index: index,
-                      title: item['title'],
-                      subtitle: item['subtitle'],
-                      imagePath: item['image'],
-                      showImage: item['showImage'] ?? false,
-                    ),
-                  );
-                },
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/black_moons_lighter.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+          // Content
+          Column(
+            children: [
+              // AppBar
+              AppBar(
+                title: const Text("What's New",
+                    style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.transparent,
+                iconTheme: const IconThemeData(color: Colors.white),
+                elevation: 0,
               ),
+              // Body content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: updates.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "You're all caught up!",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 16),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: updates.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 20),
+                          itemBuilder: (context, index) {
+                            final update = updates[index];
+                            return Dismissible(
+                              key: ValueKey('${update.version}_$index'),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Icon(Icons.delete,
+                                    color: Colors.white),
+                              ),
+                              onDismissed: (_) => _removeUpdate(index),
+                              child: _buildUpdateCard(
+                                context: context,
+                                update: update,
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildUpdateCard({
     required BuildContext context,
-    required int index,
-    required String title,
-    required String subtitle,
-    String? imagePath,
-    bool showImage = false,
+    required UpdateData update,
   }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -110,17 +128,17 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// Title & Time
+                // Title & Time
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
                       child: Text(
-                        title,
+                        update.title,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                          fontSize: 15,
                         ),
                       ),
                     ),
@@ -132,7 +150,7 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  subtitle,
+                  update.subtitle,
                   style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 13,
@@ -140,26 +158,29 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                /// Optional Image
-                if (showImage && imagePath != null)
+                // Optional Image
+                if (update.showImage)
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => WhatsNewDetailScreen(title: title),
+                          builder: (_) => WhatsNewDetailScreen(
+                            title: update.title,
+                            version: update.version,
+                          ),
                         ),
                       );
                     },
                     child: Hero(
-                      tag: title,
+                      tag: update.title,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.asset(
-                          imagePath,
+                          update.imagePath,
                           width: double.infinity,
-                          fit: BoxFit.fitWidth, // <- zooms out to fit the width
-                          alignment: Alignment.center, // optional: control which part shows
+                          fit: BoxFit.fitWidth,
+                          alignment: Alignment.center,
                         ),
                       ),
                     ),
@@ -168,10 +189,14 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Colors.white54, size: 18),
+                    const Icon(Icons.info_outline,
+                        color: Colors.white54, size: 18),
                     const SizedBox(width: 6),
                     TextButton(
-                      onPressed: () => _removeUpdate(index),
+                      onPressed: () {
+                        final index = updates.indexOf(update);
+                        if (index != -1) _removeUpdate(index);
+                      },
                       child: const Text(
                         "Clear this update",
                         style: TextStyle(color: Colors.white70, fontSize: 14),

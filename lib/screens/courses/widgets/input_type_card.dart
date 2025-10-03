@@ -20,6 +20,20 @@ class InputTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Responsive sizing - bigger for tablets/iPads
+    final cardPadding = screenWidth > 600 ? 28.0 : 20.0;
+    final iconSize = screenWidth > 600 ? 64.0 : 48.0;
+    final iconInnerSize = screenWidth > 600 ? 32.0 : 24.0;
+    final horizontalSpacing = screenWidth > 600 ? 24.0 : 16.0;
+    final indicatorSize = screenWidth > 600 ? 16.0 : 12.0;
+    
+    // Font sizes - bigger for tablets/iPads
+    final titleSize = screenWidth > 600 ? 22.0 : 18.0;
+    final descSize = screenWidth > 600 ? 16.0 : 14.0;
+    final exampleSize = screenWidth > 600 ? 14.0 : 12.0;
+    
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 200),
       tween: Tween<double>(begin: 1.0, end: isSelected ? 1.02 : 1.0),
@@ -31,7 +45,7 @@ class InputTypeCard extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(cardPadding),
               decoration: BoxDecoration(
                 color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(12),
@@ -55,8 +69,8 @@ class InputTypeCard extends StatelessWidget {
                   // Icon
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    width: 48,
-                    height: 48,
+                    width: iconSize,
+                    height: iconSize,
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Colors.white.withOpacity(0.2)
@@ -66,10 +80,10 @@ class InputTypeCard extends StatelessWidget {
                     child: Icon(
                       icon,
                       color: Colors.white,
-                      size: 24,
+                      size: iconInnerSize,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: horizontalSpacing),
                   // Content
                   Expanded(
                     child: Column(
@@ -77,8 +91,8 @@ class InputTypeCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
-                            fontSize: 18,
+                          style: TextStyle(
+                            fontSize: titleSize,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -87,7 +101,7 @@ class InputTypeCard extends StatelessWidget {
                         Text(
                           description,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: descSize,
                             color: Colors.grey[400],
                           ),
                         ),
@@ -95,7 +109,7 @@ class InputTypeCard extends StatelessWidget {
                         Text(
                           examples,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: exampleSize,
                             color: Colors.grey[500],
                           ),
                         ),
@@ -107,8 +121,8 @@ class InputTypeCard extends StatelessWidget {
                     scale: isSelected ? 1.0 : 0.0,
                     duration: const Duration(milliseconds: 200),
                     child: Container(
-                      width: 12,
-                      height: 12,
+                      width: indicatorSize,
+                      height: indicatorSize,
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,

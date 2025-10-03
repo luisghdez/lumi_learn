@@ -10,7 +10,7 @@ class GalaxyHeader extends StatelessWidget {
       child: Stack(
         children: [
           Image.asset(
-            'assets/galaxies/galaxy4.png',
+            'assets/images/black_moons_lighter.png',
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
