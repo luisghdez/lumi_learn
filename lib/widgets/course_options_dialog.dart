@@ -7,7 +7,7 @@ void showCourseOptionsDialog({
   required BuildContext context,
   required String courseId,
   required String courseTitle,
-  VoidCallback? onDelete,
+  required VoidCallback onDelete,
 }) {
   showModalBottomSheet(
     context: context,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
 import 'package:lumi_learn_app/widgets/course_options_dialog.dart';
+import 'package:lumi_learn_app/utils/course_delete_helper.dart';
 
 class CategoryCard extends StatelessWidget {
   final String courseId;
@@ -149,9 +150,15 @@ class CategoryCard extends StatelessWidget {
                     context: context,
                     courseId: courseId,
                     courseTitle: title,
-                    onDelete: () {
-                      // TODO: Implement delete functionality
+                    onDelete: () async {
                       Navigator.of(context).pop();
+
+                      // Use the helper to handle deletion
+                      await CourseDeleteHelper.showDeleteConfirmationAndDelete(
+                        context: context,
+                        courseId: courseId,
+                        courseTitle: title,
+                      );
                     },
                   );
                 },

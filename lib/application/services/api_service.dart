@@ -8,11 +8,11 @@ import 'dart:io';
 import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:3000';
+  // static const String _baseUrl = 'http://localhost:3000';
   //LOCAL
   // static const String _baseUrl = 'http://localhost:3000';
   //DEV
-  // static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
+  static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
   //PROD
   // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
@@ -211,6 +211,20 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> deleteSavedCourse({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/saved-courses/$courseId');
+    final response = await http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response;
+  }
+
   static Future<void> ensureUserExists(String? idToken,
       {String? email, String? name, String? profilePicture}) async {
     if (idToken == null) {
@@ -340,7 +354,7 @@ class ApiService {
 
   static Future<void> updateUserName(String token, String newName) async {
     final uri = Uri.parse('$_baseUrl/users/me');
-    final response = await http.patch(
+    await http.patch(
       uri,
       headers: {
         'Authorization': 'Bearer $token',

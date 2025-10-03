@@ -533,6 +533,87 @@ class CourseController extends GetxController {
     }
   }
 
+  // Method to refresh current page after deletion
+  Future<void> refreshCurrentPage() async {
+    await fetchCourses(
+      subject: currentSubject.value.isEmpty ? null : currentSubject.value,
+      page: currentPage.value,
+      limit: 10,
+    );
+  }
+
+  // Method to refresh home screen courses (first 5 saved courses)
+  Future<void> refreshHomeCourses() async {
+    await fetchCoursesForHome();
+  }
+
+  Future<bool> deleteSavedCourse(String courseId) async {
+    try {
+      // Get the user's authentication token.
+      final String? token = await authController.getIdToken();
+      if (token == null) {
+        print("No user token found. Cannot delete course.");
+        Get.snackbar(
+          "Error",
+          "Authentication required to delete course.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      // Call the API service to delete the saved course.
+      final apiService = ApiService();
+      final response = await apiService.deleteSavedCourse(
+        token: token,
+        courseId: courseId,
+      );
+
+      if (response.statusCode == 200) {
+        // Remove the course from the local list
+        courses.removeWhere((course) => course['id'] == courseId);
+        // Force reactive update
+        courses.refresh();
+        return true;
+      } else if (response.statusCode == 404) {
+        Get.snackbar(
+          "Course Not Found",
+          "This course was not found in your saved courses.",
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return false;
+      } else if (response.statusCode == 401) {
+        Get.snackbar(
+          "Unauthorized",
+          "You are not authorized to delete this course.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      } else {
+        print(
+            "Failed to delete course: ${response.statusCode} ${response.body}");
+        Get.snackbar(
+          "Error",
+          "Failed to delete course. Please try again.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      print("Error deleting course: $e");
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+  }
+
   // New method to fetch courses from the backend with pagination
   Future<void> fetchCourses(
       {int page = 1,
@@ -632,7 +713,9 @@ class CourseController extends GetxController {
 
   // Method for home screen to fetch limited courses
   Future<void> fetchCoursesForHome() async {
+    print('CourseController: fetchCoursesForHome called');
     await fetchCourses(page: 1, limit: 5);
+    print('CourseController: fetchCoursesForHome completed');
   }
 
   Future<void> fetchFeaturedCourses() async {

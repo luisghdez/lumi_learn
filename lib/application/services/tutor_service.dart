@@ -5,9 +5,9 @@ import 'package:http_parser/http_parser.dart';
 
 class TutorService {
   //LOCAL
-  static const String _baseUrl = 'http://localhost:3000';
+  // static const String _baseUrl = 'http://localhost:3000';
   //DEV
-  // static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
+  static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
   //PROD
   // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 

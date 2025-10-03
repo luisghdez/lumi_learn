@@ -2,6 +2,7 @@
 
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/material.dart';
+import 'package:lumi_learn_app/utils/course_delete_helper.dart';
 import 'package:lumi_learn_app/widgets/course_options_dialog.dart';
 
 class CourseOverviewHeader extends StatelessWidget {
@@ -101,9 +102,19 @@ class CourseOverviewHeader extends StatelessWidget {
                                     context: context,
                                     courseId: courseId,
                                     courseTitle: courseTitle,
-                                    onDelete: () {
-                                      // TODO: Implement delete functionality
+                                    onDelete: () async {
                                       Navigator.of(context).pop();
+
+                                      final success = await CourseDeleteHelper
+                                          .showDeleteConfirmationAndDelete(
+                                        context: context,
+                                        courseId: courseId,
+                                        courseTitle: courseTitle,
+                                      );
+
+                                      if (success) {
+                                        onBack();
+                                      }
                                     },
                                   );
                                 }),
