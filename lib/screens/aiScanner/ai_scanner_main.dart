@@ -3,7 +3,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:crop_your_image/crop_your_image.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -12,6 +11,7 @@ import 'camera_view.dart';
 import 'image_cropper_view.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
+import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 
 class AiScannerMain extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -24,14 +24,12 @@ class AiScannerMain extends StatefulWidget {
 
 class _AiScannerMainState extends State<AiScannerMain> {
   late final CameraController _controller;
-  final CropController _cropController = CropController();
 
   bool _isCameraInitialized = false;
   bool _isCropping = false;
   bool _isCroppingInProgress = false;
 
   int _selectedIndex = 0;
-  Uint8List? _imageBytes;
 
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Math', 'color': Colors.blue, 'icon': Icons.calculate},
@@ -70,7 +68,6 @@ class _AiScannerMainState extends State<AiScannerMain> {
 
       setState(() {
         _isCropping = true;
-        _imageBytes = bytes;
       });
 
       final selectedColor = _categories[_selectedIndex]['color'] as Color;
@@ -91,7 +88,6 @@ class _AiScannerMainState extends State<AiScannerMain> {
       setState(() {
         _isCropping = false;
         _isCroppingInProgress = false;
-        _imageBytes = null;
       });
     } catch (e) {
       Get.snackbar("Capture Error", "Failed to capture image: $e");
@@ -109,20 +105,33 @@ class _AiScannerMainState extends State<AiScannerMain> {
     setState(() {
       _isCropping = false;
       _isCroppingInProgress = false;
-      _imageBytes = null;
     });
 
-    Get.to(
-      () => LumiTutorMain(
-        initialArgs: {
-          'type': 'image',
-          'paths': [filePath],
-          'category': _categories[_selectedIndex]['name'],
-        },
-      ),
-      transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 300),
-    );
+    // Call the new image thread creation method
+    await _handleScannedInput(filePath, _categories[_selectedIndex]['name']);
+  }
+
+  Future<void> _handleScannedInput(String imagePath, String category) async {
+    try {
+      final tutorController = TutorController.instance;
+
+      // Start creating the image thread (this sets up the UI immediately)
+      tutorController.createImageThread(imagePath, category);
+
+      // Navigate to the tutor interface immediately
+      Get.to(
+        () => const LumiTutorMain(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to process image: $e",
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    }
   }
 
   void _handleCategoryScroll(int index) {
@@ -133,7 +142,6 @@ class _AiScannerMainState extends State<AiScannerMain> {
     if (_isCropping) {
       setState(() {
         _isCropping = false;
-        _imageBytes = null;
         _isCroppingInProgress = false;
       });
       return false;
