@@ -12,6 +12,7 @@ import 'image_cropper_view.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class AiScannerMain extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -118,7 +119,11 @@ class _AiScannerMainState extends State<AiScannerMain> {
       // Start creating the image thread (this sets up the UI immediately)
       tutorController.createImageThread(imagePath, category);
 
-      // Navigate to the tutor interface immediately
+      Get.offAll(
+        () => MainScreen(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
       Get.to(
         () => const LumiTutorMain(),
         transition: Transition.fadeIn,
