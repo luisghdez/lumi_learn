@@ -106,6 +106,7 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.only(
                       top: topScrollViewPadding,
                       bottom: bottomScrollViewPadding,

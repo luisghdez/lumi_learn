@@ -82,7 +82,7 @@ class _CourseLoadingScreenState extends State<CourseLoadingScreen>
     if (!widget.isTestMode) {
       _listenForCompletion();
     } else {
-      // In test mode, simulate completion after 8 seconds
+      // In test mode, simulate completion after 10 seconds
       Timer(const Duration(seconds: 10), () {
         if (mounted) {
           setState(() {
@@ -224,178 +224,266 @@ class _CourseLoadingScreenState extends State<CourseLoadingScreen>
     }
   }
 
+  // Get responsive sizing based on screen dimensions
+  double _getCircleSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Use smaller dimension to ensure it fits
+    final smallerDimension = screenWidth < screenHeight ? screenWidth : screenHeight;
+    
+    // Calculate circle size with wider range for larger screens
+    if (screenWidth > 600) {
+      return (smallerDimension * 0.3).clamp(160.0, 220.0);
+    }
+    return (smallerDimension * 0.35).clamp(100.0, 160.0);
+  }
+
+  double _getProgressCircleStroke(BuildContext context) {
+    final circleSize = _getCircleSize(context);
+    if (circleSize > 180) return 5.0;
+    return circleSize > 130 ? 4.0 : 3.0;
+  }
+
+  double _getProgressTextSize(BuildContext context) {
+    final circleSize = _getCircleSize(context);
+    if (circleSize > 180) return 32.0;
+    return circleSize > 130 ? 24.0 : 20.0;
+  }
+
+  double _getStepCircleSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 600) return 40.0;
+    return screenWidth < 360 ? 28.0 : 32.0;
+  }
+
+  double _getStepTextSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 600) return 18.0;
+    return screenWidth < 360 ? 14.0 : 16.0;
+  }
+
+  double _getTitleTextSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 600) return 26.0;
+    if (screenWidth < 360) return 18.0;
+    if (screenWidth < 400) return 19.0;
+    return 20.0;
+  }
+
   Widget _buildProgressCircle() {
-    return Container(
-      width: 140,
-      height: 140,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.03),
-        border: Border.all(
-          color: greyBorder.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Progress circle
-          SizedBox(
-            width: 120,
-            height: 120,
-            child: CircularProgressIndicator(
-              value: _progress,
-              strokeWidth: 4,
-              backgroundColor: Colors.white.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(lumiPurple),
-              strokeCap: StrokeCap.round,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final circleSize = _getCircleSize(context);
+        final innerCircleSize = circleSize - 20;
+        final strokeWidth = _getProgressCircleStroke(context);
+        final textSize = _getProgressTextSize(context);
+
+        return Container(
+          width: circleSize,
+          height: circleSize,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.03),
+            border: Border.all(
+              color: greyBorder.withOpacity(0.3),
+              width: 1,
             ),
           ),
-          // Percentage text
-          Text(
-            '${(_progress * 100).round()}%',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Progress circle
+              SizedBox(
+                width: innerCircleSize,
+                height: innerCircleSize,
+                child: CircularProgressIndicator(
+                  value: _progress,
+                  strokeWidth: strokeWidth,
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  valueColor: const AlwaysStoppedAnimation<Color>(lumiPurple),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              // Percentage text
+              Text(
+                '${(_progress * 100).round()}%',
+                style: GoogleFonts.poppins(
+                  fontSize: textSize,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildStepCircle(int index, bool isActive, bool isCompleted) {
-    if (isCompleted) {
-      return AnimatedBuilder(
-        animation: _stepAnimations[index],
-        builder: (context, child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final circleSize = _getStepCircleSize(context);
+        final iconSize = circleSize * 0.5625; // Maintains proportion
+        final numberSize = circleSize * 0.4375;
+        final innerCircleSize = circleSize * 0.75;
+        final dotSize = circleSize * 0.1875;
+
+        if (isCompleted) {
+          return AnimatedBuilder(
+            animation: _stepAnimations[index],
+            builder: (context, child) {
+              return Container(
+                width: circleSize,
+                height: circleSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color.lerp(
+                    Colors.white.withOpacity(0.05),
+                    lumiPurple,
+                    _stepAnimations[index].value,
+                  ),
+                  border: Border.all(
+                    color: Color.lerp(
+                      greyBorder.withOpacity(0.5),
+                      lumiPurple,
+                      _stepAnimations[index].value,
+                    )!,
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: _stepAnimations[index].value > 0.5 ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: iconSize,
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        } else if (isActive) {
           return Container(
-            width: 32,
-            height: 32,
+            width: circleSize,
+            height: circleSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color.lerp(
-                Colors.white.withOpacity(0.05),
-                lumiPurple,
-                _stepAnimations[index].value,
-              ),
-              border: Border.all(
-                color: Color.lerp(
-                  greyBorder.withOpacity(0.5),
-                  lumiPurple,
-                  _stepAnimations[index].value,
-                )!,
-                width: 1,
-              ),
+              color: Colors.transparent,
+              border: Border.all(color: lumiPurple, width: 2),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: innerCircleSize,
+                  height: innerCircleSize,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: const AlwaysStoppedAnimation<Color>(lumiPurple),
+                    backgroundColor: Colors.transparent,
+                  ),
+                ),
+                Container(
+                  width: dotSize,
+                  height: dotSize,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: lumiPurple,
+                  ),
+                ),
+              ],
+            ),
+          );
+        } else {
+          return Container(
+            width: circleSize,
+            height: circleSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.05),
+              border: Border.all(color: greyBorder.withOpacity(0.5), width: 1),
             ),
             child: Center(
-              child: AnimatedOpacity(
-                opacity: _stepAnimations[index].value > 0.5 ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 18,
+              child: Text(
+                '${index + 1}',
+                style: GoogleFonts.poppins(
+                  fontSize: numberSize,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white54,
                 ),
               ),
             ),
           );
-        },
-      );
-    } else if (isActive) {
-      return Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-          border: Border.all(color: lumiPurple, width: 2),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: const AlwaysStoppedAnimation<Color>(lumiPurple),
-                backgroundColor: Colors.transparent,
-              ),
-            ),
-            Container(
-              width: 6,
-              height: 6,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: lumiPurple,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.05),
-          border: Border.all(color: greyBorder.withOpacity(0.5), width: 1),
-        ),
-        child: Center(
-          child: Text(
-            '${index + 1}',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white54,
-            ),
-          ),
-        ),
-      );
-    }
+        }
+      },
+    );
   }
 
   Widget _buildStepsList() {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 300),
-        child: Column(
-          children: _steps.asMap().entries.map((entry) {
-            int index = entry.key;
-            String step = entry.value;
-            bool isActive = index == _currentStep;
-            bool isCompleted = index < _currentStep || _isCompleted;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final screenHeight = MediaQuery.of(context).size.height;
+        
+        // Check if device is in landscape mode (width > height)
+        final isLandscape = screenWidth > screenHeight;
+        
+        final maxWidth = screenWidth > 600 
+            ? (screenWidth * 0.6).clamp(400.0, 600.0)
+            : (screenWidth * 0.85).clamp(280.0, 400.0);
+        final stepTextSize = _getStepTextSize(context);
+        final spacing = screenWidth > 600 ? 24.0 : (screenWidth < 360 ? 12.0 : 16.0);
+        
+        // Reduce vertical padding in landscape mode, especially on tablets
+        final verticalPadding = isLandscape 
+            ? (screenWidth > 600 ? 8.0 : 10.0)  // Smaller padding in landscape
+            : (screenWidth > 600 ? 16.0 : (screenWidth < 360 ? 10.0 : 12.0));
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: Row(
-                children: [
-                  // Step circle with individual loading
-                  _buildStepCircle(index, isActive, isCompleted),
-                  const SizedBox(width: 20),
-                  // Step text
-                  Expanded(
-                    child: Text(
-                      step,
-                      // textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: isActive || isCompleted
-                            ? Colors.white
-                            : Colors.white54,
+        return Center(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: _steps.asMap().entries.map((entry) {
+                int index = entry.key;
+                String step = entry.value;
+                bool isActive = index == _currentStep;
+                bool isCompleted = index < _currentStep || _isCompleted;
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: verticalPadding),
+                  child: Row(
+                    children: [
+                      // Step circle with individual loading
+                      _buildStepCircle(index, isActive, isCompleted),
+                      SizedBox(width: spacing),
+                      // Step text
+                      Expanded(
+                        child: Text(
+                          step,
+                          style: GoogleFonts.poppins(
+                            fontSize: stepTextSize,
+                            fontWeight: FontWeight.w400,
+                            color: isActive || isCompleted
+                                ? Colors.white
+                                : Colors.white54,
+                            height: 1.3,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-      ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -414,76 +502,119 @@ class _CourseLoadingScreenState extends State<CourseLoadingScreen>
           ),
           // Content
           SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  // Progress circle
-                  _buildProgressCircle(),
-                  const SizedBox(height: 32),
-                  // Main title
-                  Text(
-                    'Hold tight, Lumi is working hard!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenHeight = constraints.maxHeight;
+                final screenWidth = constraints.maxWidth;
+                
+                // Responsive padding
+                final horizontalPadding = (screenWidth * 0.06).clamp(16.0, 32.0);
+                final topPadding = (screenHeight * 0.025).clamp(12.0, 24.0);
+                
+                // Responsive spacing
+                final afterCircleSpacing = (screenHeight * 0.04).clamp(20.0, 40.0);
+                final afterTitleSpacing = (screenHeight * 0.035).clamp(20.0, 32.0);
+                final bottomButtonSpacing = (screenHeight * 0.02).clamp(12.0, 20.0);
+                
+                final titleTextSize = _getTitleTextSize(context);
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: topPadding,
                   ),
-                  const SizedBox(height: 32),
-                  // Steps list
-                  Expanded(
-                    child: Center(
-                      child: _buildStepsList(),
-                    ),
-                  ),
-                  // Bottom button - disabled while loading, enabled when completed
-                  SizedBox(
-                    width: double.infinity,
-                    child: _isCompleted
-                        ? ElevatedButton(
-                            onPressed: _goToCourse,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
+                  child: Center(
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: screenWidth > 600 ? 700 : double.infinity,
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(height: topPadding),
+                          // Progress circle
+                          _buildProgressCircle(),
+                          SizedBox(height: afterCircleSpacing),
+                          // Main title
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth < 360 ? 8.0 : 0.0,
                             ),
                             child: Text(
-                              'Start Learning!',
+                              'Hold tight, Lumi is working hard!',
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                                fontSize: titleTextSize,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                height: 1.3,
                               ),
-                            ),
-                          )
-                        : Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: greyBorder, width: 1),
-                            ),
-                            child: Text(
-                              'Start Learning!',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white54,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(height: afterTitleSpacing),
+                          // Steps list - scrollable for small screens
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Padding(
+                                padding: EdgeInsets.only(bottom: bottomButtonSpacing),
+                                child: _buildStepsList(),
                               ),
                             ),
                           ),
+                          // Bottom button
+                          SizedBox(
+                            width: double.infinity,
+                            child: _isCompleted
+                                ? ElevatedButton(
+                                    onPressed: _goToCourse,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: screenWidth < 360 ? 14.0 : (screenWidth > 600 ? 18.0 : 16.0),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: Text(
+                                      'Start Learning!',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: screenWidth > 600 ? 18.0 : (screenWidth < 360 ? 15.0 : 16.0),
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  )
+                                : Container(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: screenWidth < 360 ? 14.0 : (screenWidth > 600 ? 18.0 : 16.0),
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: greyBorder, width: 1),
+                                    ),
+                                    child: Text(
+                                      'Start Learning!',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: screenWidth > 600 ? 18.0 : (screenWidth < 360 ? 15.0 : 16.0),
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                          SizedBox(height: topPadding / 2),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],

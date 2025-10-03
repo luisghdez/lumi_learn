@@ -7,7 +7,6 @@ import 'package:lumi_learn_app/screens/settings/screens/notifications_screen.dar
 import 'package:lumi_learn_app/screens/settings/screens/help_support_screen.dart';
 import 'package:lumi_learn_app/screens/settings/screens/feedback_screen.dart';
 import 'package:lumi_learn_app/screens/settings/screens/whats_new_screen.dart';
-import 'package:lumi_learn_app/screens/settings/widgets/galaxybg.dart';
 import 'package:lumi_learn_app/screens/settings/screens/subscription_screen.dart';
 import 'package:lumi_learn_app/screens/settings/screens/more_settings_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
@@ -55,14 +54,21 @@ class _SettingsScreenState extends State<SettingsScreen>
             ? 13.5
             : 15;
     final double topSpacing = isSmallPhone ? 60 : 100;
-    final double tileSpacing = isSmallPhone ? 14 : 18;
     final double tileIconSize = isSmallPhone ? 20 : 24;
     final double tilePadding = isSmallPhone ? 14 : 18;
 
     return Scaffold(
       body: Stack(
         children: [
-          const Positioned(top: 0, left: 0, right: 0, child: GalaxyHeader()),
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/black_moons_lighter.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+          // Content
           SafeArea(
             child: Column(
               children: [
@@ -217,40 +223,124 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text("Logout", style: TextStyle(color: Colors.white)),
-        content: const Text("Are you sure you want to log out?",
-            style: TextStyle(color: Colors.grey)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+void _confirmLogout(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (context) => AlertDialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.1),
+          width: 1.5,
+        ),
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.logout,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              authController.signOut(); // Call logout function
-              Navigator.pop(context); // Close dialog
-              Get.offAll(() => SignupScreen());
-            },
-            child:
-                const Text("Logout", style: TextStyle(color: Colors.redAccent)),
+          const SizedBox(width: 12),
+          const Text(
+            "Logout",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
-    );
-  }
+      content: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: const Text(
+          "Are you sure you want to log out? You'll need to sign in again to access your courses.",
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 15,
+            height: 1.5,
+          ),
+        ),
+      ),
+      actions: [
+        // Cancel button
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text(
+            "Cancel",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Logout button with gradient
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.red.withOpacity(0.8),
+                Colors.redAccent.withOpacity(0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: () {
+              authController.signOut();
+              Navigator.pop(context);
+              Get.offAll(() => SignupScreen());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              "Logout",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }
 
 final List<Map<String, dynamic>> _tiles = [
-  {
-    'icon': Icons.notifications_active_outlined,
-    'title': 'App notifications',
-    'screen': const NotificationsScreen(),
-  },
   {
     'icon': Icons.help_outline,
     'title': 'Help and Support',
