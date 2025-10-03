@@ -609,12 +609,22 @@ class TutorController extends GetxController {
 
       // Add a processing message to show user something is happening
       final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Create a temporary image object for immediate display
+      final tempImage = MessageImage(
+        fileId: 'temp_${tempId}',
+        fileUrl: 'file://$imagePath', // Use local file path temporarily
+        originalName: 'uploaded_image.png',
+        mimeType: 'image/png',
+      );
+
       messages.add(
         Message(
           messageId: tempId,
           role: MessageRole.user,
-          content: 'Image uploaded for analysis',
+          content: '[Image]', // Backend identifier, not displayed to user
           timestamp: DateTime.now(),
+          image: tempImage,
         ),
       );
 
@@ -693,15 +703,32 @@ class TutorController extends GetxController {
               messageData.remove('type');
               final newMessage = Message.fromJson(messageData);
 
-              // Replace the temporary assistant message with the real one
-              final assistantIndex = messages.indexWhere(
-                (msg) => msg.messageId == assistantTempId,
-              );
-              if (assistantIndex != -1) {
-                messages[assistantIndex] = newMessage;
-                messages.refresh();
+              // Check if this is a user message with image data (to replace temp image)
+              if (newMessage.role == MessageRole.user &&
+                  newMessage.image != null) {
+                final int userIndex =
+                    messages.indexWhere((m) => m.messageId == tempId);
+                if (userIndex != -1) {
+                  messages[userIndex] = Message(
+                    messageId: newMessage.messageId,
+                    role: newMessage.role,
+                    content: newMessage.content,
+                    timestamp: newMessage.timestamp,
+                    image: newMessage.image, // Use the real Firebase URL
+                  );
+                  messages.refresh();
+                }
               } else {
-                messages.add(newMessage);
+                // Replace the temporary assistant message with the real one
+                final assistantIndex = messages.indexWhere(
+                  (msg) => msg.messageId == assistantTempId,
+                );
+                if (assistantIndex != -1) {
+                  messages[assistantIndex] = newMessage;
+                  messages.refresh();
+                } else {
+                  messages.add(newMessage);
+                }
               }
             } catch (e) {
               print('Error parsing message: $e');

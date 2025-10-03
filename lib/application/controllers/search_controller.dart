@@ -404,6 +404,98 @@ class LumiSearchController extends GetxController {
     searchQuery.value = query;
   }
 
+  // Method to refresh current page after deletion
+  Future<void> refreshCurrentPage() async {
+    if (showSavedOnly.value) {
+      // Refresh saved courses with current filters
+      final currentSubject = selectedSubject.value;
+      await fetchSavedCourses(
+        subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+        page: savedCurrentPage.value,
+        limit: 10,
+      );
+    } else {
+      // Refresh all courses with current filters
+      final currentSubject = selectedSubject.value;
+      await fetchAllCourses(
+        subject: currentSubject?.id == 'all' ? null : currentSubject?.name,
+        page: currentPage.value,
+        limit: 10,
+      );
+    }
+  }
+
+  // Method to delete a saved course
+  Future<bool> deleteSavedCourse(String courseId) async {
+    try {
+      // Get the user's authentication token.
+      final String? token = await authController.getIdToken();
+      if (token == null) {
+        print("No user token found. Cannot delete course.");
+        Get.snackbar(
+          "Error",
+          "Authentication required to delete course.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      // Call the API service to delete the saved course.
+      final response = await apiService.deleteSavedCourse(
+        token: token,
+        courseId: courseId,
+      );
+
+      if (response.statusCode == 200) {
+        // Remove the course from the local saved courses list
+        savedCourses.removeWhere((course) => course['id'] == courseId);
+        // Force reactive update
+        savedCourses.refresh();
+
+        // Update the total count
+        savedTotalCount.value = savedTotalCount.value - 1;
+
+        return true;
+      } else if (response.statusCode == 404) {
+        Get.snackbar(
+          "Course Not Found",
+          "This course was not found in your saved courses.",
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return false;
+      } else if (response.statusCode == 401) {
+        Get.snackbar(
+          "Unauthorized",
+          "You are not authorized to delete this course.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      } else {
+        print(
+            "Failed to delete course: ${response.statusCode} ${response.body}");
+        Get.snackbar(
+          "Error",
+          "Failed to delete course. Please try again.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      print("Error deleting course: $e");
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+  }
+
   // Methods to configure search screen from other parts of the app
   void showSavedCourses() {
     showSavedOnly.value = true;

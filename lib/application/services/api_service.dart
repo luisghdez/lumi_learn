@@ -211,6 +211,20 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> deleteSavedCourse({
+    required String token,
+    required String courseId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/saved-courses/$courseId');
+    final response = await http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response;
+  }
+
   static Future<void> ensureUserExists(String? idToken,
       {String? email, String? name, String? profilePicture}) async {
     if (idToken == null) {
@@ -340,7 +354,7 @@ class ApiService {
 
   static Future<void> updateUserName(String token, String newName) async {
     final uri = Uri.parse('$_baseUrl/users/me');
-    final response = await http.patch(
+    await http.patch(
       uri,
       headers: {
         'Authorization': 'Bearer $token',

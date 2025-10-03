@@ -285,6 +285,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                                       : ChatSender.tutor,
                                   sources: message.sources,
                                   isStreaming: message.isStreaming,
+                                  image: message.image,
                                 ),
                               );
                             },

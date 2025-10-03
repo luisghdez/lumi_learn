@@ -102,12 +102,13 @@ class _LumiTextInputFieldState extends State<LumiTextInputField> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.attach_file,
-                  color: Colors.white60, size: 22),
-              onPressed: _handleAttachment,
-              tooltip: 'Attach file or image',
-            ),
+            // IconButton(
+            //   icon: const Icon(Icons.attach_file,
+            //       color: Colors.white60, size: 22),
+            //   onPressed: _handleAttachment,
+            //   tooltip: 'Attach file or image',
+            // ),
+            const SizedBox(width: 22),
             Expanded(
               child: TextField(
                 controller: _controller,
