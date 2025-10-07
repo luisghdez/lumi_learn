@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -17,13 +18,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   int _selectedIndex = -1;
   final courseController = Get.find<CourseController>();
   final authController = Get.find<AuthController>();
-  late AnimationController _shimmerController;
 
   final List<Map<String, dynamic>> _plans = [
     {
       'title': 'Monthly Plan',
       'price': '\$7.99/month',
-      'identifier': 'lumi_monthly', // 👈 use your RevenueCat monthly product ID
+      'identifier': 'lumipro_799_monthly', // 👈 use your RevenueCat monthly product ID
       'gradientColors': [const Color(0xFF0004FF), const Color(0xFF4D4DFF)],
       'features': [
         'Unlimited course generation',
@@ -36,7 +36,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     {
       'title': 'Yearly Plan',
       'price': '\$79.99/year',
-      'identifier': 'lumi_annual', // 👈 use your RevenueCat yearly product ID
+      'identifier': 'lumipro_7999_yearly', // 👈 use your RevenueCat yearly product ID
       'savings': 'Save \$16! Only \$6.67/month',
       'gradientColors': [const Color(0xFFFFB800), const Color(0xFFFFD700)],
       'features': [
@@ -49,57 +49,75 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
+
+Future<void> _subscribe() async {
+  if (_selectedIndex == -1) {
+    Get.snackbar("Select a plan", "Please choose a subscription plan first.");
+    return;
   }
 
-  @override
-  void dispose() {
-    _shimmerController.dispose();
-    super.dispose();
-  }
+  final selectedIdentifier = _plans[_selectedIndex]['identifier'] as String;
 
-  Future<void> _subscribe() async {
-    if (_selectedIndex == -1) return;
-
-    try {
-      final offerings = await Purchases.getOfferings();
-      final current = offerings.current;
-
-      if (current != null && current.availablePackages.isNotEmpty) {
-        final targetId = _plans[_selectedIndex]['identifier'] as String;
-
-        final package = current.availablePackages.firstWhere(
-          (p) => p.storeProduct.identifier.contains(targetId),
-          orElse: () => current.availablePackages.first,
-        );
-
-        await Purchases.purchasePackage(package);
-
-        authController.isPremium.value = true;
-        Get.snackbar("Success", "Subscription activated!");
-      } else {
-        Get.snackbar("Oops", "No subscription packages available.");
-      }
-    } on PlatformException catch (error) {
-      if (error.code == "purchaseCancelled" || error.code == "1") {
-        return;
-      } else if (error.code == "network_error") {
-        Get.snackbar("Network Error",
-            "Please check your internet connection and try again.");
-      } else {
-        Get.snackbar("Error", "Something went wrong: ${error.message}");
-      }
-    } catch (_) {
-      Get.snackbar("Error", "An unexpected error occurred.");
+  try {
+    final offerings = await Purchases.getOfferings();
+    if (offerings.current == null) {
+      Get.snackbar("Unavailable", "No offerings found. Please try again later.");
+      return;
     }
-  }
 
+    final availablePackages = offerings.current!.availablePackages;
+    if (availablePackages.isEmpty) {
+      Get.snackbar("Oops", "No subscription packages available.");
+      return;
+    }
+
+    // Match the selected plan to the RevenueCat product
+    final matchingPackage = availablePackages.firstWhere(
+      (p) => p.storeProduct.identifier == selectedIdentifier,
+      orElse: () => availablePackages.first,
+    );
+
+    // Perform the purchase
+    final customerInfo = await Purchases.purchasePackage(matchingPackage);
+    final isPro = customerInfo.entitlements.active.containsKey("Pro"); // replace "Pro" with your entitlement ID
+
+    if (isPro) {
+      // ✅ Update subscription state
+      authController.isPremium.value = true;
+      authController.activeProductId.value = matchingPackage.storeProduct.identifier;
+      _selectedIndex = _plans.indexWhere(
+        (plan) => plan['identifier'] == authController.activeProductId.value,
+      );
+      setState(() {});
+
+      // 🎉 Show success dialog instead of snackbar
+      Get.dialog(const LumiProSuccessDialog(), barrierDismissible: false);
+    } else {
+      Get.snackbar(
+        "Pending",
+        "Purchase complete but entitlement not yet active.",
+      );
+    }
+  } on PlatformException catch (error) {
+    if (error.code == PurchasesErrorCode.purchaseCancelledError) {
+      return;
+    } else if (error.code == PurchasesErrorCode.networkError) {
+      Get.snackbar(
+        "Network Error",
+        "Please check your internet connection and try again.",
+      );
+    } else {
+      Get.snackbar(
+        "Error",
+        "Something went wrong: ${error.message}",
+      );
+    }
+  } catch (_) {
+    Get.snackbar("Error", "An unexpected error occurred.");
+  }
+}
+  
+  
   @override
   Widget build(BuildContext context) {
     final bool isButtonDisabled =
@@ -118,31 +136,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             ),
           ),
           // Animated gradient overlay
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _shimmerController,
-              builder: (context, child) {
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF0004FF).withOpacity(0.03),
-                        Colors.transparent,
-                        const Color(0xFFA28BFF).withOpacity(0.03),
-                      ],
-                      stops: [
-                        _shimmerController.value - 0.3,
-                        _shimmerController.value,
-                        _shimmerController.value + 0.3,
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
           // Content
           SafeArea(
             child: Column(
@@ -309,7 +302,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   Widget _planTile(int index) {
     final plan = _plans[index];
     final isSelected = _selectedIndex == index;
-    final isActive = authController.isPremium.value && index == 0;
+    final planIdentifier = plan['identifier'] as String;
+    final isActive = authController.isPremium.value &&
+        authController.activeProductId.value == planIdentifier;
+
     final gradientColors = plan['gradientColors'] as List<Color>;
     final isYearly = index == 1;
 

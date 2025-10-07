@@ -23,6 +23,8 @@ class AuthController extends GetxController {
   final RxBool hasCompletedOnboarding = false.obs;
   RxBool isAuthInitialized = false.obs;
 
+  final RxString activeProductId = ''.obs;
+
   RxMap<String, dynamic> userDoc = <String, dynamic>{}.obs;
   RxInt streakCount = 0.obs;
   RxInt xpCount = 0.obs;

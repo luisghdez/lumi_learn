@@ -37,40 +37,50 @@ class _UpgradePopupState extends State<UpgradePopup>
     super.dispose();
   }
 
-  Future<void> _purchasePlan(
-      String productId, AuthController authController) async {
-    try {
-      final offerings = await Purchases.getOfferings();
-      final current = offerings.current;
+Future<void> _purchasePlan(String productId, AuthController authController) async {
+  try {
+    final offerings = await Purchases.getOfferings();
+    final current = offerings.current;
 
-      if (current != null && current.availablePackages.isNotEmpty) {
-        final package = current.availablePackages.firstWhere(
-          (p) => p.storeProduct.identifier.contains(productId),
-          orElse: () => current.availablePackages.first,
-        );
-
-        await Purchases.purchasePackage(package);
-
-        authController.isPremium.value = true;
-        Get.back();
-        Get.dialog(const LumiProSuccessDialog());
-      } else {
-        Get.snackbar("Oops", "No subscription packages available.");
-      }
-    } on PlatformException catch (error) {
-      if (error.code == "purchaseCancelled" || error.code == "1") {
-        return;
-      } else if (error.code == "network_error") {
-        Get.snackbar("Network Error",
-            "Please check your internet connection and try again.");
-      } else {
-        Get.snackbar("Error", "Something went wrong: ${error.message}");
-      }
-    } catch (_) {
-      Get.snackbar("Error", "An unexpected error occurred.");
+    if (current == null || current.availablePackages.isEmpty) {
+      Get.snackbar("Unavailable", "No subscription packages found. Please try again later.");
+      return;
     }
-  }
 
+    // Match the correct product by identifier
+    final selectedPackage = current.availablePackages.firstWhere(
+      (p) => p.storeProduct.identifier == productId,
+      orElse: () => current.availablePackages.first,
+    );
+
+    // Perform the purchase
+    final customerInfo = await Purchases.purchasePackage(selectedPackage);
+
+    // Check your entitlement ID in RevenueCat (e.g., "pro" or "premium")
+    final isPro = customerInfo.entitlements.active.containsKey("Pro");
+
+    if (isPro) {
+      authController.isPremium.value = true;
+      authController.activeProductId.value = selectedPackage.storeProduct.identifier;
+
+      Get.back(); // Close popup
+      Get.dialog(const LumiProSuccessDialog());
+      Get.snackbar("Success", "Welcome to Lumi PRO!");
+    } else {
+      Get.snackbar("Pending", "Purchase completed but entitlement not yet active.");
+    }
+  } on PlatformException catch (error) {
+    if (error.code == PurchasesErrorCode.purchaseCancelledError) {
+      return;
+    } else if (error.code == PurchasesErrorCode.networkError) {
+      Get.snackbar("Network Error", "Please check your internet connection and try again.");
+    } else {
+      Get.snackbar("Error", "Something went wrong: ${error.message}");
+    }
+  } catch (_) {
+    Get.snackbar("Error", "An unexpected error occurred.");
+  }
+}
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
@@ -389,7 +399,7 @@ class _UpgradePopupState extends State<UpgradePopup>
                                 ),
                               ),
                               onPressed: () => _purchasePlan(
-                                  "lumi_annual", authController),
+                                  "lumipro_7999_yearly", authController),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -434,7 +444,7 @@ class _UpgradePopupState extends State<UpgradePopup>
                               ),
                             ),
                             onPressed: () =>
-                                _purchasePlan("lumi_monthly", authController),
+                                _purchasePlan("lumipro_799_monthly", authController),
                             child: Text(
                               "Try for \$7.99/month",
                               style: TextStyle(
