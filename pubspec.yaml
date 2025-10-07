@@ -84,7 +84,7 @@ dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/photos/pp2.png"  # <-- Use your new icon here
+  image_path: "assets/photos/pp3.png"  # <-- Use your new icon here
   remove_alpha_ios: true             # <-- Ensures the App Store icon has no transparency
 
 flutter_native_splash:
