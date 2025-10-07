@@ -74,8 +74,8 @@ class HorizontalCategoryList extends StatelessWidget {
                       }
 
                       // Always proceed to navigation regardless of save status
-                      courseController.setSelectedCourseId(
-                          course['id'], course['title']);
+                      courseController.setSelectedCourseId(course['id'],
+                          course['title'], course['hasEmbeddings'] ?? false);
 
                       Get.to(
                         () => LoadingScreen(),
