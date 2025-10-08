@@ -66,8 +66,9 @@ dependencies:
   sign_in_with_apple: ^6.1.4
   intl: ^0.20.2
   purchases_flutter: ^8.7.2
-  flutter_math_fork: ^0.7.4
+  flutter_math_fork: ^0.7.3
   flutter_markdown: ^0.7.7+1
+  flutter_highlight: ^0.7.0
   flutter_doc_scanner: ^0.0.16
   crop_your_image: ^2.0.0
   image_cropper: ^5.0.0

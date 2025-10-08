@@ -18,6 +18,9 @@ class TutorController extends GetxController {
   RxBool hasMore = false.obs;
   RxString errorMessage = ''.obs;
   RxnString nextCursor = RxnString();
+  // UI state for streaming/loading indicators
+  RxBool showLoadingMoon = false.obs;
+  RxBool showCopyAll = false.obs;
 
   // Active thread and messages
   Rxn<Thread> activeThread = Rxn<Thread>();
@@ -115,6 +118,11 @@ class TutorController extends GetxController {
         ),
       );
 
+      // UI state for streaming
+      showLoadingMoon.value = true;
+      showCopyAll.value = false;
+      bool firstDeltaReceived = false;
+
       final stream = _tutorService.createThreadStream(
         token: token,
         initialMessage: initialMessage,
@@ -134,6 +142,11 @@ class TutorController extends GetxController {
               ? List<Map<String, dynamic>>.from(event['sources'])
               : null;
         } else if (type == 'delta') {
+          // Handle first delta to hide moon
+          if (!firstDeltaReceived) {
+            firstDeltaReceived = true;
+            showLoadingMoon.value = false;
+          }
           final delta = (event['delta'] as String?) ?? '';
           if (delta.isEmpty) continue;
           accumulated += delta;
@@ -179,6 +192,8 @@ class TutorController extends GetxController {
             } else {
               messages.add(persisted);
             }
+            // After message is updated, show copy all
+            showCopyAll.value = true;
           } catch (_) {
             // ignore parse issues
           }
@@ -192,6 +207,8 @@ class TutorController extends GetxController {
           activeThread.value = null;
         } else if (type == 'done') {
           // Stream finished
+          showLoadingMoon.value = false;
+          showCopyAll.value = true;
         }
       }
 
@@ -245,6 +262,11 @@ class TutorController extends GetxController {
             ),
       );
 
+      // UI state for streaming
+      showLoadingMoon.value = true;
+      showCopyAll.value = false;
+      bool firstDeltaReceived = false;
+
       final stream = _tutorService.sendMessageStream(
         token: token,
         threadId: activeThread.value!.threadId,
@@ -262,6 +284,11 @@ class TutorController extends GetxController {
               ? List<Map<String, dynamic>>.from(event['sources'])
               : null;
         } else if (type == 'delta') {
+          // Handle first delta to hide moon
+          if (!firstDeltaReceived) {
+            firstDeltaReceived = true;
+            showLoadingMoon.value = false;
+          }
           final delta = (event['delta'] as String?) ?? '';
           if (delta.isEmpty) continue;
           accumulated += delta;
@@ -300,6 +327,8 @@ class TutorController extends GetxController {
             } else {
               messages.add(persisted);
             }
+            // After message is updated, show copy all
+            showCopyAll.value = true;
           } catch (_) {
             // ignore parse issues
           }
@@ -307,6 +336,8 @@ class TutorController extends GetxController {
           errorMessage.value = 'Failed to send message';
         } else if (type == 'done') {
           // Stream finished
+          showLoadingMoon.value = false;
+          showCopyAll.value = true;
         }
       }
     } catch (e) {

@@ -9,6 +9,8 @@ import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_bubble.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_input_area.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_drawer.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lottie/lottie.dart';
+
 
 class LumiTutorMain extends StatefulWidget {
   final Map<String, dynamic>? initialArgs;
@@ -290,6 +292,25 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                               );
                             },
                           ),
+                          // Show _ThinkingMoon when streaming/loading, positioned below last user message, left-aligned
+                          Obx(() {
+                            final tutorController = TutorController.instance;
+                            if (tutorController.showLoadingMoon.value) {
+                              return const Positioned(
+                                bottom: 0, // just above input area
+                                left: 16, // slightly indented from the edge
+                                child: SizedBox(
+                                  height: 64,
+                                  width: 64,
+                                  child: Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: _ThinkingMoon(),
+                                  ),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          }),
                           if (_tutorController.isLoadingMoreMessages.value)
                             Positioned(
                               top: 8,
@@ -334,6 +355,25 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+class _ThinkingMoon extends StatelessWidget {
+  const _ThinkingMoon({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: Lottie.asset(
+        'assets/videos/moon.json',
+        repeat: true,
+        animate: true,
+        fit: BoxFit.contain,
       ),
     );
   }

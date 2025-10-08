@@ -8,6 +8,12 @@ import 'package:lumi_learn_app/application/models/chat_sender.dart'; // ✅ Shar
 import 'package:lumi_learn_app/application/models/message_model.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/source_viewer_modal.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/copyIcon.dart';
+import 'package:get/get.dart';
+import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:flutter_highlight/flutter_highlight.dart';
+import './spaceTheme.dart';
+
+
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -234,6 +240,10 @@ class ChatBubble extends StatelessWidget {
       //     ? <String>[]
       //     : orderedFiles.where((f) => citedFiles.contains(f)).toList();
 
+      // Detect if the message contains a Markdown table
+      final bool containsTable = message.contains(RegExp(r'\|.*\|')) &&
+          message.contains(RegExp(r'-{3,}'));
+
       List<Widget> children = [
         Container(
           width: double.infinity,
@@ -256,7 +266,7 @@ class ChatBubble extends StatelessWidget {
                       srcList, fileNameToIndex, fileNameToPages),
                   'numberRef': NumberRefBuilder(
                       srcList, fileNameToIndex, fileNameToPages),
-                  'pre': CopyableCodeBlockBuilder(),
+                  'code': CopyableCodeBlockBuilder(),
                 },
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
@@ -306,10 +316,27 @@ class ChatBubble extends StatelessWidget {
                         left: BorderSide(color: Colors.cyanAccent, width: 4)),
                   ),
                   listBullet: const TextStyle(color: Colors.white),
-                  tableBorder: TableBorder.all(color: Colors.white24),
+                  // Improved table colors and styles
+                  tableBorder: TableBorder.all(color: Colors.white30, width: 0.6),
                   tableColumnWidth: const FlexColumnWidth(),
-                  tableCellsDecoration:
-                      BoxDecoration(color: Colors.white.withOpacity(0.02)),
+                  tableCellsDecoration: BoxDecoration(
+                    color: containsTable
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.white.withOpacity(0.02),
+                  ),
+                  tableHead: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    backgroundColor: containsTable
+                        ? Colors.white.withOpacity(0.12)
+                        : Colors.transparent,
+                  ),
+                  tableBody: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                  tablePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   horizontalRuleDecoration: const BoxDecoration(
                     border: Border(
                         top: BorderSide(color: Colors.white24, width: 1)),
@@ -321,7 +348,6 @@ class ChatBubble extends StatelessWidget {
           ),
         ),
       ];
-
       // DONT DELETE I MIGHT USE LATER!!!!
       // Add grouped source list at the bottom if any referenced indices exist
       // if (filteredFiles.isNotEmpty) {
@@ -396,26 +422,32 @@ class ChatBubble extends StatelessWidget {
       //     );
       //   }
       // }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ...children,
-          if (!isStreaming)
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: InkWell(
-                onTap: () => Clipboard.setData(ClipboardData(text: message)),
-                borderRadius: BorderRadius.circular(4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CopyButton(text: message, label: "Copy all"),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...children,
+              Obx(() {
+                final tutorController = TutorController.instance;
+                if (tutorController.showCopyAll.value) {
+                  return Align(
+                    alignment: Alignment.bottomLeft,
+                    child: InkWell(
+                      onTap: () => Clipboard.setData(ClipboardData(text: message)),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CopyButton(text: message, label: "Copy all"),
+                        ],
+                      ),
+                    ),
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
+              }),
+          ],
+        );
     }
   }
 }
@@ -517,16 +549,30 @@ class CopyableCodeBlockBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
     final String code = element.textContent;
+    
+    // Try to detect language from class attribute (e.g., "language-dart")
+    String? language;
+    final className = element.attributes['class'];
+    if (className != null && className.startsWith('language-')) {
+      language = className.substring('language-'.length);
+    }
+
+    // Create custom theme without background
+    final customTheme = {
+      ...spaceTheme,
+      'root': const TextStyle(
+        backgroundColor: Colors.transparent, // ✅ Remove background
+        color: Color(0xFFF8F8F2),
+      ),
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Copy controls ABOVE the box
         Align(
           alignment: Alignment.centerRight,
           child: CopyButton(text: code, label: "Copy code"),
         ),
-        // ✅ Code container
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -537,11 +583,14 @@ class CopyableCodeBlockBuilder extends MarkdownElementBuilder {
           ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Text(
+            child: HighlightView(
               code,
-              style: const TextStyle(
+              language: language ?? 'dart',
+              theme: customTheme, // ✅ Use custom theme
+              padding: EdgeInsets.zero,
+              textStyle: const TextStyle(
                 fontSize: 14,
-                color: Colors.white,
+                fontFamily: 'monospace',
               ),
             ),
           ),
@@ -550,6 +599,7 @@ class CopyableCodeBlockBuilder extends MarkdownElementBuilder {
     );
   }
 }
+
 
 class SourceIndexRefSyntax extends md.InlineSyntax {
   SourceIndexRefSyntax()
