@@ -340,38 +340,30 @@ class CourseController extends GetxController {
     }
 
     // After processing and shuffling the standard questions,
-    // check if there is a speak or write question in the lesson.
-    // If so, create a corresponding Question and add it at the end.
-    final speakQuestionJson = lesson['speakQuestion'];
-    final writeQuestionJson = lesson['writeQuestion'];
-    if (speakQuestionJson != null && speakQuestionJson is Map) {
-      final speakFlashcards = (lesson['flashcards'] as List<dynamic>?)
-              ?.take(3)
-              .map((f) => Flashcard(
-                    term: f['term'] ?? '',
-                    definition: f['definition'] ?? '',
-                  ))
-              .toList() ??
-          [];
+    // always add a "speak all" question at the end of every lesson.
+    // Use the first 3 flashcards from the lesson (or all if there are fewer).
+    final speakFlashcards = (lesson['flashcards'] as List<dynamic>?)
+            ?.take(3)
+            .map((f) => Flashcard(
+                  term: f['term'] ?? '',
+                  definition: f['definition'] ?? '',
+                ))
+            .toList() ??
+        [];
 
-      questions.add(Question(
-        questionText: speakQuestionJson['prompt'] ??
-            "Explain everything you remember about this lesson.",
-        options: [],
-        flashcards: speakFlashcards,
-        lessonType: LessonType.speakAll,
-      ));
-    } else if (writeQuestionJson != null && writeQuestionJson is Map) {
-      questions.add(Question(
-        questionText: writeQuestionJson['prompt'] ??
-            "Write everything you remember about this lesson.",
-        options: (writeQuestionJson['options'] as List<dynamic>?)
-                ?.map((opt) => opt.toString())
-                .toList() ??
-            [],
-        lessonType: LessonType.writeAll,
-      ));
-    }
+    // Check if there's a custom prompt from speakQuestion
+    final speakQuestionJson = lesson['speakQuestion'];
+    final customPrompt = (speakQuestionJson != null && speakQuestionJson is Map)
+        ? speakQuestionJson['prompt']
+        : null;
+
+    questions.add(Question(
+      questionText:
+          customPrompt ?? "Explain everything you remember about this lesson.",
+      options: [],
+      flashcards: speakFlashcards,
+      lessonType: LessonType.speakAll,
+    ));
 
     questionsCount.value = questions.length;
     return questions;
@@ -409,7 +401,12 @@ class CourseController extends GetxController {
     isLoading.value = true;
 
     try {
-      checkCourseSlotAvailable();
+      // Check if user has available course slots
+      if (!checkCourseSlotAvailable()) {
+        isLoading.value = false;
+        return {}; // Return empty map to indicate no course was created
+      }
+
       final token = await authController.getIdToken();
       if (token == null) {
         isLoading.value = false;
@@ -519,7 +516,6 @@ class CourseController extends GetxController {
           'subject': responseData['subject'] ?? '',
         };
         courses.insert(0, newCourse);
-        authController.courseSlotsUsed.value++;
 
         return true;
       } else {

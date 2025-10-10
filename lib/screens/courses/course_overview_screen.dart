@@ -479,10 +479,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   // **Handling Lesson Taps**
   void _onLessonTap(int index, Planet planet) {
     final lessons = courseController.lessons;
-    final isPremium = authController.isPremium.value;
-
-    // Count total lessons
-    final lessonCount = lessons.length;
 
     // Find the last completed lesson index
     int lastCompletedIndex = -1;
@@ -529,28 +525,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       return;
     }
 
-    // 2) If user is NOT premium, block from:
-    //    - 3rd lesson (index=2) onward if course has <= 4 lessons
-    //    - 4th lesson (index=3) onward if course has > 4 lessons
-    if (!isPremium) {
-      if (lessonCount <= 4 && index >= 2) {
-        // Non-premium block for "small" course
-        courseController.showUpgradePopup(
-          title: "Discover all planets with premium!",
-          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
-        );
-        return;
-      } else if (lessonCount > 4 && index >= 3) {
-        // Non-premium block for "larger" course
-        courseController.showUpgradePopup(
-          title: "Discover all planets with premium!",
-          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
-        );
-        return;
-      }
-    }
-
-    // 3) For unlocked & allowed lessons, open the bottom panel (or re-open if switching lessons)
+    // For unlocked lessons, open the bottom panel (or re-open if switching lessons)
     if (_selectedLessonIndex == index && _isPanelVisible) {
       // If user taps the same planet while panel is open, ignore
       return;
