@@ -114,6 +114,9 @@ class SpeakController extends GetxController {
     try {
       isAudioPlaying.value = true;
       await audioPlayer.play(AssetSource("sounds/echo_outro_2.wav"));
+      // Wait for the audio to complete.
+      await audioPlayer.onPlayerComplete.first;
+      isAudioPlaying.value = false;
     } catch (e) {
       isAudioPlaying.value = false;
       rethrow;
@@ -269,7 +272,6 @@ class SpeakController extends GetxController {
       }
 
       final int currentIndex = currentTermIndex.value;
-      final int currentScore = (termProgress[currentIndex] * 100).round();
 
       // Build the full terms data for the API call.
       final List<Map<String, dynamic>> termsData = [];
@@ -330,22 +332,26 @@ class SpeakController extends GetxController {
           if (currentIndex < terms.length - 1) {
             currentTermIndex.value++;
             attemptNumber = 1;
+            // Clear conversation history for the new term
+            conversationHistory.clear();
           } else {
+            print("all terms gone through");
             bool allPerfect = termProgress.every((score) => score == 1.0);
 
             if (allPerfect) {
               // All terms are perfect – play the first closing audio.
-              await playClosingAudio();
               feedbackMessage.value =
-                  "Hey that was AWESOME! I mean, look at you go, you’re really soaking this stuff up. Honestly, just keep going like this and we’re gonna make some SERIOUS progress.";
+                  "Hey that was AWESOME! I mean, look at you go, you're really soaking this stuff up. Honestly, just keep going like this and we're gonna make some SERIOUS progress.";
+              await playClosingAudio();
             } else {
               // Not all terms are perfect – play the alternative closing audio.
-              await playClosingAudio2();
               feedbackMessage.value =
-                  "Sooo close! You nailed most of it, but a few slipped by. Flashcards are your secret weapon—go give ’em a spin!";
+                  "Sooo close! You nailed most of it, but a few slipped by. Flashcards are your secret weapon—go give 'em a spin!";
+              await playClosingAudio2();
             }
-            await audioPlayer.onPlayerComplete.first;
+            // await audioPlayer.onPlayerComplete.first;
             // After the closing audio finishes, proceed to the next question.
+            print("Closing audio finished, calling nextQuestion");
             courseController.nextQuestion();
           }
         }
