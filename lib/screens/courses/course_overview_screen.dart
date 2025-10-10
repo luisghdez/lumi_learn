@@ -6,17 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/data/assets_data.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
+import 'package:lumi_learn_app/screens/courses/lessons/note_screen.dart';
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_panel.dart';
 import 'package:lumi_learn_app/widgets/course_overview_header.dart';
 import 'package:lumi_learn_app/widgets/star_painter.dart';
 import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart'; // <--- Import your AuthController
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart'; // <--- Import your AuthController
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
+import 'package:lumi_learn_app/widgets/embeddings_popup.dart';
+import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 
 class CourseOverviewScreen extends StatefulWidget {
   const CourseOverviewScreen({Key? key}) : super(key: key);
@@ -100,11 +104,14 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
     return Obx(() {
       final courseId = courseController.selectedCourseId;
+      final String courseTitle = courseController.selectedCourseTitle.value;
       final lessons = courseController.lessons;
       final lessonCount = lessons.length;
       final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
       int completedCount = lessons.where((l) => l['completed'] == true).length;
       double progress = (lessonCount == 0) ? 0 : completedCount / lessonCount;
+
+      final courseMarkdown = courseController.selectedCourseSummary.value;
 
       Planet? previousPlanet;
 
@@ -377,22 +384,66 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                   horizontal: isTablet ? 32 : 16,
                   vertical: isTablet ? 32 : 0,
                 ),
-                child: CourseOverviewHeader(
-                  onBack: () => Get.offAll(
-                    () => MainScreen(),
-                    transition: Transition.fadeIn,
-                    duration: const Duration(milliseconds: 1000),
-                  ),
-                  courseTitle: "${courseController.selectedCourseTitle}",
-                  progress: progress,
-                  onViewFlashcards: () {
-                    Get.to(
-                      () => FlashcardScreen(flashcards: flashcards),
-                      transition: Transition.fadeIn,
-                      duration: const Duration(milliseconds: 300),
-                    );
-                  },
-                ),
+                child: Builder(builder: (context) {
+                  final tutorController = Get.find<TutorController>();
+                  return Obx(() => CourseOverviewHeader(
+                        onBack: () => Get.offAll(
+                          () => MainScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 1000),
+                        ),
+                        courseTitle: courseController.selectedCourseTitle.value,
+                        courseId: courseId.value,
+                        progress: progress,
+                        onViewFlashcards: () {
+                          Get.to(
+                            () => FlashcardScreen(flashcards: flashcards),
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        },
+                        onViewNotes: () {
+                          if (!courseController
+                              .selectedCourseHasEmbeddings.value) {
+                            Get.dialog(
+                              const EmbeddingsPopup(),
+                              barrierDismissible: true,
+                            );
+                            return;
+                          }
+                          Get.to(
+                            () => NoteScreen(
+                              markdownText: courseMarkdown,
+                            ),
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        },
+                        onViewLumiTutor: () {
+                          if (!courseController
+                              .selectedCourseHasEmbeddings.value) {
+                            Get.dialog(
+                              const EmbeddingsPopup(),
+                              barrierDismissible: true,
+                            );
+                            return;
+                          }
+                          tutorController
+                              .openTutorForCourse(
+                                  courseId: courseId.value,
+                                  courseTitle: courseTitle)
+                              .whenComplete(() {
+                            Get.to(
+                              () => LumiTutorMain(
+                                courseId: courseId.value,
+                                courseTitle: courseTitle,
+                              ),
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          });
+                        },
+                        isOpeningTutor:
+                            tutorController.isOpeningFromCourse.value,
+                      ));
+                }),
               ),
             ],
           ),
@@ -428,10 +479,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   // **Handling Lesson Taps**
   void _onLessonTap(int index, Planet planet) {
     final lessons = courseController.lessons;
-    final isPremium = authController.isPremium.value;
-
-    // Count total lessons
-    final lessonCount = lessons.length;
 
     // Find the last completed lesson index
     int lastCompletedIndex = -1;
@@ -478,28 +525,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       return;
     }
 
-    // 2) If user is NOT premium, block from:
-    //    - 3rd lesson (index=2) onward if course has <= 4 lessons
-    //    - 4th lesson (index=3) onward if course has > 4 lessons
-    if (!isPremium) {
-      if (lessonCount <= 4 && index >= 2) {
-        // Non-premium block for "small" course
-        courseController.showUpgradePopup(
-          title: "Discover all planets with premium!",
-          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
-        );
-        return;
-      } else if (lessonCount > 4 && index >= 3) {
-        // Non-premium block for "larger" course
-        courseController.showUpgradePopup(
-          title: "Discover all planets with premium!",
-          subtitle: "Upgrade to Lumi Premium for unlimited courses.",
-        );
-        return;
-      }
-    }
-
-    // 3) For unlocked & allowed lessons, open the bottom panel (or re-open if switching lessons)
+    // For unlocked lessons, open the bottom panel (or re-open if switching lessons)
     if (_selectedLessonIndex == index && _isPanelVisible) {
       // If user taps the same planet while panel is open, ignore
       return;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/leaderboard/widget/top_three_widget.dart';
 import 'package:lumi_learn_app/screens/leaderboard/components/leaderboard_list.dart';
-import 'package:lumi_learn_app/controllers/leaderboard_controller.dart';
+import 'package:lumi_learn_app/application/controllers/leaderboard_controller.dart';
 import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 
 class LeaderboardPage extends StatelessWidget {

@@ -20,49 +20,70 @@ class FeedbackScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Feedback & Contact', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Have suggestions, questions, or ran into an issue?",
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/black_moons_lighter.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              "We're always improving Lumi. Drop us your thoughts or feedback, and we'll be happy to hear from you.",
-              style: TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: _launchEmail,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          // Content
+          Column(
+            children: [
+              // AppBar
+              AppBar(
+                title: const Text('Feedback & Contact', style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                iconTheme: const IconThemeData(color: Colors.white),
               ),
-              icon: const Icon(Icons.email_outlined),
-              label: const Text(
-                "Contact Us via Email",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              // Body content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Have suggestions, questions, or ran into an issue?",
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "We're always improving Lumi. Drop us your thoughts or feedback, and we'll be happy to hear from you.",
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton.icon(
+                        onPressed: _launchEmail,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.email_outlined),
+                        label: const Text(
+                          "Contact Us via Email",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Text(
+                        "Email: samluidev1@gmail.com",
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const Spacer(),
-            const Text(
-              "Email: samluidev1@gmail.com",
-              style: TextStyle(color: Colors.white38, fontSize: 13),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

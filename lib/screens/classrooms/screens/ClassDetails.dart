@@ -2,15 +2,15 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart';
-import 'package:lumi_learn_app/controllers/student_controller.dart';
+import 'package:lumi_learn_app/application/controllers/class_controller.dart';
+import 'package:lumi_learn_app/application/controllers/student_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/ClassroomHeader.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/WeeklySchedule.dart';
 import 'package:lumi_learn_app/screens/classrooms/widgets/student/ClassCourseCard.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/category_card.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:crypto/crypto.dart';
 
 class ClassroomDetails extends StatefulWidget {
@@ -109,18 +109,18 @@ class _ClassroomDetailsState extends State<ClassroomDetails> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 20),
                               child: CategoryCard(
+                                courseId: course.id,
                                 title: course.title,
                                 completedLessons: 0,
                                 totalLessons: 0,
                                 imagePath: getGalaxyForCourse(course.id),
+                                tags: [],
                                 onTap: () async {
                                   // Prevent navigation if still loading
                                   if (false == true) return;
 
                                   courseController.setSelectedCourseId(
-                                    course.id,
-                                    course.title,
-                                  );
+                                      course.id, course.title);
 
                                   Get.to(
                                     () => LoadingScreen(),

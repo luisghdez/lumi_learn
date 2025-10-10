@@ -5,8 +5,8 @@ class PfpViewer extends StatefulWidget {
   final bool isEditing;
   final Function(bool)? onEditModeChange;
   final Function(int)? onAvatarChanged;
-  final int selectedIndex; //pfp id 
-
+  final Function()? onDone;
+  final int selectedIndex; //pfp id
 
   const PfpViewer({
     super.key,
@@ -14,6 +14,7 @@ class PfpViewer extends StatefulWidget {
     this.isEditing = false,
     this.onEditModeChange,
     this.onAvatarChanged,
+    this.onDone,
     this.selectedIndex = 0,
   });
 
@@ -29,61 +30,112 @@ class _PfpViewerState extends State<PfpViewer> {
     'assets/pfp/pfp4.png',
   ];
 
-    late int currentIndex;
+  late int currentIndex;
 
-    void _next() {
-      setState(() {
-        currentIndex = (currentIndex + 1) % avatars.length;
-        widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
-      });
-    }
+  void _next() {
+    setState(() {
+      currentIndex = (currentIndex + 1) % avatars.length;
+      widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
+    });
+  }
 
-    void _prev() {
-      setState(() {
-        currentIndex = (currentIndex - 1 + avatars.length) % avatars.length;
-        widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
-      });
-    }
+  void _prev() {
+    setState(() {
+      currentIndex = (currentIndex - 1 + avatars.length) % avatars.length;
+      widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
+    });
+  }
 
-
-
-    @override
-    void initState() {
-      super.initState();
-      currentIndex = widget.selectedIndex.clamp(0, avatars.length - 1);
-    }
-
-
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.selectedIndex.clamp(0, avatars.length - 1);
+  }
 
   @override
   Widget build(BuildContext context) {
+    const double imageHeight = 350.0;
+
     return Transform.translate(
       offset: Offset(0, -widget.offsetUp),
       child: GestureDetector(
         onLongPress: () => widget.onEditModeChange?.call(true),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset(avatars[currentIndex], height: 350),
-            if (widget.isEditing)
+        child: SizedBox(
+          height: imageHeight,
+          child: Stack(
+            children: [
+              Center(
+                child: Image.asset(avatars[currentIndex], height: imageHeight),
+              ),
+              // Edit icon in top-right corner
               Positioned(
-                left: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.chevron_left,
-                      color: Colors.white, size: 32),
-                  onPressed: _prev,
+                top: 10,
+                right: 90,
+                child: GestureDetector(
+                  onTap: () => widget.onEditModeChange?.call(true),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 91, 91, 91)
+                          .withOpacity(0.6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.edit,
+                      color: widget.isEditing ? Colors.grey : Colors.white,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
-            if (widget.isEditing)
-              Positioned(
-                right: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.chevron_right,
-                      color: Colors.white, size: 32),
-                  onPressed: _next,
+              // Done button - appears when editing
+              if (widget.isEditing)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () => widget.onDone?.call(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 91, 91, 91)
+                            .withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Text(
+                        "Done",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-          ],
+              if (widget.isEditing)
+                Positioned(
+                  left: 10,
+                  top: imageHeight / 2 - 16, // Center vertically
+                  child: IconButton(
+                    icon: const Icon(Icons.chevron_left,
+                        color: Colors.white, size: 32),
+                    onPressed: _prev,
+                  ),
+                ),
+              if (widget.isEditing)
+                Positioned(
+                  right: 10,
+                  top: imageHeight / 2 - 16, // Center vertically
+                  child: IconButton(
+                    icon: const Icon(Icons.chevron_right,
+                        color: Colors.white, size: 32),
+                    onPressed: _next,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

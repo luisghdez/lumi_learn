@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/social/widgets/add_friends_tab.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_requests_tab.dart';
-import 'package:lumi_learn_app/models/userSearch_model.dart';
+import 'package:lumi_learn_app/application/models/userSearch_model.dart';
 
 class AddFriendsScreen extends StatefulWidget {
   const AddFriendsScreen({super.key});
@@ -71,7 +71,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
   void _shareFollowLink() {
     final user = AuthController.instance.firebaseUser.value;
     if (user != null) {
-      final link = "https://lumilearn.app/user/${user.uid}";
+      final link = "https://www.lumilearnapp.com/invite/${user.uid}";
       Share.share("Follow ${user.displayName ?? "me"} on Lumi Learn! $link");
     } else {
       Get.snackbar("Not Logged In", "Sign in to share your profile.");
@@ -92,11 +92,17 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
       appBar: AppBar(
         title: const Text(
           'Add Friends',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: _shareFollowLink,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -106,17 +112,27 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
           indicatorColor: Colors.white,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
         children: [
-          Obx(() => AddFriendsTab(
-                emailController: _searchController,
-                onCheckContactsPermission: _checkContactsPermission,
-                onShareLink: _shareFollowLink,
-                contactsPermissionGranted: _contactsPermissionGranted.value,
-                onSearch: _performSearch, // 👈 Hook up search logic
-              )),
-          const FriendRequestsTab(),
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/black_moons_lighter.png",
+              fit: BoxFit.cover,
+            ),
+          ),
+          TabBarView(
+            controller: _tabController,
+            children: [
+              Obx(() => AddFriendsTab(
+                    emailController: _searchController,
+                    onCheckContactsPermission: _checkContactsPermission,
+                    onShareLink: _shareFollowLink,
+                    contactsPermissionGranted: _contactsPermissionGranted.value,
+                    onSearch: _performSearch,
+                  )),
+              const FriendRequestsTab(),
+            ],
+          ),
         ],
       ),
     );

@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/widgets/tag_chip.dart';
+import 'package:lumi_learn_app/widgets/course_options_dialog.dart';
+import 'package:lumi_learn_app/utils/course_delete_helper.dart';
 
 class CategoryCard extends StatelessWidget {
+  final String courseId;
   final String title;
   final int completedLessons;
   final int totalLessons;
   final String imagePath;
+  final List<String> tags;
   final VoidCallback onTap;
+  final String? subject;
+  final bool hasEmbeddings;
 
   const CategoryCard({
     Key? key,
+    required this.courseId,
     required this.title,
     required this.completedLessons,
     required this.totalLessons,
     required this.imagePath,
+    required this.tags,
     required this.onTap,
+    this.subject,
+    this.hasEmbeddings = false,
   }) : super(key: key);
 
   @override
@@ -22,10 +33,20 @@ class CategoryCard extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 600;
 
-    final double cardHeight = isTablet ? 180.0 : 140.0;
+    final double cardHeight = isTablet ? 180.0 : 120.0;
 
     final double progress =
         totalLessons > 0 ? completedLessons / totalLessons : 0.0;
+
+    List<String> displayTags = List.from(tags);
+
+    // Add subject tag if hasEmbeddings is true and subject is available
+    if (hasEmbeddings && subject != null && subject!.isNotEmpty) {
+      displayTags.insert(0, subject!);
+    } else if (tags.isEmpty) {
+      // Only show default tags when no subject and no other tags
+      displayTags = ['#Classic'];
+    }
 
     return InkWell(
       splashColor: Colors.transparent,
@@ -46,27 +67,14 @@ class CategoryCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: cardHeight * 0.57,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(16),
-                  ),
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.7),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
             Align(
-              alignment: Alignment.bottomLeft,
+              alignment: Alignment.centerLeft,
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -77,11 +85,20 @@ class CategoryCard extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: isTablet ? 24 : 18,
+                        fontSize: isTablet ? 20 : 16,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: -6,
+                      children: displayTags
+                          .map((tag) => TagChip(label: tag))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 8),
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final barWidth = constraints.maxWidth * 0.45;
@@ -92,7 +109,7 @@ class CategoryCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                               child: SizedBox(
                                 width: barWidth,
-                                height: 10,
+                                height: 8,
                                 child: TweenAnimationBuilder<double>(
                                   tween: Tween<double>(begin: 0, end: progress),
                                   duration: const Duration(milliseconds: 300),
@@ -112,7 +129,7 @@ class CategoryCard extends StatelessWidget {
                             Text(
                               "$completedLessons/$totalLessons Lessons",
                               style: TextStyle(
-                                fontSize: isTablet ? 16 : 14,
+                                fontSize: isTablet ? 14 : 11,
                                 color: Colors.white,
                               ),
                             ),
@@ -121,6 +138,41 @@ class CategoryCard extends StatelessWidget {
                       },
                     ),
                   ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: () {
+                  showCourseOptionsDialog(
+                    context: context,
+                    courseId: courseId,
+                    courseTitle: title,
+                    onDelete: () async {
+                      Navigator.of(context).pop();
+
+                      // Use the helper to handle deletion
+                      await CourseDeleteHelper.showDeleteConfirmationAndDelete(
+                        context: context,
+                        courseId: courseId,
+                        courseTitle: title,
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    size: 16,
+                    color: Colors.white54,
+                  ),
                 ),
               ),
             ),

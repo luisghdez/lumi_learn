@@ -1,11 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/controllers/class_controller.dart';
+import 'package:lumi_learn_app/application/controllers/class_controller.dart';
 
 class ClassroomHeaderCard extends StatelessWidget {
   final Classroom classroom;
 
-  const ClassroomHeaderCard({Key? key, required this.classroom}) : super(key: key);
+  const ClassroomHeaderCard({Key? key, required this.classroom})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,8 @@ class ClassroomHeaderCard extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: classroom.sideColor,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
               ),
               Padding(

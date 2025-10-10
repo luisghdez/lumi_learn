@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
@@ -118,26 +118,31 @@ class CategoryList extends StatelessWidget {
         return title.contains(query);
       }).toList();
 
+      // 3. Limit to 5 courses for home screen display
+      final displayCourses = filteredCourses.take(5).toList();
+
       return Column(
-        children: filteredCourses.map<Widget>((course) {
+        children: displayCourses.map<Widget>((course) {
           final galaxyImagePath = getGalaxyForCourse(course['id']);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Stack(
               children: [
                 CategoryCard(
+                  courseId: course['id'] ?? '',
                   title: course['title'] ?? 'Untitled',
                   completedLessons: course['completedLessons'] ?? 0,
                   totalLessons: course['totalLessons'] ?? 0,
                   imagePath: galaxyImagePath,
+                  tags: course['tags'] ?? [],
+                  subject: course['subject'],
+                  hasEmbeddings: course['hasEmbeddings'] ?? false,
                   onTap: () async {
                     // Prevent navigation if still loading
                     if (course['loading'] == true) return;
 
                     courseController.setSelectedCourseId(
-                      course['id'],
-                      course['title'],
-                    );
+                        course['id'], course['title'], course['hasEmbeddings']);
 
                     Get.to(
                       () => LoadingScreen(),

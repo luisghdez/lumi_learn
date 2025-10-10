@@ -1,216 +1,193 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/widgets/tag_chip.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
+import 'package:share/share.dart';
 
-class HorizontalCategoryCard extends StatefulWidget {
+class HorizontalCategoryCard extends StatelessWidget {
+  final String? courseId;
   final String title;
   final String imagePath;
   final VoidCallback onConfirm;
   final double height;
+  final List<String> tags;
+  final String? subject;
+  final bool hasEmbeddings;
+  final String? createdByName;
+  final String? createdById;
 
   const HorizontalCategoryCard({
     Key? key,
+    this.courseId,
     required this.title,
     required this.imagePath,
     required this.onConfirm,
     required this.height,
+    required this.tags,
+    this.subject,
+    this.hasEmbeddings = false,
+    this.createdByName,
+    this.createdById,
   }) : super(key: key);
 
-  @override
-  State<HorizontalCategoryCard> createState() => _HorizontalCategoryCardState();
-}
+  static const double _aspectRatio = 220 / 140;
 
-class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
-  bool _overlayVisible = false;
-  late FocusNode _focusNode;
-
-  static const double _aspectRatio = 170 / 260;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    _focusNode.addListener(() {
-      if (!_focusNode.hasFocus) {
-        setState(() {
-          _overlayVisible = false;
-        });
-      }
-    });
+  void _shareCourse() {
+    if (courseId != null) {
+      final shareLink = 'https://www.lumilearnapp.com/course/$courseId';
+      Share.share(
+        "🚀 Check out $title on Lumi Learn: \n$shareLink",
+      );
+    }
   }
 
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
+  Future<void> _navigateToUserProfile(String userId) async {
+    try {
+      final friendsController = Get.find<FriendsController>();
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      await friendsController.setActiveFriend(userId);
+      Get.back(); // Close loading dialog
+      Get.to(
+        () => const FriendProfile(),
+        transition: Transition.fadeIn,
+      );
+    } catch (e) {
+      Get.back(); // Close loading dialog
+      Get.snackbar("Error", "Could not load profile: $e");
+    }
   }
 
-  void _handleCardTap() {
-    _focusNode.requestFocus();
-    setState(() {
-      _overlayVisible = true;
-    });
-  }
+  void _showConfirmationDialog(BuildContext context) {
+    List<String> displayTags = List.from(tags);
 
-  void _handleCancel() {
-    setState(() {
-      _overlayVisible = false;
-    });
-    _focusNode.unfocus();
-  }
+    // Add subject tag if hasEmbeddings is true and subject is available
+    if (hasEmbeddings && subject != null && subject!.isNotEmpty) {
+      displayTags.insert(0, subject!);
+    } else if (tags.isEmpty) {
+      // Only show default tags when no subject and no other tags
+      displayTags = ['#Classic'];
+    }
 
-  void _handleConfirm() {
-    setState(() {
-      _overlayVisible = false;
-    });
-    _focusNode.unfocus();
-    widget.onConfirm();
-  }
+    Get.generalDialog(
+      barrierDismissible: true,
+      barrierLabel: "Course Confirm",
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) {
+        return const SizedBox.shrink(); // required but unused
+      },
+      transitionBuilder: (context, animation, _, __) {
+        final offsetAnimation = Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        ));
 
-  @override
-  Widget build(BuildContext context) {
-    final double cardHeight = widget.height;
-    final double cardWidth = cardHeight * _aspectRatio;
-    final double gradientHeight = cardHeight * (100 / 240);
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isTablet = screenWidth >= 600;
-
-    return SizedBox(
-      width: cardWidth,
-      height: cardHeight,
-      child: Focus(
-        focusNode: _focusNode,
-        child: GestureDetector(
-          onTap: _handleCardTap,
-          child: Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: greyBorder,
-                    width: 1,
+        return SlideTransition(
+          position: offsetAnimation,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: GestureDetector(
+              onTap: () {}, // Prevent outside tap
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                    image: AssetImage(widget.imagePath),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: gradientHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(16),
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.9),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              widget.title,
-                              textAlign: TextAlign.left,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: isTablet ? 22 : 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Created By: Anonymous',
-                              style: TextStyle(
-                                fontSize: isTablet ? 16 : 12,
-                                color: const Color.fromARGB(255, 200, 200, 200),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IgnorePointer(
-                ignoring: !_overlayVisible,
-                child: AnimatedOpacity(
-                  opacity: _overlayVisible ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.black.withOpacity(0.75),
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 8),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        GestureDetector(
+                          onTap: () {
+                            if (createdById != null) {
+                              _navigateToUserProfile(createdById!);
+                            }
+                          },
                           child: Text(
-                            'Do you want to \nsave and start\nthis course?',
+                            'Created by: ${createdByName ?? 'Anonymous'}',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: isTablet ? 22 : 18,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                              letterSpacing: -1,
+                              fontSize: 13,
+                              color: createdById != null
+                                  ? Colors.white70
+                                  : Colors.white54,
+                              decoration: createdById != null
+                                  ? TextDecoration.underline
+                                  : null,
                             ),
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 32,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                              onPressed: _handleConfirm,
-                              child: const Text(
-                                'Yes!',
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: -6,
+                          children: displayTags
+                              .map((tag) => TagChip(label: tag))
+                              .toList(),
                         ),
-                        SizedBox(
-                          height: 32,
-                          child: TextButton(
-                            onPressed: _handleCancel,
-                            child: const Text(
-                              'Cancel',
+                        const SizedBox(height: 12),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.bookmark_border,
+                                color: Colors.white60, size: 18),
+                            SizedBox(width: 4),
+                            Text(
+                              '24',
                               style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                                height: 0.9,
+                                  color: Colors.white70, fontSize: 13),
+                            ),
+                            SizedBox(width: 16),
+                            Icon(Icons.menu_book_rounded,
+                                color: Colors.white60, size: 18),
+                            SizedBox(width: 4),
+                            Text(
+                              '4 lessons',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Get.back(); // Close dialog
+                              onConfirm(); // Proceed
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
+                            child: const Text('Start Learning'),
                           ),
                         ),
                       ],
@@ -218,8 +195,123 @@ class _HorizontalCategoryCardState extends State<HorizontalCategoryCard> {
                   ),
                 ),
               ),
-            ],
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double cardHeight = height;
+    final double cardWidth = cardHeight * _aspectRatio;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
+
+    List<String> displayTags = List.from(tags);
+
+    // Add subject tag if hasEmbeddings is true and subject is available
+    if (hasEmbeddings && subject != null && subject!.isNotEmpty) {
+      displayTags.insert(0, subject!);
+    } else if (tags.isEmpty) {
+      // Only show default tags when no subject and no other tags
+      displayTags = ['#Classic'];
+    }
+
+    return SizedBox(
+      width: cardWidth,
+      height: cardHeight,
+      child: GestureDetector(
+        onTap: () => _showConfirmationDialog(context),
+        child: Stack(
+          children: [
+            // Card background
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: greyBorder, width: 1),
+                borderRadius: BorderRadius.circular(16),
+                image: DecorationImage(
+                  image: AssetImage(imagePath),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Black overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+
+                  // Title and tags
+                  Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            title,
+                            textAlign: TextAlign.left,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: isTablet ? 18 : 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: -6,
+                            children: displayTags
+                                .map((tag) => TagChip(label: tag))
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Top right icons (share and arrow)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Share icon
+                        if (courseId != null)
+                          GestureDetector(
+                            onTap: _shareCourse,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              margin: const EdgeInsets.only(right: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.share,
+                                size: 14,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

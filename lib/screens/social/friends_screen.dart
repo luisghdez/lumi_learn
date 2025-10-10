@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/models/friends_model.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/models/friends_model.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_tile.dart';
 
@@ -62,33 +62,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
         children: [
           // Background image layer.
           Positioned.fill(
-            child: Column(
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.20,
-                  child: Stack(
-                    children: [
-                      // 🌌 Galaxy Image.
-                      Image.asset(
-                        'assets/galaxies/galaxyDefault.png',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                      // Gradient overlay.
-                      Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [Colors.black, Colors.transparent],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: Image.asset(
+              'assets/images/black_moons_lighter.png',
+              fit: BoxFit.cover,
             ),
           ),
           // Main content layer.

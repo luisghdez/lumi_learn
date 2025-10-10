@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 
 class FriendRequestsTab extends StatelessWidget {
   const FriendRequestsTab({super.key});
@@ -29,11 +29,13 @@ class FriendRequestsTab extends StatelessWidget {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.check, color: Colors.green),
-                            onPressed: () => controller.respondToRequest(req.id, true),
+                            onPressed: () =>
+                                controller.respondToRequest(req.id, true),
                           ),
                           IconButton(
                             icon: const Icon(Icons.close, color: Colors.red),
-                            onPressed: () => controller.respondToRequest(req.id, false),
+                            onPressed: () =>
+                                controller.respondToRequest(req.id, false),
                           ),
                         ],
                       ),
@@ -63,7 +65,8 @@ class FriendRequestsTab extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Text(
           message,
-          style: const TextStyle(color: Colors.white38, fontStyle: FontStyle.italic),
+          style: const TextStyle(
+              color: Colors.white38, fontStyle: FontStyle.italic),
         ),
       );
 

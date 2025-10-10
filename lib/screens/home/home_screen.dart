@@ -1,19 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:camera/camera.dart';
+
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/constants.dart';
+import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
+import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
+import 'package:material_symbols_icons/symbols.dart';
+
+import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 
 import 'components/category_list.dart';
-import 'components/search_bar.dart' as custom;
 import 'components/top_picks_header.dart';
 import 'components/home_header.dart';
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   static const double _tabletBreakpoint = 800.0;
+  List<CameraDescription>? _cameras;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCameras();
+  }
+
+  Future<void> _loadCameras() async {
+    final cameras = await availableCameras();
+    setState(() {
+      _cameras = cameras;
+    });
+  }
 
   double _getHorizontalPadding(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -24,6 +52,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
     final CourseController courseController = Get.find();
+    final NavigationController navigationController = Get.find();
 
     final double horizontalPadding = _getHorizontalPadding(context);
     final double topScrollViewPadding =
@@ -39,16 +68,14 @@ class HomeScreen extends StatelessWidget {
               fontWeight: FontWeight.w300,
             )
         : const TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w300,
             color: Colors.white,
           );
 
     return Scaffold(
       body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
             Positioned.fill(
@@ -89,14 +116,128 @@ class HomeScreen extends StatelessWidget {
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),
-                            child: Text(
-                              'Featured Courses',
-                              style: sectionTitleStyle,
+                            child: Container(
+                              height: 130,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: greyBorder),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0x9900012D),
+                                    Color(0x993A005A),
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  FeatureCard(
+                                    gradientColors: const [],
+                                    icon: Symbols.document_scanner,
+                                    title: 'AI Scanner',
+                                    subtitle: 'Scan & learn instantly',
+                                    onTap: () {
+                                      if (_cameras != null) {
+                                        Get.to(() =>
+                                            AiScannerMain(cameras: _cameras!));
+                                      } else {
+                                        Get.snackbar('Camera Error',
+                                            'Cameras not ready yet');
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(width: 12),
+                                  FeatureCard(
+                                    gradientColors: const [],
+                                    icon: Symbols.note_add,
+                                    title: 'Add Course',
+                                    subtitle: 'Create new course',
+                                    onTap: () {
+                                      Get.to(() => const CourseCreation(),
+                                          transition: Transition.fadeIn,
+                                          duration: const Duration(
+                                              milliseconds: 500));
+                                    },
+                                  ),
+                                  const SizedBox(width: 12),
+                                  FeatureCard(
+                                    gradientColors: const [],
+                                    icon: Symbols.forum,
+                                    title: 'LumiTutor',
+                                    subtitle: 'AI study companion',
+                                    onTap: () {
+                                      Get.to(
+                                        () => const LumiTutorMain(
+                                          initialArgs: {
+                                            'type': 'text',
+                                            'paths': [],
+                                            'category': 'Anything',
+                                          },
+                                        ),
+                                        transition: Transition.fadeIn,
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Suggested Courses',
+                                  style: sectionTitleStyle,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    navigationController.updateIndex(1);
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'Search',
+                                        style: sectionTitleStyle.copyWith(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withOpacity(0.8),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_forward,
+                                          size: 16, color: Colors.white),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
                           HorizontalCategoryList(
                               initialPadding: horizontalPadding),
+                          const SizedBox(height: 18),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'LumiTutor',
+                                  style: sectionTitleStyle,
+                                ),
+                                const SizedBox(height: 8),
+                                const LumiTutorCard(),
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 18),
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -117,13 +258,6 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: const custom.SearchBar(),
-                          ),
-                          const SizedBox(height: 8),
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: horizontalPadding),

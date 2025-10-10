@@ -1,14 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/fill_in_blank_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/match_terms_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/multiple_choice_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/speak_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/type_in_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/lesson_progress_bar.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 
 class LessonScreenMain extends StatelessWidget {
   LessonScreenMain({Key? key}) : super(key: key);

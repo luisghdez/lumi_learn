@@ -14,18 +14,28 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: appBar,
-      floatingActionButton: floatingActionButton,
-      backgroundColor: const Color.fromARGB(255, 12, 12, 12),
-
-      // Wrap the body in Padding
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
-          child: body,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
+        Scaffold(
+          appBar: appBar,
+          floatingActionButton: floatingActionButton,
+          backgroundColor: Colors.transparent,
+
+          // Wrap the body in Padding
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+              child: body,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

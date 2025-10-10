@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/profile/components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/social/components/pfp_viewer.dart';
 import 'package:lumi_learn_app/screens/social/components/xp_chart_box.dart';
@@ -15,12 +15,13 @@ class FriendProfile extends StatelessWidget {
   }
 
   String getProfilePicturePath(String? profilePicture) {
-  if (profilePicture == null || profilePicture.isEmpty || profilePicture == "default") {
-    return 'assets/pfp/pfp1.png';
+    if (profilePicture == null ||
+        profilePicture.isEmpty ||
+        profilePicture == "default") {
+      return 'assets/pfp/pfp1.png';
+    }
+    return 'assets/pfp/pfp$profilePicture.png';
   }
-  return 'assets/pfp/pfp$profilePicture.png';
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -41,35 +42,13 @@ class FriendProfile extends StatelessWidget {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // 🌌 Galaxy header background
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: Stack(
-                  children: [
-                    Image.asset(
-                      'assets/galaxies/galaxyDefault.png',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Colors.black, Colors.transparent],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            // 🌌 Fullscreen Galaxy Image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/black_moons_lighter.png',
+                fit: BoxFit.cover,
               ),
             ),
-
             // 👇 Scrollable body content
             SingleChildScrollView(
               padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
@@ -78,7 +57,8 @@ class FriendProfile extends StatelessWidget {
                   Center(
                     child: PfpViewer(
                       offsetUp: -120,
-                      backgroundImage: AssetImage(getProfilePicturePath(friend.profilePicture)),
+                      backgroundImage: AssetImage(
+                          getProfilePicturePath(friend.profilePicture)),
                     ),
                   ),
                   // Info box

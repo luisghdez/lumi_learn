@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lumi_learn_app/models/leaderboard_model.dart';
+import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class LeaderboardCard extends StatelessWidget {
   final int position;

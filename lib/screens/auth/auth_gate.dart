@@ -1,10 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/controllers/speak_screen_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/application/controllers/search_controller.dart';
+import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
+import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/application/services/deeplink.dart';
 import 'package:lumi_learn_app/screens/auth/launch_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/auth/splash_screen.dart';
@@ -59,6 +62,23 @@ class AuthGate extends StatelessWidget {
           permanent: true,
         );
       }
+
+      if (!Get.isRegistered<TutorController>()) {
+        Get.put<TutorController>(
+          TutorController(),
+          permanent: true,
+        );
+      }
+
+      if (!Get.isRegistered<LumiSearchController>()) {
+        Get.put<LumiSearchController>(
+          LumiSearchController(),
+          permanent: true,
+        );
+      }
+
+      // Initialize deep link handler now that all controllers are registered
+      DeepLinkHandler.instance.reinitialize();
 
       precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 

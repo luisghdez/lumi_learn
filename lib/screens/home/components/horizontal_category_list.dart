@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_card.dart';
@@ -20,7 +20,7 @@ class HorizontalCategoryList extends StatelessWidget {
     final CourseController courseController = Get.find<CourseController>();
 
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 260.0;
+    final double responsiveHeight = screenWidth >= 600 ? 350.0 : 140.0;
 
     return Obx(() {
       final courses = courseController.featuredCourses;
@@ -46,22 +46,36 @@ class HorizontalCategoryList extends StatelessWidget {
               child: Stack(
                 children: [
                   HorizontalCategoryCard(
+                    courseId: course['id'],
                     height: responsiveHeight,
                     title: course['title'] ?? 'Untitled',
                     imagePath: galaxyImagePath,
+                    tags: course['tags'] ?? [],
+                    subject: course['subject'],
+                    hasEmbeddings: course['hasEmbeddings'] ?? false,
+                    createdByName: course['createdByName'],
+                    createdById: course['createdById'] ?? course['createdBy'],
                     onConfirm: () async {
                       if (course['loading'] == true) return;
 
-                      if (!courseController.checkCourseSlotAvailable()) {
-                        return;
+                      // Check if course is already saved
+                      bool isAlreadySaved = courseController.courses.any(
+                          (savedCourse) => savedCourse['id'] == course['id']);
+
+                      if (!isAlreadySaved) {
+                        // Only check slots and save if it's not already saved
+                        if (!courseController.checkCourseSlotAvailable()) {
+                          return;
+                        }
+
+                        bool saved = await courseController.saveSharedCourse(
+                            course['id'], course['title']);
+                        if (!saved) return;
                       }
 
-                      bool saved = await courseController.saveSharedCourse(
-                          course['id'], course['title']);
-                      if (!saved) return;
-
-                      courseController.setSelectedCourseId(
-                          course['id'], course['title']);
+                      // Always proceed to navigation regardless of save status
+                      courseController.setSelectedCourseId(course['id'],
+                          course['title'], course['hasEmbeddings'] ?? false);
 
                       Get.to(
                         () => LoadingScreen(),

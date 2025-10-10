@@ -1,11 +1,12 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/course_controller.dart';
-import 'package:lumi_learn_app/models/question.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
+import 'package:lumi_learn_app/widgets/flashcards/flashcard_widget.dart';
+import 'package:lumi_learn_app/widgets/flashcards/summary_view.dart';
 
 class FlashcardScreen extends StatefulWidget {
   final List<Flashcard> flashcards;
@@ -24,6 +25,46 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   int currentIndex = 0;
   bool isListView = false;
+  int get _known => _status.where((s) => s == true).length;
+  int get _unknown => _status.where((s) => s == false).length;
+  Color _cardTint = Colors.transparent; // current overlay color
+  void _resetTint() => _cardTint = Colors.transparent;
+
+  double _knownScale = 1.0;
+  double _unknownScale = 1.0;
+  Color _knownGlow = Colors.transparent;
+  Color _unknownGlow = Colors.transparent;
+
+  bool _completed = false;
+
+  void _animateBubble(bool isKnown) {
+    setState(() {
+      if (isKnown) {
+        _knownScale = 1.25;
+        _knownGlow = Colors.green.withOpacity(.5);
+      } else {
+        _unknownScale = 1.25;
+        _unknownGlow = Colors.red.withOpacity(.5);
+      }
+    });
+
+    // snap back after 300 ms
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() {
+        if (isKnown) {
+          _knownScale = 1.0;
+          _knownGlow = Colors.transparent;
+        } else {
+          _unknownScale = 1.0;
+          _unknownGlow = Colors.transparent;
+        }
+      });
+    });
+  }
+
+  late final List<bool?> _status =
+      List<bool?>.filled(widget.flashcards.length, null, growable: false);
 
   void _moveToPreviousCard() {
     if (currentIndex > 0) {
@@ -37,6 +78,94 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     }
   }
 
+  Widget _nextCard() {
+    if (currentIndex + 1 >= widget.flashcards.length) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child), // ⬅️ smooth fade-in
+      child: Transform.translate(
+        key: ValueKey('peek_${currentIndex + 1}'), // ⬅️ new key each time
+        offset: Offset(0, 40 * (1 - _dragProgress)), // slides up as you drag
+        child: Transform.scale(
+          scale: 0.9 + 0.1 * _dragProgress, // grows 0.9 → 1.0
+          child: FlashcardWidget(
+            flashcard: widget.flashcards[currentIndex + 1],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ②  ADD: track drag progress (0‒1) so we can animate the back card
+  double _dragProgress = 0.0;
+
+  void _resetDeck() {
+    setState(() {
+      currentIndex = 0;
+      _completed = false;
+      for (var i = 0; i < _status.length; i++) {
+        _status[i] = null;
+      }
+      _knownScale = 1.0;
+      _unknownScale = 1.0;
+      _knownGlow = Colors.transparent;
+      _unknownGlow = Colors.transparent;
+      _resetTint();
+    });
+  }
+
+  Widget _bubble(int value, Color color, double scale, Color glow) =>
+      TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1.0, end: scale),
+        duration: const Duration(milliseconds: 200),
+        builder: (_, s, child) => Transform.scale(
+          scale: s,
+          child: child,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(.15),
+            border: Border.all(color: color),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: glow == Colors.transparent
+                ? null
+                : [
+                    BoxShadow(
+                      color: glow,
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    )
+                  ],
+          ),
+          child: Text(
+            value.toString(),
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+
+  Widget _counterStrip() {
+    final isTablet = MediaQuery.of(context).size.width >= 768;
+    final padding = isTablet ? 32.0 : 16.0;
+
+    return Padding(
+      padding: EdgeInsets.all(padding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _bubble(_unknown, Colors.red, _unknownScale, _unknownGlow),
+          const SizedBox(width: 6),
+          _bubble(_known, Colors.green, _knownScale, _knownGlow),
+        ],
+      ),
+    );
+  }
+
   /// One‑by‑one flashcard view
   Widget _buildFlashcardView() {
     final current = widget.flashcards[currentIndex];
@@ -45,14 +174,66 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
     return Column(
       children: [
+        _counterStrip(),
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(padding),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
-                child:
-                    FlashcardWidget(key: ValueKey(current), flashcard: current),
+                child: Stack(
+                  // <──── NEW
+                  alignment: Alignment.center,
+                  children: [
+                    _nextCard(), // back-card
+                    Dismissible(
+                      // front-card
+                      key: ValueKey('card_$currentIndex'),
+                      direction: DismissDirection.horizontal,
+                      resizeDuration: null, // keeps size constant
+                      background: const SizedBox.shrink(),
+                      secondaryBackground: const SizedBox.shrink(),
+                      onUpdate: (details) {
+                        // store progress for the parallax
+                        setState(() {
+                          _dragProgress =
+                              (details.progress * 2).clamp(0.0, 1.0);
+                          _cardTint = Color.lerp(
+                            Colors.transparent,
+                            details.direction == DismissDirection.startToEnd
+                                ? Colors.green
+                                : Colors.red,
+                            _dragProgress,
+                          )!;
+                        });
+                      },
+                      onDismissed: (dir) {
+                        final isKnown = dir == DismissDirection.startToEnd;
+                        _status[currentIndex] = isKnown;
+                        _animateBubble(isKnown);
+                        _resetTint();
+                        _dragProgress = 0.0; // reset for next pair
+
+                        if (currentIndex < widget.flashcards.length - 1) {
+                          setState(() => currentIndex++);
+                        } else {
+                          setState(() => _completed = true);
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 50),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        foregroundDecoration: BoxDecoration(
+                          color: _cardTint,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: FlashcardWidget(flashcard: current),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -151,164 +332,75 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final iconSize = isTablet ? 28.0 : 20.0;
     final appBarPad = isTablet ? 32.0 : 0.0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight + appBarPad * 2),
-        child: Padding(
-          padding: EdgeInsets.all(appBarPad),
-          child: AppBar(
-            backgroundColor: const Color(0xFF0A0A0A),
-            elevation: 0,
-            leading: IconButton(
-              iconSize: iconSize,
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: Get.back,
-            ),
-            actions: [
-              IconButton(
-                iconSize: iconSize,
-                icon: Icon(isListView ? Icons.view_carousel : Icons.view_list),
-                onPressed: () => setState(() => isListView = !isListView),
-              ),
-            ],
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
           ),
         ),
-      ),
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: isListView
-              ? Container(key: const ValueKey('list'), child: _buildListView())
-              : Container(
-                  key: const ValueKey('cards'), child: _buildFlashcardView()),
-        ),
-      ),
-    );
-  }
-}
-
-/// ─────────────────────────────────────────────────────────────────────────────
-/// Individual flip card widget
-/// ─────────────────────────────────────────────────────────────────────────────
-class FlashcardWidget extends StatefulWidget {
-  final Flashcard flashcard;
-
-  const FlashcardWidget({Key? key, required this.flashcard}) : super(key: key);
-
-  @override
-  _FlashcardWidgetState createState() => _FlashcardWidgetState();
-}
-
-class _FlashcardWidgetState extends State<FlashcardWidget>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 500));
-  late final Animation<double> _anim =
-      Tween<double>(begin: 0, end: pi).animate(_controller);
-
-  bool isFront = true;
-
-  @override
-  void didUpdateWidget(covariant FlashcardWidget old) {
-    super.didUpdateWidget(old);
-    if (old.flashcard != widget.flashcard) {
-      _controller.reset();
-      isFront = true;
-    }
-  }
-
-  void _flip() {
-    if (isFront) {
-      _controller.forward();
-    } else {
-      _controller.reverse();
-    }
-    setState(() => isFront = !isFront);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isTablet = MediaQuery.of(context).size.width >= 768;
-    final frontSize = isTablet ? 32.0 : 24.0;
-    final backSize = isTablet ? 26.0 : 20.0;
-
-    return GestureDetector(
-      onTap: _flip,
-      child: AnimatedBuilder(
-        animation: _anim,
-        builder: (_, __) {
-          final angle = _anim.value;
-          final transform = Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateY(angle);
-
-          return Transform(
-            alignment: Alignment.center,
-            transform: transform,
-            child: angle <= pi / 2
-                ? _card(
-                    SmartText(
-                      widget.flashcard.term,
-                      style: TextStyle(
-                        fontSize: frontSize,
-                        fontWeight: FontWeight.w200,
-                        color: Colors.white,
-                      ),
-                      align: TextAlign.center,
-                    ),
-                  )
-                : Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.rotationY(pi),
-                    child: _card(
-                      SmartText(
-                        widget.flashcard.definition,
-                        style: TextStyle(
-                          fontSize: backSize,
-                          fontWeight: FontWeight.w300,
-                          color: Colors.white,
-                        ),
-                        align: TextAlign.center,
-                      ),
-                    ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(kToolbarHeight + appBarPad * 2),
+            child: Padding(
+              padding: EdgeInsets.all(appBarPad),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  iconSize: iconSize,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  onPressed: Get.back,
+                ),
+                actions: [
+                  IconButton(
+                    iconSize: iconSize,
+                    icon: Icon(isListView ? Icons.view_carousel : Icons.view_list),
+                    onPressed: () => setState(() => isListView = !isListView),
                   ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _card(Widget child) {
-    final height = MediaQuery.of(context).size.height * 0.6;
-
-    return Container(
-      height: height,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(30)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Stack(
-          children: [
-            BackdropFilter(filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5)),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: greyBorder, width: 1),
+                ],
               ),
-              padding: const EdgeInsets.all(24),
-              child: Center(child: child),
             ),
-          ],
+          ),
+          body: SafeArea(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: _completed
+                  ? KeyedSubtree(
+                      key: const ValueKey('summary'),
+                      child: SummaryView(
+                          known: _known,
+                          total: widget.flashcards.length,
+                          onResetDeck: _resetDeck))
+                  : KeyedSubtree(
+                      key: const ValueKey('main'),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: isListView
+                                  ? KeyedSubtree(
+                                      key: const ValueKey('list'),
+                                      child: _buildListView(),
+                                    )
+                                  : KeyedSubtree(
+                                      key: const ValueKey('cards'),
+                                      child: _buildFlashcardView(),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }

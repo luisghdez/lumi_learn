@@ -2,13 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
-import 'package:lumi_learn_app/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:share/share.dart';
 import '../components/pfp_viewer.dart';
 import '../components/info_stat_card.dart';
-import '../components/xp_chart_box.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
-import 'package:lumi_learn_app/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
 
 class ProfileBody extends StatefulWidget {
@@ -66,6 +66,17 @@ class _ProfileBodyState extends State<ProfileBody> {
     return topInset > 20;
   }
 
+  void _shareProfileLink() {
+    final authController = Get.find<AuthController>();
+    final user = authController.firebaseUser.value;
+    if (user != null) {
+      final link = "https://www.lumilearnapp.com/invite/${user.uid}";
+      Share.share("Follow ${authController.name.value} on Lumi Learn! $link");
+    } else {
+      Get.snackbar("Not Logged In", "Sign in to share your profile.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
@@ -105,6 +116,19 @@ class _ProfileBodyState extends State<ProfileBody> {
                                 selectedAvatarId = newId;
                               });
                             },
+                            onDone: () async {
+                              toggleEditMode(false);
+                              final currentPfpId = int.tryParse(
+                                    authController
+                                            .firebaseUser.value?.photoURL ??
+                                        '',
+                                  ) ??
+                                  1;
+                              if (selectedAvatarId != currentPfpId) {
+                                await authController
+                                    .updateProfilePicture(selectedAvatarId);
+                              }
+                            },
                           ),
                         ),
                         AnimatedPadding(
@@ -133,11 +157,8 @@ class _ProfileBodyState extends State<ProfileBody> {
                                           child: Column(
                                             children: [
                                               Obx(() {
-                                                final name = authController
-                                                        .firebaseUser
-                                                        .value
-                                                        ?.displayName ??
-                                                    'User';
+                                                final name =
+                                                    authController.name.value;
                                                 if (!isEditingName) {
                                                   return Text(
                                                     name,
@@ -175,6 +196,36 @@ class _ProfileBodyState extends State<ProfileBody> {
                                                             Colors.white,
                                                         autofocus: true,
                                                         maxLines: 1,
+                                                        textInputAction:
+                                                            TextInputAction
+                                                                .done,
+                                                        onSubmitted:
+                                                            (value) async {
+                                                          final newName =
+                                                              value.trim();
+                                                          if (newName
+                                                                  .isNotEmpty &&
+                                                              newName !=
+                                                                  authController
+                                                                      .name
+                                                                      .value) {
+                                                            await authController
+                                                                .updateDisplayName(
+                                                                    newName);
+                                                          }
+                                                          setState(() =>
+                                                              isEditingName =
+                                                                  false);
+                                                        },
+                                                        onTapOutside: (event) {
+                                                          // Reset to original name and exit editing mode
+                                                          nameController.text =
+                                                              authController
+                                                                  .name.value;
+                                                          setState(() =>
+                                                              isEditingName =
+                                                                  false);
+                                                        },
                                                         decoration:
                                                             const InputDecoration(
                                                           isDense: true,
@@ -247,38 +298,22 @@ class _ProfileBodyState extends State<ProfileBody> {
                                             ],
                                           ),
                                         ),
-                                        Positioned(
-                                          top: 8,
-                                          right: 12,
-                                          child: GestureDetector(
-                                            onTap: () async {
-                                              if (isEditingName) {
-                                                final newName =
-                                                    nameController.text.trim();
-                                                if (newName.isNotEmpty &&
-                                                    newName !=
-                                                        authController
-                                                            .firebaseUser
-                                                            .value
-                                                            ?.displayName) {
-                                                  await authController
-                                                      .updateDisplayName(
-                                                          newName);
-                                                }
-                                              }
-                                              setState(() => isEditingName =
-                                                  !isEditingName);
-                                            },
-                                            child: Icon(
-                                              isEditingName
-                                                  ? Icons.check
-                                                  : Icons.edit,
-                                              color: Colors.white
-                                                  .withOpacity(0.85),
-                                              size: 20,
+                                        if (!isEditingName)
+                                          Positioned(
+                                            top: 8,
+                                            right: 12,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(
+                                                    () => isEditingName = true);
+                                              },
+                                              child: const Icon(
+                                                Icons.edit,
+                                                color: Colors.white54,
+                                                size: 20,
+                                              ),
                                             ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 20),
@@ -354,6 +389,27 @@ class _ProfileBodyState extends State<ProfileBody> {
             ),
             SafeArea(
               child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(top: topPadding, left: 16),
+                  child: AbsorbPointer(
+                    absorbing: widget.isEditingPfp,
+                    child: GestureDetector(
+                      onTap: _shareProfileLink,
+                      child: Icon(
+                        Icons.share,
+                        color: widget.isEditingPfp
+                            ? const Color.fromARGB(63, 158, 158, 158)
+                            : Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Align(
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: EdgeInsets.only(top: topPadding, right: 16),
@@ -365,7 +421,9 @@ class _ProfileBodyState extends State<ProfileBody> {
                       },
                       child: Icon(
                         Icons.settings,
-                        color: widget.isEditingPfp ? Colors.grey : Colors.white,
+                        color: widget.isEditingPfp
+                            ? const Color.fromARGB(63, 158, 158, 158)
+                            : Colors.white,
                         size: 28,
                       ),
                     ),
@@ -373,52 +431,6 @@ class _ProfileBodyState extends State<ProfileBody> {
                 ),
               ),
             ),
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(top: topPadding, left: 16),
-                  child: AbsorbPointer(
-                    absorbing: widget.isEditingPfp,
-                    child: GestureDetector(
-                      onTap: () {
-                        toggleEditMode(true); // Trigger PFP edit mode
-                      },
-                      child: Icon(
-                        Icons.edit,
-                        color: widget.isEditingPfp ? Colors.grey : Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            if (widget.isEditingPfp)
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 104, right: 12),
-                  child: TextButton(
-                    onPressed: () async {
-                      toggleEditMode(false);
-                      final currentPfpId = int.tryParse(
-                            authController.firebaseUser.value?.photoURL ?? '',
-                          ) ??
-                          1;
-                      if (selectedAvatarId != currentPfpId) {
-                        await authController
-                            .updateProfilePicture(selectedAvatarId);
-                      }
-                    },
-                    child: const Text(
-                      "Done",
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
