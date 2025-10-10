@@ -96,40 +96,50 @@ class _MatchTermsState extends State<MatchTerms> {
       });
     }
 
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16.0, topPadding, 16.0, 0),
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.of(context).padding.top),
-            _buildInstructions(isTablet),
-            const Divider(height: 60),
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: widget.question.flashcards.length,
-                      itemBuilder: (context, index) {
-                        final term = widget.question.flashcards[index].term;
-                        final matchedDef = matchedDefinitions[index];
-                        return _buildTermCard(
-                            term, matchedDef, index, textSize, cardHeight);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                      child: _buildDefinitionsColumn(
-                          defTextSize, popupTextSize, cardHeight)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16.0, topPadding, 16.0, 0),
+            child: Column(
+              children: [
+                SizedBox(height: MediaQuery.of(context).padding.top),
+                _buildInstructions(isTablet),
+                const Divider(height: 60),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: widget.question.flashcards.length,
+                          itemBuilder: (context, index) {
+                            final term = widget.question.flashcards[index].term;
+                            final matchedDef = matchedDefinitions[index];
+                            return _buildTermCard(
+                                term, matchedDef, index, textSize, cardHeight);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                          child: _buildDefinitionsColumn(
+                              defTextSize, popupTextSize, cardHeight)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

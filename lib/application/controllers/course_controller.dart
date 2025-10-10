@@ -12,7 +12,6 @@ import 'package:lumi_learn_app/screens/courses/lessons/lesson_result_screen.dart
 import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
-import 'package:lumi_learn_app/notifications/notification_campaigns.dart';
 import 'package:lumi_learn_app/screens/streak/streakScreen.dart';
 
 class CourseController extends GetxController {
@@ -863,25 +862,13 @@ class CourseController extends GetxController {
         authController.xpCount.value += totalXP;
         lessons[activeLessonIndex.value]['completed'] = true;
 
-        // ✅ Schedule risk reminder at +22h
-        await NotificationCampaigns.instance()
-            .scheduleStreakRiskReminderAfterLastCheckIn(
-          lastCheckIn: DateTime.now(),
-        );
-
         // --- Streak handling ---
         final streakInfo = responseData['streakInfo'];
         if (streakInfo != null) {
           final int newStreak = streakInfo['newStreak'];
           final bool streakExtended = streakInfo['streakExtended'] == true;
 
-          // 🔥 Update local streak state
           authController.streakCount.value = newStreak;
-
-          if (streakExtended) {
-            await NotificationCampaigns.instance()
-                .scheduleStreakMilestoneNotification(newStreak);
-          }
         }
 
         return responseData['streakInfo'];

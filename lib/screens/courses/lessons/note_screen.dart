@@ -1,13 +1,37 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:get/get.dart';
 
-class NoteScreen extends StatelessWidget {
+class NoteScreen extends StatefulWidget {
   final String markdownText;
 
   const NoteScreen({Key? key, required this.markdownText}) : super(key: key);
+
+  @override
+  State<NoteScreen> createState() => _NoteScreenState();
+}
+
+class _NoteScreenState extends State<NoteScreen> {
+  bool _isCopied = false;
+
+  void _copyAllText() {
+    Clipboard.setData(ClipboardData(text: widget.markdownText));
+    setState(() {
+      _isCopied = true;
+    });
+
+    // Reset after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isCopied = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +98,7 @@ class NoteScreen extends StatelessWidget {
       ),
       blockquotePadding: const EdgeInsets.all(16),
       blockquoteDecoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withOpacity(0.08),
@@ -87,11 +111,11 @@ class NoteScreen extends StatelessWidget {
         fontFamily: 'monospace',
         fontSize: isTablet ? 16 : 14,
         color: const Color(0xFFF3E5F5),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Colors.transparent,
       ),
       codeblockPadding: const EdgeInsets.all(16),
       codeblockDecoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: const Color(0xFF1A1A1A).withOpacity(0.8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withOpacity(0.08),
@@ -137,41 +161,86 @@ class NoteScreen extends StatelessWidget {
       blockSpacing: 16,
     );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          iconSize: iconSize,
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: Colors.white,
-          onPressed: Get.back,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      body: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.08),
-                width: 1,
-              ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              iconSize: iconSize,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              color: Colors.white,
+              onPressed: Get.back,
             ),
-            child: Markdown(
-              data: markdownText,
-              styleSheet: markdownStyle,
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.all(padding),
+            actions: [
+              Padding(
+                padding: EdgeInsets.only(right: isTablet ? 32.0 : 8.0),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: TextButton.icon(
+                    key: ValueKey(_isCopied),
+                    onPressed: _isCopied ? null : _copyAllText,
+                    icon: Icon(
+                      _isCopied ? Icons.check : Icons.copy_all,
+                      size: iconSize,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      _isCopied ? 'Copied' : 'Copy All',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isTablet ? 16 : 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 16 : 12,
+                        vertical: isTablet ? 12 : 8,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Markdown(
+                    data: widget.markdownText,
+                    styleSheet: markdownStyle,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.all(padding),
+                    selectable: true,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
