@@ -48,138 +48,148 @@ class FillInBlankScreen extends StatelessWidget {
     final double astronautHeight = isTablet ? 200.0 : 140.0;
     final double bubbleWidth = isTablet ? 380.0 : 220.0;
 
-    return AppScaffold(
-      body: Column(
-        children: [
-          // Header section
-          Container(
-            height: isTablet ? 300 : 200,
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: greyBorder,
-                  width: 1,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
+          ),
+        ),
+        AppScaffold(
+          body: Column(
+            children: [
+              // Header section
+              Container(
+                height: isTablet ? 300 : 200,
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: greyBorder,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: isTablet
+                    ? Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Image.asset(
+                              'assets/astronaut/thinking.png',
+                              width: astronautSize,
+                              height: astronautHeight,
+                            ),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: SpeechBubble(
+                                  text: question.questionText,
+                                  isTablet: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Stack(
+                        children: [
+                          Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Image.asset(
+                              'assets/astronaut/thinking.png',
+                              width: astronautSize,
+                              height: astronautHeight,
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: SizedBox(
+                              width: bubbleWidth,
+                              child: SpeechBubble(
+                                text: question.questionText,
+                                isTablet: false,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Options section
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: _selectedOption,
+                    builder: (context, selected, _) {
+                      return Wrap(
+                        spacing: 8.0,
+                        runSpacing: 12.0,
+                        alignment: WrapAlignment.center,
+                        children: List.generate(question.options.length, (index) {
+                          final option = question.options[index];
+                          final isSelected = selected == index;
+
+                          return GestureDetector(
+                            onTap: () => _selectedOption.value = index,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: optionVerticalPadding,
+                                horizontal: optionHorizontalPadding,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: isSelected ? Colors.white : greyBorder,
+                                  width: 1,
+                                ),
+                              ),
+                              child: SmartText(
+                                option,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.white70,
+                                  fontSize: fontSize,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                align: TextAlign.start, // or center, as needed
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            child: isTablet
-                ? Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Image.asset(
-                          'assets/astronaut/thinking.png',
-                          width: astronautSize,
-                          height: astronautHeight,
-                        ),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: SpeechBubble(
-                              text: question.questionText,
-                              isTablet: true,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : Stack(
-                    children: [
-                      Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Image.asset(
-                          'assets/astronaut/thinking.png',
-                          width: astronautSize,
-                          height: astronautHeight,
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: SizedBox(
-                          width: bubbleWidth,
-                          child: SpeechBubble(
-                            text: question.questionText,
-                            isTablet: false,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
 
-          const SizedBox(height: 30),
+              const SizedBox(height: 16),
 
-          // Options section
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: ValueListenableBuilder<int>(
+              // Next button
+              ValueListenableBuilder<int>(
                 valueListenable: _selectedOption,
                 builder: (context, selected, _) {
-                  return Wrap(
-                    spacing: 8.0,
-                    runSpacing: 12.0,
-                    alignment: WrapAlignment.center,
-                    children: List.generate(question.options.length, (index) {
-                      final option = question.options[index];
-                      final isSelected = selected == index;
-
-                      return GestureDetector(
-                        onTap: () => _selectedOption.value = index,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: optionVerticalPadding,
-                            horizontal: optionHorizontalPadding,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: isSelected ? Colors.white : greyBorder,
-                              width: 1,
-                            ),
-                          ),
-                          child: SmartText(
-                            option,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
-                              fontSize: fontSize,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            align: TextAlign.start, // or center, as needed
-                          ),
-                        ),
-                      );
-                    }),
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: isTablet ? 24.0 : 16.0,
+                    ),
+                    child: NextButton(
+                      onPressed:
+                          selected != -1 ? () => _submitAnswer(context) : null,
+                    ),
                   );
                 },
               ),
-            ),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          // Next button
-          ValueListenableBuilder<int>(
-            valueListenable: _selectedOption,
-            builder: (context, selected, _) {
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: isTablet ? 24.0 : 16.0,
-                ),
-                child: NextButton(
-                  onPressed:
-                      selected != -1 ? () => _submitAnswer(context) : null,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

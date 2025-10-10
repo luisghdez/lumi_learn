@@ -332,65 +332,75 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final iconSize = isTablet ? 28.0 : 20.0;
     final appBarPad = isTablet ? 32.0 : 0.0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight + appBarPad * 2),
-        child: Padding(
-          padding: EdgeInsets.all(appBarPad),
-          child: AppBar(
-            backgroundColor: const Color(0xFF0A0A0A),
-            elevation: 0,
-            leading: IconButton(
-              iconSize: iconSize,
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: Get.back,
-            ),
-            actions: [
-              IconButton(
-                iconSize: iconSize,
-                icon: Icon(isListView ? Icons.view_carousel : Icons.view_list),
-                onPressed: () => setState(() => isListView = !isListView),
-              ),
-            ],
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/black_moons_lighter.png',
+            fit: BoxFit.cover,
           ),
         ),
-      ),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          transitionBuilder: (child, animation) =>
-              FadeTransition(opacity: animation, child: child),
-          child: _completed
-              ? KeyedSubtree(
-                  key: const ValueKey('summary'),
-                  child: SummaryView(
-                      known: _known,
-                      total: widget.flashcards.length,
-                      onResetDeck: _resetDeck))
-              : KeyedSubtree(
-                  key: const ValueKey('main'),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: isListView
-                              ? KeyedSubtree(
-                                  key: const ValueKey('list'),
-                                  child: _buildListView(),
-                                )
-                              : KeyedSubtree(
-                                  key: const ValueKey('cards'),
-                                  child: _buildFlashcardView(),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(kToolbarHeight + appBarPad * 2),
+            child: Padding(
+              padding: EdgeInsets.all(appBarPad),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  iconSize: iconSize,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  onPressed: Get.back,
                 ),
+                actions: [
+                  IconButton(
+                    iconSize: iconSize,
+                    icon: Icon(isListView ? Icons.view_carousel : Icons.view_list),
+                    onPressed: () => setState(() => isListView = !isListView),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          body: SafeArea(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: _completed
+                  ? KeyedSubtree(
+                      key: const ValueKey('summary'),
+                      child: SummaryView(
+                          known: _known,
+                          total: widget.flashcards.length,
+                          onResetDeck: _resetDeck))
+                  : KeyedSubtree(
+                      key: const ValueKey('main'),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: isListView
+                                  ? KeyedSubtree(
+                                      key: const ValueKey('list'),
+                                      child: _buildListView(),
+                                    )
+                                  : KeyedSubtree(
+                                      key: const ValueKey('cards'),
+                                      child: _buildFlashcardView(),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }
