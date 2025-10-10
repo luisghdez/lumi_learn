@@ -12,9 +12,9 @@ class ApiService {
   //LOCAL
   // static const String _baseUrl = 'http://localhost:3000';
   //DEV
-  static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
+  // static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
   //PROD
-  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
 
   Future<http.Response> createCourse({
     required String token,

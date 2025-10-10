@@ -402,7 +402,12 @@ class CourseController extends GetxController {
     isLoading.value = true;
 
     try {
-      checkCourseSlotAvailable();
+      // Check if user has available course slots
+      if (!checkCourseSlotAvailable()) {
+        isLoading.value = false;
+        return {}; // Return empty map to indicate no course was created
+      }
+
       final token = await authController.getIdToken();
       if (token == null) {
         isLoading.value = false;
@@ -512,7 +517,6 @@ class CourseController extends GetxController {
           'subject': responseData['subject'] ?? '',
         };
         courses.insert(0, newCourse);
-        authController.courseSlotsUsed.value++;
 
         return true;
       } else {

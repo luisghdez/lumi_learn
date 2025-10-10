@@ -265,6 +265,11 @@ class _CourseCreationState extends State<CourseCreation>
 
     final courseController = Get.find<CourseController>();
 
+    // Check if user has available course slots before proceeding
+    if (!courseController.checkCourseSlotAvailable()) {
+      return; // Popup is shown, don't navigate
+    }
+
     // Start the course creation process and get the Future
     final courseCreationFuture = courseController.createCourse(
       files: [...selectedFiles, ...selectedImages],
