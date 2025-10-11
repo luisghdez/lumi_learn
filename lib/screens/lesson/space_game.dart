@@ -105,7 +105,8 @@ class _SpaceGameState extends State<SpaceGame> {
     double barrierY = screenHeight - 200; // Moved more up.
     if (!_shipInitialized) {
       // Start the ship 50 pixels above the lowest allowed position.
-      shipPosition = Offset(screenWidth / 2 - shipWidth / 2, barrierY - shipHeight - 50);
+      shipPosition =
+          Offset(screenWidth / 2 - shipWidth / 2, barrierY - shipHeight - 50);
       _shipInitialized = true;
     }
   }
@@ -213,7 +214,8 @@ class _SpaceGameState extends State<SpaceGame> {
     enemies.removeWhere((enemy) => removeEnemies.contains(enemy));
 
     // Collision between enemies and spaceship.
-    Rect shipRect = Rect.fromLTWH(shipPosition.dx, shipPosition.dy, shipWidth, shipHeight);
+    Rect shipRect =
+        Rect.fromLTWH(shipPosition.dx, shipPosition.dy, shipWidth, shipHeight);
     List<Offset> enemiesHit = [];
     for (var enemy in enemies) {
       Rect enemyRect = Rect.fromLTWH(enemy.dx, enemy.dy, 60, 60);
@@ -240,7 +242,8 @@ class _SpaceGameState extends State<SpaceGame> {
 
     // Remove old explosions.
     explosions.removeWhere((explosion) =>
-        DateTime.now().difference(explosion.startTime) > const Duration(milliseconds: 500));
+        DateTime.now().difference(explosion.startTime) >
+        const Duration(milliseconds: 500));
 
     // Check for Game Over.
     if (currentHealth <= 0) {
@@ -327,7 +330,8 @@ class _SpaceGameState extends State<SpaceGame> {
       explosions.clear();
       // Recalculate barrier and position ship accordingly.
       double barrierY = screenHeight - 200; // Moved more up.
-      shipPosition = Offset(screenWidth / 2 - shipWidth / 2, barrierY - shipHeight - 50);
+      shipPosition =
+          Offset(screenWidth / 2 - shipWidth / 2, barrierY - shipHeight - 50);
     });
     _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
       if (!_isPaused && !_isGameOver) _updateGame();
@@ -350,7 +354,8 @@ class _SpaceGameState extends State<SpaceGame> {
       _isGameOver = false;
       _isPaused = false;
       double barrierY = screenHeight - 200; // Moved more up.
-      shipPosition = Offset(screenWidth / 2 - shipWidth / 2, barrierY - shipHeight - 50);
+      shipPosition =
+          Offset(screenWidth / 2 - shipWidth / 2, barrierY - shipHeight - 50);
     });
     _startGame();
   }
@@ -441,34 +446,29 @@ class _SpaceGameState extends State<SpaceGame> {
                 fit: BoxFit.cover,
               ),
             ),
-            // Top overlay: Lesson info, score, level, and pause button.
+            // Top overlay: score, level, and pause button.
             Positioned(
               top: 50,
               left: 10,
               right: 10,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Lesson Info.
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Lesson: ${widget.lessonName}',
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                        Text('Subject: ${widget.subject}',
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
                   // Score and Level.
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text('Score: $score',
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
                       Text('Level: $level',
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                   // Pause Button.
@@ -491,7 +491,8 @@ class _SpaceGameState extends State<SpaceGame> {
               child: LinearProgressIndicator(
                 value: currentHealth / maxHealth,
                 backgroundColor: Colors.white24,
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Colors.redAccent),
               ),
             ),
             // Barrier line and label.
@@ -515,7 +516,10 @@ class _SpaceGameState extends State<SpaceGame> {
             // Explosion effects.
             ...explosions.map((explosion) {
               double opacity = (1 -
-                      DateTime.now().difference(explosion.startTime).inMilliseconds / 500)
+                      DateTime.now()
+                              .difference(explosion.startTime)
+                              .inMilliseconds /
+                          500)
                   .clamp(0.0, 1.0);
               return Positioned(
                 left: explosion.position.dx,
@@ -620,7 +624,8 @@ class _SpaceGameState extends State<SpaceGame> {
                       left: 40,
                       child: _buildFiringButton(
                         icon: Icons.circle,
-                        gradient: const LinearGradient(colors: [Colors.redAccent, Colors.red]),
+                        gradient: const LinearGradient(
+                            colors: [Colors.redAccent, Colors.red]),
                         onPressed: _fireLaser,
                       ),
                     ),
@@ -630,7 +635,8 @@ class _SpaceGameState extends State<SpaceGame> {
                       left: 0,
                       child: _buildFiringButton(
                         icon: Icons.star,
-                        gradient: const LinearGradient(colors: [Colors.blueAccent, Colors.lightBlue]),
+                        gradient: const LinearGradient(
+                            colors: [Colors.blueAccent, Colors.lightBlue]),
                         onPressed: _firePowerShot,
                       ),
                     ),
@@ -640,7 +646,8 @@ class _SpaceGameState extends State<SpaceGame> {
                       right: 0,
                       child: _buildFiringButton(
                         icon: Icons.adjust,
-                        gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.deepOrange]),
+                        gradient: const LinearGradient(
+                            colors: [Colors.orangeAccent, Colors.deepOrange]),
                         onPressed: _fireMissile,
                       ),
                     ),
@@ -669,7 +676,8 @@ class _SpaceGameState extends State<SpaceGame> {
                         ElevatedButton(
                           onPressed: _restartGame,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 20),
                           ),
                           child: const Text(
                             'Restart',
@@ -690,7 +698,8 @@ class _SpaceGameState extends State<SpaceGame> {
                     child: ElevatedButton(
                       onPressed: _startGame,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 20),
                       ),
                       child: const Text(
                         'Start Game',
@@ -707,7 +716,10 @@ class _SpaceGameState extends State<SpaceGame> {
   }
 
   /// Builds a custom firing button with a gradient background.
-  Widget _buildFiringButton({required IconData icon, required Gradient gradient, required VoidCallback onPressed}) {
+  Widget _buildFiringButton(
+      {required IconData icon,
+      required Gradient gradient,
+      required VoidCallback onPressed}) {
     return Container(
       width: 70,
       height: 70,
@@ -750,14 +762,17 @@ class _JoystickPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Draw outer circle.
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width / 2, outerPaint);
+    canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2), size.width / 2, outerPaint);
 
     // Calculate knob position with a maximum movement radius.
     final double maxKnobMovement = size.width / 2 - 15;
-    final Offset knobOffset = Offset(direction.dx * maxKnobMovement, direction.dy * maxKnobMovement);
+    final Offset knobOffset =
+        Offset(direction.dx * maxKnobMovement, direction.dy * maxKnobMovement);
 
     // Draw knob.
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2) + knobOffset, 25, knobPaint);
+    canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2) + knobOffset, 25, knobPaint);
   }
 
   @override
