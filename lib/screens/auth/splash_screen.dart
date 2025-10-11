@@ -7,29 +7,17 @@ class SplashScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // BACKGROUND IMAGE
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/black_moons_lighter.png', // your background
-              fit: BoxFit.cover,
+      backgroundColor: const Color(0xFF0A0A0A), // Adjust background color
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: screenWidth * 0.6, // 40% of screen width
+              child: Image.asset('assets/splash/moon_splash.png'),
             ),
-          ),
-
-          // FOREGROUND CONTENT
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: screenWidth * 0.6, // 40% of screen width
-                  child: Image.asset('assets/splash/moon_splash.png'),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
