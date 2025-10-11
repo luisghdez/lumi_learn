@@ -36,6 +36,7 @@ class AuthController extends GetxController {
   RxString timezone = ''.obs;
 
   RxBool isPremium = false.obs;
+  RxString subscriptionPlanType = ''.obs; // 'monthly', 'yearly', or empty
 
   @override
   void onReady() {
@@ -60,8 +61,28 @@ class AuthController extends GetxController {
   Future<bool> checkIfUserIsPro() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all['Pro']?.isActive ?? false;
+      final proEntitlement = customerInfo.entitlements.all['Pro'];
+      final isActive = proEntitlement?.isActive ?? false;
+
+      if (isActive && proEntitlement != null) {
+        // Get the product identifier to determine plan type
+        final productId = proEntitlement.productIdentifier.toLowerCase();
+
+        // Determine if it's monthly or yearly based on product identifier
+        if (productId.contains('month')) {
+          subscriptionPlanType.value = 'monthly';
+        } else if (productId.contains('year') || productId.contains('annual')) {
+          subscriptionPlanType.value = 'yearly';
+        } else {
+          subscriptionPlanType.value = 'unknown';
+        }
+      } else {
+        subscriptionPlanType.value = '';
+      }
+
+      return isActive;
     } catch (e) {
+      subscriptionPlanType.value = '';
       return false;
     }
   }
@@ -156,7 +177,7 @@ class AuthController extends GetxController {
   Future<void> login(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      Get.snackbar("Success", "Logged in successfully!");
+      // Get.snackbar("Success", "Logged in successfully!");
       Get.offAll(() => AuthGate());
     } catch (e) {
       Get.snackbar("Error", e.toString());
@@ -214,7 +235,7 @@ class AuthController extends GetxController {
         if (userCredential.additionalUserInfo?.isNewUser ?? false) {
           Get.snackbar("Welcome!", "Account created via Google sign-in.");
         } else {
-          Get.snackbar("Success", "Logged in via Google!");
+          // Get.snackbar("Success", "Logged in via Google!");
         }
       }
 
@@ -298,7 +319,7 @@ class AuthController extends GetxController {
         if (userCredential.additionalUserInfo?.isNewUser ?? false) {
           Get.snackbar("Welcome!", "Account created via Apple Sign-In.");
         } else {
-          Get.snackbar("Success", "Logged in via Apple!");
+          // Get.snackbar("Success", "Logged in via Apple!");
         }
       }
 
@@ -422,6 +443,7 @@ class AuthController extends GetxController {
     maxCourseSlots.value = 2; // or whatever your default is
     friendCount.value = 0;
     isPremium.value = false;
+    subscriptionPlanType.value = '';
     timezone.value = '';
 
     // If you want to reset loading / init flags:

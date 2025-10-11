@@ -23,7 +23,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     {
       'title': 'Monthly Plan',
       'price': '\$7.99/month',
-      'identifier': 'lumipro_799_monthly', // 👈 use your RevenueCat monthly product ID
+      'identifier':
+          'lumipro_799_monthly', // 👈 use your RevenueCat monthly product ID
       'gradientColors': [const Color(0xFF0004FF), const Color(0xFF4D4DFF)],
       'features': [
         'Unlimited course generation',
@@ -36,7 +37,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     {
       'title': 'Yearly Plan',
       'price': '\$79.99/year',
-      'identifier': 'lumipro_7999_yearly', // 👈 use your RevenueCat yearly product ID
+      'identifier':
+          'lumipro_7999_yearly', // 👈 use your RevenueCat yearly product ID
       'savings': 'Save \$16! Only \$6.67/month',
       'gradientColors': [const Color(0xFFFFB800), const Color(0xFFFFD700)],
       'features': [
@@ -49,75 +51,85 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     },
   ];
 
+  Future<void> _subscribe() async {
+    if (_selectedIndex == -1) {
+      Get.snackbar("Select a plan", "Please choose a subscription plan first.");
+      return;
+    }
 
-Future<void> _subscribe() async {
-  if (_selectedIndex == -1) {
-    Get.snackbar("Select a plan", "Please choose a subscription plan first.");
-    return;
+    final selectedIdentifier = _plans[_selectedIndex]['identifier'] as String;
+
+    try {
+      final offerings = await Purchases.getOfferings();
+      if (offerings.current == null) {
+        Get.snackbar(
+            "Unavailable", "No offerings found. Please try again later.");
+        return;
+      }
+
+      final availablePackages = offerings.current!.availablePackages;
+      if (availablePackages.isEmpty) {
+        Get.snackbar("Oops", "No subscription packages available.");
+        return;
+      }
+
+      // Match the selected plan to the RevenueCat product
+      final matchingPackage = availablePackages.firstWhere(
+        (p) => p.storeProduct.identifier == selectedIdentifier,
+        orElse: () => availablePackages.first,
+      );
+
+      // Perform the purchase
+      final customerInfo = await Purchases.purchasePackage(matchingPackage);
+      final isPro = customerInfo.entitlements.active
+          .containsKey("Pro"); // replace "Pro" with your entitlement ID
+
+      if (isPro) {
+        // ✅ Update subscription state
+        authController.isPremium.value = true;
+        authController.activeProductId.value =
+            matchingPackage.storeProduct.identifier;
+
+        // Determine and set the plan type
+        final productId = matchingPackage.storeProduct.identifier.toLowerCase();
+        if (productId.contains('month')) {
+          authController.subscriptionPlanType.value = 'monthly';
+        } else if (productId.contains('year')) {
+          authController.subscriptionPlanType.value = 'yearly';
+        }
+
+        _selectedIndex = _plans.indexWhere(
+          (plan) => plan['identifier'] == authController.activeProductId.value,
+        );
+        setState(() {});
+
+        // 🎉 Show success dialog instead of snackbar
+        Get.dialog(const LumiProSuccessDialog(), barrierDismissible: false);
+      } else {
+        Get.snackbar(
+          "Pending",
+          "Purchase complete but entitlement not yet active.",
+        );
+      }
+    } on PlatformException catch (error) {
+      if (error.code == "1") {
+        return;
+      } else if (error.code == PurchasesErrorCode.networkError) {
+        Get.snackbar(
+          "Network Error",
+          "Please check your internet connection and try again.",
+        );
+      } else {
+        Get.snackbar(
+          "Error",
+          "Something went wrong: ${error.message}",
+        );
+      }
+    } catch (_) {
+      Get.snackbar("Error", "An unexpected error occurred.");
+    }
   }
 
-  final selectedIdentifier = _plans[_selectedIndex]['identifier'] as String;
-
-  try {
-    final offerings = await Purchases.getOfferings();
-    if (offerings.current == null) {
-      Get.snackbar("Unavailable", "No offerings found. Please try again later.");
-      return;
-    }
-
-    final availablePackages = offerings.current!.availablePackages;
-    if (availablePackages.isEmpty) {
-      Get.snackbar("Oops", "No subscription packages available.");
-      return;
-    }
-
-    // Match the selected plan to the RevenueCat product
-    final matchingPackage = availablePackages.firstWhere(
-      (p) => p.storeProduct.identifier == selectedIdentifier,
-      orElse: () => availablePackages.first,
-    );
-
-    // Perform the purchase
-    final customerInfo = await Purchases.purchasePackage(matchingPackage);
-    final isPro = customerInfo.entitlements.active.containsKey("Pro"); // replace "Pro" with your entitlement ID
-
-    if (isPro) {
-      // ✅ Update subscription state
-      authController.isPremium.value = true;
-      authController.activeProductId.value = matchingPackage.storeProduct.identifier;
-      _selectedIndex = _plans.indexWhere(
-        (plan) => plan['identifier'] == authController.activeProductId.value,
-      );
-      setState(() {});
-
-      // 🎉 Show success dialog instead of snackbar
-      Get.dialog(const LumiProSuccessDialog(), barrierDismissible: false);
-    } else {
-      Get.snackbar(
-        "Pending",
-        "Purchase complete but entitlement not yet active.",
-      );
-    }
-  } on PlatformException catch (error) {
-    if (error.code == PurchasesErrorCode.purchaseCancelledError) {
-      return;
-    } else if (error.code == PurchasesErrorCode.networkError) {
-      Get.snackbar(
-        "Network Error",
-        "Please check your internet connection and try again.",
-      );
-    } else {
-      Get.snackbar(
-        "Error",
-        "Something went wrong: ${error.message}",
-      );
-    }
-  } catch (_) {
-    Get.snackbar("Error", "An unexpected error occurred.");
-  }
-}
-  
-  
   @override
   Widget build(BuildContext context) {
     final bool isButtonDisabled =
@@ -189,9 +201,8 @@ Future<void> _subscribe() async {
                     ),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isButtonDisabled
-                            ? Colors.grey[800]
-                            : Colors.white,
+                        backgroundColor:
+                            isButtonDisabled ? Colors.grey[800] : Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -302,9 +313,11 @@ Future<void> _subscribe() async {
   Widget _planTile(int index) {
     final plan = _plans[index];
     final isSelected = _selectedIndex == index;
-    final planIdentifier = plan['identifier'] as String;
+
+    // Determine the plan type based on index (0 = monthly, 1 = yearly)
+    final planType = index == 0 ? 'monthly' : 'yearly';
     final isActive = authController.isPremium.value &&
-        authController.activeProductId.value == planIdentifier;
+        authController.subscriptionPlanType.value == planType;
 
     final gradientColors = plan['gradientColors'] as List<Color>;
     final isYearly = index == 1;
@@ -330,9 +343,8 @@ Future<void> _subscribe() async {
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: !isActive && !isSelected
-              ? Colors.white.withOpacity(0.03)
-              : null,
+          color:
+              !isActive && !isSelected ? Colors.white.withOpacity(0.03) : null,
           border: Border.all(
             color: isActive
                 ? Colors.white.withOpacity(0.4)
