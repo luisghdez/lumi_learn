@@ -197,8 +197,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 8,
               ),
-              duration: const Duration(milliseconds: 100), // Smooth animation
-              curve: Curves.easeOut, // Natural easing curve
+              duration: const Duration(milliseconds: 0), // Fast animation
               child: Column(
                 children: [
                   Obx(() {
