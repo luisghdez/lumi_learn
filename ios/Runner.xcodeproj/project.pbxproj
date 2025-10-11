@@ -510,7 +510,7 @@
 				DEVELOPMENT_TEAM = D7FAZ4W8U9;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 2.0.0;
-				FLUTTER_BUILD_NUMBER = 5;
+				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -702,7 +702,7 @@
 				DEVELOPMENT_TEAM = D7FAZ4W8U9;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 2.0.0;
-				FLUTTER_BUILD_NUMBER = 5;
+				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
@@ -731,7 +731,7 @@
 				DEVELOPMENT_TEAM = D7FAZ4W8U9;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 2.0.0;
-				FLUTTER_BUILD_NUMBER = 5;
+				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
