@@ -659,11 +659,6 @@ Future<void> _navigateToCourse(
       .any((savedCourse) => savedCourse['id'] == course['id']);
 
   if (!isAlreadySaved) {
-    // Only check slots and save if it's not already saved
-    if (!courseController.checkCourseSlotAvailable()) {
-      return;
-    }
-
     bool saved =
         await courseController.saveSharedCourse(course['id'], course['title']);
     if (!saved) return;
