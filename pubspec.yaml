@@ -81,6 +81,7 @@ dependencies:
   video_player: ^2.10.0
   lottie: ^3.3.1
   uni_links: ^0.5.1
+  flutter_timezone: ^5.0.0
 
 flutter_launcher_icons:
   android: true
