@@ -381,7 +381,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700),
                           ),
-                          if (isYearly) ...[
+                          if (isYearly && !isActive) ...[
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
