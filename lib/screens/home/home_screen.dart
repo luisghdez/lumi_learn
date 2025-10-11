@@ -26,14 +26,29 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   static const double _tabletBreakpoint = 800.0;
   List<CameraDescription>? _cameras;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
     _loadCameras();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    // Trigger animation after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animationController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCameras() async {
@@ -103,165 +118,225 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: Obx(() => HomeHeader(
-                                  streakCount: authController.streakCount.value,
-                                  xpCount: authController.xpCount.value,
-                                  isPremium: authController.isPremium.value,
-                                )),
+                          // Header - Index 0
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.0, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: Obx(() => HomeHeader(
+                                    streakCount:
+                                        authController.streakCount.value,
+                                    xpCount: authController.xpCount.value,
+                                    isPremium: authController.isPremium.value,
+                                  )),
+                            ),
                           ),
                           const SizedBox(height: 28),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: Container(
-                              height: 130,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: greyBorder),
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0x9900012D),
-                                    Color(0x993A005A),
+                          // Feature Cards - Index 1
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.1, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: Container(
+                                height: 130,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: greyBorder),
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0x9900012D),
+                                      Color(0x993A005A),
+                                    ],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    FeatureCard(
+                                      gradientColors: const [],
+                                      icon: Symbols.document_scanner,
+                                      title: 'AI Scanner',
+                                      subtitle: 'Scan & learn instantly',
+                                      onTap: () {
+                                        if (_cameras != null) {
+                                          Get.to(() => AiScannerMain(
+                                              cameras: _cameras!));
+                                        } else {
+                                          Get.snackbar('Camera Error',
+                                              'Cameras not ready yet');
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(width: 12),
+                                    FeatureCard(
+                                      gradientColors: const [],
+                                      icon: Symbols.note_add,
+                                      title: 'Add Course',
+                                      subtitle: 'Create new course',
+                                      onTap: () {
+                                        Get.to(() => const CourseCreation(),
+                                            transition: Transition.fadeIn,
+                                            duration: const Duration(
+                                                milliseconds: 500));
+                                      },
+                                    ),
+                                    const SizedBox(width: 12),
+                                    FeatureCard(
+                                      gradientColors: const [],
+                                      icon: Symbols.forum,
+                                      title: 'LumiTutor',
+                                      subtitle: 'AI study companion',
+                                      onTap: () {
+                                        Get.to(
+                                          () => const LumiTutorMain(
+                                            initialArgs: {
+                                              'type': 'text',
+                                              'paths': [],
+                                              'category': 'Anything',
+                                            },
+                                          ),
+                                          transition: Transition.fadeIn,
+                                          duration:
+                                              const Duration(milliseconds: 300),
+                                        );
+                                      },
+                                    ),
                                   ],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
                                 ),
                               ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Suggested Courses Header - Index 2
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.2, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
                               child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  FeatureCard(
-                                    gradientColors: const [],
-                                    icon: Symbols.document_scanner,
-                                    title: 'AI Scanner',
-                                    subtitle: 'Scan & learn instantly',
-                                    onTap: () {
-                                      if (_cameras != null) {
-                                        Get.to(() =>
-                                            AiScannerMain(cameras: _cameras!));
-                                      } else {
-                                        Get.snackbar('Camera Error',
-                                            'Cameras not ready yet');
-                                      }
-                                    },
+                                  Text(
+                                    'Suggested Courses',
+                                    style: sectionTitleStyle,
                                   ),
-                                  const SizedBox(width: 12),
-                                  FeatureCard(
-                                    gradientColors: const [],
-                                    icon: Symbols.note_add,
-                                    title: 'Add Course',
-                                    subtitle: 'Create new course',
+                                  GestureDetector(
                                     onTap: () {
-                                      Get.to(() => const CourseCreation(),
-                                          transition: Transition.fadeIn,
-                                          duration: const Duration(
-                                              milliseconds: 500));
+                                      navigationController.updateIndex(1);
                                     },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  FeatureCard(
-                                    gradientColors: const [],
-                                    icon: Symbols.forum,
-                                    title: 'LumiTutor',
-                                    subtitle: 'AI study companion',
-                                    onTap: () {
-                                      Get.to(
-                                        () => const LumiTutorMain(
-                                          initialArgs: {
-                                            'type': 'text',
-                                            'paths': [],
-                                            'category': 'Anything',
-                                          },
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          'Search',
+                                          style: sectionTitleStyle.copyWith(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.white
+                                                .withValues(alpha: 0.8),
+                                          ),
                                         ),
-                                        transition: Transition.fadeIn,
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                      );
-                                    },
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.arrow_forward,
+                                            size: 16, color: Colors.white),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(height: 24),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Suggested Courses',
-                                  style: sectionTitleStyle,
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    navigationController.updateIndex(1);
-                                  },
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'Search',
-                                        style: sectionTitleStyle.copyWith(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
-                                          color: Colors.white.withOpacity(0.8),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.arrow_forward,
-                                          size: 16, color: Colors.white),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 8),
-                          HorizontalCategoryList(
-                              initialPadding: horizontalPadding),
-                          const SizedBox(height: 18),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'LumiTutor',
-                                  style: sectionTitleStyle,
-                                ),
-                                const SizedBox(height: 8),
-                                const LumiTutorCard(),
-                              ],
+                          // Horizontal Category List - Index 3
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.3, 1.0,
+                                  curve: Curves.easeOut),
                             ),
+                            child: HorizontalCategoryList(
+                                initialPadding: horizontalPadding),
                           ),
                           const SizedBox(height: 18),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: Obx(
-                              () => TopPicksHeader(
-                                onAddTap: () {
-                                  if (courseController
-                                      .checkCourseSlotAvailable()) {
-                                    Get.to(() => const CourseCreation(),
-                                        transition: Transition.fadeIn);
-                                  }
-                                },
-                                slotsUsed: authController.courseSlotsUsed.value,
-                                maxSlots: authController.maxCourseSlots.value,
-                                isPremium: authController.isPremium.value,
-                                titleStyle: sectionTitleStyle,
+                          // LumiTutor Section - Index 4
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.4, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'LumiTutor',
+                                    style: sectionTitleStyle,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const LumiTutorCard(),
+                                ],
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding),
-                            child: CategoryList(),
+                          const SizedBox(height: 18),
+                          // Top Picks Header - Index 5
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.5, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: Obx(
+                                () => TopPicksHeader(
+                                  onAddTap: () {
+                                    if (courseController
+                                        .checkCourseSlotAvailable()) {
+                                      Get.to(() => const CourseCreation(),
+                                          transition: Transition.fadeIn);
+                                    }
+                                  },
+                                  slotsUsed:
+                                      authController.courseSlotsUsed.value,
+                                  maxSlots: authController.maxCourseSlots.value,
+                                  isPremium: authController.isPremium.value,
+                                  titleStyle: sectionTitleStyle,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Category List - Index 6
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.6, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: CategoryList(),
+                            ),
                           ),
                         ],
                       ),
