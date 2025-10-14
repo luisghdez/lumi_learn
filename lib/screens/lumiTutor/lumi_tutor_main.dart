@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:camera/camera.dart';
 import 'package:lumi_learn_app/application/models/chat_sender.dart';
 import 'package:lumi_learn_app/application/models/message_model.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
@@ -9,6 +10,8 @@ import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_bubble.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_input_area.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_drawer.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
+import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 import 'package:lottie/lottie.dart';
 
 class LumiTutorMain extends StatefulWidget {
@@ -172,6 +175,38 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     }
     // in case the user was scrolled up browsing history.
     _animateToBottom(durationMs: 150);
+  }
+
+  Future<void> _handleScannerPressed() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        Get.snackbar(
+          "Camera Error",
+          "No camera available on this device",
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Navigate to scanner
+      await Navigator.of(context).push(
+        NoSwipePageRoute(
+          builder: (_) => AiScannerMain(
+            cameras: cameras,
+            existingThreadId: _tutorController.activeThread.value?.threadId,
+          ),
+        ),
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Camera Error",
+        "Failed to open camera: $e",
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -372,6 +407,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                       print('File picked: ${file.path}');
                       _animateToBottom();
                     },
+                    onScannerPressed: _handleScannerPressed,
                   ),
                 ],
               ),

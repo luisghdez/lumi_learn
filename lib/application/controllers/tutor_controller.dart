@@ -616,6 +616,206 @@ class TutorController extends GetxController {
     }
   }
 
+  Future<void> sendImageToThread({
+    required String threadId,
+    required String imagePath,
+  }) async {
+    try {
+      final token = await _authController.getIdToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required';
+        return;
+      }
+
+      // Add a processing message to show user something is happening
+      final String tempId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Create a temporary image object for immediate display
+      final tempImage = MessageImage(
+        fileId: 'temp_${tempId}',
+        fileUrl: 'file://$imagePath', // Use local file path temporarily
+        originalName: 'uploaded_image.png',
+        mimeType: 'image/png',
+      );
+
+      messages.add(
+        Message(
+          messageId: tempId,
+          role: MessageRole.user,
+          content: '[Image]', // Backend identifier, not displayed to user
+          timestamp: DateTime.now(),
+          image: tempImage,
+        ),
+      );
+
+      // Placeholder assistant message that we will stream-update
+      final String assistantTempId = '${tempId}_assistant';
+      messages.add(
+        Message(
+          messageId: assistantTempId,
+          role: MessageRole.assistant,
+          content: '',
+          timestamp: DateTime.now(),
+          isStreaming: true,
+        ),
+      );
+
+      // UI state for streaming
+      showLoadingMoon.value = true;
+      showCopyAll.value = false;
+      bool firstDeltaReceived = false;
+
+      final stream = _tutorService.sendImageToThreadStream(
+        token: token,
+        threadId: threadId,
+        imagePath: imagePath,
+      );
+
+      String accumulated = '';
+      List<Map<String, dynamic>>? sources;
+
+      await for (final event in stream) {
+        final type = event['type'] as String?;
+
+        switch (type) {
+          case 'start':
+            // Backend sends 'start' when assistant message begins
+            accumulated = '';
+            // Extract sources if present
+            sources = event['sources'] != null
+                ? List<Map<String, dynamic>>.from(event['sources'])
+                : null;
+            break;
+
+          case 'delta':
+            // Handle first delta to hide moon
+            if (!firstDeltaReceived) {
+              firstDeltaReceived = true;
+              showLoadingMoon.value = false;
+            }
+
+            // Backend sends 'delta' with content chunks
+            final delta = event['delta'] as String? ?? '';
+            if (delta.isEmpty) continue;
+            accumulated += delta;
+
+            // Update the assistant message with accumulated content
+            final assistantIndex = messages.indexWhere(
+              (msg) => msg.messageId == assistantTempId,
+            );
+            if (assistantIndex != -1) {
+              final currentMessage = messages[assistantIndex];
+              messages[assistantIndex] = Message(
+                messageId: currentMessage.messageId,
+                role: currentMessage.role,
+                content: accumulated,
+                timestamp: currentMessage.timestamp,
+                sources: sources,
+                isStreaming: true,
+              );
+              messages.refresh();
+            }
+            break;
+
+          case 'message':
+            // Backend sends 'message' with the final persisted message
+            try {
+              final messageData = Map<String, dynamic>.from(event);
+              messageData.remove('type');
+              final newMessage = Message.fromJson(messageData);
+
+              // Check if this is a user message with image data (to replace temp image)
+              if (newMessage.role == MessageRole.user &&
+                  newMessage.image != null) {
+                final int userIndex =
+                    messages.indexWhere((m) => m.messageId == tempId);
+                if (userIndex != -1) {
+                  messages[userIndex] = Message(
+                    messageId: newMessage.messageId,
+                    role: newMessage.role,
+                    content: newMessage.content,
+                    timestamp: newMessage.timestamp,
+                    image: newMessage.image, // Use the real Firebase URL
+                  );
+                  messages.refresh();
+                }
+              } else {
+                // Replace the temporary assistant message with the real one
+                final assistantIndex = messages.indexWhere(
+                  (msg) => msg.messageId == assistantTempId,
+                );
+                if (assistantIndex != -1) {
+                  messages[assistantIndex] = Message(
+                    messageId: newMessage.messageId,
+                    role: newMessage.role,
+                    content: newMessage.content,
+                    timestamp: newMessage.timestamp,
+                    sources: newMessage.sources,
+                    isStreaming: false, // Mark as complete
+                  );
+                  messages.refresh();
+                } else {
+                  messages.add(newMessage);
+                }
+              }
+              // After message is updated, show copy all
+              showCopyAll.value = true;
+            } catch (e) {
+              print('Error parsing message: $e');
+            }
+            break;
+
+          case 'done':
+            // Stream finished - update UI state
+            showLoadingMoon.value = false;
+            showCopyAll.value = true;
+            break;
+
+          case 'error':
+            final error = event['error'] as String? ?? 'Unknown error';
+            errorMessage.value = 'Error: $error';
+            showLoadingMoon.value = false;
+            showCopyAll.value = false;
+            // Remove the placeholder messages on error
+            messages.removeWhere(
+                (m) => m.messageId == tempId || m.messageId == assistantTempId);
+            messages.refresh();
+            break;
+
+          case 'http_error':
+            final status = event['status'] as int?;
+            errorMessage.value = 'Server error: HTTP $status';
+            showLoadingMoon.value = false;
+            showCopyAll.value = false;
+            // Remove the placeholder messages on error
+            messages.removeWhere(
+                (m) => m.messageId == tempId || m.messageId == assistantTempId);
+            messages.refresh();
+            break;
+
+          case 'parse_error':
+          case 'stream_error':
+          case 'request_error':
+          case 'multipart_error':
+            final error = event['error'] as String? ?? 'Unknown error';
+            errorMessage.value = 'Error sending image: $error';
+            showLoadingMoon.value = false;
+            showCopyAll.value = false;
+            // Remove the placeholder messages on error
+            messages.removeWhere(
+                (m) => m.messageId == tempId || m.messageId == assistantTempId);
+            messages.refresh();
+            break;
+        }
+      }
+    } catch (e) {
+      errorMessage.value = 'Error sending image: $e';
+      showLoadingMoon.value = false;
+      showCopyAll.value = false;
+      print('Error sending image to thread: $e');
+    }
+  }
+
   Future<void> createImageThread(String imagePath, String category,
       {String? courseId}) async {
     try {
