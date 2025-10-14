@@ -31,14 +31,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           'Lumi supports a variety of subjects, including Math, Science, History, English, and more. Were always adding new topics!',
     },
     {
-      'question': 'Can I use Lumi offline?',
-      'answer':
-          'Yes! Premium users can download lessons and access them offline for studying anytime, anywhere.',
-    },
-    {
       'question': 'How can I contact support?',
       'answer':
-          'Lumi supports a variety of subjects, including Math, Science, History, English, and more. Were always adding new topics!',
+          'Just email us at samluidev1@gmail.com, and we\'ll get back to you as soon as possible.',
     },
   ];
 
