@@ -625,6 +625,13 @@ class TutorController extends GetxController {
         return;
       }
 
+      // Clear any existing thread and messages to show the new thread
+      messages.clear();
+      activeThread.value = null;
+      showLoadingMoon.value = false;
+      showCopyAll.value = false;
+      errorMessage.value = '';
+
       // Create a temporary thread to show processing immediately
       final String tempThreadId =
           'temp_${DateTime.now().millisecondsSinceEpoch}';
@@ -670,6 +677,11 @@ class TutorController extends GetxController {
         ),
       );
 
+      // UI state for streaming
+      showLoadingMoon.value = true;
+      showCopyAll.value = false;
+      bool firstDeltaReceived = false;
+
       final stream = _tutorService.createImageThreadStream(
         token: token,
         imagePath: imagePath,
@@ -677,6 +689,7 @@ class TutorController extends GetxController {
 
       String accumulated = '';
       Thread? newThread;
+      List<Map<String, dynamic>>? sources;
 
       await for (final event in stream) {
         final type = event['type'] as String?;
@@ -702,11 +715,22 @@ class TutorController extends GetxController {
           case 'start':
             // Backend sends 'start' when assistant message begins
             accumulated = '';
+            // Extract sources if present
+            sources = event['sources'] != null
+                ? List<Map<String, dynamic>>.from(event['sources'])
+                : null;
             break;
 
           case 'delta':
+            // Handle first delta to hide moon
+            if (!firstDeltaReceived) {
+              firstDeltaReceived = true;
+              showLoadingMoon.value = false;
+            }
+
             // Backend sends 'delta' with content chunks
             final delta = event['delta'] as String? ?? '';
+            if (delta.isEmpty) continue;
             accumulated += delta;
 
             // Update the assistant message with accumulated content
@@ -720,7 +744,7 @@ class TutorController extends GetxController {
                 role: currentMessage.role,
                 content: accumulated,
                 timestamp: currentMessage.timestamp,
-                sources: currentMessage.sources,
+                sources: sources,
                 isStreaming: true,
               );
               messages.refresh();
@@ -755,19 +779,31 @@ class TutorController extends GetxController {
                   (msg) => msg.messageId == assistantTempId,
                 );
                 if (assistantIndex != -1) {
-                  messages[assistantIndex] = newMessage;
+                  messages[assistantIndex] = Message(
+                    messageId: newMessage.messageId,
+                    role: newMessage.role,
+                    content: newMessage.content,
+                    timestamp: newMessage.timestamp,
+                    sources: newMessage.sources,
+                    isStreaming: false, // Mark as complete
+                  );
                   messages.refresh();
                 } else {
                   messages.add(newMessage);
                 }
               }
+              // After message is updated, show copy all
+              showCopyAll.value = true;
             } catch (e) {
               print('Error parsing message: $e');
             }
             break;
 
           case 'done':
-            // Stream finished - update the thread list
+            // Stream finished - update the thread list and UI state
+            showLoadingMoon.value = false;
+            showCopyAll.value = true;
+
             if (newThread != null) {
               final existingIndex = threads.indexWhere(
                 (t) => t.threadId == newThread!.threadId,
@@ -784,6 +820,8 @@ class TutorController extends GetxController {
           case 'error':
             final error = event['error'] as String? ?? 'Unknown error';
             errorMessage.value = 'Error: $error';
+            showLoadingMoon.value = false;
+            showCopyAll.value = false;
             // Remove the placeholder messages on error
             messages.removeWhere(
                 (m) => m.messageId == tempId || m.messageId == assistantTempId);
@@ -794,6 +832,8 @@ class TutorController extends GetxController {
           case 'http_error':
             final status = event['status'] as int?;
             errorMessage.value = 'Server error: HTTP $status';
+            showLoadingMoon.value = false;
+            showCopyAll.value = false;
             // Remove the placeholder messages on error
             messages.removeWhere(
                 (m) => m.messageId == tempId || m.messageId == assistantTempId);
@@ -807,6 +847,8 @@ class TutorController extends GetxController {
           case 'multipart_error':
             final error = event['error'] as String? ?? 'Unknown error';
             errorMessage.value = 'Error creating image thread: $error';
+            showLoadingMoon.value = false;
+            showCopyAll.value = false;
             // Remove the placeholder messages on error
             messages.removeWhere(
                 (m) => m.messageId == tempId || m.messageId == assistantTempId);
@@ -817,6 +859,8 @@ class TutorController extends GetxController {
       }
     } catch (e) {
       errorMessage.value = 'Error creating image thread: $e';
+      showLoadingMoon.value = false;
+      showCopyAll.value = false;
       print('Error creating image thread: $e');
     }
   }
