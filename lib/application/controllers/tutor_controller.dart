@@ -83,6 +83,13 @@ class TutorController extends GetxController {
         return;
       }
 
+      // Clear any existing thread and messages to show the new thread
+      messages.clear();
+      activeThread.value = null;
+      showLoadingMoon.value = false;
+      showCopyAll.value = false;
+      errorMessage.value = '';
+
       // Create a temporary thread to show messages immediately
       final String tempThreadId =
           'temp_${DateTime.now().millisecondsSinceEpoch}';

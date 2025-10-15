@@ -117,13 +117,14 @@ class _ProfileBodyState extends State<ProfileBody> {
                       children: [
                         Center(
                           child: PfpViewer(
-                            offsetUp: -120,
+                            offsetUp: -70,
                             isEditing: false,
                             selectedIndex: selectedAvatarId -
                                 1, // convert 1-based to 0-based
                             onEditModeChange: toggleEditMode,
                           ),
                         ),
+                        const SizedBox(height: 20),
                         Column(
                           children: [
                             Stack(

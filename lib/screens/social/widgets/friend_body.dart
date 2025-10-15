@@ -56,11 +56,12 @@ class FriendProfile extends StatelessWidget {
                 children: [
                   Center(
                     child: PfpViewer(
-                      offsetUp: -80,
+                      offsetUp: -70,
                       backgroundImage: AssetImage(
                           getProfilePicturePath(friend.profilePicture)),
                     ),
                   ),
+                  const SizedBox(height: 40),
                   // Info box
                   Container(
                     decoration: BoxDecoration(
