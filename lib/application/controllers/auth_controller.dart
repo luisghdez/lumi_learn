@@ -377,7 +377,7 @@ class AuthController extends GetxController {
 
       await ApiService.updateUserProfilePicture(token, avatarId);
 
-      Get.snackbar("Success", "Profile picture updated!");
+      // Get.snackbar("Success", "Profile picture updated!");
     } catch (e) {
       Get.snackbar("Error", "Failed to update profile picture: $e");
     }

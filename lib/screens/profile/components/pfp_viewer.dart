@@ -28,23 +28,54 @@ class _PfpViewerState extends State<PfpViewer> {
     'assets/pfp/pfp2.png',
     'assets/pfp/pfp3.png',
     'assets/pfp/pfp4.png',
+    'assets/pfp/pfp5.png',
+    'assets/pfp/pfp6.png',
+    'assets/pfp/pfp7.png',
+    'assets/pfp/pfp8.png',
+    'assets/pfp/pfp9.png',
+    'assets/pfp/pfp10.png',
+    'assets/pfp/pfp11.png',
+    'assets/pfp/pfp12.png',
+    'assets/pfp/pfp13.png',
+    'assets/pfp/pfp14.png',
+    'assets/pfp/pfp15.png',
+    'assets/pfp/pfp16.png',
+    'assets/pfp/pfp17.png',
+    'assets/pfp/pfp18.png',
+    'assets/pfp/pfp19.png',
+    'assets/pfp/pfp20.png',
+    'assets/pfp/pfp21.png',
+    'assets/pfp/pfp22.png',
+    'assets/pfp/pfp23.png',
+    'assets/pfp/pfp24.png',
+    'assets/pfp/pfp25.png',
+    'assets/pfp/pfp26.png',
+    'assets/pfp/pfp27.png',
+    'assets/pfp/pfp28.png',
+    'assets/pfp/pfp29.png',
+    'assets/pfp/pfp30.png',
+    'assets/pfp/pfp31.png',
+    'assets/pfp/pfp32.png',
+    'assets/pfp/pfp33.png',
+    'assets/pfp/pfp34.png',
+    'assets/pfp/pfp35.png',
+    'assets/pfp/pfp36.png',
+    'assets/pfp/pfp37.png',
+    'assets/pfp/pfp38.png',
+    'assets/pfp/pfp39.png',
+    'assets/pfp/pfp40.png',
+    'assets/pfp/pfp41.png',
+    'assets/pfp/pfp42.png',
+    'assets/pfp/pfp43.png',
+    'assets/pfp/pfp44.png',
+    'assets/pfp/pfp45.png',
+    'assets/pfp/pfp46.png',
+    'assets/pfp/pfp47.png',
+    'assets/pfp/pfp48.png',
+    // Add more avatars here as they become available
   ];
 
   late int currentIndex;
-
-  void _next() {
-    setState(() {
-      currentIndex = (currentIndex + 1) % avatars.length;
-      widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
-    });
-  }
-
-  void _prev() {
-    setState(() {
-      currentIndex = (currentIndex - 1 + avatars.length) % avatars.length;
-      widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
-    });
-  }
 
   @override
   void initState() {
@@ -53,8 +84,18 @@ class _PfpViewerState extends State<PfpViewer> {
   }
 
   @override
+  void didUpdateWidget(PfpViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      setState(() {
+        currentIndex = widget.selectedIndex.clamp(0, avatars.length - 1);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const double imageHeight = 350.0;
+    const double imageHeight = 400.0;
 
     return Transform.translate(
       offset: Offset(0, -widget.offsetUp),
@@ -80,60 +121,14 @@ class _PfpViewerState extends State<PfpViewer> {
                           .withOpacity(0.6),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.edit,
-                      color: widget.isEditing ? Colors.grey : Colors.white,
+                      color: Colors.white,
                       size: 20,
                     ),
                   ),
                 ),
               ),
-              // Done button - appears when editing
-              if (widget.isEditing)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: GestureDetector(
-                    onTap: () => widget.onDone?.call(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 91, 91, 91)
-                            .withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Text(
-                        "Done",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (widget.isEditing)
-                Positioned(
-                  left: 10,
-                  top: imageHeight / 2 - 16, // Center vertically
-                  child: IconButton(
-                    icon: const Icon(Icons.chevron_left,
-                        color: Colors.white, size: 32),
-                    onPressed: _prev,
-                  ),
-                ),
-              if (widget.isEditing)
-                Positioned(
-                  right: 10,
-                  top: imageHeight / 2 - 16, // Center vertically
-                  child: IconButton(
-                    icon: const Icon(Icons.chevron_right,
-                        color: Colors.white, size: 32),
-                    onPressed: _next,
-                  ),
-                ),
             ],
           ),
         ),

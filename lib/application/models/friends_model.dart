@@ -48,7 +48,7 @@ class Friend {
       id: data['id'],
       name: data['name'] ?? 'Unknown',
       email: data['email'] ?? '',
-      avatarUrl: data['profilePicture'] ?? 'assets/pfp/pfp1.png',
+      avatarUrl: data['profilePicture'] ?? 'assets/pfp/pfp28.png',
       userIds: userIds,
       points: data['points'] ?? 0,
       dayStreak: data['dayStreak'] ?? 0,

@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:share/share.dart';
 import '../components/pfp_viewer.dart';
+import '../components/pfp_gallery_screen.dart';
 import '../components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
@@ -28,8 +28,6 @@ class ProfileBody extends StatefulWidget {
 }
 
 class _ProfileBodyState extends State<ProfileBody> {
-  bool showTooltip = false;
-
   bool isEditingName = false;
   TextEditingController nameController = TextEditingController();
 
@@ -45,17 +43,30 @@ class _ProfileBodyState extends State<ProfileBody> {
   }
 
   void toggleEditMode(bool enable) {
-    widget.onEditModeChange(enable);
     if (enable) {
-      setState(() {
-        showTooltip = true;
-      });
+      // Open the pfp gallery screen
+      Get.to(
+        () => PfpGalleryScreen(
+          selectedIndex: selectedAvatarId,
+          onAvatarSelected: (int newId) async {
+            setState(() {
+              selectedAvatarId = newId;
+            });
 
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() => showTooltip = false);
-        }
-      });
+            final authController = Get.find<AuthController>();
+            final currentPfpId = int.tryParse(
+                  authController.firebaseUser.value?.photoURL ?? '',
+                ) ??
+                1;
+
+            if (selectedAvatarId != currentPfpId) {
+              await authController.updateProfilePicture(selectedAvatarId);
+            }
+          },
+        ),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+      );
     }
   }
 
@@ -107,279 +118,213 @@ class _ProfileBodyState extends State<ProfileBody> {
                         Center(
                           child: PfpViewer(
                             offsetUp: -120,
-                            isEditing: widget.isEditingPfp,
+                            isEditing: false,
                             selectedIndex: selectedAvatarId -
                                 1, // convert 1-based to 0-based
                             onEditModeChange: toggleEditMode,
-                            onAvatarChanged: (int newId) {
-                              setState(() {
-                                selectedAvatarId = newId;
-                              });
-                            },
-                            onDone: () async {
-                              toggleEditMode(false);
-                              final currentPfpId = int.tryParse(
-                                    authController
-                                            .firebaseUser.value?.photoURL ??
-                                        '',
-                                  ) ??
-                                  1;
-                              if (selectedAvatarId != currentPfpId) {
-                                await authController
-                                    .updateProfilePicture(selectedAvatarId);
-                              }
-                            },
                           ),
                         ),
-                        AnimatedPadding(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                          padding: EdgeInsets.only(
-                              top: widget.isEditingPfp ? 120 : 0),
-                          child: Stack(
-                            children: [
-                              IgnorePointer(
-                                ignoring: widget.isEditingPfp,
-                                child: Column(
-                                  children: [
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF1A1A1A),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            border: Border.all(
-                                                color: greyBorder, width: 0.8),
-                                          ),
-                                          padding: const EdgeInsets.only(
-                                              top: 16, left: 16, right: 16),
-                                          child: Column(
-                                            children: [
-                                              Obx(() {
-                                                final name =
-                                                    authController.name.value;
-                                                if (!isEditingName) {
-                                                  return Text(
-                                                    name,
-                                                    textAlign: TextAlign.center,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 24,
-                                                      fontWeight:
-                                                          FontWeight.w300,
-                                                      letterSpacing: -1,
-                                                      height: 1.2,
-                                                    ),
-                                                  );
-                                                } else {
-                                                  nameController.text = name;
-                                                  return Center(
-                                                    child: Container(
-                                                      height: 32,
-                                                      alignment:
-                                                          Alignment.center,
-                                                      child: TextField(
-                                                        controller:
-                                                            nameController,
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 24,
-                                                          fontWeight:
-                                                              FontWeight.w300,
-                                                          letterSpacing: -1,
-                                                          height: 1.2,
-                                                        ),
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        cursorColor:
-                                                            Colors.white,
-                                                        autofocus: true,
-                                                        maxLines: 1,
-                                                        textInputAction:
-                                                            TextInputAction
-                                                                .done,
-                                                        onSubmitted:
-                                                            (value) async {
-                                                          final newName =
-                                                              value.trim();
-                                                          if (newName
-                                                                  .isNotEmpty &&
-                                                              newName !=
-                                                                  authController
-                                                                      .name
-                                                                      .value) {
-                                                            await authController
-                                                                .updateDisplayName(
-                                                                    newName);
-                                                          }
-                                                          setState(() =>
-                                                              isEditingName =
-                                                                  false);
-                                                        },
-                                                        onTapOutside: (event) {
-                                                          // Reset to original name and exit editing mode
-                                                          nameController.text =
-                                                              authController
-                                                                  .name.value;
-                                                          setState(() =>
-                                                              isEditingName =
-                                                                  false);
-                                                        },
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          isDense: true,
-                                                          border:
-                                                              InputBorder.none,
-                                                          contentPadding:
-                                                              EdgeInsets.zero,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                              }),
-                                              const SizedBox(height: 4),
-                                              Obx(() => Text(
-                                                    authController.firebaseUser
-                                                            .value?.email ??
-                                                        'error',
-                                                    style: const TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 14),
-                                                  )),
-                                              const SizedBox(height: 12),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceEvenly,
-                                                children: [
-                                                  GestureDetector(
-                                                    onTap: () {},
-                                                    child: InfoStatCard(
-                                                      label: 'Courses',
-                                                      value: authController
-                                                          .courseSlotsUsed
-                                                          .toString(),
-                                                      background: false,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 60,
-                                                    child: VerticalDivider(
-                                                      color: greyBorder,
-                                                      thickness: 1,
-                                                    ),
-                                                  ),
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      Get.to(
-                                                        () =>
-                                                            const FriendsScreen(),
-                                                        transition:
-                                                            Transition.fadeIn,
-                                                        duration:
-                                                            const Duration(
-                                                                milliseconds:
-                                                                    250),
-                                                        curve: Curves.easeInOut,
-                                                      );
-                                                    },
-                                                    child: InfoStatCard(
-                                                      label: 'Friends',
-                                                      value: authController
-                                                          .friendCount
-                                                          .toString(),
-                                                      background: false,
-                                                    ),
-                                                  ),
-                                                ],
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                        if (!isEditingName)
-                                          Positioned(
-                                            top: 8,
-                                            right: 12,
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                setState(
-                                                    () => isEditingName = true);
-                                              },
-                                              child: const Icon(
-                                                Icons.edit,
-                                                color: Colors.white54,
-                                                size: 20,
+                        Column(
+                          children: [
+                            Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A1A1A),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                        color: greyBorder, width: 0.8),
+                                  ),
+                                  padding: const EdgeInsets.only(
+                                      top: 16, left: 16, right: 16),
+                                  child: Column(
+                                    children: [
+                                      Obx(() {
+                                        final name = authController.name.value;
+                                        if (!isEditingName) {
+                                          return Text(
+                                            name,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w300,
+                                              letterSpacing: -1,
+                                              height: 1.2,
+                                            ),
+                                          );
+                                        } else {
+                                          nameController.text = name;
+                                          return Center(
+                                            child: Container(
+                                              height: 32,
+                                              alignment: Alignment.center,
+                                              child: TextField(
+                                                controller: nameController,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.w300,
+                                                  letterSpacing: -1,
+                                                  height: 1.2,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                cursorColor: Colors.white,
+                                                autofocus: true,
+                                                maxLines: 1,
+                                                textInputAction:
+                                                    TextInputAction.done,
+                                                onSubmitted: (value) async {
+                                                  final newName = value.trim();
+                                                  if (newName.isNotEmpty &&
+                                                      newName !=
+                                                          authController
+                                                              .name.value) {
+                                                    await authController
+                                                        .updateDisplayName(
+                                                            newName);
+                                                  }
+                                                  setState(() =>
+                                                      isEditingName = false);
+                                                },
+                                                onTapOutside: (event) {
+                                                  // Reset to original name and exit editing mode
+                                                  nameController.text =
+                                                      authController.name.value;
+                                                  setState(() =>
+                                                      isEditingName = false);
+                                                },
+                                                decoration:
+                                                    const InputDecoration(
+                                                  isDense: true,
+                                                  border: InputBorder.none,
+                                                  contentPadding:
+                                                      EdgeInsets.zero,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 20),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {
-                                          Get.to(
-                                            () => const AddFriendsScreen(),
-                                            transition: Transition.fadeIn,
-                                            duration: const Duration(
-                                                milliseconds: 250),
-                                            curve: Curves.easeInOut,
                                           );
-                                        },
-                                        icon: const Icon(Icons.person_add_alt,
-                                            size: 24, color: Color(0xFFB388FF)),
-                                        label: const Text(
-                                          'ADD FRIENDS',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white,
-                                          foregroundColor: Colors.black,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16)),
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: InfoStatCard(
-                                              icon: Icons.rocket_launch,
-                                              label: 'Day streak',
+                                        }
+                                      }),
+                                      const SizedBox(height: 4),
+                                      Obx(() => Text(
+                                            authController.firebaseUser.value
+                                                    ?.email ??
+                                                'error',
+                                            style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 14),
+                                          )),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {},
+                                            child: InfoStatCard(
+                                              label: 'Courses',
                                               value: authController
-                                                  .streakCount.value
-                                                  .toString()),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: InfoStatCard(
-                                              icon: Icons.star,
-                                              label: 'Total Stars',
-                                              value: authController
-                                                  .xpCount.value
-                                                  .toString()),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (widget.isEditingPfp)
-                                Positioned.fill(
-                                  child: Container(
-                                    color: Colors.black.withOpacity(0.75),
+                                                  .courseSlotsUsed
+                                                  .toString(),
+                                              background: false,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 60,
+                                            child: VerticalDivider(
+                                              color: greyBorder,
+                                              thickness: 1,
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              Get.to(
+                                                () => const FriendsScreen(),
+                                                transition: Transition.fadeIn,
+                                                duration: const Duration(
+                                                    milliseconds: 250),
+                                                curve: Curves.easeInOut,
+                                              );
+                                            },
+                                            child: InfoStatCard(
+                                              label: 'Friends',
+                                              value: authController.friendCount
+                                                  .toString(),
+                                              background: false,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    ],
                                   ),
                                 ),
-                            ],
-                          ),
+                                if (!isEditingName)
+                                  Positioned(
+                                    top: 8,
+                                    right: 12,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() => isEditingName = true);
+                                      },
+                                      child: const Icon(
+                                        Icons.edit,
+                                        color: Colors.white54,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Get.to(
+                                    () => const AddFriendsScreen(),
+                                    transition: Transition.fadeIn,
+                                    duration: const Duration(milliseconds: 250),
+                                    curve: Curves.easeInOut,
+                                  );
+                                },
+                                icon: const Icon(Icons.person_add_alt,
+                                    size: 24, color: Color(0xFFB388FF)),
+                                label: const Text(
+                                  'ADD FRIENDS',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InfoStatCard(
+                                      icon: Icons.rocket_launch,
+                                      label: 'Day streak',
+                                      value: authController.streakCount.value
+                                          .toString()),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: InfoStatCard(
+                                      icon: Icons.star,
+                                      label: 'Total Stars',
+                                      value: authController.xpCount.value
+                                          .toString()),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ],
                     ),
