@@ -28,28 +28,26 @@ class _PfpViewerState extends State<PfpViewer> {
     'assets/pfp/pfp2.png',
     'assets/pfp/pfp3.png',
     'assets/pfp/pfp4.png',
+    'assets/pfp/pfp5.png',
+    // Add more avatars here as they become available
   ];
 
   late int currentIndex;
-
-  void _next() {
-    setState(() {
-      currentIndex = (currentIndex + 1) % avatars.length;
-      widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
-    });
-  }
-
-  void _prev() {
-    setState(() {
-      currentIndex = (currentIndex - 1 + avatars.length) % avatars.length;
-      widget.onAvatarChanged?.call(currentIndex + 1); // 1-based
-    });
-  }
 
   @override
   void initState() {
     super.initState();
     currentIndex = widget.selectedIndex.clamp(0, avatars.length - 1);
+  }
+
+  @override
+  void didUpdateWidget(PfpViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      setState(() {
+        currentIndex = widget.selectedIndex.clamp(0, avatars.length - 1);
+      });
+    }
   }
 
   @override
@@ -80,60 +78,14 @@ class _PfpViewerState extends State<PfpViewer> {
                           .withOpacity(0.6),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.edit,
-                      color: widget.isEditing ? Colors.grey : Colors.white,
+                      color: Colors.white,
                       size: 20,
                     ),
                   ),
                 ),
               ),
-              // Done button - appears when editing
-              if (widget.isEditing)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: GestureDetector(
-                    onTap: () => widget.onDone?.call(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 91, 91, 91)
-                            .withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Text(
-                        "Done",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (widget.isEditing)
-                Positioned(
-                  left: 10,
-                  top: imageHeight / 2 - 16, // Center vertically
-                  child: IconButton(
-                    icon: const Icon(Icons.chevron_left,
-                        color: Colors.white, size: 32),
-                    onPressed: _prev,
-                  ),
-                ),
-              if (widget.isEditing)
-                Positioned(
-                  right: 10,
-                  top: imageHeight / 2 - 16, // Center vertically
-                  child: IconButton(
-                    icon: const Icon(Icons.chevron_right,
-                        color: Colors.white, size: 32),
-                    onPressed: _next,
-                  ),
-                ),
             ],
           ),
         ),
