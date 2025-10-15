@@ -29,6 +29,49 @@ class _PfpViewerState extends State<PfpViewer> {
     'assets/pfp/pfp3.png',
     'assets/pfp/pfp4.png',
     'assets/pfp/pfp5.png',
+    'assets/pfp/pfp6.png',
+    'assets/pfp/pfp7.png',
+    'assets/pfp/pfp8.png',
+    'assets/pfp/pfp9.png',
+    'assets/pfp/pfp10.png',
+    'assets/pfp/pfp11.png',
+    'assets/pfp/pfp12.png',
+    'assets/pfp/pfp13.png',
+    'assets/pfp/pfp14.png',
+    'assets/pfp/pfp15.png',
+    'assets/pfp/pfp16.png',
+    'assets/pfp/pfp17.png',
+    'assets/pfp/pfp18.png',
+    'assets/pfp/pfp19.png',
+    'assets/pfp/pfp20.png',
+    'assets/pfp/pfp21.png',
+    'assets/pfp/pfp22.png',
+    'assets/pfp/pfp23.png',
+    'assets/pfp/pfp24.png',
+    'assets/pfp/pfp25.png',
+    'assets/pfp/pfp26.png',
+    'assets/pfp/pfp27.png',
+    'assets/pfp/pfp28.png',
+    'assets/pfp/pfp29.png',
+    'assets/pfp/pfp30.png',
+    'assets/pfp/pfp31.png',
+    'assets/pfp/pfp32.png',
+    'assets/pfp/pfp33.png',
+    'assets/pfp/pfp34.png',
+    'assets/pfp/pfp35.png',
+    'assets/pfp/pfp36.png',
+    'assets/pfp/pfp37.png',
+    'assets/pfp/pfp38.png',
+    'assets/pfp/pfp39.png',
+    'assets/pfp/pfp40.png',
+    'assets/pfp/pfp41.png',
+    'assets/pfp/pfp42.png',
+    'assets/pfp/pfp43.png',
+    'assets/pfp/pfp44.png',
+    'assets/pfp/pfp45.png',
+    'assets/pfp/pfp46.png',
+    'assets/pfp/pfp47.png',
+    'assets/pfp/pfp48.png',
     // Add more avatars here as they become available
   ];
 
@@ -52,7 +95,7 @@ class _PfpViewerState extends State<PfpViewer> {
 
   @override
   Widget build(BuildContext context) {
-    const double imageHeight = 350.0;
+    const double imageHeight = 400.0;
 
     return Transform.translate(
       offset: Offset(0, -widget.offsetUp),
