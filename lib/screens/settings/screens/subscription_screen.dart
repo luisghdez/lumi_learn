@@ -5,6 +5,7 @@ import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -54,6 +55,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   Future<void> _subscribe() async {
     if (_selectedIndex == -1) {
       Get.snackbar("Select a plan", "Please choose a subscription plan first.");
+      return;
+    }
+    if (kIsWeb) {
+      Get.snackbar("Unavailable on Web", "Purchases are only supported on iOS and Android.");
       return;
     }
 

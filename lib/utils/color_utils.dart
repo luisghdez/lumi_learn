@@ -29,14 +29,14 @@ class ColorUtils {
 
   /// 64-bit FNV-1a hash (stable across runs, no dependencies).
   static int _fnv1a64(String input) {
-    const int fnvOffset = 0xcbf29ce484222325; // 14695981039346656037
+    const int fnvOffset = 0x811c9dc5; // 2166136261
     const int fnvPrime = 0x100000001b3; // 1099511628211
-    const int mask64 = 0xFFFFFFFFFFFFFFFF;
-
+    
+    const int mask32 = 0xFFFFFFFF;
     int hash = fnvOffset;
     for (int i = 0; i < input.length; i++) {
       hash ^= input.codeUnitAt(i);
-      hash = (hash * fnvPrime) & mask64;
+      hash = (hash * fnvPrime) & mask32;
     }
     return hash;
   }

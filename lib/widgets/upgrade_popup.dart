@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 
 class UpgradePopup extends StatefulWidget {
   final String title;
@@ -38,6 +40,14 @@ class _UpgradePopupState extends State<UpgradePopup>
   }
 
 Future<void> _purchasePlan(String productId, AuthController authController) async {
+  if (kIsWeb) {
+    Get.snackbar(
+      "Unsupported on Web",
+      "Purchases are only available on mobile for now.",
+    );
+    return;
+  }
+
   try {
     final offerings = await Purchases.getOfferings();
     final current = offerings.current;
@@ -47,33 +57,28 @@ Future<void> _purchasePlan(String productId, AuthController authController) asyn
       return;
     }
 
-    // Match the correct product by identifier
     final selectedPackage = current.availablePackages.firstWhere(
       (p) => p.storeProduct.identifier == productId,
       orElse: () => current.availablePackages.first,
     );
 
-    // Perform the purchase
     final customerInfo = await Purchases.purchasePackage(selectedPackage);
 
-    // Check your entitlement ID in RevenueCat (e.g., "pro" or "premium")
     final isPro = customerInfo.entitlements.active.containsKey("Pro");
 
     if (isPro) {
       authController.isPremium.value = true;
       authController.activeProductId.value = selectedPackage.storeProduct.identifier;
-
-      Get.back(); // Close popup
+      Get.back();
       Get.dialog(const LumiProSuccessDialog());
       Get.snackbar("Success", "Welcome to Lumi PRO!");
     } else {
       Get.snackbar("Pending", "Purchase completed but entitlement not yet active.");
     }
   } on PlatformException catch (error) {
-    if (error.code == PurchasesErrorCode.purchaseCancelledError) {
-      return;
-    } else if (error.code == PurchasesErrorCode.networkError) {
-      Get.snackbar("Network Error", "Please check your internet connection and try again.");
+    if (error.code == PurchasesErrorCode.purchaseCancelledError) return;
+    if (error.code == PurchasesErrorCode.networkError) {
+      Get.snackbar("Network Error", "Please check your internet connection.");
     } else {
       Get.snackbar("Error", "Something went wrong: ${error.message}");
     }

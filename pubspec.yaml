@@ -97,7 +97,6 @@ flutter_native_splash:
   fullscreen: true
 
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -153,14 +152,6 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  fonts:
-    - family: Poppins
-      fonts:
-        - asset: assets/fonts/Poppins-Regular.ttf
-        - asset: assets/fonts/Poppins-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Poppins-Light.ttf
-          weight: 300
 
   #
   # For details regarding fonts from package dependencies,
@@ -169,3 +160,15 @@ flutter:
 dependency_overrides:
   flutter:
     sdk: flutter
+  image_cropper:
+    git:
+      url: https://github.com/hnvn/flutter_image_cropper.git
+      path: image_cropper
+  image_cropper_for_web:
+    git:
+      url: https://github.com/hnvn/flutter_image_cropper.git
+      path: image_cropper_for_web
+  image_cropper_platform_interface:
+    git:
+      url: https://github.com/hnvn/flutter_image_cropper.git
+      path: image_cropper_platform_interface
