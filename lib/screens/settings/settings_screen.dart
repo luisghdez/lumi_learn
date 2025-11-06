@@ -11,6 +11,8 @@ import 'package:lumi_learn_app/screens/settings/screens/subscription_screen.dart
 import 'package:lumi_learn_app/screens/settings/screens/more_settings_screen.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/lesson/space_game.dart';
+import 'package:lumi_learn_app/screens/lesson/nebula_game.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -370,16 +372,11 @@ final List<Map<String, dynamic>> _tiles = [
     {
     'icon': Icons.gamepad_outlined,
     'title': "Asteroid Game",
-    'screen': const SpaceGame(
-      lessonName: 'Your Lesson Name',
-      subject: 'Your Subject',
-      fileName: 'Your File Name',
-      className: 'Your Class Name',
-      school: 'Your School',
-      crn: 'Your CRN',
-      professorName: 'Your Professor Name',
-      term: 'Your Term',
-      additionalInfo: 'Your Additional Info',
-    ),
+    'screen': const SpaceGame(),
+  },
+  {
+    'icon': Icons.rocket_launch_outlined,
+    'title': "Nebula Game",
+    'screen': const NebulaGame(),
   },
 ];

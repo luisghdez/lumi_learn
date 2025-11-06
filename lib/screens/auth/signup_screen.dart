@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -63,141 +64,139 @@ class SignupScreen extends StatelessWidget {
             alignment: Alignment.centerLeft,
           ),
         ),
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: topPadding),
-
-                  // Title
-                  RichText(
-                    text: TextSpan(
-                      text: "Let's\n",
-                      style: TextStyle(
-                        fontSize: titleFontSize.toDouble(),
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        height: 1.1,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: "Start",
-                          style: GoogleFonts.poppins(
-                            fontSize: subTitleFontSize.toDouble(),
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: betweenTitleAndFields),
-
-                  // _buildInputField("Your Name", Icons.person,
-                  //     controller: nameController),
-                  // SizedBox(height: spacingMedium),
-
-                  // _buildInputField("Email", Icons.email,
-                  //     controller: emailController),
-                  // SizedBox(height: spacingMedium),
-
-                  // _buildInputField("Password", Icons.lock,
-                  //     controller: passwordController, isPassword: true),
-                  // SizedBox(height: spacingMedium),
-
-                  // _buildPrimaryButton("Sign Up", () {
-                  //   authController.signUp(
-                  //     emailController.text.trim(),
-                  //     passwordController.text.trim(),
-                  //     nameController.text.trim(),
-                  //   );
-                  // }),
-
-                  SizedBox(height: spacingLarge),
-
-                  // Divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.white.withOpacity(0.5),
-                          thickness: 1.2,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          "Sign up with",
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: Colors.white.withOpacity(0.5),
-                          thickness: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: spacingLarge),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSocialButton(
-                            "Google", FontAwesomeIcons.google, () async {
-                          await authController.signInWithGoogle();
-                        }),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: _buildSocialButton(
-                            "Apple", FontAwesomeIcons.apple, () async {
-                          await authController.signInWithApple();
-                        }),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: spacingLarge),
-
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Get.offAll(
-                          () => LoginScreen(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        );
-                      },
-                      style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all(
-                          Colors.transparent,
-                        ),
-                      ),
-                      child: Text(
-                        "Already have an account? Login",
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+        child: Stack(
+          children: [
+            // Dark gradient overlay behind background image
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.6),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
-          ),
+            SingleChildScrollView(
+              child: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: topPadding),
+
+                      // Title
+                      RichText(
+                        text: TextSpan(
+                          text: "Let's\n",
+                          style: TextStyle(
+                            fontSize: titleFontSize.toDouble(),
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            height: 1.1,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: "Start",
+                              style: GoogleFonts.poppins(
+                                fontSize: subTitleFontSize.toDouble(),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: betweenTitleAndFields),
+
+                      SizedBox(height: spacingLarge),
+
+                      // Divider
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: Colors.white.withOpacity(0.5),
+                              thickness: 1.2,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              "Sign up with",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: Colors.white.withOpacity(0.5),
+                              thickness: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: spacingLarge),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildSocialButton(
+                                "Google", FontAwesomeIcons.google, () async {
+                              await authController.signInWithGoogle();
+                            }),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: _buildSocialButton(
+                                "Apple", FontAwesomeIcons.apple, () async {
+                              await authController.signInWithApple();
+                            }),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: spacingLarge),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Get.offAll(
+                              () => LoginScreen(),
+                              transition: Transition.fadeIn,
+                              duration: const Duration(milliseconds: 500),
+                            );
+                          },
+                          style: ButtonStyle(
+                            overlayColor: MaterialStateProperty.all(
+                              Colors.transparent,
+                            ),
+                          ),
+                          child: Text(
+                            "Already have an account? Login",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -207,32 +206,48 @@ class SignupScreen extends StatelessWidget {
   Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
-      child: Obx(() => ElevatedButton(
-            onPressed: authController.isLoading.value
-                ? null
-                : onPressed, // Disable button when loading
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
-              padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Obx(() => ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: ElevatedButton(
+                onPressed: authController.isLoading.value
+                    ? null
+                    : onPressed, // Disable button when loading
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.15),
+                  side: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                ),
+                child: authController.isLoading.value
+                    ? const SizedBox(
+                        height: 26,
+                        width: 26,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ) // Show loading indicator
+                    : Text(
+                        text,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 8,
+                              color: Colors.white.withOpacity(0.6),
+                              offset: const Offset(0, 0),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
             ),
-            child: authController.isLoading.value
-                ? const SizedBox(
-                    height: 26,
-                    width: 26,
-                    child: CircularProgressIndicator(
-                      color: Colors.black,
-                    ),
-                  ) // Show loading indicator
-                : Text(
-                    text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
           )),
     );
   }
@@ -241,40 +256,67 @@ class SignupScreen extends StatelessWidget {
 // Input Field
 Widget _buildInputField(String label, IconData icon,
     {bool isPassword = false, required TextEditingController controller}) {
-  return TextField(
-    controller: controller,
-    obscureText: isPassword,
-    style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
-      suffixIcon: Icon(icon, color: Colors.white, size: 22),
-      enabledBorder: UnderlineInputBorder(
-        borderSide:
-            BorderSide(color: Colors.white.withOpacity(0.6), width: 1.5),
-      ),
-      focusedBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.white, width: 2),
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(30),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.2),
+        ),
+        child: TextField(
+          controller: controller,
+          obscureText: isPassword,
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
+          cursorColor: Colors.white,
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: GoogleFonts.poppins(color: Colors.white.withOpacity(0.8), fontSize: 18),
+            suffixIcon: Icon(icon, color: Colors.white.withOpacity(0.8), size: 22),
+            border: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          ),
+        ),
       ),
     ),
   );
 }
 
 Widget _buildSocialButton(String text, IconData icon, VoidCallback onPressed) {
-  return ElevatedButton.icon(
-    onPressed: onPressed,
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-    ),
-    icon: Icon(icon, color: Colors.black, size: 20), // Use built-in icons
-    label: Text(
-      text,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        color: Colors.black,
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(30),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withOpacity(0.15),
+          side: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          shadowColor: Colors.transparent,
+          elevation: 0,
+        ),
+        icon: Icon(icon, color: Colors.white, size: 20), // Use built-in icons
+        label: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                blurRadius: 6,
+                color: Colors.white54,
+                offset: Offset(0, 0),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );

@@ -167,7 +167,7 @@ class AuthController extends GetxController {
 
       Get.snackbar("Success", "Account created successfully!");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", "Please sign up with google or apple");
     } finally {
       isLoading.value = false; // Stop loading
     }
@@ -180,7 +180,7 @@ class AuthController extends GetxController {
       // Get.snackbar("Success", "Logged in successfully!");
       Get.offAll(() => AuthGate());
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", "Please login with google or apple");
     }
   }
 
@@ -241,7 +241,7 @@ class AuthController extends GetxController {
 
       Get.offAll(() => AuthGate());
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", "Please retry Google sign-in");
     } finally {
       isLoading.value = false;
     }
@@ -326,7 +326,7 @@ class AuthController extends GetxController {
       // Navigate to your authenticated gate.
       Get.offAll(() => AuthGate());
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", "Please retry Apple sign-in: ");
     } finally {
       isLoading.value = false;
     }

@@ -11,30 +11,10 @@ class Explosion {
 }
 
 class SpaceGame extends StatefulWidget {
-  final String lessonName;
-  final String subject;
-  final String fileName;
-
-  // Syllabus data.
-  final String className;
-  final String school;
-  final String crn;
-  final String professorName;
-  final String term;
-  final String additionalInfo;
 
   const SpaceGame({
-    Key? key,
-    required this.lessonName,
-    required this.subject,
-    required this.fileName,
-    required this.className,
-    required this.school,
-    required this.crn,
-    required this.professorName,
-    required this.term,
-    required this.additionalInfo,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<SpaceGame> createState() => _SpaceGameState();
@@ -508,7 +488,7 @@ class _SpaceGameState extends State<SpaceGame> {
               top: barrierY - 30,
               child: const Center(
                 child: Text(
-                  "Move & Shot",
+                  "Move & Shoot",
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
