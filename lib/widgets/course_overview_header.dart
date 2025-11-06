@@ -13,6 +13,7 @@ class CourseOverviewHeader extends StatelessWidget {
   final VoidCallback onViewFlashcards;
   final VoidCallback onViewNotes;
   final VoidCallback onViewLumiTutor;
+  final VoidCallback onViewPodcast;
   final bool isOpeningTutor;
 
   const CourseOverviewHeader({
@@ -24,6 +25,7 @@ class CourseOverviewHeader extends StatelessWidget {
     required this.onViewFlashcards,
     required this.onViewNotes,
     required this.onViewLumiTutor,
+    required this.onViewPodcast,
     this.isOpeningTutor = false,
   }) : super(key: key);
 
@@ -176,6 +178,7 @@ class CourseOverviewHeader extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Fixed: Use flexible layout for 4 buttons
                       Row(
                         children: [
                           Expanded(
@@ -189,7 +192,7 @@ class CourseOverviewHeader extends StatelessWidget {
                           Expanded(
                             child: _HeaderButton(
                               icon: Icons.menu_book_outlined,
-                              label: 'Flashcards',
+                              label: 'Cards',
                               onTap: onViewFlashcards,
                             ),
                           ),
@@ -197,9 +200,17 @@ class CourseOverviewHeader extends StatelessWidget {
                           Expanded(
                             child: _HeaderButton(
                               icon: Icons.chat_bubble_outline,
-                              label: 'LumiTutor',
+                              label: 'Tutor',
                               onTap: onViewLumiTutor,
                               isLoading: isOpeningTutor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: _HeaderButton(
+                              icon: Icons.podcasts,
+                              label: 'Cast',
+                              onTap: onViewPodcast,
                             ),
                           ),
                         ],
@@ -234,8 +245,8 @@ class _HeaderButton extends StatelessWidget {
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       child: Container(
-        alignment: Alignment.center, // center the Row
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: const Color.fromARGB(140, 0, 0, 0),
           borderRadius: BorderRadius.circular(12),
@@ -244,30 +255,34 @@ class _HeaderButton extends StatelessWidget {
             width: 1,
           ),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center, // center contents
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (!isLoading) ...[
-              Icon(icon, color: Colors.white, size: 14),
-              const SizedBox(width: 8),
+              Icon(icon, color: Colors.white, size: 16),
+              const SizedBox(height: 4),
             ] else ...[
               SizedBox(
-                width: 14,
-                height: 14,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 4),
             ],
             Text(
               label,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

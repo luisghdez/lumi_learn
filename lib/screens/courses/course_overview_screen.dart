@@ -21,6 +21,8 @@ import 'package:lumi_learn_app/application/controllers/auth_controller.dart'; //
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
 import 'package:lumi_learn_app/widgets/embeddings_popup.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/screens/podcast/podcast_screen.dart';
+
 
 class CourseOverviewScreen extends StatefulWidget {
   const CourseOverviewScreen({Key? key}) : super(key: key);
@@ -378,73 +380,99 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 ),
               ),
 
-              // 5) Top Header
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 32 : 16,
-                  vertical: isTablet ? 32 : 0,
-                ),
-                child: Builder(builder: (context) {
-                  final tutorController = Get.find<TutorController>();
-                  return Obx(() => CourseOverviewHeader(
-                        onBack: () => Get.offAll(
-                          () => MainScreen(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 1000),
-                        ),
-                        courseTitle: courseController.selectedCourseTitle.value,
-                        courseId: courseId.value,
-                        progress: progress,
-                        onViewFlashcards: () {
-                          Get.to(
-                            () => FlashcardScreen(flashcards: flashcards),
-                            duration: const Duration(milliseconds: 300),
-                          );
-                        },
-                        onViewNotes: () {
-                          if (!courseController
-                              .selectedCourseHasEmbeddings.value) {
-                            Get.dialog(
-                              const EmbeddingsPopup(),
-                              barrierDismissible: true,
-                            );
-                            return;
-                          }
-                          Get.to(
-                            () => NoteScreen(
-                              markdownText: courseMarkdown,
-                            ),
-                            duration: const Duration(milliseconds: 300),
-                          );
-                        },
-                        onViewLumiTutor: () {
-                          if (!courseController
-                              .selectedCourseHasEmbeddings.value) {
-                            Get.dialog(
-                              const EmbeddingsPopup(),
-                              barrierDismissible: true,
-                            );
-                            return;
-                          }
-                          tutorController
-                              .openTutorForCourse(
-                                  courseId: courseId.value,
-                                  courseTitle: courseTitle)
-                              .whenComplete(() {
+                // 5) Top Header
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 32 : 16,
+                    vertical: isTablet ? 32 : 0,
+                  ),
+                  child: Builder(builder: (context) {
+                    final tutorController = Get.find<TutorController>();
+                    return Obx(() => CourseOverviewHeader(
+                          onBack: () => Get.offAll(
+                            () => MainScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 1000),
+                          ),
+                          courseTitle: courseController.selectedCourseTitle.value,
+                          courseId: courseId.value,
+                          progress: progress,
+
+                          onViewFlashcards: () {
                             Get.to(
-                              () => LumiTutorMain(
-                                courseId: courseId.value,
-                                courseTitle: courseTitle,
+                              () => FlashcardScreen(flashcards: flashcards),
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          },
+
+                          onViewNotes: () {
+                            if (!courseController.selectedCourseHasEmbeddings.value) {
+                              Get.dialog(
+                                const EmbeddingsPopup(),
+                                barrierDismissible: true,
+                              );
+                              return;
+                            }
+                            Get.to(
+                              () => NoteScreen(
+                                markdownText: courseMarkdown,
                               ),
                               duration: const Duration(milliseconds: 300),
                             );
-                          });
-                        },
-                        isOpeningTutor:
-                            tutorController.isOpeningFromCourse.value,
-                      ));
-                }),
-              ),
+                          },
+
+                          onViewLumiTutor: () {
+                            if (!courseController.selectedCourseHasEmbeddings.value) {
+                              Get.dialog(
+                                const EmbeddingsPopup(),
+                                barrierDismissible: true,
+                              );
+                              return;
+                            }
+                            tutorController
+                                .openTutorForCourse(
+                                  courseId: courseId.value,
+                                  courseTitle: courseTitle,
+                                )
+                                .whenComplete(() {
+                              Get.to(
+                                () => LumiTutorMain(
+                                  courseId: courseId.value,
+                                  courseTitle: courseTitle,
+                                ),
+                                duration: const Duration(milliseconds: 300),
+                              );
+                            });
+                          },
+
+                          // 🎧 NEW: Podcast button callback
+                          onViewPodcast: () async {
+                            final token = await courseController.authController.getIdToken();
+                            if (token == null) {
+                              Get.snackbar(
+                                "Authentication Error",
+                                "Please log in to listen to podcasts.",
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white,
+                              );
+                              return;
+                            }
+
+                            Get.to(
+                              () => PodcastScreen(
+                                courseId: courseId.value,
+                                courseTitle: courseController.selectedCourseTitle.value,
+                                token: token,
+                              ),
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          },
+
+                          isOpeningTutor: tutorController.isOpeningFromCourse.value,
+                        ));
+                  }),
+                ),
+
             ],
           ),
         ),
