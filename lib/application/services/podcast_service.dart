@@ -1,6 +1,8 @@
 // lib/services/podcast_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:io'; // 👈 For File
+import 'package:http_parser/http_parser.dart'; // 👈 For MediaType
 import 'package:lumi_learn_app/application/models/podcast_model.dart';
 
 class PodcastService {
@@ -10,6 +12,8 @@ class PodcastService {
   // Timeout durations
   static const Duration _standardTimeout = Duration(seconds: 30);
   static const Duration _generationTimeout = Duration(minutes: 5);
+
+  
 
   /// Generate a new podcast from course content
   /// POST /podcasts
@@ -50,6 +54,44 @@ class PodcastService {
       throw PodcastException('Unexpected error: $e');
     }
   }
+
+  Future<Map<String, dynamic>> transcribeAudioQuestion(
+    File audioFile, {
+    required String token,
+    required String courseId,
+    required String segmentId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/podcasts/transcribe');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['courseId'] = courseId
+      ..fields['segmentId'] = segmentId
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'audio',
+          audioFile.path,
+          contentType: MediaType('audio', 'aac'),
+        ),
+      );
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(responseBody) as Map<String, dynamic>;
+      return json; // ✅ returns text + hostAudioUrl + hostResponse
+    } else {
+      throw PodcastException(
+        'Failed to transcribe audio',
+        statusCode: response.statusCode,
+        details: responseBody,
+      );
+    }
+  }
+
+
+
 
   /// Send a "call-in" interrupt question during a podcast
   /// POST /podcasts/interrupt
@@ -137,6 +179,7 @@ class PodcastService {
 
   /// Get all segments with dialogue for a podcast
   /// GET /podcasts/:courseId/segments
+  /// 🆕 NOW PARSES: topic, examples, isStandalone
   Future<List<PodcastSegment>> getPodcastSegments({
     required String token,
     required String courseId,
@@ -173,10 +216,17 @@ class PodcastService {
             );
           }).toList();
 
+          // 🆕 PARSE NEW FIELDS
+          final List<dynamic>? examplesData = segmentMap['examples'] as List<dynamic>?;
+          final List<String>? examples = examplesData?.map((e) => e.toString()).toList();
+
           return PodcastSegment(
             id: segmentMap['id'] as String? ?? '',
             order: segmentMap['order'] as int? ?? 0,
             duration: segmentMap['duration'] as int?,
+            topic: segmentMap['topic'] as String?,              // 🆕 NEW
+            examples: examples,                                   // 🆕 NEW
+            isStandalone: segmentMap['isStandalone'] as bool?,  // 🆕 NEW
             dialogue: dialogue,
           );
         }).toList();
@@ -198,6 +248,7 @@ class PodcastService {
 
   /// Get a single segment with its dialogue
   /// GET /podcasts/:courseId/segments/:segmentId
+  /// 🆕 NOW PARSES: topic, examples, isStandalone
   Future<PodcastSegment?> getPodcastSegment({
     required String token,
     required String courseId,
@@ -231,10 +282,17 @@ class PodcastService {
           );
         }).toList();
 
+        // 🆕 PARSE NEW FIELDS
+        final List<dynamic>? examplesData = segmentMap['examples'] as List<dynamic>?;
+        final List<String>? examples = examplesData?.map((e) => e.toString()).toList();
+
         return PodcastSegment(
           id: segmentMap['id'] as String? ?? '',
           order: segmentMap['order'] as int? ?? 0,
           duration: segmentMap['duration'] as int?,
+          topic: segmentMap['topic'] as String?,              // 🆕 NEW
+          examples: examples,                                   // 🆕 NEW
+          isStandalone: segmentMap['isStandalone'] as bool?,  // 🆕 NEW
           dialogue: dialogue,
         );
       } else if (response.statusCode == 404) {
