@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
@@ -32,8 +33,10 @@ class AuthController extends GetxController {
   RxInt maxCourseSlots = 2.obs;
   RxInt friendCount = 0.obs;
   RxString name = 'User'.obs;
+  RxString timezone = ''.obs;
 
   RxBool isPremium = false.obs;
+  RxString subscriptionPlanType = ''.obs; // 'monthly', 'yearly', or empty
 
   @override
   void onReady() {
@@ -58,8 +61,28 @@ class AuthController extends GetxController {
   Future<bool> checkIfUserIsPro() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all['Pro']?.isActive ?? false;
+      final proEntitlement = customerInfo.entitlements.all['Pro'];
+      final isActive = proEntitlement?.isActive ?? false;
+
+      if (isActive && proEntitlement != null) {
+        // Get the product identifier to determine plan type
+        final productId = proEntitlement.productIdentifier.toLowerCase();
+
+        // Determine if it's monthly or yearly based on product identifier
+        if (productId.contains('month')) {
+          subscriptionPlanType.value = 'monthly';
+        } else if (productId.contains('year') || productId.contains('annual')) {
+          subscriptionPlanType.value = 'yearly';
+        } else {
+          subscriptionPlanType.value = 'unknown';
+        }
+      } else {
+        subscriptionPlanType.value = '';
+      }
+
+      return isActive;
     } catch (e) {
+      subscriptionPlanType.value = '';
       return false;
     }
   }
@@ -87,6 +110,18 @@ class AuthController extends GetxController {
       maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
       friendCount.value = data['user']['friendCount'] ?? 0;
       name.value = data['user']['name'] ?? '';
+      final serverTimezone = data['user']['timezone'] ?? '';
+
+      // Get the current device timezone
+      final currentTimezone = await getIanaTimezoneId();
+
+      // If timezone is empty or different from current timezone, update it
+      if (serverTimezone.isEmpty || serverTimezone != currentTimezone) {
+        await ApiService.updateUserTimezone(token, currentTimezone);
+        timezone.value = currentTimezone;
+      } else {
+        timezone.value = serverTimezone;
+      }
     } catch (e) {
       print('Error fetching user data: $e');
     }
@@ -124,8 +159,11 @@ class AuthController extends GetxController {
         return;
       }
 
+      // Get the user's timezone
+      final timezone = await getIanaTimezoneId();
+
       await ApiService.ensureUserExists(token,
-          email: email, name: name, profilePicture: "");
+          email: email, name: name, profilePicture: "", timezone: timezone);
 
       Get.snackbar("Success", "Account created successfully!");
     } catch (e) {
@@ -139,7 +177,7 @@ class AuthController extends GetxController {
   Future<void> login(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      Get.snackbar("Success", "Logged in successfully!");
+      // Get.snackbar("Success", "Logged in successfully!");
       Get.offAll(() => AuthGate());
     } catch (e) {
       Get.snackbar("Error", e.toString());
@@ -183,17 +221,21 @@ class AuthController extends GetxController {
           return;
         }
 
+        // Get the user's timezone
+        final timezone = await getIanaTimezoneId();
+
         await ApiService.ensureUserExists(
           token,
           email: user.email,
           name: user.displayName,
           profilePicture: "default",
+          timezone: timezone,
         );
 
         if (userCredential.additionalUserInfo?.isNewUser ?? false) {
           Get.snackbar("Welcome!", "Account created via Google sign-in.");
         } else {
-          Get.snackbar("Success", "Logged in via Google!");
+          // Get.snackbar("Success", "Logged in via Google!");
         }
       }
 
@@ -259,6 +301,9 @@ class AuthController extends GetxController {
           return;
         }
 
+        // Get the user's timezone
+        final timezone = await getIanaTimezoneId();
+
         // Use the API service to ensure the user exists in your backend.
         // Use the fullName if available, or fallback to Firebase displayName.
         await ApiService.ensureUserExists(
@@ -267,13 +312,14 @@ class AuthController extends GetxController {
               .email, // might be null on subsequent logins, so consider a fallback.
           name: fullName ?? user.displayName ?? "User",
           profilePicture: "default",
+          timezone: timezone,
         );
 
         // Notify user whether this is a new account.
         if (userCredential.additionalUserInfo?.isNewUser ?? false) {
           Get.snackbar("Welcome!", "Account created via Apple Sign-In.");
         } else {
-          Get.snackbar("Success", "Logged in via Apple!");
+          // Get.snackbar("Success", "Logged in via Apple!");
         }
       }
 
@@ -331,7 +377,7 @@ class AuthController extends GetxController {
 
       await ApiService.updateUserProfilePicture(token, avatarId);
 
-      Get.snackbar("Success", "Profile picture updated!");
+      // Get.snackbar("Success", "Profile picture updated!");
     } catch (e) {
       Get.snackbar("Error", "Failed to update profile picture: $e");
     }
@@ -397,6 +443,8 @@ class AuthController extends GetxController {
     maxCourseSlots.value = 2; // or whatever your default is
     friendCount.value = 0;
     isPremium.value = false;
+    subscriptionPlanType.value = '';
+    timezone.value = '';
 
     // If you want to reset loading / init flags:
     isAuthInitialized.value = false;
@@ -410,4 +458,9 @@ class AuthController extends GetxController {
   void setUserRole(UserRole role) {
     userRole.value = role;
   }
+}
+
+Future<String> getIanaTimezoneId() async {
+  final info = await FlutterTimezone.getLocalTimezone();
+  return info.identifier; // e.g. "America/Chicago"
 }

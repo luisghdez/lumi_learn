@@ -226,7 +226,10 @@ class ApiService {
   }
 
   static Future<void> ensureUserExists(String? idToken,
-      {String? email, String? name, String? profilePicture}) async {
+      {String? email,
+      String? name,
+      String? profilePicture,
+      String? timezone}) async {
     if (idToken == null) {
       throw Exception("ID token is null, cannot ensure user exists");
     }
@@ -242,6 +245,7 @@ class ApiService {
         "email": email,
         "name": name,
         "profilePicture": profilePicture,
+        "timezone": timezone,
       }),
     );
 
@@ -362,6 +366,20 @@ class ApiService {
       },
       body: jsonEncode({
         'name': newName,
+      }),
+    );
+  }
+
+  static Future<void> updateUserTimezone(String token, String timezone) async {
+    final uri = Uri.parse('$_baseUrl/users/me');
+    await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'timezone': timezone,
       }),
     );
   }

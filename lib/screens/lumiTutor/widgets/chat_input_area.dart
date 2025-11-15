@@ -7,6 +7,7 @@ class ChatInputArea extends StatelessWidget {
   final void Function(String text) onSend;
   final void Function(File image)? onImagePicked;
   final void Function(File file)? onFilePicked;
+  final VoidCallback? onScannerPressed;
 
   const ChatInputArea({
     Key? key,
@@ -14,6 +15,7 @@ class ChatInputArea extends StatelessWidget {
     required this.onSend,
     this.onImagePicked,
     this.onFilePicked,
+    this.onScannerPressed,
   }) : super(key: key);
 
   @override
@@ -25,6 +27,7 @@ class ChatInputArea extends StatelessWidget {
           onSend: onSend,
           onImagePicked: onImagePicked,
           onFilePicked: onFilePicked,
+          onScannerPressed: onScannerPressed,
         ),
       ],
     );

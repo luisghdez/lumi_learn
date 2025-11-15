@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:camera/camera.dart';
 import 'package:lumi_learn_app/application/models/chat_sender.dart';
 import 'package:lumi_learn_app/application/models/message_model.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
@@ -9,8 +10,9 @@ import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_bubble.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/chat_input_area.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/widgets/tutor_drawer.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
+import 'package:lumi_learn_app/widgets/no_swipe_route.dart';
 import 'package:lottie/lottie.dart';
-
 
 class LumiTutorMain extends StatefulWidget {
   final Map<String, dynamic>? initialArgs;
@@ -175,6 +177,38 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     _animateToBottom(durationMs: 150);
   }
 
+  Future<void> _handleScannerPressed() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        Get.snackbar(
+          "Camera Error",
+          "No camera available on this device",
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Navigate to scanner
+      await Navigator.of(context).push(
+        NoSwipePageRoute(
+          builder: (_) => AiScannerMain(
+            cameras: cameras,
+            existingThreadId: _tutorController.activeThread.value?.threadId,
+          ),
+        ),
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Camera Error",
+        "Failed to open camera: $e",
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -198,8 +232,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 8,
               ),
-              duration: const Duration(milliseconds: 100), // Smooth animation
-              curve: Curves.easeOut, // Natural easing curve
+              duration: const Duration(milliseconds: 0), // Fast animation
               child: Column(
                 children: [
                   Obx(() {
@@ -269,12 +302,56 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                           ListView.builder(
                             controller: _scrollController,
                             reverse: true,
-                            itemCount: _tutorController.messages.length,
+                            itemCount: _tutorController.messages.length + 1,
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 16),
                             itemBuilder: (context, index) {
+                              // Show loading moon as the first item (bottom of reversed list)
+                              if (index == 0) {
+                                return Obx(() {
+                                  final showMoon =
+                                      _tutorController.showLoadingMoon.value;
+                                  return AnimatedOpacity(
+                                    opacity: showMoon ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: showMoon
+                                        ? Curves.easeIn
+                                        : Curves.easeOut,
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      height: showMoon ? 64 : 0,
+                                      curve: showMoon
+                                          ? Curves.easeIn
+                                          : Curves.easeOut,
+                                      child: showMoon
+                                          ? Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Transform.translate(
+                                                offset: const Offset(-16, 0),
+                                                child: const Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 8, bottom: 8),
+                                                  child: SizedBox(
+                                                    height: 64,
+                                                    width: 64,
+                                                    child: _ThinkingMoon(),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          : const SizedBox.shrink(),
+                                    ),
+                                  );
+                                });
+                              }
+
+                              // Adjust index for messages (subtract 1 for the moon slot)
+                              final messageIndex = index - 1;
                               final reversedIndex =
-                                  _tutorController.messages.length - 1 - index;
+                                  _tutorController.messages.length -
+                                      1 -
+                                      messageIndex;
                               final message =
                                   _tutorController.messages[reversedIndex];
                               return SizedBox(
@@ -292,25 +369,6 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                               );
                             },
                           ),
-                          // Show _ThinkingMoon when streaming/loading, positioned below last user message, left-aligned
-                          Obx(() {
-                            final tutorController = TutorController.instance;
-                            if (tutorController.showLoadingMoon.value) {
-                              return const Positioned(
-                                bottom: 0, // just above input area
-                                left: 16, // slightly indented from the edge
-                                child: SizedBox(
-                                  height: 64,
-                                  width: 64,
-                                  child: Align(
-                                    alignment: Alignment.bottomLeft,
-                                    child: _ThinkingMoon(),
-                                  ),
-                                ),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          }),
                           if (_tutorController.isLoadingMoreMessages.value)
                             Positioned(
                               top: 8,
@@ -349,6 +407,7 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
                       print('File picked: ${file.path}');
                       _animateToBottom();
                     },
+                    onScannerPressed: _handleScannerPressed,
                   ),
                 ],
               ),
@@ -359,7 +418,6 @@ class _LumiTutorMainState extends State<LumiTutorMain> {
     );
   }
 }
-
 
 class _ThinkingMoon extends StatelessWidget {
   const _ThinkingMoon({Key? key}) : super(key: key);

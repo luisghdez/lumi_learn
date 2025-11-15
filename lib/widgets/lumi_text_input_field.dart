@@ -8,6 +8,7 @@ class LumiTextInputField extends StatefulWidget {
   final String hintText;
   final void Function(File image)? onImagePicked;
   final void Function(File file)? onFilePicked;
+  final VoidCallback? onScannerPressed;
 
   const LumiTextInputField({
     Key? key,
@@ -15,6 +16,7 @@ class LumiTextInputField extends StatefulWidget {
     this.hintText = "Type your message...",
     this.onImagePicked,
     this.onFilePicked,
+    this.onScannerPressed,
   }) : super(key: key);
 
   @override
@@ -108,7 +110,14 @@ class _LumiTextInputFieldState extends State<LumiTextInputField> {
             //   onPressed: _handleAttachment,
             //   tooltip: 'Attach file or image',
             // ),
-            const SizedBox(width: 22),
+            const SizedBox(width: 6),
+            if (widget.onScannerPressed != null)
+              IconButton(
+                icon: const Icon(Icons.document_scanner_outlined,
+                    color: Colors.white60, size: 22),
+                onPressed: widget.onScannerPressed,
+                tooltip: 'Scan with AI',
+              ),
             Expanded(
               child: TextField(
                 controller: _controller,

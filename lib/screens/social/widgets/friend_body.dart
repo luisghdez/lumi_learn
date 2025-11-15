@@ -18,7 +18,7 @@ class FriendProfile extends StatelessWidget {
     if (profilePicture == null ||
         profilePicture.isEmpty ||
         profilePicture == "default") {
-      return 'assets/pfp/pfp1.png';
+      return 'assets/pfp/pfp28.png';
     }
     return 'assets/pfp/pfp$profilePicture.png';
   }
@@ -56,11 +56,12 @@ class FriendProfile extends StatelessWidget {
                 children: [
                   Center(
                     child: PfpViewer(
-                      offsetUp: -120,
+                      offsetUp: -70,
                       backgroundImage: AssetImage(
                           getProfilePicturePath(friend.profilePicture)),
                     ),
                   ),
+                  const SizedBox(height: 40),
                   // Info box
                   Container(
                     decoration: BoxDecoration(

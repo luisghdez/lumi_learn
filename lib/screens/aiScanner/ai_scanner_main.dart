@@ -16,8 +16,14 @@ import 'package:lumi_learn_app/screens/main/main_screen.dart';
 
 class AiScannerMain extends StatefulWidget {
   final List<CameraDescription> cameras;
+  final String?
+      existingThreadId; // If provided, add image to this thread instead of creating new one
 
-  const AiScannerMain({super.key, required this.cameras});
+  const AiScannerMain({
+    super.key,
+    required this.cameras,
+    this.existingThreadId,
+  });
 
   @override
   State<AiScannerMain> createState() => _AiScannerMainState();
@@ -116,19 +122,32 @@ class _AiScannerMainState extends State<AiScannerMain> {
     try {
       final tutorController = TutorController.instance;
 
-      // Start creating the image thread (this sets up the UI immediately)
-      tutorController.createImageThread(imagePath, category);
+      // Check if we should add to existing thread or create a new one
+      if (widget.existingThreadId != null) {
+        // Add image to existing thread
+        tutorController.sendImageToThread(
+          threadId: widget.existingThreadId!,
+          imagePath: imagePath,
+        );
 
-      Get.offAll(
-        () => MainScreen(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 300),
-      );
-      Get.to(
-        () => const LumiTutorMain(),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 300),
-      );
+        // Just pop back to the tutor screen
+        Get.back();
+        Get.back();
+      } else {
+        // Create a new image thread (this sets up the UI immediately)
+        tutorController.createImageThread(imagePath, category);
+
+        Get.offAll(
+          () => MainScreen(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 300),
+        );
+        Get.to(
+          () => const LumiTutorMain(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 300),
+        );
+      }
     } catch (e) {
       Get.snackbar(
         "Error",
