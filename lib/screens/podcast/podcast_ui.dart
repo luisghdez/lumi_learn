@@ -21,16 +21,16 @@ class PodcastUI extends StatelessWidget {
     if (controller.isLoading || controller.isGenerating) {
       return Stack(
         children: [
-          _buildMainContent(),
+          _buildMainContent(context),
           PodcastLoadingOverlay(controller: controller),
         ],
       );
     }
     
-    return _buildMainContent();
+    return _buildMainContent(context);
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -60,7 +60,13 @@ class PodcastUI extends StatelessWidget {
                       const SizedBox(height: 20),
                       PodcastCallInButton(controller: controller),
                       const SizedBox(height: 32),
-                      PodcastTranscript(controller: controller),
+                      
+                      // Transcript with fixed height
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5, // 50% of screen height
+                        child: PodcastTranscript(controller: controller),
+                      ),
+                      
                       const SizedBox(height: 40),
                     ],
                   ),

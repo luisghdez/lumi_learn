@@ -33,9 +33,9 @@ class PodcastCard extends StatelessWidget {
           child: OverflowBox(
             maxHeight: double.infinity,
             child: Transform.translate(
-              offset: const Offset(0, -80),
+              offset: const Offset(0, 0),
               child: Image.asset(
-                'assets/podcast/podcast.png',
+                'assets/podcast/podcast2.png',
                 fit: BoxFit.cover,
               ),
             ),
