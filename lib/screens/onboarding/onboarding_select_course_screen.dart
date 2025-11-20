@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
@@ -16,22 +17,324 @@ class OnboardingSelectCourseScreen extends StatefulWidget {
 }
 
 class _OnboardingSelectCourseScreenState
-    extends State<OnboardingSelectCourseScreen> {
+    extends State<OnboardingSelectCourseScreen> with TickerProviderStateMixin {
+  final Map<String, List<Map<String, dynamic>>> _coursesBySubject = {};
+  final Map<String, bool> _loadingSubjects = {};
+  bool _isInitialLoading = true;
+  late AnimationController _animationController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
-    // Fetch courses if not already loaded
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fetchCoursesBySubject();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playLoadSound() async {
+    try {
+      await _audioPlayer.setSource(AssetSource('sounds/onboarding2.mp3'));
+      await _audioPlayer.setVolume(1.0);
+      await _audioPlayer.resume();
+    } catch (e) {
+      print('Error playing load sound: $e');
+    }
+  }
+
+  Future<void> _fetchCoursesBySubject() async {
     final courseController = Get.find<CourseController>();
-    if (courseController.courses.isEmpty) {
-      courseController.fetchCourses();
+    final selectedSubjects = courseController.onboardingSelectedSubjects;
+
+    if (selectedSubjects.isEmpty) {
+      setState(() {
+        _isInitialLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isInitialLoading = true;
+      for (var subject in selectedSubjects) {
+        _loadingSubjects[subject] = true;
+        _coursesBySubject[subject] = [];
+      }
+    });
+    // Reset animation when starting a new load
+    _animationController.reset();
+
+    // Fetch courses for each subject (3 per subject)
+    final List<Future<void>> fetchFutures =
+        selectedSubjects.map((subject) async {
+      try {
+        final subjectCourses = await courseController.fetchAllCoursesBySubject(
+          subject: subject,
+          page: 1,
+          limit: 3,
+        );
+
+        if (mounted) {
+          setState(() {
+            _coursesBySubject[subject] = subjectCourses;
+            _loadingSubjects[subject] = false;
+          });
+        }
+      } catch (e) {
+        print('Error fetching courses for $subject: $e');
+        if (mounted) {
+          setState(() {
+            _loadingSubjects[subject] = false;
+          });
+        }
+      }
+    }).toList();
+
+    await Future.wait(fetchFutures);
+
+    if (mounted) {
+      setState(() {
+        _isInitialLoading = false;
+      });
+      // Play sound and trigger animation when loading finishes
+      _playLoadSound();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_animationController.status != AnimationStatus.completed) {
+          _animationController.forward();
+        }
+      });
     }
   }
 
   String _getGalaxyForCourse(String courseId) {
     // Simple hash-based selection
     final hash = courseId.hashCode.abs();
-    final galaxyIndex = (hash % 22) + 1;
+    final galaxyIndex = (hash % 18) + 1;
     return 'assets/galaxies/galaxy$galaxyIndex.png';
+  }
+
+  Widget _buildCoursesBySubject(CourseController courseController) {
+    final selectedSubjects = courseController.onboardingSelectedSubjects;
+
+    if (selectedSubjects.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.explore_off,
+              size: 48,
+              color: Colors.white60,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No subjects selected',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Please select subjects during onboarding',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    bool hasAnyCourses =
+        _coursesBySubject.values.any((courses) => courses.isNotEmpty);
+
+    if (!hasAnyCourses) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.explore_off,
+              size: 48,
+              color: Colors.white60,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No courses available',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Courses will appear here once they are created',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Calculate total course count for global indexing
+    int globalCourseIndex = 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: selectedSubjects.map<Widget>((subject) {
+        final courses = _coursesBySubject[subject] ?? [];
+        final isLoading = _loadingSubjects[subject] ?? false;
+
+        if (isLoading) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 32.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    subject,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (courses.isEmpty) {
+          return const SizedBox.shrink(); // Don't show empty subjects
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Subject Header
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  subject,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              // Courses for this subject
+              ...courses.asMap().entries.map<Widget>((entry) {
+                final course = entry.value;
+                final currentIndex = globalCourseIndex++;
+                final galaxyImagePath = _getGalaxyForCourse(course['id'] ?? '');
+                return FadeTransition(
+                  opacity: CurvedAnimation(
+                    parent: _animationController,
+                    curve: Interval(
+                      (currentIndex * 0.1).clamp(0.0, 0.8),
+                      1.0,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: RegularCategoryCard(
+                      courseId: course['id'] ?? '',
+                      courseName: course['title'] ?? 'Untitled',
+                      lessonCount: course['totalLessons'] ?? 0,
+                      bookmarkCount: course['savedCount'] ?? 0,
+                      imagePath: galaxyImagePath,
+                      tags: List<String>.from(course['tags'] ?? []),
+                      subject: course['subject'],
+                      hasEmbeddings: course['hasEmbeddings'] ?? false,
+                      onStartLearning: () async {
+                        // Prevent navigation if still loading
+                        if (course['loading'] == true) return;
+
+                        courseController.setSelectedCourseId(
+                          course['id'],
+                          course['title'],
+                          course['hasEmbeddings'],
+                        );
+
+                        Get.to(
+                          () => LoadingScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
+
+                        await Future.wait([
+                          Future.delayed(const Duration(milliseconds: 1000)),
+                          precacheImage(
+                            const AssetImage('assets/images/milky_way.png'),
+                            context,
+                          ),
+                        ]);
+
+                        while (courseController.isLoading.value) {
+                          await Future.delayed(
+                              const Duration(milliseconds: 100));
+                        }
+
+                        // Navigate to CourseOverviewScreen and clear onboarding stack
+                        Get.offAll(
+                          () => CourseOverviewScreen(),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -67,144 +370,59 @@ class _OnboardingSelectCourseScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Back button
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new,
-                            color: Colors.white),
-                        onPressed: () {
-                          Get.off(
-                            () => CourseCreation(fromOnboarding: true),
-                            transition: Transition.fadeIn,
-                            duration: const Duration(milliseconds: 500),
-                          );
-                        },
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white),
+                      onPressed: () {
+                        Get.off(
+                          () => CourseCreation(fromOnboarding: true),
+                          transition: Transition.fadeIn,
+                          duration: const Duration(milliseconds: 500),
+                        );
+                      },
+                    ),
+
+                    // Header
+                    SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Select an \nexisting course",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.playfairDisplay(
+                              color: Colors.white,
+                              fontSize: isTablet ? 60 : 44,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: -1.5,
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * 0.02),
+                          Text(
+                            "Choose a course to get started",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.75),
+                              fontSize: isTablet ? 20 : 16,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    // Header
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Select an \nexisting course",
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white,
-                            fontSize: isTablet ? 52 : 38,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Choose a course to get started",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
-                            fontSize: isTablet ? 22 : 18,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 30),
-                    // Course List
-                    Obx(() {
-                      final courses = courseController.courses;
-
-                      if (courses.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.explore_off,
-                                size: 48,
-                                color: Colors.white60,
+                    // Course List by Subject
+                    _isInitialLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
                               ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'No courses available',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Courses will appear here once they are created',
-                                style: TextStyle(
-                                  color: Colors.white60,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return Column(
-                        children: courses.map<Widget>((course) {
-                          final galaxyImagePath =
-                              _getGalaxyForCourse(course['id'] ?? '');
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: RegularCategoryCard(
-                              courseId: course['id'] ?? '',
-                              courseName: course['title'] ?? 'Untitled',
-                              lessonCount: course['totalLessons'] ?? 0,
-                              bookmarkCount: course['savedCount'] ?? 0,
-                              imagePath: galaxyImagePath,
-                              tags: List<String>.from(course['tags'] ?? []),
-                              subject: course['subject'],
-                              hasEmbeddings: course['hasEmbeddings'] ?? false,
-                              onStartLearning: () async {
-                                // Prevent navigation if still loading
-                                if (course['loading'] == true) return;
-
-                                courseController.setSelectedCourseId(
-                                  course['id'],
-                                  course['title'],
-                                  course['hasEmbeddings'],
-                                );
-
-                                Get.to(
-                                  () => LoadingScreen(),
-                                  transition: Transition.fadeIn,
-                                  duration: const Duration(milliseconds: 500),
-                                );
-
-                                await Future.wait([
-                                  Future.delayed(
-                                      const Duration(milliseconds: 1000)),
-                                  precacheImage(
-                                    const AssetImage(
-                                        'assets/images/milky_way.png'),
-                                    context,
-                                  ),
-                                ]);
-
-                                while (courseController.isLoading.value) {
-                                  await Future.delayed(
-                                      const Duration(milliseconds: 100));
-                                }
-
-                                // Navigate to CourseOverviewScreen and clear onboarding stack
-                                Get.offAll(
-                                  () => CourseOverviewScreen(),
-                                  transition: Transition.fadeIn,
-                                  duration: const Duration(milliseconds: 500),
-                                );
-                              },
                             ),
-                          );
-                        }).toList(),
-                      );
-                    }),
+                          )
+                        : _buildCoursesBySubject(courseController),
                   ],
                 ),
               ),

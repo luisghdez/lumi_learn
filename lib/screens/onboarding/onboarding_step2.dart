@@ -6,7 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 /// Step 2 of onboarding: Subject selection
 class OnboardingStep2 extends StatefulWidget {
   final String username;
-  final VoidCallback onComplete;
+  final Function(List<String> selectedSubjects) onComplete;
   final VoidCallback onBack;
   final VideoPlayerController videoController;
   final AudioPlayer audioPlayer;
@@ -177,7 +177,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
 
   final Set<String> _selectedSubjects = {};
 
-  bool get _canContinue => _selectedSubjects.isNotEmpty;
+  bool get _canContinue => _selectedSubjects.length >= 3;
 
   void _toggleSubject(String title) {
     setState(() {
@@ -190,6 +190,14 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
   }
 
   String get _headerLine {
+    final count = _selectedSubjects.length;
+    if (count < 3) {
+      final remaining = 3 - count;
+      if (widget.username.isEmpty) {
+        return "Select at least 3 subjects ($count selected, $remaining more needed)";
+      }
+      return "${widget.username}, select at least 3 subjects ($count selected, $remaining more needed)";
+    }
     if (widget.username.isEmpty) {
       return "What sparks your curiosity?";
     }
@@ -200,8 +208,8 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
     // Fade out the background music before transitioning
     await _fadeOutBackgroundMusic();
 
-    // Call the completion callback to move to video transition
-    widget.onComplete();
+    // Call the completion callback to move to video transition with selected subjects
+    widget.onComplete(_selectedSubjects.toList());
   }
 
   Future<void> _fadeOutBackgroundMusic() async {

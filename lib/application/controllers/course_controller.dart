@@ -34,6 +34,8 @@ class CourseController extends GetxController {
   var hasPreviousPage = false.obs;
   var totalCount = 0.obs;
   var currentSubject = ''.obs; // Track current subject filter
+  var onboardingSelectedSubjects =
+      <String>[].obs; // Subjects selected during onboarding
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   var selectedCourseHasEmbeddings = false.obs;
@@ -704,6 +706,44 @@ class CourseController extends GetxController {
   Future<void> fetchSavedCoursesForSubject(
       {String? subject, int page = 1, int limit = 10}) async {
     await fetchCourses(page: page, limit: limit, subject: subject);
+  }
+
+  // Method to fetch all courses by subject (for onboarding)
+  Future<List<Map<String, dynamic>>> fetchAllCoursesBySubject({
+    String? subject,
+    int page = 1,
+    int limit = 3,
+  }) async {
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return [];
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.getAllCourses(
+        token: token,
+        page: page,
+        limit: limit,
+        subject: subject,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final coursesList = data['courses'] as List?;
+        if (coursesList != null) {
+          return coursesList
+              .map((course) => course as Map<String, dynamic>)
+              .toList();
+        }
+      } else {
+        print('Failed to fetch all courses: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching all courses: $e');
+    }
+    return [];
   }
 
   // Method for home screen to fetch limited courses

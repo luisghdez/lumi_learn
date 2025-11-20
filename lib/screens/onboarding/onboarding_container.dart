@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_step1.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_step2.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_video_transition.dart';
@@ -98,7 +99,11 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
     });
   }
 
-  void _goToVideoTransition() {
+  void _goToVideoTransition(List<String> selectedSubjects) {
+    // Save selected subjects to CourseController
+    final courseController = Get.find<CourseController>();
+    courseController.onboardingSelectedSubjects.value = selectedSubjects;
+
     setState(() {
       _currentStep = 2;
     });

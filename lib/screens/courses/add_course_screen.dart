@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
@@ -12,7 +13,6 @@ import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons
 import 'package:lumi_learn_app/screens/courses/course_loading_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_select_course_screen.dart';
-import 'package:lumi_learn_app/constants.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
 class CourseCreation extends StatefulWidget {
@@ -295,76 +295,126 @@ class _CourseCreationState extends State<CourseCreation>
       Align(
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700),
+          constraints: const BoxConstraints(maxWidth: 600),
           child: Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 12, 12, 12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: greyBorder, width: 1),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Text(
-                  "Skip creating a course?",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    fontSize: 20,
-                    decoration: TextDecoration.none,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "You can always create a course later. For now, you can explore existing courses.",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white54,
-                    fontSize: 14,
-                    decoration: TextDecoration.none,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back(); // Close dialog
-                      // Navigate to course selection screen
-                      Get.offAll(
-                        () => OnboardingSelectCourseScreen(),
-                        transition: Transition.fadeIn,
-                        duration: const Duration(milliseconds: 500),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+            margin: const EdgeInsets.only(left: 20, right: 20, bottom: 40),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                      width: 1,
                     ),
-                    child: const Text(
-                      'Confirm Skip',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
+                        spreadRadius: 5,
                       ),
-                    ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Skip creating a course?",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 24,
+                          letterSpacing: -0.5,
+                          decoration: TextDecoration.none,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "You can always create a course later.\nFor now, you can explore existing courses.",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                          height: 1.5,
+                          decoration: TextDecoration.none,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Get.back(),
+                              style: TextButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: Colors.white.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                "Cancel",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.back(); // Close dialog
+                                // Navigate to course selection screen
+                                Get.offAll(
+                                  () => OnboardingSelectCourseScreen(),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 500),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                elevation: 0,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'Skip',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-              ],
+              ),
             ),
           ),
         ),
       ),
+      barrierColor: Colors.black.withOpacity(0.4),
       barrierDismissible: true,
     );
   }

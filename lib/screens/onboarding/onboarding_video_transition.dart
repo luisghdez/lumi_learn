@@ -65,9 +65,8 @@ class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
 
     final position = widget.videoController.value.position;
     final duration = widget.videoController.value.duration;
-    final isPlaying = widget.videoController.value.isPlaying;
 
-    // Start fading out audio 2 seconds before the end
+    // Start fading out audio 3 seconds before the end
     if (duration.inMilliseconds > 0 &&
         position.inMilliseconds >= duration.inMilliseconds - 3000 &&
         !_isFadingOut) {
@@ -75,14 +74,13 @@ class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
       _fadeOutAudio();
     }
 
-    // Check if video has reached the end (within 500ms of duration)
+    // Navigate to next screen 2 seconds before video ends
+    // This allows the next screen to fade in while the video is still playing
     if (duration.inMilliseconds > 0 &&
-        position.inMilliseconds >= duration.inMilliseconds - 500 &&
-        !isPlaying) {
-      // Video has finished playing
+        position.inMilliseconds >= duration.inMilliseconds - 2500 &&
+        !_hasCompleted) {
       _hasCompleted = true;
-      widget.videoController.removeListener(_videoListener);
-      // Wait 0.5 seconds before navigating to next screen
+      // We don't wait for video to stop or finish. We just hand off.
       if (mounted) {
         widget.onComplete();
       }
