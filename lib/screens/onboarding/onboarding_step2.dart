@@ -190,43 +190,24 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
   }
 
   String get _headerLine {
-    final count = _selectedSubjects.length;
-    if (count < 3) {
-      final remaining = 3 - count;
-      if (widget.username.isEmpty) {
-        return "Select at least 3 subjects ($count selected, $remaining more needed)";
-      }
-      return "${widget.username}, select at least 3 subjects ($count selected, $remaining more needed)";
-    }
     if (widget.username.isEmpty) {
       return "What sparks your curiosity?";
     }
     return "What sparks ${widget.username}'s curiosity?";
   }
 
-  void _handleFinishSetup() async {
-    // Fade out the background music before transitioning
-    await _fadeOutBackgroundMusic();
-
-    // Call the completion callback to move to video transition with selected subjects
-    widget.onComplete(_selectedSubjects.toList());
+  String get _progressText {
+    final count = _selectedSubjects.length;
+    if (count < 3) {
+      return "$count of 3 selected";
+    }
+    return "$count selected";
   }
 
-  Future<void> _fadeOutBackgroundMusic() async {
-    // Fade out over 1 second
-    const steps = 10;
-    const stepDuration = Duration(milliseconds: 100);
-
-    for (int i = steps; i >= 0; i--) {
-      if (!mounted) break;
-
-      final volume = i / steps;
-      await widget.audioPlayer.setVolume(volume);
-      await Future.delayed(stepDuration);
-    }
-
-    // Stop the audio player
-    await widget.audioPlayer.stop();
+  void _handleFinishSetup() async {
+    // Call the completion callback to move to video transition with selected subjects
+    // The video transition will handle fading out the audio
+    widget.onComplete(_selectedSubjects.toList());
   }
 
   Widget _buildCategoryHeader(String title) {
@@ -350,6 +331,16 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                             color: Colors.white.withOpacity(0.75),
                             fontSize: isTablet ? 20 : 16,
                             letterSpacing: 0.8,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.015),
+                        Text(
+                          _progressText,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: isTablet ? 16 : 14,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],

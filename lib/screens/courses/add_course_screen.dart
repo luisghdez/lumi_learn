@@ -19,12 +19,14 @@ class CourseCreation extends StatefulWidget {
   final String? classId;
   final bool fromOnboarding;
   final VideoPlayerController? videoController;
+  final AudioPlayer? onboardingAudioPlayer;
 
   const CourseCreation({
     Key? key,
     this.classId,
     this.fromOnboarding = false,
     this.videoController,
+    this.onboardingAudioPlayer,
   }) : super(key: key);
 
   @override
@@ -48,11 +50,23 @@ class _CourseCreationState extends State<CourseCreation>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _entryFadeAnimation; // New animation for screen entry
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  late final AudioPlayer _audioPlayer;
+  late final AudioPlayer _onboardingAudio;
+  bool _shouldDisposeOnboardingAudio = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize audio players
+    _audioPlayer = AudioPlayer();
+    if (widget.onboardingAudioPlayer != null) {
+      _onboardingAudio = widget.onboardingAudioPlayer!;
+      _shouldDisposeOnboardingAudio = false;
+    } else {
+      _onboardingAudio = AudioPlayer();
+      _shouldDisposeOnboardingAudio = true;
+    }
 
     // Play glow sound if coming from onboarding
     if (widget.fromOnboarding) {
@@ -107,7 +121,7 @@ class _CourseCreationState extends State<CourseCreation>
   Future<void> _playEntrySound() async {
     try {
       await _audioPlayer.setSource(AssetSource('sounds/glow.mp3'));
-      await _audioPlayer.setVolume(1.0);
+      await _audioPlayer.setVolume(1.5);
       await _audioPlayer.resume();
     } catch (e) {
       print('Error playing entry sound: $e');
@@ -120,6 +134,9 @@ class _CourseCreationState extends State<CourseCreation>
     _progressController.dispose();
     _entryController.dispose();
     _audioPlayer.dispose();
+    if (_shouldDisposeOnboardingAudio) {
+      _onboardingAudio.dispose();
+    }
     // Dispose video controller if it was passed from onboarding
     widget.videoController?.dispose();
     super.dispose();
@@ -380,7 +397,9 @@ class _CourseCreationState extends State<CourseCreation>
                                 Get.back(); // Close dialog
                                 // Navigate to course selection screen
                                 Get.offAll(
-                                  () => OnboardingSelectCourseScreen(),
+                                  () => OnboardingSelectCourseScreen(
+                                    onboardingAudioPlayer: _onboardingAudio,
+                                  ),
                                   transition: Transition.fadeIn,
                                   duration: const Duration(milliseconds: 500),
                                 );
@@ -453,6 +472,13 @@ class _CourseCreationState extends State<CourseCreation>
     // Check if user has available course slots before proceeding
     if (!courseController.checkCourseSlotAvailable()) {
       return; // Popup is shown, don't navigate
+    }
+
+    // Stop and dispose onboarding audio if it exists
+    if (widget.fromOnboarding) {
+      _onboardingAudio.stop();
+      _onboardingAudio.dispose();
+      _shouldDisposeOnboardingAudio = false; // Already disposed
     }
 
     // Start the course creation process and get the Future

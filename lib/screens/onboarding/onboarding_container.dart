@@ -57,7 +57,7 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
     try {
       await _audioPlayer.setSource(AssetSource('sounds/onboarding1.mp3'));
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.setVolume(1.0);
+      await _audioPlayer.setVolume(0.8);
       await _audioPlayer.resume();
     } catch (e) {
       print('Error initializing audio: $e');
@@ -68,8 +68,8 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
   void dispose() {
     if (_shouldDisposeController) {
       _videoController.dispose();
+      _audioPlayer.dispose();
     }
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -81,6 +81,7 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
       () => CourseCreation(
         fromOnboarding: true,
         videoController: _videoController,
+        onboardingAudioPlayer: _audioPlayer,
       ),
       transition: Transition.noTransition,
     );
@@ -142,6 +143,7 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
                   : OnboardingVideoTransition(
                       key: const ValueKey('video'),
                       videoController: _videoController,
+                      audioPlayer: _audioPlayer,
                       onComplete: _completeOnboarding,
                     ),
         ),

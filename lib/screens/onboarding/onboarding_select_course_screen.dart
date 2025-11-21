@@ -9,7 +9,12 @@ import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/widgets/regular_category_card.dart';
 
 class OnboardingSelectCourseScreen extends StatefulWidget {
-  const OnboardingSelectCourseScreen({Key? key}) : super(key: key);
+  final AudioPlayer? onboardingAudioPlayer;
+
+  const OnboardingSelectCourseScreen({
+    Key? key,
+    this.onboardingAudioPlayer,
+  }) : super(key: key);
 
   @override
   State<OnboardingSelectCourseScreen> createState() =>
@@ -22,11 +27,24 @@ class _OnboardingSelectCourseScreenState
   final Map<String, bool> _loadingSubjects = {};
   bool _isInitialLoading = true;
   late AnimationController _animationController;
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  late final AudioPlayer _audioPlayer;
+  late final AudioPlayer _onboardingAudio;
+  bool _shouldDisposeOnboardingAudio = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize audio players
+    _audioPlayer = AudioPlayer();
+    if (widget.onboardingAudioPlayer != null) {
+      _onboardingAudio = widget.onboardingAudioPlayer!;
+      _shouldDisposeOnboardingAudio = false;
+    } else {
+      _onboardingAudio = AudioPlayer();
+      _shouldDisposeOnboardingAudio = true;
+    }
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -38,6 +56,9 @@ class _OnboardingSelectCourseScreenState
   void dispose() {
     _animationController.dispose();
     _audioPlayer.dispose();
+    if (_shouldDisposeOnboardingAudio) {
+      _onboardingAudio.dispose();
+    }
     super.dispose();
   }
 
@@ -284,7 +305,8 @@ class _OnboardingSelectCourseScreenState
                     child: RegularCategoryCard(
                       courseId: course['id'] ?? '',
                       courseName: course['title'] ?? 'Untitled',
-                      lessonCount: course['totalLessons'] ?? 0,
+                      lessonCount:
+                          course['lessonCount'] ?? course['totalLessons'] ?? 0,
                       bookmarkCount: course['savedCount'] ?? 0,
                       imagePath: galaxyImagePath,
                       tags: List<String>.from(course['tags'] ?? []),
@@ -318,6 +340,12 @@ class _OnboardingSelectCourseScreenState
                           await Future.delayed(
                               const Duration(milliseconds: 100));
                         }
+
+                        // Stop and dispose onboarding audio
+                        await _onboardingAudio.stop();
+                        _onboardingAudio.dispose();
+                        _shouldDisposeOnboardingAudio =
+                            false; // Already disposed
 
                         // Navigate to CourseOverviewScreen and clear onboarding stack
                         Get.offAll(
@@ -375,7 +403,10 @@ class _OnboardingSelectCourseScreenState
                           color: Colors.white),
                       onPressed: () {
                         Get.off(
-                          () => CourseCreation(fromOnboarding: true),
+                          () => CourseCreation(
+                            fromOnboarding: true,
+                            onboardingAudioPlayer: _onboardingAudio,
+                          ),
                           transition: Transition.fadeIn,
                           duration: const Duration(milliseconds: 500),
                         );

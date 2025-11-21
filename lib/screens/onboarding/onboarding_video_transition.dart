@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class OnboardingVideoTransition extends StatefulWidget {
   final VideoPlayerController videoController;
   final VoidCallback onComplete;
+  final AudioPlayer? audioPlayer;
 
   const OnboardingVideoTransition({
     super.key,
     required this.videoController,
     required this.onComplete,
+    this.audioPlayer,
   });
 
   @override
@@ -18,7 +21,7 @@ class OnboardingVideoTransition extends StatefulWidget {
 
 class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
   bool _hasCompleted = false;
-  bool _isFadingOut = false;
+  bool _isFadingOutVideo = false;
 
   @override
   void initState() {
@@ -28,6 +31,8 @@ class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
 
   void _playVideo() async {
     try {
+      // Keep onboarding audio playing - don't fade it out
+
       // Ensure video is initialized
       if (!widget.videoController.value.isInitialized) {
         await widget.videoController.initialize();
@@ -66,16 +71,17 @@ class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
     final position = widget.videoController.value.position;
     final duration = widget.videoController.value.duration;
 
-    // Start fading out audio 3 seconds before the end
+    // Start fading out video audio 3 seconds before the end
     if (duration.inMilliseconds > 0 &&
         position.inMilliseconds >= duration.inMilliseconds - 3000 &&
-        !_isFadingOut) {
-      _isFadingOut = true;
-      _fadeOutAudio();
+        !_isFadingOutVideo) {
+      _isFadingOutVideo = true;
+      _fadeOutVideoAudio();
     }
 
     // Navigate to next screen 2 seconds before video ends
     // This allows the next screen to fade in while the video is still playing
+    // Onboarding audio keeps playing throughout
     if (duration.inMilliseconds > 0 &&
         position.inMilliseconds >= duration.inMilliseconds - 2500 &&
         !_hasCompleted) {
@@ -87,7 +93,7 @@ class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
     }
   }
 
-  void _fadeOutAudio() async {
+  void _fadeOutVideoAudio() async {
     // Fade out over 2 seconds
     const steps = 20;
     const stepDuration = Duration(milliseconds: 100);
