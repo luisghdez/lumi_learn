@@ -42,9 +42,6 @@ class _OnboardingVideoTransitionState extends State<OnboardingVideoTransition> {
       await widget.videoController.seekTo(Duration.zero);
       await widget.videoController.setVolume(1.0);
 
-      // Small delay to ensure seek completes
-      await Future.delayed(const Duration(milliseconds: 100));
-
       // Listen for video completion BEFORE playing
       widget.videoController.addListener(_videoListener);
 
