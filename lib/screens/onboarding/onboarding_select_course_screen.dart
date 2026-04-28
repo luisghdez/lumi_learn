@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
@@ -603,6 +604,10 @@ class _OnboardingSelectCourseScreenState
     await _onboardingAudio.stop();
     _onboardingAudio.dispose();
     _shouldDisposeOnboardingAudio = false; // Already disposed
+
+    // Complete onboarding when course is selected
+    final authController = Get.find<AuthController>();
+    await authController.completeOnboarding();
 
     Get.offAll(
       () => const CourseOverviewScreen(),

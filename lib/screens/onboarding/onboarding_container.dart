@@ -74,7 +74,6 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
   }
 
   void _completeOnboarding() {
-    authController.hasCompletedOnboarding.value = true;
     _shouldDisposeController = false; // Pass ownership to next screen
 
     Get.offAll(

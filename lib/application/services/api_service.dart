@@ -384,6 +384,21 @@ class ApiService {
     );
   }
 
+  static Future<void> updateOnboardingStatus(
+      String token, bool hasCompletedOnboarding) async {
+    final uri = Uri.parse('$_baseUrl/users/me');
+    await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'hasCompletedOnboarding': hasCompletedOnboarding,
+      }),
+    );
+  }
+
   static Future<void> deleteUserData(String token) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/users/me'),

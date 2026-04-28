@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
@@ -460,7 +461,7 @@ class _CourseCreationState extends State<CourseCreation>
     return totalItems > 0;
   }
 
-  void _createCourse() {
+  Future<void> _createCourse() async {
     if (!_canCreateCourse) {
       Get.snackbar(
           "Missing Content", "Please add content before creating the course.");
@@ -479,6 +480,10 @@ class _CourseCreationState extends State<CourseCreation>
       _onboardingAudio.stop();
       _onboardingAudio.dispose();
       _shouldDisposeOnboardingAudio = false; // Already disposed
+
+      // Complete onboarding when course is created
+      final authController = Get.find<AuthController>();
+      await authController.completeOnboarding();
     }
 
     // Start the course creation process and get the Future
