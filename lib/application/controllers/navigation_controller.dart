@@ -9,9 +9,9 @@ class NavigationController extends GetxController {
     final previousIndex = currentIndex.value;
     currentIndex.value = index;
 
-    // When navigating back to home screen from another screen,
+    // When navigating back to the courses screen from another screen,
     // refetch the courses to show the 5 most recently accessed ones
-    if (index == 0 && previousIndex != 0) {
+    if (index == 1 && previousIndex != 1) {
       try {
         final CourseController courseController = Get.find<CourseController>();
         courseController.fetchCoursesForHome();

@@ -53,9 +53,9 @@ class ClassroomsScreen extends StatelessWidget {
               onTap: () {
                 Get.to(
                   () => AgeSelectionScreen(
-                    onCompleteOnboarding: () {
+                    onCompleteOnboarding: () async {
                       authController.setUserRole(UserRole.student);
-                      authController.hasCompletedOnboarding.value = true;
+                      await authController.completeOnboarding();
                     },
                   ),
                   transition: Transition.fadeIn,
@@ -67,9 +67,9 @@ class ClassroomsScreen extends StatelessWidget {
             RoleSelectionCard(
               title: 'Teacher',
               description: 'Manage classes and help students learn.',
-              onTap: () {
+              onTap: () async {
                 authController.setUserRole(UserRole.teacher);
-                authController.hasCompletedOnboarding.value = true;
+                await authController.completeOnboarding();
               },
             ),
           ],

@@ -42,18 +42,22 @@ class AuthController extends GetxController {
   void onReady() {
     super.onReady();
     _auth.authStateChanges().listen((User? user) async {
+      isAuthInitialized.value = false;
       firebaseUser.value = user;
-      isAuthInitialized.value = true;
 
-      if (user != null) {
-        // Link RevenueCat to Firebase user UID
-        await Purchases.logIn(user.uid);
-        await updateProStatus();
+      try {
+        if (user != null) {
+          // Link RevenueCat to Firebase user UID
+          await Purchases.logIn(user.uid);
+          await updateProStatus();
 
-        await fetchUserData();
-      } else {
-        // Clear out userDoc when logged out
-        userDoc.value = {};
+          await fetchUserData();
+        } else {
+          // Clear out userDoc when logged out
+          userDoc.value = {};
+        }
+      } finally {
+        isAuthInitialized.value = true;
       }
     });
   }
@@ -102,17 +106,24 @@ class AuthController extends GetxController {
       final response =
           await ApiService.getUserData(token: token, userId: userId);
       final data = jsonDecode(response.body);
+      final userData = data['user'] as Map<String, dynamic>? ?? {};
+      final hasOnboardingField = userData.containsKey('hasCompletedOnboarding');
+      if (!hasOnboardingField) {
+        userData['hasCompletedOnboarding'] = true;
+        data['user'] = userData;
+      }
 
       userDoc.value = data;
-      streakCount.value = data['user']['streakCount'] ?? 0;
-      xpCount.value = data['user']['xpCount'] ?? 0;
-      courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
-      maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
-      friendCount.value = data['user']['friendCount'] ?? 0;
-      name.value = data['user']['name'] ?? '';
-      hasCompletedOnboarding.value =
-          data['user']['hasCompletedOnboarding'] ?? false;
-      final serverTimezone = data['user']['timezone'] ?? '';
+      streakCount.value = userData['streakCount'] ?? 0;
+      xpCount.value = userData['xpCount'] ?? 0;
+      courseSlotsUsed.value = userData['courseSlotsUsed'] ?? 0;
+      maxCourseSlots.value = userData['maxCourseSlots'] ?? 2;
+      friendCount.value = userData['friendCount'] ?? 0;
+      name.value = userData['name'] ?? '';
+      hasCompletedOnboarding.value = hasOnboardingField
+          ? userData['hasCompletedOnboarding'] == true
+          : true;
+      final serverTimezone = userData['timezone'] ?? '';
 
       // Get the current device timezone
       final currentTimezone = await getIanaTimezoneId();
@@ -433,6 +444,15 @@ class AuthController extends GetxController {
   Future<void> completeOnboarding() async {
     // Update local state
     hasCompletedOnboarding.value = true;
+    userDoc.update('user', (value) {
+      if (value is Map<String, dynamic>) {
+        return {
+          ...value,
+          'hasCompletedOnboarding': true,
+        };
+      }
+      return value;
+    }, ifAbsent: () => {'hasCompletedOnboarding': true});
 
     // Send backend request to update onboarding status
     try {

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import '../application/controllers/navigation_controller.dart';
 import '../utils/constants.dart';
-import '../screens/lumiTutor/lumi_tutor_main.dart'; // 👈 import the screen
 
 class BottomNavbar extends StatefulWidget {
-  const BottomNavbar({Key? key}) : super(key: key);
+  const BottomNavbar({super.key});
 
   @override
   State<BottomNavbar> createState() => _HideableNavBarPageState();
@@ -46,7 +44,7 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -70,12 +68,6 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                             transition: Transition.fadeIn,
                             duration: const Duration(milliseconds: 400),
                           );
-                        } else if (index == 3) {
-                          Get.to(
-                            () => const LumiTutorMain(),
-                            transition: Transition.fadeIn,
-                            duration: const Duration(milliseconds: 400),
-                          );
                         } else {
                           navigationController.updateIndex(index);
                         }
@@ -86,25 +78,13 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
                           label: Constants.home,
                         ),
                         BottomNavigationBarItem(
-                          icon: Icon(Icons.search),
-                          label: 'Search',
+                          icon: Icon(Icons.menu_book_outlined),
+                          label: 'Courses',
                         ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.add_circle_outline),
                           label: 'Add',
                         ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.chat_bubble_outline),
-                          label: 'LumiTutor',
-                        ),
-                        // BottomNavigationBarItem(
-                        //   icon: Icon(Icons.emoji_events), // Leaderboard (Trophy)
-                        //   label: Constants.leaderboard,
-                        // ),
-                        // BottomNavigationBarItem(
-                        //   icon: Icon(Icons.school), // Leaderboard (Trophy)
-                        //   label: Constants.classrooms,
-                        // ),
                         BottomNavigationBarItem(
                           icon: Icon(Icons.person),
                           label: Constants.profile,
