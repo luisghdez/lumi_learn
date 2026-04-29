@@ -73,12 +73,17 @@ class ApiService {
     int limit = 10,
     String? subject,
   }) async {
-    String url = '$_baseUrl/courses?page=$page&limit=$limit';
+    final queryParameters = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
     if (subject != null && subject.isNotEmpty && subject != 'all') {
-      url += '&subject=$subject';
+      queryParameters['subject'] = subject;
     }
 
-    final uri = Uri.parse(url);
+    final uri = Uri.parse('$_baseUrl/courses').replace(
+      queryParameters: queryParameters,
+    );
     final response = await http.get(
       uri,
       headers: {
@@ -113,12 +118,17 @@ class ApiService {
     print(
         "getting all courses${subject != null ? ' for subject: $subject' : ''} (page: $page, limit: $limit)");
 
-    String url = '$_baseUrl/courses/all?page=$page&limit=$limit';
+    final queryParameters = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
     if (subject != null && subject.isNotEmpty && subject != 'all') {
-      url += '&subject=$subject';
+      queryParameters['subject'] = subject;
     }
 
-    final uri = Uri.parse(url);
+    final uri = Uri.parse('$_baseUrl/courses/all').replace(
+      queryParameters: queryParameters,
+    );
     final response = await http.get(
       uri,
       headers: {
@@ -380,6 +390,21 @@ class ApiService {
       },
       body: jsonEncode({
         'timezone': timezone,
+      }),
+    );
+  }
+
+  static Future<void> updateOnboardingStatus(
+      String token, bool hasCompletedOnboarding) async {
+    final uri = Uri.parse('$_baseUrl/users/me');
+    await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'hasCompletedOnboarding': hasCompletedOnboarding,
       }),
     );
   }

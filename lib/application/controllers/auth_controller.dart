@@ -110,6 +110,8 @@ class AuthController extends GetxController {
       maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
       friendCount.value = data['user']['friendCount'] ?? 0;
       name.value = data['user']['name'] ?? '';
+      hasCompletedOnboarding.value =
+          data['user']['hasCompletedOnboarding'] ?? false;
       final serverTimezone = data['user']['timezone'] ?? '';
 
       // Get the current device timezone
@@ -425,6 +427,22 @@ class AuthController extends GetxController {
       Get.snackbar("Account Deleted", "Your account has been deleted.");
     } catch (e) {
       Get.snackbar("Error", "Failed to delete account: ${e.toString()}");
+    }
+  }
+
+  Future<void> completeOnboarding() async {
+    // Update local state
+    hasCompletedOnboarding.value = true;
+
+    // Send backend request to update onboarding status
+    try {
+      final token = await getIdToken();
+      if (token != null) {
+        await ApiService.updateOnboardingStatus(token, true);
+      }
+    } catch (e) {
+      print('Error updating onboarding status: $e');
+      // Continue even if API call fails
     }
   }
 

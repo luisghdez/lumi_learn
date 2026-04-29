@@ -1,7 +1,11 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
@@ -9,11 +13,22 @@ import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart'
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
 import 'package:lumi_learn_app/screens/courses/course_loading_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
+import 'package:lumi_learn_app/screens/onboarding/onboarding_select_course_screen.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
 class CourseCreation extends StatefulWidget {
   final String? classId;
-  const CourseCreation({Key? key, this.classId}) : super(key: key);
+  final bool fromOnboarding;
+  final VideoPlayerController? videoController;
+  final AudioPlayer? onboardingAudioPlayer;
+
+  const CourseCreation({
+    Key? key,
+    this.classId,
+    this.fromOnboarding = false,
+    this.videoController,
+    this.onboardingAudioPlayer,
+  }) : super(key: key);
 
   @override
   State<CourseCreation> createState() => _CourseCreationState();
@@ -32,12 +47,43 @@ class _CourseCreationState extends State<CourseCreation>
   // Animation controllers
   late AnimationController _stepController;
   late AnimationController _progressController;
+  late AnimationController _entryController; // New controller for screen entry
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _entryFadeAnimation; // New animation for screen entry
+  late final AudioPlayer _audioPlayer;
+  late final AudioPlayer _onboardingAudio;
+  bool _shouldDisposeOnboardingAudio = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize audio players
+    _audioPlayer = AudioPlayer();
+    if (widget.onboardingAudioPlayer != null) {
+      _onboardingAudio = widget.onboardingAudioPlayer!;
+      _shouldDisposeOnboardingAudio = false;
+    } else {
+      _onboardingAudio = AudioPlayer();
+      _shouldDisposeOnboardingAudio = true;
+    }
+
+    // Play glow sound if coming from onboarding
+    if (widget.fromOnboarding) {
+      _playEntrySound();
+    }
+
+    // Initialize entry animation
+    _entryController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _entryFadeAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOut,
+    );
 
     // Initialize step transition animation
     _stepController = AnimationController(
@@ -70,12 +116,30 @@ class _CourseCreationState extends State<CourseCreation>
     // Start initial animations
     _stepController.forward();
     _progressController.forward();
+    _entryController.forward();
+  }
+
+  Future<void> _playEntrySound() async {
+    try {
+      await _audioPlayer.setSource(AssetSource('sounds/glow.mp3'));
+      await _audioPlayer.setVolume(1.5);
+      await _audioPlayer.resume();
+    } catch (e) {
+      print('Error playing entry sound: $e');
+    }
   }
 
   @override
   void dispose() {
     _stepController.dispose();
     _progressController.dispose();
+    _entryController.dispose();
+    _audioPlayer.dispose();
+    if (_shouldDisposeOnboardingAudio) {
+      _onboardingAudio.dispose();
+    }
+    // Dispose video controller if it was passed from onboarding
+    widget.videoController?.dispose();
     super.dispose();
   }
 
@@ -234,6 +298,147 @@ class _CourseCreationState extends State<CourseCreation>
     }
   }
 
+  void _handleBackNavigation() {
+    if (_currentStep > 0) {
+      // If on step 1, go back to step 0
+      _previousStep();
+    } else {
+      // Otherwise, use default back navigation
+      Get.back();
+    }
+  }
+
+  void _showSkipConfirmationDialog() {
+    Get.dialog(
+      Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Container(
+            margin: const EdgeInsets.only(left: 20, right: 20, bottom: 40),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Skip creating a course?",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 24,
+                          letterSpacing: -0.5,
+                          decoration: TextDecoration.none,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "You can always create a course later.\nFor now, you can explore existing courses.",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                          height: 1.5,
+                          decoration: TextDecoration.none,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Get.back(),
+                              style: TextButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: Colors.white.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                "Cancel",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.back(); // Close dialog
+                                // Navigate to course selection screen
+                                Get.offAll(
+                                  () => OnboardingSelectCourseScreen(
+                                    onboardingAudioPlayer: _onboardingAudio,
+                                  ),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 500),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                elevation: 0,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'Skip',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      barrierColor: Colors.black.withOpacity(0.4),
+      barrierDismissible: true,
+    );
+  }
+
   void _clearAllContent() {
     selectedFiles.clear();
     selectedImages.clear();
@@ -256,7 +461,7 @@ class _CourseCreationState extends State<CourseCreation>
     return totalItems > 0;
   }
 
-  void _createCourse() {
+  Future<void> _createCourse() async {
     if (!_canCreateCourse) {
       Get.snackbar(
           "Missing Content", "Please add content before creating the course.");
@@ -268,6 +473,17 @@ class _CourseCreationState extends State<CourseCreation>
     // Check if user has available course slots before proceeding
     if (!courseController.checkCourseSlotAvailable()) {
       return; // Popup is shown, don't navigate
+    }
+
+    // Stop and dispose onboarding audio if it exists
+    if (widget.fromOnboarding) {
+      _onboardingAudio.stop();
+      _onboardingAudio.dispose();
+      _shouldDisposeOnboardingAudio = false; // Already disposed
+
+      // Complete onboarding when course is created
+      final authController = Get.find<AuthController>();
+      await authController.completeOnboarding();
     }
 
     // Start the course creation process and get the Future
@@ -313,6 +529,7 @@ class _CourseCreationState extends State<CourseCreation>
         return InputTypeSelectionStep(
           selectedInputType: _selectedInputType,
           onInputTypeSelected: _selectInputType,
+          fromOnboarding: widget.fromOnboarding,
         );
       case 1:
         return ContentUploadStep(
@@ -330,6 +547,7 @@ class _CourseCreationState extends State<CourseCreation>
         return InputTypeSelectionStep(
           selectedInputType: _selectedInputType,
           onInputTypeSelected: _selectInputType,
+          fromOnboarding: widget.fromOnboarding,
         );
     }
   }
@@ -347,45 +565,102 @@ class _CourseCreationState extends State<CourseCreation>
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffoldHome(
-      body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: SingleChildScrollView(
-          child: Center(
-            child: Column(
-              children: [
-                /// CARD HEADER
-                SizedBox(
-                  height: 56, // adjust to taste
-                  child: Stack(
-                    children: [
-                      // 2) back button on the left
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new,
-                              color: Colors.white),
-                          onPressed: () => Get.back(),
-                        ),
+    Widget? backgroundWidget;
+    if (widget.videoController != null &&
+        widget.videoController!.value.isInitialized) {
+      backgroundWidget = Stack(
+        children: [
+          Positioned.fill(
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: widget.videoController!.value.size.width,
+                height: widget.videoController!.value.size.height,
+                child: VideoPlayer(widget.videoController!),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.3),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          _handleBackNavigation();
+        }
+      },
+      child: AppScaffoldHome(
+        backgroundWidget: backgroundWidget,
+        body: FadeTransition(
+          opacity: _entryFadeAnimation,
+          child: GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            child: SingleChildScrollView(
+              child: Center(
+                child: Column(
+                  children: [
+                    /// CARD HEADER
+                    SizedBox(
+                      height: 56, // adjust to taste
+                      child: Stack(
+                        children: [
+                          // Back button on the left (hidden when from onboarding)
+                          if (!widget.fromOnboarding)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back_ios_new,
+                                    color: Colors.white),
+                                onPressed: _handleBackNavigation,
+                              ),
+                            ),
+                          // Skip button on the right (only when from onboarding)
+                          if (widget.fromOnboarding)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _showSkipConfirmationDialog,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0, vertical: 8),
+                                  child: Text(
+                                    "Skip",
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Step Indicator
+                    _buildStepIndicator(),
+
+                    // Step Content
+                    _buildStepContent(),
+
+                    // Navigation Buttons
+                    _buildNavigationButtons(),
+
+                    const SizedBox(height: 36),
+                  ],
                 ),
-                const SizedBox(height: 4),
-
-                // Step Indicator
-                _buildStepIndicator(),
-
-                // Step Content
-                _buildStepContent(),
-
-                // Navigation Buttons
-                _buildNavigationButtons(),
-
-                const SizedBox(height: 36),
-              ],
+              ),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/drop_zone.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/file_list.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/image_preview_list.dart';
@@ -46,14 +47,13 @@ class ContentUploadStep extends StatelessWidget {
   Widget _buildFileUploadStep() {
     return Column(
       children: [
-        const Text(
-          "Upload Files",
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text("Upload Files",
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+              letterSpacing: -1.5,
+            )),
         const SizedBox(height: 8),
         Text(
           "Upload your documents and files",
@@ -95,14 +95,13 @@ class ContentUploadStep extends StatelessWidget {
   Widget _buildImagesUploadStep() {
     return Column(
       children: [
-        const Text(
-          "Upload Images",
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text("Upload Images",
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+              letterSpacing: -1.5,
+            )),
         const SizedBox(height: 8),
         Text(
           "Upload your photos and graphics",
@@ -143,14 +142,13 @@ class ContentUploadStep extends StatelessWidget {
   Widget _buildTextInputStep() {
     return Column(
       children: [
-        const Text(
-          "Add Text Content",
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text("Add Text Content",
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+              letterSpacing: -1.5,
+            )),
         const SizedBox(height: 8),
         Text(
           "Enter your text content",
