@@ -25,6 +25,57 @@ class OnboardingSelectCourseScreen extends StatefulWidget {
 
 class _OnboardingSelectCourseScreenState
     extends State<OnboardingSelectCourseScreen> with TickerProviderStateMixin {
+  static const Map<String, List<String>> _subjectAliases = {
+    'AP Biology': ['Biology'],
+    'AP Physics 1': ['Physics'],
+    'AP Physics 2': ['Physics'],
+    'AP Physics C: E&M': ['Physics', 'Electrical Engineering'],
+    'AP Physics C: Mechanics': ['Physics'],
+    'AP Chemistry': ['Chemistry'],
+    'AP Environmental Science': ['Environmental Science', 'Environmental'],
+    'Electrical Engineering': ['Physics', 'Computer Science'],
+    'AP Computer Science A': ['Computer Science', 'Computer S.'],
+    'Computer Science / Programming': ['Computer Science', 'Computer S.'],
+    'AP Computer Science Principles': ['Computer Science', 'Computer S.'],
+    'Honors Computer Education': ['Computer Science', 'Computer S.'],
+    'Health & Medicine': ['Biology'],
+    'Algebra 1': ['Algebra'],
+    'Algebra 2': ['Algebra'],
+    'Trigonometry': ['Algebra', 'Geometry'],
+    'Pre-Calculus': ['Calculus', 'Algebra'],
+    'Calculus 1': ['Calculus'],
+    'AP Statistics': ['Statistics'],
+    'AP Pre-Calculus': ['Calculus', 'Algebra'],
+    'Differential Equations': ['Calculus'],
+    'AP Business with Personal Finance': ['Finance', 'General Business'],
+    'AP US Government & Politics': ['U.S. History', 'US History', 'Civics'],
+    'US History': ['U.S. History'],
+    'AP US History': ['U.S. History', 'US History'],
+    'AP European History': ['European History'],
+    'AP World History': ['World History'],
+    'AP Human Geography': ['World Geography', 'World History', 'Sociology'],
+    'AP Comparative Government & Politics': ['World History', 'U.S. History'],
+    'AP Psychology': ['Psychology'],
+    'AP Macroeconomics': ['Macroeconomics'],
+    'AP Microeconomics': ['Microeconomics'],
+    'World Geography': ['World History'],
+    'AP African American Studies': ['U.S. History', 'US History'],
+    'Civics': ['U.S. History', 'US History'],
+    'AP Research': ['Philosophy', 'Sociology'],
+    'AP English Language': ['Foreign Languages', 'Philosophy'],
+    'AP English Literature': ['Art & Design', 'Philosophy'],
+    'AP Music Theory': ['Music'],
+    'AP Art History': ['Art History', 'Art & Design'],
+    'AP Spanish Language': ['Foreign Languages'],
+    'AP Spanish Literature': ['Foreign Languages'],
+    'AP French': ['Foreign Languages'],
+    'AP German': ['Foreign Languages'],
+    'AP Chinese': ['Foreign Languages'],
+    'AP Italian': ['Foreign Languages'],
+    'AP Japanese': ['Foreign Languages'],
+    'AP Latin': ['Foreign Languages'],
+  };
+
   final Map<String, List<Map<String, dynamic>>> _coursesBySubject = {};
   final Map<String, bool> _loadingSubjects = {};
   bool _isInitialLoading = true;
@@ -99,7 +150,8 @@ class _OnboardingSelectCourseScreenState
     final List<Future<void>> fetchFutures =
         selectedSubjects.map((subject) async {
       try {
-        final subjectCourses = await courseController.fetchAllCoursesBySubject(
+        final subjectCourses = await _fetchCoursesForSubjectWithAliases(
+          courseController,
           subject: subject,
           page: 1,
           limit: 3,
@@ -135,6 +187,45 @@ class _OnboardingSelectCourseScreenState
         }
       });
     }
+  }
+
+  List<String> _getSubjectAliases(String subject) {
+    final aliases = _subjectAliases[subject] ?? const [];
+    return [
+      subject,
+      ...aliases,
+    ].where((value) => value.trim().isNotEmpty).toSet().toList();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchCoursesForSubjectWithAliases(
+    CourseController courseController, {
+    required String subject,
+    required int page,
+    required int limit,
+  }) async {
+    final Map<String, Map<String, dynamic>> coursesById = {};
+
+    for (final subjectQuery in _getSubjectAliases(subject)) {
+      if (coursesById.length >= limit) break;
+
+      final courses = await courseController.fetchAllCoursesBySubject(
+        subject: subjectQuery,
+        page: page,
+        limit: limit,
+      );
+
+      for (final course in courses) {
+        final id = course['id']?.toString();
+        if (id == null || id.isEmpty || coursesById.containsKey(id)) {
+          continue;
+        }
+
+        coursesById[id] = course;
+        if (coursesById.length >= limit) break;
+      }
+    }
+
+    return coursesById.values.toList();
   }
 
   String _getGalaxyForCourse(String courseId) {
