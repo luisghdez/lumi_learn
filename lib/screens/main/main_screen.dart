@@ -6,7 +6,6 @@ import 'package:lumi_learn_app/screens/feed/feed_screen.dart';
 import 'package:lumi_learn_app/screens/home/home_screen.dart';
 import 'package:lumi_learn_app/screens/profile/profile_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart';
-import 'package:lumi_learn_app/screens/addCourse/add_course_main.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -38,7 +37,6 @@ class MainScreen extends StatelessWidget {
                 children: const [
                   FeedScreen(),
                   HomeScreen(),
-                  AddCourseMain(),
                   ProfileScreen(),
                 ],
               ),

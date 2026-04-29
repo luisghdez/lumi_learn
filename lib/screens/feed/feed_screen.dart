@@ -277,40 +277,89 @@ class _FeedHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.auto_awesome, size: 16, color: Colors.white),
-              SizedBox(width: 6),
-              Text(
-                'Learn Feed',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.22),
                 ),
               ),
-            ],
-          ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+                  SizedBox(width: 6),
+                  Text(
+                    'Learn Feed',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Text(
+              'Swipe up',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.72),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        const Spacer(),
-        Text(
-          'Swipe up',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.72),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        const SizedBox(height: 14),
+        const _FeedFilterTabs(),
       ],
+    );
+  }
+}
+
+class _FeedFilterTabs extends StatelessWidget {
+  const _FeedFilterTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    const filters = ['For You', 'Following', 'Saved'];
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: filters.map((filter) {
+        final isSelected = filter == 'For You';
+
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: isSelected ? 1 : 0.18),
+              ),
+            ),
+            child: Text(
+              filter,
+              style: TextStyle(
+                color: isSelected ? Colors.black : Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
