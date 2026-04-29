@@ -16,6 +16,7 @@ class OnboardingVideoBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
         // Video Background
         if (videoController.value.isInitialized)

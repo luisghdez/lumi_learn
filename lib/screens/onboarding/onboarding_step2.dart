@@ -25,159 +25,135 @@ class OnboardingStep2 extends StatefulWidget {
 }
 
 class _OnboardingStep2State extends State<OnboardingStep2> {
-  // Math subjects
-  static const List<_SubjectChoice> _mathSubjects = [
-    _SubjectChoice(
-      title: 'Algebra',
-      icon: Icons.functions,
-      color: Color(0xFF5DE5E5),
+  static const List<_SubjectCategory> _subjectCategories = [
+    _SubjectCategory(
+      title: 'Sciences',
+      subjects: [
+        _SubjectChoice(title: 'AP Biology'),
+        _SubjectChoice(title: 'AP Physics 1'),
+        _SubjectChoice(title: 'Physics'),
+        _SubjectChoice(title: 'AP Chemistry'),
+        _SubjectChoice(title: 'Chemistry'),
+        _SubjectChoice(title: 'AP Environmental Science'),
+        _SubjectChoice(title: 'AP Physics 2'),
+        _SubjectChoice(title: 'AP Physics C: E&M'),
+        _SubjectChoice(title: 'AP Physics C: Mechanics'),
+        _SubjectChoice(title: 'Electrical Engineering'),
+      ],
     ),
-    _SubjectChoice(
-      title: 'Geometry',
-      icon: Icons.change_history,
-      color: Color(0xFF5DE5E5),
+    _SubjectCategory(
+      title: 'Computer Science & Technology',
+      subjects: [
+        _SubjectChoice(title: 'AP Computer Science A'),
+        _SubjectChoice(title: 'Computer Science / Programming'),
+        _SubjectChoice(title: 'AP Computer Science Principles'),
+        _SubjectChoice(title: 'Honors Computer Education'),
+      ],
     ),
-    _SubjectChoice(
-      title: 'Statistics',
-      icon: Icons.bar_chart,
-      color: Color(0xFF5DE5E5),
+    _SubjectCategory(
+      title: 'PE & Health',
+      subjects: [
+        _SubjectChoice(title: 'Health & Medicine'),
+      ],
     ),
-    _SubjectChoice(
-      title: 'Calculus',
-      icon: Icons.timeline,
-      color: Color(0xFF5DE5E5),
+    _SubjectCategory(
+      title: 'Maths',
+      subjects: [
+        _SubjectChoice(title: 'Algebra'),
+        _SubjectChoice(title: 'Algebra 1'),
+        _SubjectChoice(title: 'Algebra 2'),
+        _SubjectChoice(title: 'Geometry'),
+        _SubjectChoice(title: 'Trigonometry'),
+        _SubjectChoice(title: 'Pre-Calculus'),
+        _SubjectChoice(title: 'Calculus 1'),
+        _SubjectChoice(title: 'Statistics'),
+        _SubjectChoice(title: 'AP Statistics'),
+        _SubjectChoice(title: 'AP Pre-Calculus'),
+        _SubjectChoice(title: 'Differential Equations'),
+        _SubjectChoice(title: 'AP Business with Personal Finance'),
+      ],
     ),
-  ];
-
-  // Science subjects
-  static const List<_SubjectChoice> _scienceSubjects = [
-    _SubjectChoice(
-      title: 'Biology',
-      icon: Icons.biotech,
-      color: Color(0xFF8AE26D),
+    _SubjectCategory(
+      title: 'Humanities & Social Sciences',
+      subjects: [
+        _SubjectChoice(title: 'AP US Government & Politics'),
+        _SubjectChoice(title: 'US History'),
+        _SubjectChoice(title: 'AP US History'),
+        _SubjectChoice(title: 'AP European History'),
+        _SubjectChoice(title: 'World History'),
+        _SubjectChoice(title: 'AP World History'),
+        _SubjectChoice(title: 'AP Human Geography'),
+        _SubjectChoice(title: 'AP Comparative Government & Politics'),
+        _SubjectChoice(title: 'Macroeconomics'),
+        _SubjectChoice(title: 'AP Psychology'),
+        _SubjectChoice(title: 'AP Macroeconomics'),
+        _SubjectChoice(title: 'AP Microeconomics'),
+        _SubjectChoice(title: 'World Geography'),
+        _SubjectChoice(title: 'AP African American Studies'),
+        _SubjectChoice(title: 'Civics'),
+        _SubjectChoice(title: 'AP Research'),
+      ],
     ),
-    _SubjectChoice(
-      title: 'Chemistry',
-      icon: Icons.bubble_chart,
-      color: Color(0xFF8AE26D),
+    _SubjectCategory(
+      title: 'English & Literature',
+      subjects: [
+        _SubjectChoice(title: 'AP English Language'),
+        _SubjectChoice(title: 'AP English Literature'),
+      ],
     ),
-    _SubjectChoice(
-      title: 'Physics',
-      icon: Icons.scatter_plot,
-      color: Color(0xFF8AE26D),
+    _SubjectCategory(
+      title: 'Arts & Music',
+      subjects: [
+        _SubjectChoice(title: 'Art & Design'),
+        _SubjectChoice(title: 'AP Music Theory'),
+        _SubjectChoice(title: 'AP Art History'),
+      ],
     ),
-    _SubjectChoice(
-      title: 'Earth & Space',
-      icon: Icons.public,
-      color: Color(0xFF8AE26D),
-    ),
-    _SubjectChoice(
-      title: 'Environmental',
-      icon: Icons.eco,
-      color: Color(0xFF8AE26D),
-    ),
-    _SubjectChoice(
-      title: 'Computer S.',
-      icon: Icons.computer,
-      color: Color(0xFF8AE26D),
-    ),
-  ];
-
-  // Social Studies subjects
-  static const List<_SubjectChoice> _socialSubjects = [
-    _SubjectChoice(
-      title: 'World History',
-      icon: Icons.language,
-      color: Color(0xFFFFD76F),
-    ),
-    _SubjectChoice(
-      title: 'U.S. History',
-      icon: Icons.flag,
-      color: Color(0xFFFFD76F),
-    ),
-    _SubjectChoice(
-      title: 'European History',
-      icon: Icons.castle,
-      color: Color(0xFFFFD76F),
-    ),
-    _SubjectChoice(
-      title: 'Art History',
-      icon: Icons.museum,
-      color: Color(0xFFFFD76F),
-    ),
-    _SubjectChoice(
-      title: 'Psychology',
-      icon: Icons.psychology,
-      color: Color(0xFFFFD76F),
-    ),
-    _SubjectChoice(
-      title: 'Sociology',
-      icon: Icons.groups,
-      color: Color(0xFFFFD76F),
-    ),
-    _SubjectChoice(
-      title: 'Philosophy',
-      icon: Icons.lightbulb,
-      color: Color(0xFFFFD76F),
-    ),
-  ];
-
-  // Business & Economics subjects
-  static const List<_SubjectChoice> _businessSubjects = [
-    _SubjectChoice(
-      title: 'Accounting',
-      icon: Icons.account_balance,
-      color: Color(0xFFF4AA8D),
-    ),
-    _SubjectChoice(
-      title: 'Finance',
-      icon: Icons.attach_money,
-      color: Color(0xFFF4AA8D),
-    ),
-    _SubjectChoice(
-      title: 'Marketing',
-      icon: Icons.campaign,
-      color: Color(0xFFF4AA8D),
-    ),
-    _SubjectChoice(
-      title: 'General Business',
-      icon: Icons.business_center,
-      color: Color(0xFFF4AA8D),
-    ),
-    _SubjectChoice(
-      title: 'Microeconomics',
-      icon: Icons.trending_up,
-      color: Color(0xFFF4AA8D),
-    ),
-    _SubjectChoice(
-      title: 'Macroeconomics',
-      icon: Icons.show_chart,
-      color: Color(0xFFF4AA8D),
-    ),
-  ];
-
-  // Other subjects
-  static const List<_SubjectChoice> _otherSubjects = [
-    _SubjectChoice(
-      title: 'Music',
-      icon: Icons.music_note,
-      color: Color(0xFF7E7CED),
-    ),
-    _SubjectChoice(
-      title: 'Art & Design',
-      icon: Icons.palette,
-      color: Color(0xFF7E7CED),
-    ),
-    _SubjectChoice(
+    _SubjectCategory(
       title: 'Foreign Languages',
-      icon: Icons.translate,
-      color: Color(0xFF7E7CED),
+      subjects: [
+        _SubjectChoice(title: 'AP Spanish Language'),
+        _SubjectChoice(title: 'AP Spanish Literature'),
+        _SubjectChoice(title: 'AP French'),
+        _SubjectChoice(title: 'AP German'),
+        _SubjectChoice(title: 'AP Chinese'),
+        _SubjectChoice(title: 'AP Italian'),
+        _SubjectChoice(title: 'AP Japanese'),
+        _SubjectChoice(title: 'AP Latin'),
+      ],
     ),
   ];
 
   final Set<String> _selectedSubjects = {};
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   bool get _canContinue => _selectedSubjects.length >= 3;
+
+  List<_SubjectCategory> get _visibleSubjectCategories {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return _subjectCategories;
+
+    return _subjectCategories
+        .map(
+          (category) => _SubjectCategory(
+            title: category.title,
+            subjects: category.subjects
+                .where(
+                  (subject) => subject.title.toLowerCase().contains(query),
+                )
+                .toList(),
+          ),
+        )
+        .where((category) => category.subjects.isNotEmpty)
+        .toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _toggleSubject(String title) {
     setState(() {
@@ -211,39 +187,110 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
   }
 
   Widget _buildCategoryHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          letterSpacing: -0.3,
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.48),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.4,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(bool isTablet) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: isTablet ? 560 : double.infinity),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isTablet ? 16 : 14,
+            fontWeight: FontWeight.w500,
+          ),
+          cursorColor: Colors.white,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Search subjects',
+            hintStyle: TextStyle(
+              color: Colors.white.withOpacity(0.52),
+              fontSize: isTablet ? 16 : 14,
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: Colors.white.withOpacity(0.62),
+              size: 20,
+            ),
+            suffixIcon: _searchQuery.isEmpty
+                ? null
+                : IconButton(
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white.withOpacity(0.62),
+                      size: 18,
+                    ),
+                  ),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.08),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(999),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.34),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(999),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.72),
+                width: 1.2,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildSubjectGrid(List<_SubjectChoice> subjects, bool isTablet) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 12) / 2;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: subjects
-              .map(
-                (subject) => _SubjectCard(
-                  subject: subject,
-                  isSelected: _selectedSubjects.contains(subject.title),
-                  onTap: () => _toggleSubject(subject.title),
-                  isTablet: isTablet,
-                  cardWidth: cardWidth,
-                ),
-              )
-              .toList(),
-        );
-      },
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: subjects
+            .map(
+              (subject) => _SubjectTag(
+                subject: subject,
+                isSelected: _selectedSubjects.contains(subject.title),
+                onTap: () => _toggleSubject(subject.title),
+                isTablet: isTablet,
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 
@@ -252,6 +299,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth >= 768;
+    final visibleSubjectCategories = _visibleSubjectCategories;
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -264,114 +312,131 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
         children: [
           SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: isTablet ? screenWidth * 0.15 : 24,
-                right: isTablet ? screenWidth * 0.15 : 24,
-                top: 16,
-                bottom: _canContinue ? 100 : 20,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back button at the top
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 0),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: widget.onBack,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: Colors.white,
-                            size: isTablet ? 28 : 28,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: isTablet ? screenWidth * 0.15 : 24,
+                    right: isTablet ? screenWidth * 0.15 : 24,
+                    top: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Back button at the top
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 0),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: widget.onBack,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: Colors.white,
+                                size: isTablet ? 28 : 28,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  // Header
-                  SizedBox(
-                    width: double.infinity,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: isTablet ? 60 : 44,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
-                              letterSpacing: -1.5,
-                            ),
-                            children: [
-                              TextSpan(text: 'Choose a '),
-                              TextSpan(
-                                text: 'subject',
+                      // Header
+                      SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: isTablet ? 60 : 44,
                                   fontWeight: FontWeight.w400,
-                                  fontStyle: FontStyle.italic,
                                   color: Colors.white,
                                   letterSpacing: -1.5,
                                 ),
+                                children: [
+                                  TextSpan(text: 'Choose a '),
+                                  TextSpan(
+                                    text: 'subject',
+                                    style: GoogleFonts.playfairDisplay(
+                                      fontSize: isTablet ? 60 : 44,
+                                      fontWeight: FontWeight.w400,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.white,
+                                      letterSpacing: -1.5,
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
+                            SizedBox(height: screenHeight * 0.02),
+                            Text(
+                              _headerLine,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.75),
+                                fontSize: isTablet ? 20 : 16,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.015),
+                            Text(
+                              _progressText,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: isTablet ? 16 : 14,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSearchBar(isTablet),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: isTablet ? screenWidth * 0.15 : 24,
+                      right: isTablet ? screenWidth * 0.15 : 24,
+                      bottom: _canContinue ? 100 : 20,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (visibleSubjectCategories.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 28),
+                              child: Text(
+                                'No subjects found',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.58),
+                                  fontSize: isTablet ? 16 : 14,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ...visibleSubjectCategories.expand(
+                            (category) => [
+                              _buildCategoryHeader(category.title),
+                              _buildSubjectGrid(category.subjects, isTablet),
+                              const SizedBox(height: 24),
                             ],
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        Text(
-                          _headerLine,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
-                            fontSize: isTablet ? 20 : 16,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.015),
-                        Text(
-                          _progressText,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: isTablet ? 16 : 14,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  // Math Section
-                  _buildCategoryHeader('Math'),
-                  _buildSubjectGrid(_mathSubjects, isTablet),
-                  const SizedBox(height: 24),
-
-                  // Science Section
-                  _buildCategoryHeader('Science'),
-                  _buildSubjectGrid(_scienceSubjects, isTablet),
-                  const SizedBox(height: 24),
-
-                  // Social Studies Section
-                  _buildCategoryHeader('Social Studies'),
-                  _buildSubjectGrid(_socialSubjects, isTablet),
-                  const SizedBox(height: 24),
-
-                  // Business & Economics Section
-                  _buildCategoryHeader('Business & Economics'),
-                  _buildSubjectGrid(_businessSubjects, isTablet),
-                  const SizedBox(height: 24),
-
-                  // Other Section
-                  _buildCategoryHeader('Other'),
-                  _buildSubjectGrid(_otherSubjects, isTablet),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           // Floating button that appears when subjects are selected
@@ -429,29 +494,31 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
 
 class _SubjectChoice {
   final String title;
-  final IconData icon;
-  final Color color;
 
-  const _SubjectChoice({
+  const _SubjectChoice({required this.title});
+}
+
+class _SubjectCategory {
+  final String title;
+  final List<_SubjectChoice> subjects;
+
+  const _SubjectCategory({
     required this.title,
-    required this.icon,
-    required this.color,
+    required this.subjects,
   });
 }
 
-class _SubjectCard extends StatelessWidget {
+class _SubjectTag extends StatelessWidget {
   final _SubjectChoice subject;
   final bool isSelected;
   final VoidCallback onTap;
   final bool isTablet;
-  final double cardWidth;
 
-  const _SubjectCard({
+  const _SubjectTag({
     required this.subject,
     required this.isSelected,
     required this.onTap,
     required this.isTablet,
-    required this.cardWidth,
   });
 
   @override
@@ -461,66 +528,49 @@ class _SubjectCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
-        width: cardWidth,
-        padding: EdgeInsets.all(isTablet ? 20 : 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 18 : 16,
+          vertical: isTablet ? 14 : 12,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: LinearGradient(
-            colors: isSelected
-                ? [
-                    subject.color.withOpacity(0.5),
-                    subject.color.withOpacity(0.2),
-                  ]
-                : [
-                    Colors.white.withOpacity(0.12),
-                    Colors.white.withOpacity(0.04),
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: isSelected
+              ? Colors.white.withOpacity(0.88)
+              : Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
-                ? subject.color.withOpacity(0.8)
-                : Colors.white.withOpacity(0.3),
-            width: 1,
+                ? Colors.white.withOpacity(0.9)
+                : Colors.white.withOpacity(0.42),
+            width: isSelected ? 1.2 : 1.1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: subject.color.withOpacity(0.0),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                    // offset: const Offset(0, 12),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.6),
-                    blurRadius: 0,
-                    spreadRadius: 0,
-                    // offset: const Offset(0, 8),
-                  ),
-                ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              subject.icon,
-              color: isSelected ? Colors.white : subject.color,
-              size: isTablet ? 36 : 32,
-            ),
-            SizedBox(height: isTablet ? 12 : 10),
             Text(
               subject.title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
-                fontSize: isTablet ? 18 : 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
+                color:
+                    isSelected ? Colors.black : Colors.white.withOpacity(0.94),
+                fontSize: isTablet ? 17 : 15,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: -0.1,
               ),
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              child: isSelected
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: Colors.black.withOpacity(0.82),
+                        size: isTablet ? 18 : 16,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
