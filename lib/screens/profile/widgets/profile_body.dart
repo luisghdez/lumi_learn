@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/video_controller.dart';
+import 'package:lumi_learn_app/application/models/video_model.dart';
 import 'package:share/share.dart';
+import 'package:video_player/video_player.dart';
 import '../components/pfp_viewer.dart';
 import '../components/pfp_gallery_screen.dart';
 import '../components/info_stat_card.dart';
@@ -40,6 +43,18 @@ class _ProfileBodyState extends State<ProfileBody> {
     // Initialize selectedAvatarId once from the auth controller's photoURL.
     selectedAvatarId =
         int.tryParse(authController.firebaseUser.value?.photoURL ?? "0") ?? 1;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = authController.firebaseUser.value?.uid;
+      if (userId != null && Get.isRegistered<VideoController>()) {
+        Get.find<VideoController>().fetchUserVideos(userId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
   }
 
   void toggleEditMode(bool enable) {
@@ -325,6 +340,8 @@ class _ProfileBodyState extends State<ProfileBody> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 24),
+                            const _ProfileVideosSection(),
                           ],
                         ),
                       ],
@@ -374,6 +391,336 @@ class _ProfileBodyState extends State<ProfileBody> {
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileVideosSection extends StatelessWidget {
+  const _ProfileVideosSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
+    final videoController = Get.find<VideoController>();
+    final userId = authController.firebaseUser.value?.uid;
+
+    if (userId == null) return const SizedBox.shrink();
+
+    return Obx(() {
+      final videos = videoController.userVideosByUserId[userId] ?? [];
+      final isLoading =
+          videoController.loadingUserVideosByUserId[userId] == true;
+
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: greyBorder, width: 0.8),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.video_library_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Videos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                if (isLoading)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFFB388FF),
+                    ),
+                  )
+                else
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => videoController.fetchUserVideos(userId),
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white70,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (videos.isEmpty && !isLoading)
+              const _EmptyProfileVideos()
+            else
+              GridView.builder(
+                itemCount: videos.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  childAspectRatio: 9 / 14,
+                ),
+                itemBuilder: (context, index) {
+                  return _ProfileVideoTile(video: videos[index]);
+                },
+              ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _ProfileVideoTile extends StatelessWidget {
+  const _ProfileVideoTile({required this.video});
+
+  final VideoPost video;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Get.to(
+          () => _ProfileVideoPreviewScreen(video: video),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 250),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (video.thumbnailUrl != null)
+              Image.network(
+                video.thumbnailUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const _VideoTileFallback(),
+              )
+            else
+              const _VideoTileFallback(),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.62),
+                  ],
+                ),
+              ),
+            ),
+            const Center(
+              child: Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 34,
+              ),
+            ),
+            Positioned(
+              left: 6,
+              right: 6,
+              bottom: 6,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.favorite,
+                    color: Colors.white,
+                    size: 13,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    video.likeCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoTileFallback extends StatelessWidget {
+  const _VideoTileFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2A174B),
+            Color(0xFF0B0B0B),
+            Color(0xFF1E2F4A),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyProfileVideos extends StatelessWidget {
+  const _EmptyProfileVideos();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 26),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.movie_creation_outlined,
+            color: Colors.white.withValues(alpha: 0.72),
+            size: 34,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'No videos yet',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.86),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Published videos will show up here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.56),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileVideoPreviewScreen extends StatefulWidget {
+  const _ProfileVideoPreviewScreen({required this.video});
+
+  final VideoPost video;
+
+  @override
+  State<_ProfileVideoPreviewScreen> createState() =>
+      _ProfileVideoPreviewScreenState();
+}
+
+class _ProfileVideoPreviewScreenState
+    extends State<_ProfileVideoPreviewScreen> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final playbackUrl = widget.video.playbackUrl;
+    if (playbackUrl == null || playbackUrl.isEmpty) return;
+
+    final controller = VideoPlayerController.networkUrl(Uri.parse(playbackUrl));
+    _controller = controller;
+    controller.initialize().then((_) {
+      if (!mounted) return;
+      controller
+        ..setLooping(true)
+        ..play();
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayback() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    if (controller.value.isPlaying) {
+      controller.pause();
+    } else {
+      controller.play();
+    }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Video'),
+      ),
+      body: GestureDetector(
+        onTap: _togglePlayback,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (controller != null && controller.value.isInitialized)
+              FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
+                ),
+              )
+            else
+              const Center(
+                child: CircularProgressIndicator(color: Color(0xFFB388FF)),
+              ),
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 36,
+              child: Text(
+                widget.video.caption,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

@@ -14,9 +14,12 @@ class VideoController extends GetxController {
   final ApiService _api = ApiService();
 
   final RxList<VideoPost> videos = <VideoPost>[].obs;
+  final RxMap<String, List<VideoPost>> userVideosByUserId =
+      <String, List<VideoPost>>{}.obs;
   final RxMap<String, List<VideoComment>> commentsByVideoId =
       <String, List<VideoComment>>{}.obs;
   final RxMap<String, bool> loadingCommentsByVideoId = <String, bool>{}.obs;
+  final RxMap<String, bool> loadingUserVideosByUserId = <String, bool>{}.obs;
 
   final RxBool isLoadingFeed = false.obs;
   final RxBool isRefreshingFeed = false.obs;
@@ -25,6 +28,7 @@ class VideoController extends GetxController {
   final RxString feedError = ''.obs;
 
   String? _nextFeedCursor;
+  final Map<String, String?> _userVideoCursorsByUserId = {};
   final Map<String, String?> _commentCursorsByVideoId = {};
 
   String? get currentUserId => authController.firebaseUser.value?.uid;
@@ -143,6 +147,7 @@ class VideoController extends GetxController {
 
       videos.removeWhere((video) => video.id == completed.id);
       videos.insert(0, completed);
+      _insertUserVideo(completed);
       return true;
     } catch (e) {
       Get.snackbar(
@@ -196,9 +201,49 @@ class VideoController extends GetxController {
       final response = await _api.deleteVideo(token: token, videoId: video.id);
       _ensureSuccess(response, expectedStatuses: const [200]);
       videos.removeWhere((item) => item.id == video.id);
+      _removeUserVideo(video);
       commentsByVideoId.remove(video.id);
     } catch (e) {
       Get.snackbar('Delete Video', e.toString());
+    }
+  }
+
+  Future<void> fetchUserVideos(String userId, {bool refresh = true}) async {
+    if (loadingUserVideosByUserId[userId] == true) return;
+
+    final token = await _tokenOrNotify();
+    if (token == null) return;
+
+    loadingUserVideosByUserId[userId] = true;
+    if (refresh) {
+      _userVideoCursorsByUserId[userId] = null;
+    }
+
+    try {
+      final response = await _api.getUserVideos(
+        token: token,
+        userId: userId,
+        cursor: refresh ? null : _userVideoCursorsByUserId[userId],
+      );
+      _ensureSuccess(response, expectedStatuses: const [200]);
+      final body = _decodeBody(response.body);
+      final fetchedVideos = (body['videos'] as List<dynamic>? ?? [])
+          .map((item) => VideoPost.fromJson(_asMap(item)))
+          .toList();
+
+      _userVideoCursorsByUserId[userId] = body['nextCursor'] as String?;
+      if (refresh) {
+        userVideosByUserId[userId] = fetchedVideos;
+      } else {
+        userVideosByUserId[userId] = [
+          ...(userVideosByUserId[userId] ?? <VideoPost>[]),
+          ...fetchedVideos,
+        ];
+      }
+    } catch (e) {
+      Get.snackbar('Profile Videos', e.toString());
+    } finally {
+      loadingUserVideosByUserId[userId] = false;
     }
   }
 
@@ -307,8 +352,34 @@ class VideoController extends GetxController {
 
   void _replaceVideo(VideoPost video) {
     final index = videos.indexWhere((item) => item.id == video.id);
-    if (index == -1) return;
-    videos[index] = video;
+    if (index != -1) {
+      videos[index] = video;
+    }
+
+    final userVideos = userVideosByUserId[video.ownerId];
+    if (userVideos == null) return;
+    final userVideoIndex = userVideos.indexWhere((item) => item.id == video.id);
+    if (userVideoIndex == -1) return;
+    final updatedUserVideos = [...userVideos];
+    updatedUserVideos[userVideoIndex] = video;
+    userVideosByUserId[video.ownerId] = updatedUserVideos;
+  }
+
+  void _insertUserVideo(VideoPost video) {
+    final existingVideos = userVideosByUserId[video.ownerId];
+    if (existingVideos == null) return;
+    userVideosByUserId[video.ownerId] = [
+      video,
+      ...existingVideos.where((item) => item.id != video.id),
+    ];
+  }
+
+  void _removeUserVideo(VideoPost video) {
+    final existingVideos = userVideosByUserId[video.ownerId];
+    if (existingVideos == null) return;
+    userVideosByUserId[video.ownerId] = [
+      ...existingVideos.where((item) => item.id != video.id),
+    ];
   }
 
   Map<String, dynamic> _decodeBody(String body) {

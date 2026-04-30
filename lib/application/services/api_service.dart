@@ -286,6 +286,29 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> getUserVideos({
+    required String token,
+    required String userId,
+    String? cursor,
+    int limit = 30,
+  }) {
+    final queryParameters = <String, String>{
+      'limit': limit.toString(),
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final uri = Uri.parse("$_baseUrl/users/$userId/videos").replace(
+      queryParameters: queryParameters,
+    );
+
+    return http.get(
+      uri,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+  }
+
   /// POST /review
   /// Process user explanation of terms and get guided AI feedback.
   Future<http.Response> submitReview({
