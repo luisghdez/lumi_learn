@@ -7,6 +7,7 @@ import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/application/services/deeplink.dart';
 import 'package:lumi_learn_app/dev_flags.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
@@ -15,7 +16,7 @@ import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_container.dart';
 
 class AuthGate extends StatelessWidget {
-  AuthGate({Key? key}) : super(key: key);
+  AuthGate({super.key});
 
   final AuthController authController = Get.find<AuthController>();
 
@@ -74,6 +75,13 @@ class AuthGate extends StatelessWidget {
         );
       }
 
+      if (!Get.isRegistered<VideoController>()) {
+        Get.put<VideoController>(
+          VideoController(),
+          permanent: true,
+        );
+      }
+
       // Initialize deep link handler now that all controllers are registered
       DeepLinkHandler.instance.reinitialize();
 
@@ -86,7 +94,7 @@ class AuthGate extends StatelessWidget {
       }
 
       // Show main screen if user is logged in and onboarding is completed
-      return MainScreen();
+      return const MainScreen();
     });
   }
 }

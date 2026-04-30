@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // For MediaType
 import 'package:mime/mime.dart'; // For lookupMimeType
 import 'package:path/path.dart' as p;
-import 'dart:io';
 import 'package:lumi_learn_app/application/models/leaderboard_model.dart';
 
 class ApiService {
@@ -97,7 +98,7 @@ class ApiService {
   Future<http.Response> getFeaturedCourses({
     required String token,
   }) async {
-    print("getting featured courses");
+    debugPrint("getting featured courses");
     final uri = Uri.parse('$_baseUrl/courses/featured');
     final response = await http.get(
       uri,
@@ -115,7 +116,7 @@ class ApiService {
     int page = 1,
     int limit = 10,
   }) async {
-    print(
+    debugPrint(
         "getting all courses${subject != null ? ' for subject: $subject' : ''} (page: $page, limit: $limit)");
 
     final queryParameters = <String, String>{
@@ -199,7 +200,7 @@ class ApiService {
         'xp': xp,
       }),
     );
-    print("response.body: ${response.body}");
+    debugPrint("response.body: ${response.body}");
     return response;
   }
 
@@ -504,6 +505,189 @@ class ApiService {
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
+      },
+    );
+  }
+
+  Future<http.Response> createVideo({
+    required String token,
+    required String mimeType,
+    String? caption,
+    String visibility = 'public',
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos');
+    return http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'mimeType': mimeType,
+        'caption': caption,
+        'visibility': visibility,
+      }),
+    );
+  }
+
+  Future<http.Response> uploadVideoFileToSignedUrl({
+    required String uploadUrl,
+    required File file,
+    required String mimeType,
+  }) async {
+    final uri = Uri.parse(uploadUrl);
+    final bytes = await file.readAsBytes();
+    return http.put(
+      uri,
+      headers: {
+        'Content-Type': mimeType,
+      },
+      body: bytes,
+    );
+  }
+
+  Future<http.Response> completeVideoUpload({
+    required String token,
+    required String videoId,
+    int? durationMs,
+    String? thumbnailUrl,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/complete');
+    return http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        if (durationMs != null) 'durationMs': durationMs,
+        if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      }),
+    );
+  }
+
+  Future<http.Response> getVideoFeed({
+    required String token,
+    String? cursor,
+    int limit = 20,
+  }) {
+    final queryParameters = <String, String>{
+      'limit': limit.toString(),
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final uri = Uri.parse('$_baseUrl/videos/feed').replace(
+      queryParameters: queryParameters,
+    );
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
+  Future<http.Response> getVideoById({
+    required String token,
+    required String videoId,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId');
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
+  Future<http.Response> deleteVideo({
+    required String token,
+    required String videoId,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId');
+    return http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  Future<http.Response> likeVideo({
+    required String token,
+    required String videoId,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/like');
+    return http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  Future<http.Response> unlikeVideo({
+    required String token,
+    required String videoId,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/like');
+    return http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  Future<http.Response> getVideoComments({
+    required String token,
+    required String videoId,
+    String? cursor,
+    int limit = 20,
+  }) {
+    final queryParameters = <String, String>{
+      'limit': limit.toString(),
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/comments').replace(
+      queryParameters: queryParameters,
+    );
+    return http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
+  Future<http.Response> createVideoComment({
+    required String token,
+    required String videoId,
+    required String text,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/comments');
+    return http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'text': text}),
+    );
+  }
+
+  Future<http.Response> deleteVideoComment({
+    required String token,
+    required String videoId,
+    required String commentId,
+  }) {
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/comments/$commentId');
+    return http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
       },
     );
   }
