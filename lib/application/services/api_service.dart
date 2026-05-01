@@ -535,6 +535,8 @@ class ApiService {
   Future<http.Response> createVideo({
     required String token,
     required String mimeType,
+    required String subject,
+    String? thumbnailMimeType,
     String? caption,
     String visibility = 'public',
   }) {
@@ -548,6 +550,8 @@ class ApiService {
       body: jsonEncode({
         'mimeType': mimeType,
         'caption': caption,
+        'subject': subject,
+        if (thumbnailMimeType != null) 'thumbnailMimeType': thumbnailMimeType,
         'visibility': visibility,
       }),
     );
@@ -560,6 +564,21 @@ class ApiService {
   }) async {
     final uri = Uri.parse(uploadUrl);
     final bytes = await file.readAsBytes();
+    return http.put(
+      uri,
+      headers: {
+        'Content-Type': mimeType,
+      },
+      body: bytes,
+    );
+  }
+
+  Future<http.Response> uploadBytesToSignedUrl({
+    required String uploadUrl,
+    required Uint8List bytes,
+    required String mimeType,
+  }) async {
+    final uri = Uri.parse(uploadUrl);
     return http.put(
       uri,
       headers: {

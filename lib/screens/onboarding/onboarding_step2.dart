@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lumi_learn_app/data/subject_catalog.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -25,104 +26,16 @@ class OnboardingStep2 extends StatefulWidget {
 }
 
 class _OnboardingStep2State extends State<OnboardingStep2> {
-  static const List<_SubjectCategory> _subjectCategories = [
-    _SubjectCategory(
-      title: 'Sciences',
-      subjects: [
-        _SubjectChoice(title: 'AP Biology'),
-        _SubjectChoice(title: 'AP Physics 1'),
-        _SubjectChoice(title: 'Physics'),
-        _SubjectChoice(title: 'AP Chemistry'),
-        _SubjectChoice(title: 'Chemistry'),
-        _SubjectChoice(title: 'AP Environmental Science'),
-        _SubjectChoice(title: 'AP Physics 2'),
-        _SubjectChoice(title: 'AP Physics C: E&M'),
-        _SubjectChoice(title: 'AP Physics C: Mechanics'),
-        _SubjectChoice(title: 'Electrical Engineering'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'Computer Science & Technology',
-      subjects: [
-        _SubjectChoice(title: 'AP Computer Science A'),
-        _SubjectChoice(title: 'Computer Science / Programming'),
-        _SubjectChoice(title: 'AP Computer Science Principles'),
-        _SubjectChoice(title: 'Honors Computer Education'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'PE & Health',
-      subjects: [
-        _SubjectChoice(title: 'Health & Medicine'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'Maths',
-      subjects: [
-        _SubjectChoice(title: 'Algebra'),
-        _SubjectChoice(title: 'Algebra 1'),
-        _SubjectChoice(title: 'Algebra 2'),
-        _SubjectChoice(title: 'Geometry'),
-        _SubjectChoice(title: 'Trigonometry'),
-        _SubjectChoice(title: 'Pre-Calculus'),
-        _SubjectChoice(title: 'Calculus 1'),
-        _SubjectChoice(title: 'Statistics'),
-        _SubjectChoice(title: 'AP Statistics'),
-        _SubjectChoice(title: 'AP Pre-Calculus'),
-        _SubjectChoice(title: 'Differential Equations'),
-        _SubjectChoice(title: 'AP Business with Personal Finance'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'Humanities & Social Sciences',
-      subjects: [
-        _SubjectChoice(title: 'AP US Government & Politics'),
-        _SubjectChoice(title: 'US History'),
-        _SubjectChoice(title: 'AP US History'),
-        _SubjectChoice(title: 'AP European History'),
-        _SubjectChoice(title: 'World History'),
-        _SubjectChoice(title: 'AP World History'),
-        _SubjectChoice(title: 'AP Human Geography'),
-        _SubjectChoice(title: 'AP Comparative Government & Politics'),
-        _SubjectChoice(title: 'Macroeconomics'),
-        _SubjectChoice(title: 'AP Psychology'),
-        _SubjectChoice(title: 'AP Macroeconomics'),
-        _SubjectChoice(title: 'AP Microeconomics'),
-        _SubjectChoice(title: 'World Geography'),
-        _SubjectChoice(title: 'AP African American Studies'),
-        _SubjectChoice(title: 'Civics'),
-        _SubjectChoice(title: 'AP Research'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'English & Literature',
-      subjects: [
-        _SubjectChoice(title: 'AP English Language'),
-        _SubjectChoice(title: 'AP English Literature'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'Arts & Music',
-      subjects: [
-        _SubjectChoice(title: 'Art & Design'),
-        _SubjectChoice(title: 'AP Music Theory'),
-        _SubjectChoice(title: 'AP Art History'),
-      ],
-    ),
-    _SubjectCategory(
-      title: 'Foreign Languages',
-      subjects: [
-        _SubjectChoice(title: 'AP Spanish Language'),
-        _SubjectChoice(title: 'AP Spanish Literature'),
-        _SubjectChoice(title: 'AP French'),
-        _SubjectChoice(title: 'AP German'),
-        _SubjectChoice(title: 'AP Chinese'),
-        _SubjectChoice(title: 'AP Italian'),
-        _SubjectChoice(title: 'AP Japanese'),
-        _SubjectChoice(title: 'AP Latin'),
-      ],
-    ),
-  ];
+  static final List<_SubjectCategory> _subjectCategories = subjectCatalog
+      .map(
+        (category) => _SubjectCategory(
+          title: category.title,
+          subjects: category.subjects
+              .map((subject) => _SubjectChoice(title: subject))
+              .toList(),
+        ),
+      )
+      .toList();
 
   final Set<String> _selectedSubjects = {};
   final TextEditingController _searchController = TextEditingController();
@@ -194,7 +107,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
         child: Text(
           title.toUpperCase(),
           style: TextStyle(
-            color: Colors.white.withOpacity(0.48),
+            color: Colors.white.withValues(alpha: 0.48),
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.4,
@@ -225,12 +138,12 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
           decoration: InputDecoration(
             hintText: 'Search subjects',
             hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.52),
+              color: Colors.white.withValues(alpha: 0.52),
               fontSize: isTablet ? 16 : 14,
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
-              color: Colors.white.withOpacity(0.62),
+              color: Colors.white.withValues(alpha: 0.62),
               size: 20,
             ),
             suffixIcon: _searchQuery.isEmpty
@@ -244,12 +157,12 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                     },
                     icon: Icon(
                       Icons.close_rounded,
-                      color: Colors.white.withOpacity(0.62),
+                      color: Colors.white.withValues(alpha: 0.62),
                       size: 18,
                     ),
                   ),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.08),
+            fillColor: Colors.white.withValues(alpha: 0.08),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
@@ -257,14 +170,14 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(999),
               borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.34),
+                color: Colors.white.withValues(alpha: 0.34),
                 width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(999),
               borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.72),
+                color: Colors.white.withValues(alpha: 0.72),
                 width: 1.2,
               ),
             ),
@@ -358,7 +271,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                                   letterSpacing: -1.5,
                                 ),
                                 children: [
-                                  TextSpan(text: 'Choose a '),
+                                  const TextSpan(text: 'Choose a '),
                                   TextSpan(
                                     text: 'subject',
                                     style: GoogleFonts.playfairDisplay(
@@ -377,7 +290,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                               _headerLine,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.75),
+                                color: Colors.white.withValues(alpha: 0.75),
                                 fontSize: isTablet ? 20 : 16,
                                 letterSpacing: 0.8,
                               ),
@@ -387,7 +300,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                               _progressText,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                                 fontSize: isTablet ? 16 : 14,
                                 letterSpacing: 0.5,
                               ),
@@ -418,7 +331,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                               child: Text(
                                 'No subjects found',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.58),
+                                  color: Colors.white.withValues(alpha: 0.58),
                                   fontSize: isTablet ? 16 : 14,
                                 ),
                               ),
@@ -457,7 +370,7 @@ class _OnboardingStep2State extends State<OnboardingStep2> {
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 20,
                         spreadRadius: 0,
                         offset: const Offset(0, 10),
@@ -534,13 +447,13 @@ class _SubjectTag extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.white.withOpacity(0.88)
-              : Colors.white.withOpacity(0.08),
+              ? Colors.white.withValues(alpha: 0.88)
+              : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
-                ? Colors.white.withOpacity(0.9)
-                : Colors.white.withOpacity(0.42),
+                ? Colors.white.withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.42),
             width: isSelected ? 1.2 : 1.1,
           ),
         ),
@@ -551,8 +464,9 @@ class _SubjectTag extends StatelessWidget {
               subject.title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color:
-                    isSelected ? Colors.black : Colors.white.withOpacity(0.94),
+                color: isSelected
+                    ? Colors.black
+                    : Colors.white.withValues(alpha: 0.94),
                 fontSize: isTablet ? 17 : 15,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 letterSpacing: -0.1,
@@ -566,7 +480,7 @@ class _SubjectTag extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(
                         Icons.check_rounded,
-                        color: Colors.black.withOpacity(0.82),
+                        color: Colors.black.withValues(alpha: 0.82),
                         size: isTablet ? 18 : 16,
                       ),
                     )

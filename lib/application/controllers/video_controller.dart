@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,6 +25,7 @@ class VideoController extends GetxController {
   final RxBool isLoadingFeed = false.obs;
   final RxBool isRefreshingFeed = false.obs;
   final RxBool isUploading = false.obs;
+  final RxBool isPreparingVideoPost = false.obs;
   final RxString uploadStatus = ''.obs;
   final RxString feedError = ''.obs;
 
@@ -33,6 +35,8 @@ class VideoController extends GetxController {
 
   String? get currentUserId => authController.firebaseUser.value?.uid;
   bool get hasMoreFeed => _nextFeedCursor != null;
+  bool get hasPendingVideoPost =>
+      isPreparingVideoPost.value || isUploading.value;
 
   @override
   void onInit() {
@@ -102,6 +106,8 @@ class VideoController extends GetxController {
   Future<bool> uploadVideo({
     required File file,
     required String caption,
+    required String subject,
+    Uint8List? thumbnailBytes,
   }) async {
     final token = await _tokenOrNotify();
     if (token == null) return false;
@@ -118,6 +124,8 @@ class VideoController extends GetxController {
       final createResponse = await _api.createVideo(
         token: token,
         mimeType: mimeType,
+        subject: subject,
+        thumbnailMimeType: thumbnailBytes == null ? null : 'image/jpeg',
         caption: caption,
       );
       _ensureSuccess(createResponse, expectedStatuses: const [201]);
@@ -133,6 +141,26 @@ class VideoController extends GetxController {
       );
       if (uploadResponse.statusCode < 200 || uploadResponse.statusCode >= 300) {
         throw Exception('Storage upload failed: ${uploadResponse.statusCode}');
+      }
+
+      final thumbnailUpload = created.thumbnailUpload;
+      if (thumbnailBytes != null) {
+        if (thumbnailUpload == null) {
+          throw Exception('Thumbnail upload target was not created.');
+        }
+
+        uploadStatus.value = 'Uploading thumbnail';
+        final thumbnailResponse = await _api.uploadBytesToSignedUrl(
+          uploadUrl: thumbnailUpload.uploadUrl,
+          bytes: thumbnailBytes,
+          mimeType: 'image/jpeg',
+        );
+        if (thumbnailResponse.statusCode < 200 ||
+            thumbnailResponse.statusCode >= 300) {
+          throw Exception(
+            'Thumbnail upload failed: ${thumbnailResponse.statusCode}',
+          );
+        }
       }
 
       uploadStatus.value = 'Publishing video';

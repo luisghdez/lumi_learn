@@ -480,7 +480,7 @@ class _VideoDetails extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            video.visibility,
+            video.subject.isEmpty ? video.visibility : video.subject,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,

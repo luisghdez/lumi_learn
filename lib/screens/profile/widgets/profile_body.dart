@@ -416,6 +416,8 @@ class _ProfileVideosSection extends StatelessWidget {
       final videos = videoController.userVideosByUserId[userId] ?? [];
       final isLoading =
           videoController.loadingUserVideosByUserId[userId] == true;
+      final hasPendingVideo = videoController.hasPendingVideoPost;
+      final tileCount = videos.length + (hasPendingVideo ? 1 : 0);
 
       return Container(
         width: double.infinity,
@@ -466,11 +468,11 @@ class _ProfileVideosSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (videos.isEmpty && !isLoading)
+            if (videos.isEmpty && !isLoading && !hasPendingVideo)
               const _EmptyProfileVideos()
             else
               GridView.builder(
-                itemCount: videos.length,
+                itemCount: tileCount,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -480,13 +482,62 @@ class _ProfileVideosSection extends StatelessWidget {
                   childAspectRatio: 9 / 14,
                 ),
                 itemBuilder: (context, index) {
-                  return _ProfileVideoTile(video: videos[index]);
+                  if (hasPendingVideo && index == 0) {
+                    return const _UploadingVideoTile();
+                  }
+                  final videoIndex = hasPendingVideo ? index - 1 : index;
+                  return _ProfileVideoTile(video: videos[videoIndex]);
                 },
               ),
           ],
         ),
       );
     });
+  }
+}
+
+class _UploadingVideoTile extends StatelessWidget {
+  const _UploadingVideoTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        color: Colors.white.withValues(alpha: 0.08),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const _VideoTileFallback(),
+            ColoredBox(color: Colors.black.withValues(alpha: 0.46)),
+            const Center(
+              child: SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Color(0xFFB388FF),
+                ),
+              ),
+            ),
+            const Positioned(
+              left: 6,
+              right: 6,
+              bottom: 8,
+              child: Text(
+                'Posting...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -510,14 +561,14 @@ class _ProfileVideoTile extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (video.thumbnailUrl != null)
+            if (video.thumbnailUrl != null && video.thumbnailUrl!.isNotEmpty)
               Image.network(
                 video.thumbnailUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _VideoTileFallback(),
+                errorBuilder: (_, __, ___) => _VideoTileVideoFrame(video: video),
               )
             else
-              const _VideoTileFallback(),
+              _VideoTileVideoFrame(video: video),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -537,6 +588,22 @@ class _ProfileVideoTile extends StatelessWidget {
                 size: 34,
               ),
             ),
+            if (video.subject.isNotEmpty)
+              Positioned(
+                left: 6,
+                right: 6,
+                top: 6,
+                child: Text(
+                  video.subject,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             Positioned(
               left: 6,
               right: 6,
@@ -583,6 +650,69 @@ class _VideoTileFallback extends StatelessWidget {
             Color(0xFF1E2F4A),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _VideoTileVideoFrame extends StatefulWidget {
+  const _VideoTileVideoFrame({required this.video});
+
+  final VideoPost video;
+
+  @override
+  State<_VideoTileVideoFrame> createState() => _VideoTileVideoFrameState();
+}
+
+class _VideoTileVideoFrameState extends State<_VideoTileVideoFrame> {
+  VideoPlayerController? _controller;
+  bool _failedToLoadFrame = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final playbackUrl = widget.video.playbackUrl;
+    if (playbackUrl == null || playbackUrl.isEmpty) {
+      _failedToLoadFrame = true;
+      return;
+    }
+
+    final controller = VideoPlayerController.networkUrl(Uri.parse(playbackUrl));
+    _controller = controller;
+    controller.initialize().then((_) async {
+      if (!mounted) return;
+      await controller.seekTo(Duration.zero);
+      await controller.pause();
+      if (!mounted) return;
+      setState(() {});
+    }).catchError((error) {
+      if (!mounted) return;
+      debugPrint('Unable to load profile video frame: $error');
+      setState(() => _failedToLoadFrame = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (_failedToLoadFrame ||
+        controller == null ||
+        !controller.value.isInitialized) {
+      return const _VideoTileFallback();
+    }
+
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: controller.value.size.width,
+        height: controller.value.size.height,
+        child: VideoPlayer(controller),
       ),
     );
   }

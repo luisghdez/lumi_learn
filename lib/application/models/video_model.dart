@@ -5,6 +5,7 @@ class VideoPost {
     required this.ownerName,
     required this.ownerProfilePicture,
     required this.caption,
+    required this.subject,
     required this.storagePath,
     required this.playbackUrl,
     required this.thumbnailUrl,
@@ -25,6 +26,7 @@ class VideoPost {
   final String ownerName;
   final String ownerProfilePicture;
   final String caption;
+  final String subject;
   final String storagePath;
   final String? playbackUrl;
   final String? thumbnailUrl;
@@ -49,6 +51,7 @@ class VideoPost {
         fallback: 'default',
       ),
       caption: _stringValue(json['caption']),
+      subject: _stringValue(json['subject']),
       storagePath: _stringValue(json['storagePath']),
       playbackUrl: _nullableString(json['playbackUrl']),
       thumbnailUrl: _nullableString(json['thumbnailUrl']),
@@ -67,6 +70,7 @@ class VideoPost {
 
   VideoPost copyWith({
     String? playbackUrl,
+    String? subject,
     int? likeCount,
     int? commentCount,
     bool? likedByMe,
@@ -77,6 +81,7 @@ class VideoPost {
       ownerName: ownerName,
       ownerProfilePicture: ownerProfilePicture,
       caption: caption,
+      subject: subject ?? this.subject,
       storagePath: storagePath,
       playbackUrl: playbackUrl ?? this.playbackUrl,
       thumbnailUrl: thumbnailUrl,
@@ -156,15 +161,20 @@ class CreateVideoUploadResponse {
   const CreateVideoUploadResponse({
     required this.video,
     required this.upload,
+    required this.thumbnailUpload,
   });
 
   final VideoPost video;
   final SignedVideoUpload upload;
+  final SignedVideoUpload? thumbnailUpload;
 
   factory CreateVideoUploadResponse.fromJson(Map<String, dynamic> json) {
     return CreateVideoUploadResponse(
       video: VideoPost.fromJson(_mapValue(json['video'])),
       upload: SignedVideoUpload.fromJson(_mapValue(json['upload'])),
+      thumbnailUpload: json['thumbnailUpload'] == null
+          ? null
+          : SignedVideoUpload.fromJson(_mapValue(json['thumbnailUpload'])),
     );
   }
 }
