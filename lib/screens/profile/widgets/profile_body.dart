@@ -12,7 +12,6 @@ import '../components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
-import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
 
 class ProfileBody extends StatefulWidget {
   final bool isEditingPfp;
@@ -290,54 +289,6 @@ class _ProfileBodyState extends State<ProfileBody> {
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Get.to(
-                                    () => const AddFriendsScreen(),
-                                    transition: Transition.fadeIn,
-                                    duration: const Duration(milliseconds: 250),
-                                    curve: Curves.easeInOut,
-                                  );
-                                },
-                                icon: const Icon(Icons.person_add_alt,
-                                    size: 24, color: Color(0xFFB388FF)),
-                                label: const Text(
-                                  'ADD FRIENDS',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: InfoStatCard(
-                                      icon: Icons.rocket_launch,
-                                      label: 'Day streak',
-                                      value: authController.streakCount.value
-                                          .toString()),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: InfoStatCard(
-                                      icon: Icons.star,
-                                      label: 'Total Stars',
-                                      value: authController.xpCount.value
-                                          .toString()),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 24),
