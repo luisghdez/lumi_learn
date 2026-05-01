@@ -1,19 +1,21 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/videos/create_video_screen.dart';
 import 'package:lumi_learn_app/widgets/create_action_sheet.dart';
+
 import '../application/controllers/navigation_controller.dart';
-import '../utils/constants.dart';
 
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({super.key});
 
   @override
-  State<BottomNavbar> createState() => _HideableNavBarPageState();
+  State<BottomNavbar> createState() => _BottomNavbarState();
 }
 
-class _HideableNavBarPageState extends State<BottomNavbar> {
+class _BottomNavbarState extends State<BottomNavbar> {
   final NavigationController navigationController = Get.find();
 
   @override
@@ -27,71 +29,102 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
   Widget _buildAnimatedNavBar() {
     return Obx(() {
       final currentIndex = navigationController.currentIndex.value;
+      final visible = navigationController.isNavBarVisible.value;
+      // Index 0 == Feed/video screen — bar collapses flush to the bottom
+      // so the focus stays on the videos.
+      final flushMode = currentIndex == 0;
+
+      final row = Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _NavIcon(
+            icon: Icons.home_rounded,
+            isSelected: currentIndex == 0,
+            onTap: () => navigationController.updateIndex(0),
+          ),
+          _NavIcon(
+            icon: Icons.auto_stories_rounded,
+            isSelected: currentIndex == 1,
+            onTap: () => navigationController.updateIndex(1),
+          ),
+          _CreateButton(onTap: _showCreateSheet),
+          _NavIcon(
+            icon: Icons.person_rounded,
+            isSelected: currentIndex == 2,
+            onTap: () => navigationController.updateIndex(2),
+          ),
+        ],
+      );
 
       return AnimatedSlide(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        offset: navigationController.isNavBarVisible.value
-            ? Offset.zero
-            : const Offset(0, 1),
-        child: SafeArea(
-          bottom: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.9, // 90% of screen width
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    splashFactory: NoSplash.splashFactory,
-                    highlightColor: Colors.transparent,
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _NavItem(
-                          icon: Icons.home,
-                          label: Constants.home,
-                          isSelected: currentIndex == 0,
-                          onTap: () => navigationController.updateIndex(0),
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        offset: visible ? Offset.zero : const Offset(0, 1.6),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          opacity: visible ? 1 : 0,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(end: flushMode ? 1.0 : 0.0),
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic,
+            builder: (context, t, _) {
+              final radius = lerpDouble(40, 0, t)!;
+              final hPad = lerpDouble(28, 0, t)!;
+              final bgAlpha = lerpDouble(0.06, 0.18, t)!;
+              final borderAlpha = lerpDouble(0.12, 0.0, t)!;
+              final shadowAlpha = lerpDouble(0.45, 0.0, t)!;
+              final safeBottom = MediaQuery.of(context).padding.bottom;
+              // In floating mode the safe inset goes OUTSIDE the pill, in
+              // flush mode it goes INSIDE so the bar background extends
+              // edge-to-edge while keeping icons above the home indicator.
+              final outerBottomPad = lerpDouble(10 + safeBottom, 0, t)!;
+              final innerBottomPad = lerpDouble(0, safeBottom, t)!;
+
+              return Padding(
+                padding: EdgeInsets.fromLTRB(hPad, 0, hPad, outerBottomPad),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(radius),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: bgAlpha),
+                        borderRadius: BorderRadius.circular(radius),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: borderAlpha),
+                          width: 1,
                         ),
-                        _NavItem(
-                          icon: Icons.menu_book_outlined,
-                          label: 'Courses',
-                          isSelected: currentIndex == 1,
-                          onTap: () => navigationController.updateIndex(1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: shadowAlpha),
+                            blurRadius: 28,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          splashFactory: NoSplash.splashFactory,
+                          highlightColor: Colors.transparent,
                         ),
-                        _CreateNavButton(onTap: _showCreateSheet),
-                        _NavItem(
-                          icon: Icons.person,
-                          label: Constants.profile,
-                          isSelected: currentIndex == 2,
-                          onTap: () => navigationController.updateIndex(2),
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            12,
+                            0,
+                            12,
+                            innerBottomPad,
+                          ),
+                          child: SizedBox(
+                            height: 68,
+                            child: row,
+                          ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       );
@@ -128,46 +161,50 @@ class _HideableNavBarPageState extends State<BottomNavbar> {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({
     required this.icon,
-    required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
   final IconData icon;
-  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? Colors.white : Colors.grey;
-
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 26),
-              const SizedBox(height: 1),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 9,
-                  height: 1,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        width: 48,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.white.withValues(alpha: 0.10)
+              : Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected
+                ? Colors.white.withValues(alpha: 0.18)
+                : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: AnimatedScale(
+          scale: isSelected ? 1.06 : 1.0,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          child: Icon(
+            icon,
+            color: isSelected
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.55),
+            size: 24,
           ),
         ),
       ),
@@ -175,38 +212,50 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _CreateNavButton extends StatelessWidget {
-  const _CreateNavButton({required this.onTap});
+class _CreateButton extends StatelessWidget {
+  const _CreateButton({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Center(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 58,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.add_rounded,
-              color: Colors.black,
-              size: 32,
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 54,
+        height: 54,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFFFFFFF),
+              Color(0xFFE4E4E4),
+            ],
           ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.85),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.22),
+              blurRadius: 18,
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.add_rounded,
+          color: Colors.black,
+          size: 30,
         ),
       ),
     );

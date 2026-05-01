@@ -396,20 +396,27 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> updateDisplayName(String newName) async {
+  Future<bool> updateDisplayName(
+    String newName, {
+    bool showSuccessMessage = true,
+  }) async {
     try {
       final token = await getIdToken();
       if (token == null) {
-        return;
+        return false;
       }
 
       name.value = newName;
 
       await ApiService.updateUserName(token, newName);
 
-      Get.snackbar("Success", "Username updated!");
+      if (showSuccessMessage) {
+        Get.snackbar("Success", "Username updated!");
+      }
+      return true;
     } catch (e) {
       Get.snackbar("Error", "Failed to update display name: $e");
+      return false;
     }
   }
 

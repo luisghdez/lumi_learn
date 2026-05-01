@@ -37,6 +37,8 @@ class VideoController extends GetxController {
   bool get hasMoreFeed => _nextFeedCursor != null;
   bool get hasPendingVideoPost =>
       isPreparingVideoPost.value || isUploading.value;
+  bool hasMoreUserVideos(String userId) =>
+      _userVideoCursorsByUserId[userId] != null;
 
   @override
   void onInit() {
