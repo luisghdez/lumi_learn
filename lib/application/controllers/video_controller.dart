@@ -287,7 +287,10 @@ class VideoController extends GetxController {
     }
 
     try {
-      await getVideoById(videoId);
+      // Note: do NOT call getVideoById here — it returns a fresh signed
+      // playbackUrl which would invalidate the in-flight video player and
+      // restart playback when the user opens the comments sheet. Like and
+      // comment counts are kept up to date optimistically elsewhere.
       final response = await _api.getVideoComments(
         token: token,
         videoId: videoId,

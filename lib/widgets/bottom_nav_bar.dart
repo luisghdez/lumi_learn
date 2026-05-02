@@ -7,6 +7,15 @@ import 'package:lumi_learn_app/screens/videos/create_video_screen.dart';
 
 import '../application/controllers/navigation_controller.dart';
 
+/// Visible height of the navbar when it is in flush mode (Feed tab). Use
+/// this on screens that need to reserve safe space for the bar so content
+/// never sits beneath it (e.g. the video feed).
+const double kFlushNavbarHeight = 52;
+
+/// Visible height of the floating-pill navbar (non-Feed tabs), excluding
+/// the safe-area inset that floats below it.
+const double kFloatingNavbarHeight = 68;
+
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({super.key});
 
@@ -141,7 +150,8 @@ class _BottomNavbarState extends State<BottomNavbar>
               final outerBottomPad = lerpDouble(10 + safeBottom, 0, t)!;
               final innerBottomPad = lerpDouble(0, safeBottom, t)!;
               // Bar shrinks in flush mode so videos take more vertical space.
-              final barHeight = lerpDouble(68, 52, t)!;
+              final barHeight =
+                  lerpDouble(kFloatingNavbarHeight, kFlushNavbarHeight, t)!;
               final navTapSize = lerpDouble(48, 42, t)!;
               final navIconSize = lerpDouble(24, 22, t)!;
               final createSize = lerpDouble(54, 42, t)!;
