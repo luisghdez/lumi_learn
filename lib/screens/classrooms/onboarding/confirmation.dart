@@ -10,11 +10,11 @@ class ConfirmationScreen extends StatelessWidget {
   final VoidCallback onCompleteOnboarding;
 
   ConfirmationScreen({
-    Key? key,
+    super.key,
     required this.ageGroup,
     required this.selectedTopics,
     required this.onCompleteOnboarding,
-  }) : super(key: key);
+  });
 
   final AuthController authController = Get.find();
 
@@ -84,7 +84,7 @@ class ConfirmationScreen extends StatelessWidget {
                   Text(
                     "Age Group:",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: isTablet ? 18 : 16,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.none,
@@ -103,7 +103,7 @@ class ConfirmationScreen extends StatelessWidget {
                   Text(
                     "Your Interests:",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: isTablet ? 18 : 16,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.none,
@@ -124,11 +124,13 @@ class ConfirmationScreen extends StatelessWidget {
                                 decoration: TextDecoration.none,
                               ),
                             ),
-                            backgroundColor: Colors.white.withOpacity(0.1),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
-                                color: Colors.purpleAccent.withOpacity(0.5),
+                                color:
+                                    Colors.purpleAccent.withValues(alpha: 0.5),
                               ),
                             ),
                           );
@@ -138,19 +140,18 @@ class ConfirmationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final AuthController authController = Get.find();
                       authController
                           .setUserRole(UserRole.student); // ✅ Set userRole
-                      authController.hasCompletedOnboarding.value =
-                          true; // ✅ Mark onboarding done
+                      await authController.completeOnboarding();
 
                       final NavigationController navigationController =
                           Get.find();
                       navigationController
-                          .updateIndex(1); // <- 1 = Classrooms tab
+                          .updateIndex(0); // 0 = Feed tab in the main shell
                       Get.offAll(() =>
-                          MainScreen()); // <- go back clean to your main structure
+                          const MainScreen()); // Go back cleanly to the main structure
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 55),

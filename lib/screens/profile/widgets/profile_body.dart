@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/video_controller.dart';
+import 'package:lumi_learn_app/application/models/video_model.dart';
 import 'package:share/share.dart';
+import 'package:video_player/video_player.dart';
 import '../components/pfp_viewer.dart';
 import '../components/pfp_gallery_screen.dart';
 import '../components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/settings/settings_screen.dart';
 import 'package:lumi_learn_app/screens/social/friends_screen.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
-import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
 
 class ProfileBody extends StatefulWidget {
   final bool isEditingPfp;
@@ -28,8 +31,7 @@ class ProfileBody extends StatefulWidget {
 }
 
 class _ProfileBodyState extends State<ProfileBody> {
-  bool isEditingName = false;
-  TextEditingController nameController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   int selectedAvatarId = 1;
 
@@ -40,6 +42,38 @@ class _ProfileBodyState extends State<ProfileBody> {
     // Initialize selectedAvatarId once from the auth controller's photoURL.
     selectedAvatarId =
         int.tryParse(authController.firebaseUser.value?.photoURL ?? "0") ?? 1;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = authController.firebaseUser.value?.uid;
+      if (userId != null && Get.isRegistered<VideoController>()) {
+        Get.find<VideoController>().fetchUserVideos(userId);
+      }
+    });
+    _scrollController.addListener(_loadMoreVideosNearBottom);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_loadMoreVideosNearBottom);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _loadMoreVideosNearBottom() {
+    if (!_scrollController.hasClients ||
+        _scrollController.position.extentAfter > 520) {
+      return;
+    }
+
+    final authController = Get.find<AuthController>();
+    final userId = authController.firebaseUser.value?.uid;
+    if (userId == null || !Get.isRegistered<VideoController>()) return;
+
+    final videoController = Get.find<VideoController>();
+    final isLoading =
+        videoController.loadingUserVideosByUserId[userId] == true;
+    if (isLoading || !videoController.hasMoreUserVideos(userId)) return;
+
+    videoController.fetchUserVideos(userId, refresh: false);
   }
 
   void toggleEditMode(bool enable) {
@@ -104,6 +138,7 @@ class _ProfileBodyState extends State<ProfileBody> {
             LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
+                  controller: _scrollController,
                   padding: EdgeInsets.fromLTRB(
                     16,
                     0,
@@ -127,204 +162,121 @@ class _ProfileBodyState extends State<ProfileBody> {
                         const SizedBox(height: 20),
                         Column(
                           children: [
-                            Stack(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1A1A1A),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                        color: greyBorder, width: 0.8),
-                                  ),
-                                  padding: const EdgeInsets.only(
-                                      top: 16, left: 16, right: 16),
-                                  child: Column(
-                                    children: [
-                                      Obx(() {
-                                        final name = authController.name.value;
-                                        if (!isEditingName) {
-                                          return Text(
-                                            name,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.w300,
-                                              letterSpacing: -1,
-                                              height: 1.2,
-                                            ),
-                                          );
-                                        } else {
-                                          nameController.text = name;
-                                          return Center(
-                                            child: Container(
-                                              height: 32,
-                                              alignment: Alignment.center,
-                                              child: TextField(
-                                                controller: nameController,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.w300,
-                                                  letterSpacing: -1,
-                                                  height: 1.2,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                                cursorColor: Colors.white,
-                                                autofocus: true,
-                                                maxLines: 1,
-                                                textInputAction:
-                                                    TextInputAction.done,
-                                                onSubmitted: (value) async {
-                                                  final newName = value.trim();
-                                                  if (newName.isNotEmpty &&
-                                                      newName !=
-                                                          authController
-                                                              .name.value) {
-                                                    await authController
-                                                        .updateDisplayName(
-                                                            newName);
-                                                  }
-                                                  setState(() =>
-                                                      isEditingName = false);
-                                                },
-                                                onTapOutside: (event) {
-                                                  // Reset to original name and exit editing mode
-                                                  nameController.text =
-                                                      authController.name.value;
-                                                  setState(() =>
-                                                      isEditingName = false);
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                  isDense: true,
-                                                  border: InputBorder.none,
-                                                  contentPadding:
-                                                      EdgeInsets.zero,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }),
-                                      const SizedBox(height: 4),
-                                      Obx(() => Text(
-                                            authController.firebaseUser.value
-                                                    ?.email ??
-                                                'error',
-                                            style: const TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 14),
-                                          )),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {},
-                                            child: InfoStatCard(
-                                              label: 'Courses',
-                                              value: authController
-                                                  .courseSlotsUsed
-                                                  .toString(),
-                                              background: false,
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            height: 60,
-                                            child: VerticalDivider(
-                                              color: greyBorder,
-                                              thickness: 1,
-                                            ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              Get.to(
-                                                () => const FriendsScreen(),
-                                                transition: Transition.fadeIn,
-                                                duration: const Duration(
-                                                    milliseconds: 250),
-                                                curve: Curves.easeInOut,
-                                              );
-                                            },
-                                            child: InfoStatCard(
-                                              label: 'Friends',
-                                              value: authController.friendCount
-                                                  .toString(),
-                                              background: false,
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                ),
-                                if (!isEditingName)
-                                  Positioned(
-                                    top: 8,
-                                    right: 12,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setState(() => isEditingName = true);
-                                      },
-                                      child: const Icon(
-                                        Icons.edit,
-                                        color: Colors.white54,
-                                        size: 20,
+                            Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A1A1A),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color: greyBorder, width: 0.8),
+                              ),
+                              padding: const EdgeInsets.only(
+                                  top: 16, left: 16, right: 16),
+                              child: Column(
+                                children: [
+                                  Obx(() {
+                                    final name = authController.name.value;
+                                    return Text(
+                                      name,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w300,
+                                        letterSpacing: -1,
+                                        height: 1.2,
+                                      ),
+                                    );
+                                  }),
+                                  const SizedBox(height: 4),
+                                  Obx(() => Text(
+                                        authController
+                                                .firebaseUser.value?.email ??
+                                            'error',
+                                        style: const TextStyle(
+                                            color: Colors.grey, fontSize: 14),
+                                      )),
+                                  const SizedBox(height: 10),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Get.to(
+                                        () => const _EditUsernameScreen(),
+                                        transition: Transition.cupertino,
+                                        duration:
+                                            const Duration(milliseconds: 260),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 13,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.08),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                        border: Border.all(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.10),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Edit username',
+                                        style: TextStyle(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.86),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.1,
+                                        ),
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Get.to(
-                                    () => const AddFriendsScreen(),
-                                    transition: Transition.fadeIn,
-                                    duration: const Duration(milliseconds: 250),
-                                    curve: Curves.easeInOut,
-                                  );
-                                },
-                                icon: const Icon(Icons.person_add_alt,
-                                    size: 24, color: Color(0xFFB388FF)),
-                                label: const Text(
-                                  'ADD FRIENDS',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {},
+                                        child: InfoStatCard(
+                                          label: 'Courses',
+                                          value: authController.courseSlotsUsed
+                                              .toString(),
+                                          background: false,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 60,
+                                        child: VerticalDivider(
+                                          color: greyBorder,
+                                          thickness: 1,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Get.to(
+                                            () => const FriendsScreen(),
+                                            transition: Transition.fadeIn,
+                                            duration: const Duration(
+                                                milliseconds: 250),
+                                            curve: Curves.easeInOut,
+                                          );
+                                        },
+                                        child: InfoStatCard(
+                                          label: 'Friends',
+                                          value: authController.friendCount
+                                              .toString(),
+                                          background: false,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: InfoStatCard(
-                                      icon: Icons.rocket_launch,
-                                      label: 'Day streak',
-                                      value: authController.streakCount.value
-                                          .toString()),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: InfoStatCard(
-                                      icon: Icons.star,
-                                      label: 'Total Stars',
-                                      value: authController.xpCount.value
-                                          .toString()),
-                                ),
-                              ],
-                            ),
+                            const SizedBox(height: 12),
+                            const _ProfileVideosGrid(),
                           ],
                         ),
                       ],
@@ -374,6 +326,707 @@ class _ProfileBodyState extends State<ProfileBody> {
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditUsernameScreen extends StatefulWidget {
+  const _EditUsernameScreen();
+
+  @override
+  State<_EditUsernameScreen> createState() => _EditUsernameScreenState();
+}
+
+class _EditUsernameScreenState extends State<_EditUsernameScreen> {
+  late final TextEditingController _usernameController;
+  late final String _initialUsername;
+  final RxBool _isSaving = false.obs;
+
+  static final RegExp _usernamePattern = RegExp(r'^[a-zA-Z0-9._]+$');
+
+  @override
+  void initState() {
+    super.initState();
+    final authController = Get.find<AuthController>();
+    _initialUsername = authController.name.value.trim();
+    _usernameController = TextEditingController(text: _initialUsername);
+    _usernameController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _isSaving.close();
+    super.dispose();
+  }
+
+  String get _username => _usernameController.text.trim();
+
+  bool get _isValidUsername {
+    final username = _username;
+    return username.length >= 3 &&
+        username.length <= 24 &&
+        _usernamePattern.hasMatch(username);
+  }
+
+  bool get _canSave =>
+      _isValidUsername && _username != _initialUsername && !_isSaving.value;
+
+  Future<void> _saveUsername() async {
+    if (!_canSave) return;
+
+    _isSaving.value = true;
+    try {
+      final didSave = await Get.find<AuthController>().updateDisplayName(
+        _username,
+        showSuccessMessage: false,
+      );
+      if (mounted && didSave) {
+        Navigator.of(context).pop();
+      }
+    } finally {
+      _isSaving.value = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final username = _username;
+    final showValidation = username.isNotEmpty && !_isValidUsername;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0B0D),
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => Get.back(),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Obx(
+                    () => GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _canSave ? _saveUsername : null,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 140),
+                          style: TextStyle(
+                            color: _canSave
+                                ? const Color(0xFFFF4D7D)
+                                : const Color(0xFFFF4D7D)
+                                    .withValues(alpha: 0.28),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          child: Text(_isSaving.value ? 'Saving...' : 'Save'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(20, 34, 20, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Username',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Choose the name people see on your profile. Usernames can contain letters, numbers, underscores, and periods.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.62),
+                        fontSize: 16,
+                        height: 1.28,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: showValidation
+                              ? const Color(0xFFFF4D7D)
+                                  .withValues(alpha: 0.72)
+                              : Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _usernameController,
+                              autofocus: true,
+                              cursorColor: const Color(0xFFFF4D7D),
+                              keyboardType: TextInputType.text,
+                              textCapitalization: TextCapitalization.none,
+                              textInputAction: TextInputAction.done,
+                              maxLength: 24,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[a-zA-Z0-9._]'),
+                                ),
+                              ],
+                              onSubmitted: (_) => _saveUsername(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: -0.2,
+                              ),
+                              decoration: const InputDecoration(
+                                counterText: '',
+                                border: InputBorder.none,
+                                contentPadding:
+                                    EdgeInsets.symmetric(horizontal: 14),
+                              ),
+                            ),
+                          ),
+                          if (_usernameController.text.isNotEmpty)
+                            GestureDetector(
+                              onTap: _usernameController.clear,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 14),
+                                child: Icon(
+                                  Icons.cancel_rounded,
+                                  color:
+                                      Colors.white.withValues(alpha: 0.38),
+                                  size: 22,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            username.isEmpty
+                                ? 'lumi.app/@username'
+                                : 'lumi.app/@$username',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.42),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${username.length}/24',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.42),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (showValidation) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Use 3-24 letters, numbers, underscores, or periods.',
+                        style: TextStyle(
+                          color: Color(0xFFFF7A9B),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileVideosGrid extends StatelessWidget {
+  const _ProfileVideosGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
+    final videoController = Get.find<VideoController>();
+    final userId = authController.firebaseUser.value?.uid;
+
+    if (userId == null) return const SizedBox.shrink();
+
+    return Obx(() {
+      final videos = videoController.userVideosByUserId[userId] ?? [];
+      final isLoading =
+          videoController.loadingUserVideosByUserId[userId] == true;
+      final hasPendingVideo = videoController.hasPendingVideoPost;
+      final hasMoreVideos = videoController.hasMoreUserVideos(userId);
+      final tileCount = videos.length + (hasPendingVideo ? 1 : 0);
+
+      return SizedBox(
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (videos.isEmpty && isLoading && !hasPendingVideo)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Color(0xFFB388FF),
+                    ),
+                  ),
+                ),
+              )
+            else if (videos.isEmpty && !hasPendingVideo)
+              const _EmptyProfileVideos()
+            else
+              Column(
+                children: [
+                  GridView.builder(
+                    itemCount: tileCount,
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.only(top: 8),
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 3,
+                      mainAxisSpacing: 3,
+                      childAspectRatio: 9 / 14,
+                    ),
+                    itemBuilder: (context, index) {
+                      if (hasPendingVideo && index == 0) {
+                        return const _UploadingVideoTile();
+                      }
+                      final videoIndex = hasPendingVideo ? index - 1 : index;
+                      return _ProfileVideoTile(video: videos[videoIndex]);
+                    },
+                  ),
+                  if (isLoading && hasMoreVideos)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 18, bottom: 2),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFB388FF),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _UploadingVideoTile extends StatelessWidget {
+  const _UploadingVideoTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        color: Colors.white.withValues(alpha: 0.08),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const _VideoTileFallback(),
+            ColoredBox(color: Colors.black.withValues(alpha: 0.46)),
+            const Center(
+              child: SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Color(0xFFB388FF),
+                ),
+              ),
+            ),
+            const Positioned(
+              left: 6,
+              right: 6,
+              bottom: 8,
+              child: Text(
+                'Posting...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileVideoTile extends StatelessWidget {
+  const _ProfileVideoTile({required this.video});
+
+  final VideoPost video;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Get.to(
+          () => _ProfileVideoPreviewScreen(video: video),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 250),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (video.thumbnailUrl != null && video.thumbnailUrl!.isNotEmpty)
+              Image.network(
+                video.thumbnailUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _VideoTileVideoFrame(video: video),
+              )
+            else
+              _VideoTileVideoFrame(video: video),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.62),
+                  ],
+                ),
+              ),
+            ),
+            const Center(
+              child: Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 34,
+              ),
+            ),
+            if (video.subject.isNotEmpty)
+              Positioned(
+                left: 6,
+                right: 6,
+                top: 6,
+                child: Text(
+                  video.subject,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            Positioned(
+              left: 6,
+              right: 6,
+              bottom: 6,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.favorite,
+                    color: Colors.white,
+                    size: 13,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    video.likeCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoTileFallback extends StatelessWidget {
+  const _VideoTileFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2A174B),
+            Color(0xFF0B0B0B),
+            Color(0xFF1E2F4A),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoTileVideoFrame extends StatefulWidget {
+  const _VideoTileVideoFrame({required this.video});
+
+  final VideoPost video;
+
+  @override
+  State<_VideoTileVideoFrame> createState() => _VideoTileVideoFrameState();
+}
+
+class _VideoTileVideoFrameState extends State<_VideoTileVideoFrame> {
+  VideoPlayerController? _controller;
+  bool _failedToLoadFrame = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final playbackUrl = widget.video.playbackUrl;
+    if (playbackUrl == null || playbackUrl.isEmpty) {
+      _failedToLoadFrame = true;
+      return;
+    }
+
+    final controller = VideoPlayerController.networkUrl(Uri.parse(playbackUrl));
+    _controller = controller;
+    controller.initialize().then((_) async {
+      if (!mounted) return;
+      await controller.seekTo(Duration.zero);
+      await controller.pause();
+      if (!mounted) return;
+      setState(() {});
+    }).catchError((error) {
+      if (!mounted) return;
+      debugPrint('Unable to load profile video frame: $error');
+      setState(() => _failedToLoadFrame = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (_failedToLoadFrame ||
+        controller == null ||
+        !controller.value.isInitialized) {
+      return const _VideoTileFallback();
+    }
+
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: controller.value.size.width,
+        height: controller.value.size.height,
+        child: VideoPlayer(controller),
+      ),
+    );
+  }
+}
+
+class _EmptyProfileVideos extends StatelessWidget {
+  const _EmptyProfileVideos();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 26),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.movie_creation_outlined,
+            color: Colors.white.withValues(alpha: 0.72),
+            size: 34,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'No videos yet',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.86),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Published videos will show up here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.56),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileVideoPreviewScreen extends StatefulWidget {
+  const _ProfileVideoPreviewScreen({required this.video});
+
+  final VideoPost video;
+
+  @override
+  State<_ProfileVideoPreviewScreen> createState() =>
+      _ProfileVideoPreviewScreenState();
+}
+
+class _ProfileVideoPreviewScreenState
+    extends State<_ProfileVideoPreviewScreen> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final playbackUrl = widget.video.playbackUrl;
+    if (playbackUrl == null || playbackUrl.isEmpty) return;
+
+    final controller = VideoPlayerController.networkUrl(Uri.parse(playbackUrl));
+    _controller = controller;
+    controller.initialize().then((_) {
+      if (!mounted) return;
+      controller
+        ..setLooping(true)
+        ..play();
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayback() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    if (controller.value.isPlaying) {
+      controller.pause();
+    } else {
+      controller.play();
+    }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Video'),
+      ),
+      body: GestureDetector(
+        onTap: _togglePlayback,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (controller != null && controller.value.isInitialized)
+              FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: controller.value.size.width,
+                  height: controller.value.size.height,
+                  child: VideoPlayer(controller),
+                ),
+              )
+            else
+              const Center(
+                child: CircularProgressIndicator(color: Color(0xFFB388FF)),
+              ),
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 36,
+              child: Text(
+                widget.video.caption,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

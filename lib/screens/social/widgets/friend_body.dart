@@ -4,7 +4,6 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/profile/components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/social/components/pfp_viewer.dart';
-import 'package:lumi_learn_app/screens/social/components/xp_chart_box.dart';
 
 class FriendProfile extends StatelessWidget {
   const FriendProfile({super.key});
@@ -145,7 +144,11 @@ class FriendProfile extends StatelessWidget {
                             : () async {
                                 try {
                                   await controller.sendFriendRequest(friend.id);
-                                } catch (e) {}
+                                } catch (error) {
+                                  debugPrint(
+                                    'Failed to send friend request: $error',
+                                  );
+                                }
                               },
                         icon: buttonIcon,
                         label: Text(
@@ -169,25 +172,6 @@ class FriendProfile extends StatelessWidget {
                     );
                   }),
 
-                  const SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InfoStatCard(
-                            icon: Icons.rocket_launch,
-                            label: 'Day streak',
-                            value: friend.streakCount.toString()),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: InfoStatCard(
-                            icon: Icons.star,
-                            label: 'Total Stars',
-                            value: friend.xpCount.toString()),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

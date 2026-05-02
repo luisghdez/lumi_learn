@@ -4,13 +4,13 @@ import 'package:camera/camera.dart';
 
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
-import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
 import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
+import 'package:lumi_learn_app/screens/search/search_main.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
@@ -67,7 +67,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
     final CourseController courseController = Get.find();
-    final NavigationController navigationController = Get.find();
 
     final double horizontalPadding = _getHorizontalPadding(context);
     final double topScrollViewPadding =
@@ -238,7 +237,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   ),
                                   GestureDetector(
                                     onTap: () {
-                                      navigationController.updateIndex(1);
+                                      Get.to(
+                                        () => const SearchMain(),
+                                        transition: Transition.fadeIn,
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                      );
                                     },
                                     child: Row(
                                       children: [
