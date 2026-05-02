@@ -397,6 +397,35 @@ class PodcastService {
       return body;
     }
   }
+
+
+  Future<Map<String, dynamic>> createRealtimeSession({
+  required String token,
+  required String courseId,
+  required String segmentId,
+}) async {
+  final response = await http.post(
+    Uri.parse('$_baseUrl/podcasts/realtime/session'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'courseId': courseId,
+      'segmentId': segmentId,
+    }),
+  ).timeout(_standardTimeout);
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  } else {
+    throw PodcastException(
+      'Failed to create realtime session',
+      statusCode: response.statusCode,
+      details: response.body,
+    );
+  }
+}
 }
 
 /// Custom exception for podcast-related errors
@@ -417,3 +446,7 @@ class PodcastException implements Exception {
     return 'PodcastException: $message';
   }
 }
+
+
+
+

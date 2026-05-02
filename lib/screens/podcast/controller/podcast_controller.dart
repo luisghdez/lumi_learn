@@ -1,4 +1,4 @@
-// lib/screens/podcast/podcast_controller.dart
+// lib/screens/podcast/controller/podcast_controller.dart
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -44,6 +44,7 @@ class PodcastController extends ChangeNotifier {
   bool isRecording = false;
   bool isRinging = false;
   bool isProcessingCallIn = false;
+  bool isJumpingToLine = false; // 🆕 Add flag for line jumping
 
   PodcastController({
     required this.courseId,
@@ -142,12 +143,14 @@ class PodcastController extends ChangeNotifier {
         _setupDialogueStream();
         // 🆕 Log loaded segments with topics
         for (var i = 0; i < segments.length; i++) {
+          print('📚 Segment ${i + 1}: ${segments[i].topic ?? "No topic"}');
         }
       }
       
       isLoading = false;
       notifyListeners();
     } catch (e) {
+      print('Error loading podcast: $e');
       isLoading = false;
       notifyListeners();
     }
@@ -336,6 +339,35 @@ class PodcastController extends ChangeNotifier {
     }
   }
 
+  // 🆕 Jump to specific line within current segment
+  Future<void> jumpToLine(int lineIndex) async {
+    if (lineIndex < 0 || lineIndex >= currentDialogue.length) return;
+    
+    isJumpingToLine = true;
+    
+    // Stop current playback
+    if (isPlaying) {
+      await _player.stop();
+    }
+    
+    // Update the current line index
+    currentLineIndex = lineIndex;
+    
+    // Update the current speaker and text immediately
+    final line = currentDialogue[lineIndex];
+    currentSpeaker = line.speaker;
+    currentDialogueText = line.text;
+    
+    // Reset audio position
+    currentPosition = Duration.zero;
+    totalDuration = Duration.zero;
+    
+    isJumpingToLine = false;
+    notifyListeners();
+    
+    print('🎯 Jumped to line $lineIndex: ${line.text.substring(0, 50.clamp(0, line.text.length))}...');
+  }
+
   // --------------------------------------------------------------------------
   // Playback
   // --------------------------------------------------------------------------
@@ -343,7 +375,7 @@ class PodcastController extends ChangeNotifier {
     _player.setReleaseMode(ReleaseMode.stop);
     
     _playerCompleteSubscription = _player.onPlayerComplete.listen((_) {
-      if (!isPlaying) return;
+      if (!isPlaying || isJumpingToLine) return;
       currentLineIndex++;
       playNextLine();
     });
@@ -363,7 +395,7 @@ class PodcastController extends ChangeNotifier {
 
   Future<void> togglePlayback() async {
     if (isPlaying) {
-      stopPlayback();
+      await pausePlayback(); // 🆕 Use pause instead of stop
     } else {
       startPlayback();
     }
@@ -371,11 +403,18 @@ class PodcastController extends ChangeNotifier {
 
   void startPlayback() {
     if (segments.isEmpty || currentSegmentIndex >= segments.length) {
+      print('❌ Cannot start playback: No segments available');
       return;
     }
     
     if (currentDialogue.isEmpty) {
+      print('❌ Cannot start playback: No dialogue in current segment');
       return;
+    }
+    
+    // Validate line index
+    if (currentLineIndex >= currentDialogue.length) {
+      currentLineIndex = 0;
     }
     
     isPlaying = true;
@@ -387,6 +426,24 @@ class PodcastController extends ChangeNotifier {
     isPlaying = false;
     _player.stop();
     notifyListeners();
+  }
+
+  // 🆕 Add pause functionality
+  Future<void> pausePlayback() async {
+    isPlaying = false;
+    await _player.pause();
+    notifyListeners();
+  }
+
+  // 🆕 Add resume functionality
+  Future<void> resumePlayback() async {
+    if (!isPlaying && _player.state == PlayerState.paused) {
+      isPlaying = true;
+      await _player.resume();
+      notifyListeners();
+    } else {
+      startPlayback();
+    }
   }
 
   Future<void> playNextLine() async {
@@ -453,17 +510,32 @@ class PodcastController extends ChangeNotifier {
         await Future.delayed(
           Duration(milliseconds: (line.text.length * 40).clamp(2000, 8000)),
         );
-        currentLineIndex++;
-        playNextLine();
+        if (!isJumpingToLine) {
+          currentLineIndex++;
+          playNextLine();
+        }
       }
     } else {
       // No audio URL, use text-based timing
       await Future.delayed(
         Duration(milliseconds: (line.text.length * 40).clamp(2000, 8000)),
       );
-      currentLineIndex++;
-      playNextLine();
+      if (!isJumpingToLine) {
+        currentLineIndex++;
+        playNextLine();
+      }
     }
+  }
+
+  // 🆕 Play specific line
+  Future<void> playLineAt(int index) async {
+    if (index < 0 || index >= currentDialogue.length) return;
+    
+    // Jump to the line
+    await jumpToLine(index);
+    
+    // Start playback from that line
+    startPlayback();
   }
 
   // --------------------------------------------------------------------------
@@ -477,6 +549,7 @@ class PodcastController extends ChangeNotifier {
         await _stopRecordingAndSend();
       }
     } catch (e) {
+      print('❌ Call-in error: $e');
       isRecording = false;
       isRinging = false;
       isProcessingCallIn = false;
@@ -488,7 +561,7 @@ class PodcastController extends ChangeNotifier {
   Future<void> _startCallInSequence() async {
     // Stop current playback
     if (isPlaying) {
-      stopPlayback();
+      await pausePlayback(); // 🆕 Use pause to maintain position
     }
 
     // 🆕 Show what topic we're asking about
@@ -595,7 +668,7 @@ class PodcastController extends ChangeNotifier {
       if (hostResponse != null) {
         currentSpeaker = result['speaker'] as String? ?? 'Host';
         currentDialogueText = hostResponse;
-        print('🎤 ${currentSpeaker}: ${hostResponse.substring(0, 100)}...');
+        print('🎤 ${currentSpeaker}: ${hostResponse.substring(0, 50.clamp(0, hostResponse.length))}...');
         notifyListeners();
       }
       
@@ -612,7 +685,7 @@ class PodcastController extends ChangeNotifier {
       
       // Resume playback if there's more content
       if (currentLineIndex < currentDialogue.length) {
-        startPlayback();
+        resumePlayback(); // 🆕 Use resume instead of start
       }
     } else {
       isProcessingCallIn = false;
@@ -632,6 +705,10 @@ class PodcastController extends ChangeNotifier {
         backgroundColor: color,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -657,6 +734,7 @@ class PodcastController extends ChangeNotifier {
       );
       await loadPodcast();
       print('✅ Podcast generated successfully!');
+      _showSnack('✅ Podcast generated successfully!', Colors.green);
     } catch (e) {
       print('❌ Error generating podcast: $e');
       _showSnack('❌ Failed to generate podcast', Colors.red);

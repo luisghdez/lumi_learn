@@ -1,5 +1,6 @@
 // lib/screens/podcast/widget/podcast_transcript.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lumi_learn_app/screens/podcast/controller/podcast_controller.dart';
 
 class PodcastTranscript extends StatefulWidget {
@@ -11,23 +12,54 @@ class PodcastTranscript extends StatefulWidget {
   State<PodcastTranscript> createState() => _PodcastTranscriptState();
 }
 
-class _PodcastTranscriptState extends State<PodcastTranscript> {
+class _PodcastTranscriptState extends State<PodcastTranscript> 
+    with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  
   int _previousLineIndex = -1;
   int _previousDialogueLength = 0;
   bool _isScrolling = false;
+  bool _userInteracting = false;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
     widget.controller.addListener(_onControllerUpdate);
+    _scrollController.addListener(_onUserScroll);
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerUpdate);
+    _scrollController.removeListener(_onUserScroll);
     _scrollController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _onUserScroll() {
+    if (_scrollController.position.isScrollingNotifier.value) {
+      _userInteracting = true;
+    } else {
+      // Resume auto-scroll after user stops scrolling
+      Future.delayed(const Duration(seconds: 3), () {
+        _userInteracting = false;
+      });
+    }
   }
 
   void _onControllerUpdate() {
@@ -40,30 +72,54 @@ class _PodcastTranscriptState extends State<PodcastTranscript> {
       _previousLineIndex = currentIndex;
       _previousDialogueLength = currentLength;
       
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToCurrentLine(currentIndex);
+      // Trigger animation for current line
+      _animationController.forward().then((_) {
+        _animationController.reverse();
       });
+      
+      // Only auto-scroll if user is not interacting
+      if (!_userInteracting) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentLine(currentIndex);
+        });
+      }
     }
   }
 
   void _scrollToCurrentLine(int index) {
     if (!mounted || _isScrolling || !_scrollController.hasClients) return;
-    
+
     final dialogue = widget.controller.currentDialogue;
     if (index < 0 || index >= dialogue.length) return;
 
     _isScrolling = true;
 
-    const itemHeight = 120.0;
-    final targetOffset = (index * itemHeight) - 100;
+    // Get actual viewport dimensions
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    final viewportHeight = renderBox?.size.height ??
+        MediaQuery.of(context).size.height * 0.5;
 
+    // Calculate target position to show full item
+    // Position item at 30% from top of viewport to ensure bottom is visible
+    final targetPosition = viewportHeight * 0.3;
+
+    // Estimate scroll position based on average item distribution
     final maxScroll = _scrollController.position.maxScrollExtent;
+    final totalItems = dialogue.length;
+
+    // Calculate approximate item position
+    final estimatedItemPosition = totalItems > 1
+        ? (index / (totalItems - 1)) * maxScroll
+        : 0.0;
+
+    // Adjust to position item at target position in viewport
+    final targetOffset = estimatedItemPosition - targetPosition;
     final clampedOffset = targetOffset.clamp(0.0, maxScroll);
 
     _scrollController.animateTo(
       clampedOffset,
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.fastOutSlowIn,
     ).then((_) {
       _isScrolling = false;
     }).catchError((error) {
@@ -72,14 +128,56 @@ class _PodcastTranscriptState extends State<PodcastTranscript> {
     });
   }
 
+  void _onTranscriptLineTap(int index) {
+    // Haptic feedback
+    HapticFeedback.lightImpact();
+    
+    // Visual feedback
+    _animationController.forward().then((_) {
+      _animationController.reverse();
+    });
+    
+    // Stop current playback if playing
+    if (widget.controller.isPlaying) {
+      widget.controller.stopPlayback();
+    }
+    
+    // Jump to the tapped line
+    widget.controller.currentLineIndex = index;
+    widget.controller.notifyListeners();
+    
+    // Start playback from this line
+    widget.controller.startPlayback();
+    
+    // Scroll to the tapped line
+    _scrollToCurrentLine(index);
+  }
+
   void _openFullscreen() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (context) => _FullscreenTranscript(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            _FullscreenTranscript(
           controller: widget.controller,
           scrollController: _scrollController,
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.02),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        fullscreenDialog: true,
       ),
     );
   }
@@ -123,14 +221,35 @@ class _PodcastTranscriptState extends State<PodcastTranscript> {
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                padding: const EdgeInsets.only(
+                  left: 12,
+                  right: 12,
+                  top: 16,
+                  bottom: 120, // Extra bottom padding for visibility
+                ),
                 physics: const BouncingScrollPhysics(),
                 itemCount: widget.controller.currentDialogue.length,
                 itemBuilder: (context, index) {
-                  return _buildTranscriptLine(
-                    index: index,
-                    line: widget.controller.currentDialogue[index],
-                    isCurrentLine: index == widget.controller.currentLineIndex,
+                  final isCurrentLine = index == widget.controller.currentLineIndex;
+                  
+                  return AnimatedBuilder(
+                    animation: isCurrentLine ? _scaleAnimation : 
+                        const AlwaysStoppedAnimation(1.0),
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: isCurrentLine ? _scaleAnimation.value : 1.0,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                          child: _buildTranscriptLine(
+                            index: index,
+                            line: widget.controller.currentDialogue[index],
+                            isCurrentLine: isCurrentLine,
+                            onTap: () => _onTranscriptLineTap(index),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -199,104 +318,144 @@ class _PodcastTranscriptState extends State<PodcastTranscript> {
     required int index,
     required dynamic line,
     required bool isCurrentLine,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCurrentLine 
-            ? const Color(0xFF6B5B95).withOpacity(0.4) 
-            : Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.all(isCurrentLine ? 18 : 16),
+        decoration: BoxDecoration(
           color: isCurrentLine 
-              ? const Color(0xFF9B8FD7) 
-              : Colors.transparent,
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: line.speaker.contains('A')
-                        ? [const Color(0xFF7B6BA8), const Color(0xFF6B5B95)]
-                        : [const Color(0xFF5B9FD7), const Color(0xFF4A8FC7)],
+              ? const Color(0xFF6B5B95).withOpacity(0.4) 
+              : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCurrentLine 
+                ? const Color(0xFF9B8FD7) 
+                : Colors.transparent,
+            width: isCurrentLine ? 2.5 : 2,
+          ),
+          boxShadow: isCurrentLine
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF9B8FD7).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
                   ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    line.speaker.contains('A') ? 'A' : 'B',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                ]
+              : [],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: isCurrentLine ? 36 : 32,
+                  height: isCurrentLine ? 36 : 32,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: line.speaker.contains('A')
+                          ? [const Color(0xFF7B6BA8), const Color(0xFF6B5B95)]
+                          : [const Color(0xFF5B9FD7), const Color(0xFF4A8FC7)],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      line.speaker.contains('A') ? 'A' : 'B',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isCurrentLine ? 16 : 14,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  line.speaker,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isCurrentLine 
-                        ? const Color(0xFF9B8FD7) 
-                        : Colors.white.withOpacity(0.9),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    line.speaker,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isCurrentLine 
+                          ? const Color(0xFF9B8FD7) 
+                          : Colors.white.withOpacity(0.9),
+                    ),
                   ),
                 ),
-              ),
-              if (isCurrentLine)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF9B8FD7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Now',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                if (isCurrentLine)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF9B8FD7),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF9B8FD7).withOpacity(0.5),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(seconds: 1),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: 0.8 + (0.2 * value),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Now',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.play_circle_outline,
+                    color: Colors.white.withOpacity(0.3),
+                    size: 20,
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            line.text,
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.6,
-              color: isCurrentLine 
-                  ? Colors.white 
-                  : Colors.white.withOpacity(0.7),
-              fontWeight: isCurrentLine ? FontWeight.w500 : FontWeight.normal,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: TextStyle(
+                fontSize: isCurrentLine ? 16 : 15,
+                height: 1.6,
+                color: isCurrentLine 
+                    ? Colors.white 
+                    : Colors.white.withOpacity(0.7),
+                fontWeight: isCurrentLine ? FontWeight.w500 : FontWeight.normal,
+              ),
+              child: Text(line.text),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,17 +475,35 @@ class _FullscreenTranscript extends StatefulWidget {
   State<_FullscreenTranscript> createState() => _FullscreenTranscriptState();
 }
 
-class _FullscreenTranscriptState extends State<_FullscreenTranscript> {
+class _FullscreenTranscriptState extends State<_FullscreenTranscript> 
+    with TickerProviderStateMixin {
   late final ScrollController _fullscreenScrollController;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  
   int _previousLineIndex = -1;
   int _previousDialogueLength = 0;
   bool _isScrolling = false;
+  bool _userInteracting = false;
 
   @override
   void initState() {
     super.initState();
     _fullscreenScrollController = ScrollController();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
     widget.controller.addListener(_onControllerUpdate);
+    _fullscreenScrollController.addListener(_onUserScroll);
     
     // Scroll to current position after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -337,8 +514,20 @@ class _FullscreenTranscriptState extends State<_FullscreenTranscript> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerUpdate);
+    _fullscreenScrollController.removeListener(_onUserScroll);
     _fullscreenScrollController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _onUserScroll() {
+    if (_fullscreenScrollController.position.isScrollingNotifier.value) {
+      _userInteracting = true;
+    } else {
+      Future.delayed(const Duration(seconds: 3), () {
+        _userInteracting = false;
+      });
+    }
   }
 
   void _onControllerUpdate() {
@@ -351,35 +540,75 @@ class _FullscreenTranscriptState extends State<_FullscreenTranscript> {
       _previousLineIndex = currentIndex;
       _previousDialogueLength = currentLength;
       
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToCurrentLine(currentIndex);
+      _animationController.forward().then((_) {
+        _animationController.reverse();
       });
+      
+      if (!_userInteracting) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentLine(currentIndex);
+        });
+      }
     }
   }
 
   void _scrollToCurrentLine(int index) {
     if (!mounted || _isScrolling || !_fullscreenScrollController.hasClients) return;
-    
+
     final dialogue = widget.controller.currentDialogue;
     if (index < 0 || index >= dialogue.length) return;
 
     _isScrolling = true;
 
-    const itemHeight = 120.0;
-    final targetOffset = (index * itemHeight) - 150;
+    // Get actual viewport dimensions
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    final viewportHeight = renderBox?.size.height ??
+        MediaQuery.of(context).size.height;
 
+    // Calculate target position to show full item
+    // Position item at 25% from top of viewport to ensure bottom is fully visible
+    final targetPosition = viewportHeight * 0.25;
+
+    // Estimate scroll position based on average item distribution
     final maxScroll = _fullscreenScrollController.position.maxScrollExtent;
+    final totalItems = dialogue.length;
+
+    // Calculate approximate item position
+    final estimatedItemPosition = totalItems > 1
+        ? (index / (totalItems - 1)) * maxScroll
+        : 0.0;
+
+    // Adjust to position item at target position in viewport
+    final targetOffset = estimatedItemPosition - targetPosition;
     final clampedOffset = targetOffset.clamp(0.0, maxScroll);
 
     _fullscreenScrollController.animateTo(
       clampedOffset,
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.fastOutSlowIn,
     ).then((_) {
       _isScrolling = false;
     }).catchError((error) {
       _isScrolling = false;
     });
+  }
+
+  void _onTranscriptLineTap(int index) {
+    HapticFeedback.lightImpact();
+    
+    _animationController.forward().then((_) {
+      _animationController.reverse();
+    });
+    
+    if (widget.controller.isPlaying) {
+      widget.controller.stopPlayback();
+    }
+    
+    widget.controller.currentLineIndex = index;
+    widget.controller.notifyListeners();
+    widget.controller.startPlayback();
+    
+    _scrollToCurrentLine(index);
   }
 
   @override
@@ -465,17 +694,32 @@ class _FullscreenTranscriptState extends State<_FullscreenTranscript> {
                   builder: (context, _) {
                     return ListView.builder(
                       controller: _fullscreenScrollController,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        right: 20,
+                        top: 20,
+                        bottom: 150, // Extra bottom padding
+                      ),
                       physics: const BouncingScrollPhysics(),
                       itemCount: widget.controller.currentDialogue.length,
                       itemBuilder: (context, index) {
                         final line = widget.controller.currentDialogue[index];
                         final isCurrentLine = index == widget.controller.currentLineIndex;
                         
-                        return _buildFullscreenTranscriptLine(
-                          index: index,
-                          line: line,
-                          isCurrentLine: isCurrentLine,
+                        return AnimatedBuilder(
+                          animation: isCurrentLine ? _scaleAnimation : 
+                              const AlwaysStoppedAnimation(1.0),
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: isCurrentLine ? _scaleAnimation.value : 1.0,
+                              child: _buildFullscreenTranscriptLine(
+                                index: index,
+                                line: line,
+                                isCurrentLine: isCurrentLine,
+                                onTap: () => _onTranscriptLineTap(index),
+                              ),
+                            );
+                          },
                         );
                       },
                     );
@@ -493,104 +737,144 @@ class _FullscreenTranscriptState extends State<_FullscreenTranscript> {
     required int index,
     required dynamic line,
     required bool isCurrentLine,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isCurrentLine 
-            ? const Color(0xFF6B5B95).withOpacity(0.5) 
-            : Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: EdgeInsets.all(isCurrentLine ? 22 : 20),
+        decoration: BoxDecoration(
           color: isCurrentLine 
-              ? const Color(0xFF9B8FD7) 
-              : Colors.transparent,
-          width: 2.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: line.speaker.contains('A')
-                        ? [const Color(0xFF7B6BA8), const Color(0xFF6B5B95)]
-                        : [const Color(0xFF5B9FD7), const Color(0xFF4A8FC7)],
+              ? const Color(0xFF6B5B95).withOpacity(0.5) 
+              : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isCurrentLine 
+                ? const Color(0xFF9B8FD7) 
+                : Colors.transparent,
+            width: isCurrentLine ? 3 : 2.5,
+          ),
+          boxShadow: isCurrentLine
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF9B8FD7).withOpacity(0.4),
+                    blurRadius: 25,
+                    offset: const Offset(0, 6),
                   ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    line.speaker.contains('A') ? 'A' : 'B',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                ]
+              : [],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: isCurrentLine ? 44 : 40,
+                  height: isCurrentLine ? 44 : 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: line.speaker.contains('A')
+                          ? [const Color(0xFF7B6BA8), const Color(0xFF6B5B95)]
+                          : [const Color(0xFF5B9FD7), const Color(0xFF4A8FC7)],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      line.speaker.contains('A') ? 'A' : 'B',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isCurrentLine ? 20 : 18,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  line.speaker,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isCurrentLine 
-                        ? const Color(0xFF9B8FD7) 
-                        : Colors.white.withOpacity(0.9),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    line.speaker,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isCurrentLine 
+                          ? const Color(0xFF9B8FD7) 
+                          : Colors.white.withOpacity(0.9),
+                    ),
                   ),
                 ),
-              ),
-              if (isCurrentLine)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF9B8FD7),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Playing Now',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                if (isCurrentLine)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF9B8FD7),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF9B8FD7).withOpacity(0.5),
+                          blurRadius: 15,
+                          offset: const Offset(0, 3),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(seconds: 1),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: 0.8 + (0.2 * value),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          'Playing Now',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.play_circle_outline,
+                    color: Colors.white.withOpacity(0.3),
+                    size: 24,
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            line.text,
-            style: TextStyle(
-              fontSize: 17,
-              height: 1.7,
-              color: isCurrentLine 
-                  ? Colors.white 
-                  : Colors.white.withOpacity(0.75),
-              fontWeight: isCurrentLine ? FontWeight.w500 : FontWeight.normal,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: TextStyle(
+                fontSize: isCurrentLine ? 18 : 17,
+                height: 1.7,
+                color: isCurrentLine 
+                    ? Colors.white 
+                    : Colors.white.withOpacity(0.75),
+                fontWeight: isCurrentLine ? FontWeight.w500 : FontWeight.normal,
+              ),
+              child: Text(line.text),
+            ),
+          ],
+        ),
       ),
     );
   }
