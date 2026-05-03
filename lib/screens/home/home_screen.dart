@@ -137,146 +137,146 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           ),
                           const SizedBox(height: 28),
                           // Feature Cards - Index 1
-                          FadeTransition(
-                            opacity: CurvedAnimation(
-                              parent: _animationController,
-                              curve: const Interval(0.1, 1.0,
-                                  curve: Curves.easeOut),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding),
-                              child: Container(
-                                height: 130,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: greyBorder),
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0x9900012D),
-                                      Color(0x993A005A),
-                                    ],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    FeatureCard(
-                                      gradientColors: const [],
-                                      icon: Symbols.document_scanner,
-                                      title: 'AI Scanner',
-                                      subtitle: 'Scan & learn instantly',
-                                      onTap: () {
-                                        if (_cameras != null) {
-                                          Get.to(() => AiScannerMain(
-                                              cameras: _cameras!));
-                                        } else {
-                                          Get.snackbar('Camera Error',
-                                              'Cameras not ready yet');
-                                        }
-                                      },
-                                    ),
-                                    const SizedBox(width: 12),
-                                    FeatureCard(
-                                      gradientColors: const [],
-                                      icon: Symbols.note_add,
-                                      title: 'Add Course',
-                                      subtitle: 'Create new course',
-                                      onTap: () {
-                                        Get.to(() => const CourseCreation(),
-                                            transition: Transition.fadeIn,
-                                            duration: const Duration(
-                                                milliseconds: 500));
-                                      },
-                                    ),
-                                    const SizedBox(width: 12),
-                                    FeatureCard(
-                                      gradientColors: const [],
-                                      icon: Symbols.forum,
-                                      title: 'LumiTutor',
-                                      subtitle: 'AI study companion',
-                                      onTap: () {
-                                        Get.to(
-                                          () => const LumiTutorMain(
-                                            initialArgs: {
-                                              'type': 'text',
-                                              'paths': [],
-                                              'category': 'Anything',
-                                            },
-                                          ),
-                                          transition: Transition.fadeIn,
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+                          // FadeTransition(
+                          //   opacity: CurvedAnimation(
+                          //     parent: _animationController,
+                          //     curve: const Interval(0.1, 1.0,
+                          //         curve: Curves.easeOut),
+                          //   ),
+                          //   child: Padding(
+                          //     padding: EdgeInsets.symmetric(
+                          //         horizontal: horizontalPadding),
+                          //     child: Container(
+                          //       height: 130,
+                          //       decoration: BoxDecoration(
+                          //         borderRadius: BorderRadius.circular(20),
+                          //         border: Border.all(color: greyBorder),
+                          //         gradient: const LinearGradient(
+                          //           colors: [
+                          //             Color(0x9900012D),
+                          //             Color(0x993A005A),
+                          //           ],
+                          //           begin: Alignment.centerLeft,
+                          //           end: Alignment.centerRight,
+                          //         ),
+                          //       ),
+                          //       child: Row(
+                          //         children: [
+                                    // FeatureCard(
+                                    //   gradientColors: const [],
+                                    //   icon: Symbols.document_scanner,
+                                    //   title: 'AI Scanner',
+                                    //   subtitle: 'Scan & learn instantly',
+                                    //   onTap: () {
+                                    //     if (_cameras != null) {
+                                    //       Get.to(() => AiScannerMain(
+                                    //           cameras: _cameras!));
+                                    //     } else {
+                                    //       Get.snackbar('Camera Error',
+                                    //           'Cameras not ready yet');
+                                    //     }
+                                    //   },
+                                    // ),
+                                    // const SizedBox(width: 12),
+                                    // FeatureCard(
+                                    //   gradientColors: const [],
+                                    //   icon: Symbols.note_add,
+                                    //   title: 'Add Course',
+                                    //   subtitle: 'Create new course',
+                                    //   onTap: () {
+                                    //     Get.to(() => const CourseCreation(),
+                                    //         transition: Transition.fadeIn,
+                                    //         duration: const Duration(
+                                    //             milliseconds: 500));
+                                    //   },
+                                    // ),
+                                    // const SizedBox(width: 12),
+                                    // FeatureCard(
+                                    //   gradientColors: const [],
+                                    //   icon: Symbols.forum,
+                                    //   title: 'LumiTutor',
+                                    //   subtitle: 'AI study companion',
+                                    //   onTap: () {
+                                    //     Get.to(
+                                    //       () => const LumiTutorMain(
+                                    //         initialArgs: {
+                                    //           'type': 'text',
+                                    //           'paths': [],
+                                    //           'category': 'Anything',
+                                    //         },
+                                    //       ),
+                                    //       transition: Transition.fadeIn,
+                                    //       duration:
+                                    //           const Duration(milliseconds: 300),
+                                    //     );
+                                    //   },
+                                    // ),
+                                  // ],
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 24),
                           // Suggested Courses Header - Index 2
-                          FadeTransition(
-                            opacity: CurvedAnimation(
-                              parent: _animationController,
-                              curve: const Interval(0.2, 1.0,
-                                  curve: Curves.easeOut),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Suggested Courses',
-                                    style: sectionTitleStyle,
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(
-                                        () => const SearchMain(),
-                                        transition: Transition.fadeIn,
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                      );
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          'Search',
-                                          style: sectionTitleStyle.copyWith(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.white
-                                                .withValues(alpha: 0.8),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        const Icon(Icons.arrow_forward,
-                                            size: 16, color: Colors.white),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Horizontal Category List - Index 3
-                          FadeTransition(
-                            opacity: CurvedAnimation(
-                              parent: _animationController,
-                              curve: const Interval(0.3, 1.0,
-                                  curve: Curves.easeOut),
-                            ),
-                            child: HorizontalCategoryList(
-                                initialPadding: horizontalPadding),
-                          ),
-                          const SizedBox(height: 18),
+                          // FadeTransition(
+                          //   opacity: CurvedAnimation(
+                          //     parent: _animationController,
+                          //     curve: const Interval(0.2, 1.0,
+                          //         curve: Curves.easeOut),
+                          //   ),
+                          //   child: Padding(
+                          //     padding: EdgeInsets.symmetric(
+                          //         horizontal: horizontalPadding),
+                          //     child: Row(
+                          //       mainAxisAlignment:
+                          //           MainAxisAlignment.spaceBetween,
+                          //       children: [
+                          //         Text(
+                          //           'Suggested Courses',
+                          //           style: sectionTitleStyle,
+                          //         ),
+                          //         GestureDetector(
+                          //           onTap: () {
+                          //             Get.to(
+                          //               () => const SearchMain(),
+                          //               transition: Transition.fadeIn,
+                          //               duration:
+                          //                   const Duration(milliseconds: 300),
+                          //             );
+                          //           },
+                          //           child: Row(
+                          //             children: [
+                          //               Text(
+                          //                 'Search',
+                          //                 style: sectionTitleStyle.copyWith(
+                          //                   fontSize: 12,
+                          //                   fontWeight: FontWeight.w400,
+                          //                   color: Colors.white
+                          //                       .withValues(alpha: 0.8),
+                          //                 ),
+                          //               ),
+                          //               const SizedBox(width: 4),
+                          //               const Icon(Icons.arrow_forward,
+                          //                   size: 16, color: Colors.white),
+                          //             ],
+                          //           ),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 8),
+                          // // Horizontal Category List - Index 3
+                          // FadeTransition(
+                          //   opacity: CurvedAnimation(
+                          //     parent: _animationController,
+                          //     curve: const Interval(0.3, 1.0,
+                          //         curve: Curves.easeOut),
+                          //   ),
+                          //   child: HorizontalCategoryList(
+                          //       initialPadding: horizontalPadding),
+                          // ),
+                          // const SizedBox(height: 18),
                           // LumiTutor Section - Index 4
                           FadeTransition(
                             opacity: CurvedAnimation(

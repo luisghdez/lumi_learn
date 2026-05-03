@@ -19,6 +19,7 @@ import 'notifications/local_notifications.dart';
 // <<< NEW: Keyboard utils
 import 'utils/keyboard.dart';
 import 'utils/keyboard_dismiss_observer.dart';
+import 'routing/app_route_observer.dart';
 
 // Deep link handler is now initialized in AuthGate after authentication
 
@@ -81,6 +82,7 @@ class MyApp extends StatelessWidget {
       // <<< Keyboard handling
       navigatorObservers: [
         KeyboardDismissObserver(),
+        appRouteObserver,
       ],
       routingCallback: (routing) {
         Keyboard.hide();

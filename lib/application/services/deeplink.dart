@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:uni_links/uni_links.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/utils/course_dialog_helper.dart';
 
 class DeepLinkHandler {
@@ -95,7 +97,9 @@ class DeepLinkHandler {
       return;
     }
 
-    if (uri.host != "www.lumilearnapp.com" || uri.pathSegments.isEmpty) {
+    final shareHost =
+        uri.host == 'www.lumilearnapp.com' || uri.host == 'lumilearnapp.com';
+    if (!shareHost || uri.pathSegments.isEmpty) {
       return;
     }
 
@@ -113,11 +117,42 @@ class DeepLinkHandler {
       _friendsController!.setActiveFriend(uid);
 
       // Navigate and pass userId
-      Get.to(() => const FriendProfile())?.then((_) {
+      Get.to(
+        () => const FriendProfile(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      )?.then((_) {
         // Reset navigation flag and processed URI when user returns
         _isNavigating = false;
         _lastProcessedUri = null; // Allow the same link to be processed again
         print("Navigation completed, reset navigation flag and processed URI");
+      });
+    }
+    // ✅ Video share links: …/video/<videoId> (see share text in feed_screen).
+    else if (firstSegment == 'video' && uri.pathSegments.length > 1) {
+      final videoId = uri.pathSegments[1];
+      if (!Get.isRegistered<VideoController>()) {
+        print(
+            'DeepLinkHandler: VideoController not registered, skip video link');
+        return;
+      }
+
+      _lastProcessedUri = uriString;
+      _isNavigating = true;
+
+      Get.find<VideoController>()
+          .openSharedVideoFromDeepLink(videoId)
+          .then((ok) {
+        _isNavigating = false;
+        _lastProcessedUri = null;
+        if (!ok) {
+          print('DeepLinkHandler: openSharedVideoFromDeepLink failed for $videoId');
+        }
+      }).catchError((Object error) {
+        print('DeepLinkHandler: video link error: $error');
+        _isNavigating = false;
+        _lastProcessedUri = null;
       });
     }
     // ✅ Handle course share links: www.lumilearnapp.com/course/<courseId>

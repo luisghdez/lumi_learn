@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:mime/mime.dart';
 
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/application/models/video_model.dart';
 import 'package:lumi_learn_app/application/services/api_service.dart';
 
@@ -28,6 +29,9 @@ class VideoController extends GetxController {
   final RxBool isPreparingVideoPost = false.obs;
   final RxString uploadStatus = ''.obs;
   final RxString feedError = ''.obs;
+
+  /// Set after [openSharedVideoFromDeepLink]; [FeedScreen] scrolls to this id.
+  final RxnString pendingScrollFeedToVideoId = RxnString();
 
   String? _nextFeedCursor;
   final Map<String, String?> _userVideoCursorsByUserId = {};
@@ -70,7 +74,9 @@ class VideoController extends GetxController {
       final body = _decodeBody(response.body);
       final fetchedVideos = (body['videos'] as List<dynamic>? ?? [])
           .map((item) => VideoPost.fromJson(_asMap(item)))
-          .where((video) => video.playbackUrl != null)
+          .where((video) =>
+              video.isSlideshow ||
+              (video.playbackUrl != null && video.playbackUrl!.isNotEmpty))
           .toList();
 
       _nextFeedCursor = body['nextCursor'] as String?;
@@ -101,8 +107,45 @@ class VideoController extends GetxController {
     _ensureSuccess(response, expectedStatuses: const [200]);
     final video =
         VideoPost.fromJson(_asMap(_decodeBody(response.body)['video']));
-    _replaceVideo(video);
+    final feedIdx = videos.indexWhere((item) => item.id == video.id);
+    if (feedIdx != -1) {
+      videos[feedIdx] = video;
+    } else {
+      videos.insert(0, video);
+    }
+    final userVideos = userVideosByUserId[video.ownerId];
+    if (userVideos != null) {
+      final userVideoIndex =
+          userVideos.indexWhere((item) => item.id == video.id);
+      if (userVideoIndex != -1) {
+        final updatedUserVideos = [...userVideos];
+        updatedUserVideos[userVideoIndex] = video;
+        userVideosByUserId[video.ownerId] = updatedUserVideos;
+      }
+    }
     return video;
+  }
+
+  /// Loads the clip, switches to the feed tab, and signals [FeedScreen] to
+  /// scroll to it (used by universal links).
+  Future<bool> openSharedVideoFromDeepLink(String videoId) async {
+    try {
+      final video = await getVideoById(videoId);
+      if (video == null) return false;
+      if (!Get.isRegistered<NavigationController>()) return false;
+      Get.find<NavigationController>().updateIndex(1);
+      pendingScrollFeedToVideoId.value = videoId;
+      return true;
+    } catch (e, st) {
+      debugPrint('openSharedVideoFromDeepLink: $e\n$st');
+      Get.snackbar(
+        'Video',
+        'Could not open this video link.',
+        backgroundColor: Colors.red.shade800,
+        colorText: Colors.white,
+      );
+      return false;
+    }
   }
 
   Future<bool> uploadVideo({
@@ -134,10 +177,14 @@ class VideoController extends GetxController {
       final created = CreateVideoUploadResponse.fromJson(
         _decodeBody(createResponse.body),
       );
+      final mainUpload = created.upload;
+      if (mainUpload == null) {
+        throw Exception('Missing main video upload URL from server.');
+      }
 
       uploadStatus.value = 'Uploading video';
       final uploadResponse = await _api.uploadVideoFileToSignedUrl(
-        uploadUrl: created.upload.uploadUrl,
+        uploadUrl: mainUpload.uploadUrl,
         file: file,
         mimeType: mimeType,
       );
@@ -182,6 +229,130 @@ class VideoController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Video Upload',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      uploadStatus.value = '';
+      isUploading.value = false;
+    }
+  }
+
+  /// Native slideshow (Option B): multiple images, one feed post.
+  Future<bool> uploadSlideshow({
+    required List<File> imageFiles,
+    required String caption,
+    required String subject,
+    int defaultSlideDurationMs = 3500,
+  }) async {
+    if (imageFiles.isEmpty) return false;
+    if (imageFiles.length > 20) {
+      Get.snackbar('Slideshow', 'Use at most 20 images.');
+      return false;
+    }
+
+    final token = await _tokenOrNotify();
+    if (token == null) return false;
+
+    final slideMimeTypes = <String>[];
+    for (final f in imageFiles) {
+      final m = lookupMimeType(f.path) ?? 'image/jpeg';
+      if (!m.toLowerCase().startsWith('image/')) {
+        Get.snackbar('Slideshow', 'Only image files are supported.');
+        return false;
+      }
+      slideMimeTypes.add(m);
+    }
+
+    Uint8List? thumbBytes;
+    try {
+      thumbBytes = await imageFiles.first.readAsBytes();
+    } catch (_) {}
+
+    isUploading.value = true;
+    try {
+      uploadStatus.value = 'Creating slideshow';
+      final firstMime = slideMimeTypes.first;
+      final createResponse = await _api.createVideo(
+        token: token,
+        mimeType: 'image/slideshow',
+        subject: subject,
+        caption: caption,
+        contentKind: 'slideshow',
+        slideCount: imageFiles.length,
+        defaultSlideDurationMs: defaultSlideDurationMs,
+        slideMimeTypes: slideMimeTypes,
+        thumbnailMimeType: thumbBytes != null ? firstMime : null,
+      );
+      _ensureSuccess(createResponse, expectedStatuses: const [201]);
+      final created = CreateVideoUploadResponse.fromJson(
+        _decodeBody(createResponse.body),
+      );
+      if (created.slideUploads.length != imageFiles.length) {
+        throw Exception(
+          'Server returned ${created.slideUploads.length} upload slots for '
+          '${imageFiles.length} images. Enable slideshow fields on POST /videos.',
+        );
+      }
+
+      for (var i = 0; i < imageFiles.length; i++) {
+        uploadStatus.value = 'Uploading image ${i + 1}/${imageFiles.length}';
+        final slot = created.slideUploads[i];
+        final bytes = await imageFiles[i].readAsBytes();
+        final res = await _api.uploadBytesToSignedUrl(
+          uploadUrl: slot.uploadUrl,
+          bytes: bytes,
+          mimeType: slideMimeTypes[i],
+        );
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          throw Exception('Slide ${i + 1} upload failed: ${res.statusCode}');
+        }
+      }
+
+      final thumbnailUpload = created.thumbnailUpload;
+      if (thumbBytes != null && thumbnailUpload != null) {
+        uploadStatus.value = 'Uploading cover';
+        final tRes = await _api.uploadBytesToSignedUrl(
+          uploadUrl: thumbnailUpload.uploadUrl,
+          bytes: thumbBytes,
+          mimeType: firstMime.startsWith('image/') ? firstMime : 'image/jpeg',
+        );
+        if (tRes.statusCode < 200 || tRes.statusCode >= 300) {
+          throw Exception('Thumbnail upload failed: ${tRes.statusCode}');
+        }
+      }
+
+      final slidesPayload = <Map<String, dynamic>>[];
+      for (final slot in created.slideUploads) {
+        slidesPayload.add({
+          'storagePath': slot.storagePath,
+          'order': slot.order,
+          'durationMs': defaultSlideDurationMs,
+        });
+      }
+      final totalMs = defaultSlideDurationMs * imageFiles.length;
+
+      uploadStatus.value = 'Publishing';
+      final completeResponse = await _api.completeVideoUpload(
+        token: token,
+        videoId: created.video.id,
+        durationMs: totalMs,
+        slides: slidesPayload,
+      );
+      _ensureSuccess(completeResponse, expectedStatuses: const [200]);
+      final completed = VideoPost.fromJson(
+        _asMap(_decodeBody(completeResponse.body)['video']),
+      );
+
+      videos.removeWhere((video) => video.id == completed.id);
+      videos.insert(0, completed);
+      _insertUserVideo(completed);
+      return true;
+    } catch (e) {
+      Get.snackbar(
+        'Slideshow',
         e.toString(),
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -263,7 +434,17 @@ class VideoController extends GetxController {
 
       _userVideoCursorsByUserId[userId] = body['nextCursor'] as String?;
       if (refresh) {
-        userVideosByUserId[userId] = fetchedVideos;
+        // Keep videos the client already has for this user that the server
+        // did not return yet (e.g. upload finished while an older fetch was
+        // in flight, or read-your-writes lag).
+        final previous = userVideosByUserId[userId] ?? <VideoPost>[];
+        final fetchedIds = fetchedVideos.map((v) => v.id).toSet();
+        final notYetOnServer = previous
+            .where((v) => v.ownerId == userId && !fetchedIds.contains(v.id))
+            .toList();
+        final merged = [...notYetOnServer, ...fetchedVideos];
+        _sortUserVideosNewestFirst(merged);
+        userVideosByUserId[userId] = merged;
       } else {
         userVideosByUserId[userId] = [
           ...(userVideosByUserId[userId] ?? <VideoPost>[]),
@@ -300,6 +481,7 @@ class VideoController extends GetxController {
       final body = _decodeBody(response.body);
       final comments = (body['comments'] as List<dynamic>? ?? [])
           .map((item) => VideoComment.fromJson(_asMap(item)))
+          .map(_withLiveSelfAvatar)
           .toList();
 
       _commentCursorsByVideoId[videoId] = body['nextCursor'] as String?;
@@ -318,34 +500,112 @@ class VideoController extends GetxController {
     }
   }
 
-  Future<void> createComment({
+  /// Returns `true` if the comment was created successfully.
+  Future<bool> createComment({
     required VideoPost video,
     required String text,
+    String? parentCommentId,
   }) async {
     final token = await _tokenOrNotify();
-    if (token == null) return;
+    if (token == null) return false;
 
     final trimmedText = text.trim();
-    if (trimmedText.isEmpty) return;
+    if (trimmedText.isEmpty) return false;
 
     try {
       final response = await _api.createVideoComment(
         token: token,
         videoId: video.id,
         text: trimmedText,
+        parentCommentId: parentCommentId,
       );
       _ensureSuccess(response, expectedStatuses: const [201]);
-      final comment = VideoComment.fromJson(
-        _asMap(_decodeBody(response.body)['comment']),
-      );
-      commentsByVideoId[video.id] = [
-        comment,
-        ...(commentsByVideoId[video.id] ?? <VideoComment>[]),
-      ];
+      if (parentCommentId != null && parentCommentId.isNotEmpty) {
+        await fetchComments(video.id, refresh: true);
+      } else {
+        var comment = VideoComment.fromJson(
+          _asMap(_decodeBody(response.body)['comment']),
+        );
+        comment = _withLiveSelfAvatar(comment);
+        commentsByVideoId[video.id] = [
+          comment,
+          ...(commentsByVideoId[video.id] ?? <VideoComment>[]),
+        ];
+      }
       _replaceVideo(video.copyWith(commentCount: video.commentCount + 1));
+      return true;
     } catch (e) {
       Get.snackbar('Comments', e.toString());
+      return false;
     }
+  }
+
+  Future<void> toggleCommentLike({
+    required VideoPost video,
+    required VideoComment comment,
+  }) async {
+    final token = await _tokenOrNotify();
+    if (token == null) return;
+
+    final nextLiked = !comment.likedByMe;
+    final optimistic = comment.copyWith(
+      likedByMe: nextLiked,
+      likeCount:
+          nextLiked ? comment.likeCount + 1 : _decrement(comment.likeCount),
+    );
+    _replaceCommentInList(video.id, comment.id, optimistic);
+
+    try {
+      final response = nextLiked
+          ? await _api.likeVideoComment(
+              token: token, videoId: video.id, commentId: comment.id)
+          : await _api.unlikeVideoComment(
+              token: token, videoId: video.id, commentId: comment.id);
+      _ensureSuccess(response, expectedStatuses: const [200]);
+      final body = _decodeBody(response.body);
+      if (body['comment'] != null) {
+        _replaceCommentInList(
+          video.id,
+          comment.id,
+          VideoComment.fromJson(_asMap(body['comment'])),
+        );
+      } else {
+        final likeCount = _intValue(body['likeCount'], optimistic.likeCount);
+        final liked = body['liked'] == true;
+        _replaceCommentInList(
+          video.id,
+          comment.id,
+          optimistic.copyWith(likeCount: likeCount, likedByMe: liked),
+        );
+      }
+    } catch (_) {
+      _replaceCommentInList(video.id, comment.id, comment);
+      Get.snackbar('Comments', 'Could not update like.');
+    }
+  }
+
+  void _replaceCommentInList(
+    String videoId,
+    String commentId,
+    VideoComment next,
+  ) {
+    final list = commentsByVideoId[videoId];
+    if (list == null) return;
+    final i = list.indexWhere((c) => c.id == commentId);
+    if (i == -1) return;
+    final copy = [...list];
+    copy[i] = _withLiveSelfAvatar(next);
+    commentsByVideoId[videoId] = copy;
+  }
+
+  /// Uses Firebase [User.photoURL] for the signed-in user so avatars match
+  /// the profile editor after a PFP change (API comments may be stale).
+  VideoComment _withLiveSelfAvatar(VideoComment c) {
+    final uid = currentUserId;
+    if (uid == null || c.authorId != uid) return c;
+    final slug = authController.firebaseUser.value?.photoURL?.trim();
+    if (slug == null || slug.isEmpty) return c;
+    return c.copyWith(authorProfilePicture: slug);
   }
 
   Future<void> deleteComment({
@@ -362,9 +622,7 @@ class VideoController extends GetxController {
         commentId: comment.id,
       );
       _ensureSuccess(response, expectedStatuses: const [200]);
-      commentsByVideoId[video.id] = [
-        ...(commentsByVideoId[video.id] ?? <VideoComment>[]),
-      ]..removeWhere((item) => item.id == comment.id);
+      await fetchComments(video.id, refresh: true);
       _replaceVideo(
         video.copyWith(
           commentCount: _decrement(video.commentCount),
@@ -399,12 +657,21 @@ class VideoController extends GetxController {
   }
 
   void _insertUserVideo(VideoPost video) {
-    final existingVideos = userVideosByUserId[video.ownerId];
-    if (existingVideos == null) return;
-    userVideosByUserId[video.ownerId] = [
+    final ownerId = video.ownerId;
+    if (ownerId.isEmpty) return;
+    final existingVideos = userVideosByUserId[ownerId] ?? <VideoPost>[];
+    userVideosByUserId[ownerId] = [
       video,
       ...existingVideos.where((item) => item.id != video.id),
     ];
+  }
+
+  static void _sortUserVideosNewestFirst(List<VideoPost> list) {
+    list.sort((a, b) {
+      final ca = a.createdAt ?? '';
+      final cb = b.createdAt ?? '';
+      return cb.compareTo(ca);
+    });
   }
 
   void _removeUserVideo(VideoPost video) {

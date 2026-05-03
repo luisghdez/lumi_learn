@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:get/get.dart';
@@ -33,6 +34,54 @@ class FriendsController extends GetxController {
 
   final service = FriendsService();
   final apiService = ApiService();
+
+  /// Page-1 saved courses for the friend profile currently being opened (Courses tap).
+  String? _prefetchSavedCoursesUserId;
+  List<Map<String, dynamic>>? _prefetchSavedCoursesList;
+  bool _prefetchSavedCoursesHasNext = false;
+  int _prefetchSavedCoursesPage = 1;
+
+  bool hasSavedCoursesPrefetch(String userId) =>
+      _prefetchSavedCoursesUserId == userId && _prefetchSavedCoursesList != null;
+
+  List<Map<String, dynamic>>? peekSavedCoursesPrefetch(String userId) {
+    if (_prefetchSavedCoursesUserId != userId || _prefetchSavedCoursesList == null) {
+      return null;
+    }
+    return List<Map<String, dynamic>>.from(_prefetchSavedCoursesList!);
+  }
+
+  bool peekSavedCoursesPrefetchHasNext(String userId) =>
+      _prefetchSavedCoursesUserId == userId && _prefetchSavedCoursesHasNext;
+
+  int peekSavedCoursesPrefetchPage(String userId) =>
+      _prefetchSavedCoursesUserId == userId ? _prefetchSavedCoursesPage : 1;
+
+  Future<void> _prefetchFriendSavedCourses(String userId) async {
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) return;
+      final res = await apiService.getUserSavedCourses(
+        token: token,
+        userId: userId,
+        page: 1,
+        limit: 30,
+      );
+      if (res.statusCode != 200) return;
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final list = data['courses'] as List<dynamic>? ?? [];
+      final pagination = data['pagination'] as Map<String, dynamic>?;
+      if (_prefetchSavedCoursesUserId != userId) return;
+      _prefetchSavedCoursesList =
+          list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      _prefetchSavedCoursesHasNext = pagination?['hasNextPage'] == true;
+      _prefetchSavedCoursesPage = pagination?['page'] as int? ?? 1;
+    } catch (_) {
+      if (_prefetchSavedCoursesUserId == userId) {
+        _prefetchSavedCoursesList = null;
+      }
+    }
+  }
 
   @override
   void onInit() {
@@ -81,6 +130,23 @@ class FriendsController extends GetxController {
       Get.snackbar("Search Failed", error.value ?? "An error occurred");
     } finally {
       _stopLoading();
+    }
+  }
+
+  Future<void> removeFriend(String userId) async {
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        Get.snackbar('Error', 'Not signed in.');
+        return;
+      }
+      await service.removeFriend(token: token, friendUserId: userId);
+      await loadFriends();
+      await getRequests();
+      friendRequestStatus.value = 'none';
+      Get.snackbar('Removed', 'They have been removed from your friends.');
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
     }
   }
 
@@ -176,17 +242,14 @@ class FriendsController extends GetxController {
 
   Future<void> setActiveFriend(String friendId) async {
     activeFriend.value = null;
+    _prefetchSavedCoursesUserId = friendId;
+    _prefetchSavedCoursesList = null;
 
     try {
-      // Ensure the friend requests lists are up-to-date (including userIds)
-      await getRequests();
-
-      // Check if friendId exists in the userIds extracted for sent and received requests
+      // Use cached request ids so we don't block on a full `getRequests()` round
+      // trip before opening a profile (that caused noticeable lag).
       final bool inSent = sentRequestIds.contains(friendId);
       final bool inReceived = recievedRequestsIds.contains(friendId);
-
-      // Update the state based on which request list contains the friendId.
-      // Given the new logic, it should never be both.
       if (inSent) {
         friendRequestStatus.value = 'sent';
       } else if (inReceived) {
@@ -197,20 +260,18 @@ class FriendsController extends GetxController {
 
       final token = await authController.getIdToken();
       if (token == null) {
-        isLoading.value = false;
-        Get.back();
-        throw Exception("No user token found.");
+        Get.snackbar('Error', 'Not signed in.');
+        throw Exception('No user token found.');
       }
 
-      // Call the ApiService with named parameters.
       final response =
           await ApiService.getUserData(token: token, userId: friendId);
 
-      // Parse the JSON from the response.
       final Map<String, dynamic> data = jsonDecode(response.body);
-
-      // Convert the JSON data to a FriendProfileModel.
       activeFriend.value = FriendProfileModel.fromJson(data['user']);
+
+      unawaited(getRequests());
+      unawaited(_prefetchFriendSavedCourses(friendId));
     } catch (e) {
       error.value = e.toString();
       Get.snackbar("Error", error.value ?? "Could not set active friend");
@@ -230,5 +291,15 @@ class FriendsController extends GetxController {
 
   bool isFriend(String userId) {
     return friends.any((f) => f.id == userId);
+  }
+
+  /// Whether the current user can tap "add" for [userId] from contexts
+  /// that are not the friend profile (e.g. video feed).
+  bool canSendFriendRequestTo(String userId) {
+    if (userId.isEmpty) return false;
+    if (isFriend(userId)) return false;
+    if (sentRequestIds.contains(userId)) return false;
+    if (recievedRequestsIds.contains(userId)) return false;
+    return true;
   }
 }

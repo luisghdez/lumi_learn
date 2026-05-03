@@ -7,6 +7,7 @@ import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
+import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
 import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/application/services/deeplink.dart';
 import 'package:lumi_learn_app/dev_flags.dart';
@@ -23,78 +24,107 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final authInit = authController.isAuthInitialized.value;
       final User? user = authController.firebaseUser.value;
       final bool hasCompletedOnboarding =
           authController.hasCompletedOnboarding.value;
 
-      if (!authController.isAuthInitialized.value) {
-        return SplashScreen(); // Show a splash/loading screen
+      late final String phaseKey;
+      late final Widget phaseChild;
+
+      if (!authInit) {
+        phaseKey = 'splash_auth';
+        phaseChild = SplashScreen();
+      } else if (user == null) {
+        phaseKey = 'auth';
+        phaseChild = SignupScreen();
+      } else {
+        if (!Get.isRegistered<CourseController>()) {
+          Get.put<CourseController>(CourseController(), permanent: true);
+        }
+        final courseController = Get.find<CourseController>();
+        if (!courseController.isInitialized.value) {
+          phaseKey = 'splash_post_login';
+          phaseChild = SplashScreen();
+        } else {
+          if (!Get.isRegistered<SpeakController>()) {
+            Get.put<SpeakController>(
+              SpeakController(),
+              permanent: true,
+            );
+          }
+
+          if (!Get.isRegistered<FriendsController>()) {
+            Get.put<FriendsController>(
+              FriendsController(),
+              permanent: true,
+            );
+          }
+
+          if (!Get.isRegistered<TutorController>()) {
+            Get.put<TutorController>(
+              TutorController(),
+              permanent: true,
+            );
+          }
+
+          if (!Get.isRegistered<LumiSearchController>()) {
+            Get.put<LumiSearchController>(
+              LumiSearchController(),
+              permanent: true,
+            );
+          }
+
+          if (!Get.isRegistered<VideoController>()) {
+            Get.put<VideoController>(
+              VideoController(),
+              permanent: true,
+            );
+          }
+
+          if (!Get.isRegistered<CreateFlowController>()) {
+            Get.put<CreateFlowController>(
+              CreateFlowController(),
+              permanent: true,
+            );
+          }
+
+          DeepLinkHandler.instance.reinitialize();
+
+          precacheImage(const AssetImage('assets/images/milky_way.png'), context);
+
+          if (DevFlags.forceOnboardingPreview || !hasCompletedOnboarding) {
+            phaseKey = 'onboarding';
+            phaseChild = const OnboardingContainer();
+          } else {
+            phaseKey = 'main';
+            phaseChild = const MainScreen();
+          }
+        }
       }
 
-      precacheImage(const AssetImage('assets/galaxies/galaxy22.png'), context);
-
-      // Show login/register screen if no user is logged in
-      if (user == null) {
-        return SignupScreen();
-      }
-
-      // Initialize all controllers first (after login)
-      if (!Get.isRegistered<CourseController>()) {
-        Get.put<CourseController>(CourseController(), permanent: true);
-      }
-      final courseController = Get.find<CourseController>();
-      if (!courseController.isInitialized.value) {
-        return SplashScreen();
-      }
-
-      if (!Get.isRegistered<SpeakController>()) {
-        Get.put<SpeakController>(
-          SpeakController(),
-          permanent: true,
-        );
-      }
-
-      if (!Get.isRegistered<FriendsController>()) {
-        Get.put<FriendsController>(
-          FriendsController(),
-          permanent: true,
-        );
-      }
-
-      if (!Get.isRegistered<TutorController>()) {
-        Get.put<TutorController>(
-          TutorController(),
-          permanent: true,
-        );
-      }
-
-      if (!Get.isRegistered<LumiSearchController>()) {
-        Get.put<LumiSearchController>(
-          LumiSearchController(),
-          permanent: true,
-        );
-      }
-
-      if (!Get.isRegistered<VideoController>()) {
-        Get.put<VideoController>(
-          VideoController(),
-          permanent: true,
-        );
-      }
-
-      // Initialize deep link handler now that all controllers are registered
-      DeepLinkHandler.instance.reinitialize();
-
-      precacheImage(const AssetImage('assets/images/milky_way.png'), context);
-
-      // Check onboarding AFTER login and controller initialization
-      // Force onboarding preview for testing, or show if not completed
-      if (DevFlags.forceOnboardingPreview || !hasCompletedOnboarding) {
-        return const OnboardingContainer();
-      }
-
-      // Show main screen if user is logged in and onboarding is completed
-      return const MainScreen();
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+          return Stack(
+            fit: StackFit.expand,
+            alignment: Alignment.center,
+            children: <Widget>[
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<String>(phaseKey),
+          child: phaseChild,
+        ),
+      );
     });
   }
 }

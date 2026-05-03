@@ -8,12 +8,24 @@ import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
+import 'package:lumi_learn_app/screens/create/create_flow_transitions.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/data/subject_catalog.dart';
+import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart'
+    show createFlowContentBottomInset;
+import 'package:lumi_learn_app/widgets/glass_confirm_dialog.dart';
+import 'package:lumi_learn_app/widgets/lumi_cosmic_backdrop.dart';
 
 class CreateVideoScreen extends StatefulWidget {
-  const CreateVideoScreen({super.key});
+  const CreateVideoScreen({
+    super.key,
+    this.embeddedInCreateFlow = false,
+  });
+
+  /// When true, shown inside the create hub shell with draft sync to the flow controller.
+  final bool embeddedInCreateFlow;
 
   @override
   State<CreateVideoScreen> createState() => _CreateVideoScreenState();
@@ -25,26 +37,117 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
   final TextEditingController _subjectSearchController =
       TextEditingController();
   final ImagePicker _picker = ImagePicker();
+  CreateFlowController? _createFlow;
 
   File? _selectedFile;
+  List<File>? _slideshowFiles;
   VideoPlayerController? _previewController;
   Uint8List? _thumbnailBytes;
   String _selectedSubject = '';
   bool _isGeneratingThumbnail = false;
+  bool _showPostDetails = false;
 
   bool get _hasVideo => _selectedFile != null;
-  bool get _hasPostDetails => _hasVideo && _selectedSubject.isNotEmpty;
+  bool get _isSlideshow =>
+      _slideshowFiles != null && _slideshowFiles!.isNotEmpty;
+  bool get _hasSelectableMedia => _hasVideo || _isSlideshow;
+  bool get _hasPostDetails =>
+      _hasSelectableMedia && _selectedSubject.isNotEmpty;
+
+  /// Title for the hoisted top bar when embedded in the create hub (matches course header row).
+  String get _embeddedGlassTitle {
+    if (_hasSelectableMedia && _showPostDetails) {
+      return _isSlideshow ? 'New slideshow' : 'New video';
+    }
+    return 'Create';
+  }
+
+  void _syncCreateFlowSubStep() {
+    if (!widget.embeddedInCreateFlow || _createFlow == null) return;
+    if (!_hasSelectableMedia) {
+      _createFlow!.setVideoSubStep(0);
+    } else {
+      _createFlow!.setVideoSubStep(_showPostDetails ? 1 : 0);
+    }
+  }
+
+  void _snapshotDraftToFlow() {
+    if (!widget.embeddedInCreateFlow || _createFlow == null) return;
+    _createFlow!.snapshotVideoDraft(
+      videoPath: _selectedFile?.path,
+      slidePaths: _slideshowFiles?.map((f) => f.path).toList(),
+      caption: _captionController.text,
+      subject: _selectedSubject,
+    );
+  }
+
+  bool _handleEmbeddedAndroidBack() {
+    if (_hasSelectableMedia && _showPostDetails) {
+      _backFromDetailsToPick();
+      return true;
+    }
+    return false;
+  }
+
+  void _backFromDetailsToPick() {
+    _previewController?.pause();
+    setState(() => _showPostDetails = false);
+    _syncCreateFlowSubStep();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _snapshotDraftToFlow();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    if (widget.embeddedInCreateFlow && Get.isRegistered<CreateFlowController>()) {
+      _createFlow = Get.find<CreateFlowController>();
+      _createFlow!.onVideoEmbeddedBack = _handleEmbeddedAndroidBack;
+      _captionController.text = _createFlow!.persistedCaption.value;
+      _selectedSubject = _createFlow!.persistedSubject.value;
+      final vp = _createFlow!.persistedVideoPath.value;
+      final slides = _createFlow!.persistedSlidePaths.toList();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        if (vp != null && File(vp).existsSync()) {
+          final openDetails =
+              _createFlow!.persistedCaption.value.trim().isNotEmpty;
+          await _loadSelectedVideo(
+            File(vp),
+            advanceToDetails: openDetails,
+          );
+        } else if (slides.isNotEmpty) {
+          final files = slides.where((p) => File(p).existsSync()).map(File.new).toList();
+          if (files.isNotEmpty) {
+            await _previewController?.dispose();
+            if (!mounted) return;
+            setState(() {
+              _slideshowFiles = files;
+              _selectedFile = null;
+              _previewController = null;
+              _thumbnailBytes = null;
+              _showPostDetails = false;
+            });
+          }
+        }
+        _syncCreateFlowSubStep();
+      });
+    }
     _captionController.addListener(() {
       if (mounted) setState(() {});
+      if (_createFlow != null) _snapshotDraftToFlow();
     });
   }
 
   @override
   void dispose() {
+    if (widget.embeddedInCreateFlow && _createFlow != null) {
+      if (_createFlow!.onVideoEmbeddedBack == _handleEmbeddedAndroidBack) {
+        _createFlow!.onVideoEmbeddedBack = null;
+      }
+    }
     _captionController.dispose();
     _subjectSearchController.dispose();
     _previewController?.dispose();
@@ -57,7 +160,30 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
     await _loadSelectedVideo(File(picked.path));
   }
 
-  Future<void> _loadSelectedVideo(File file) async {
+  Future<void> _pickSlideshow() async {
+    final picks = await _picker.pickMultiImage(imageQuality: 92);
+    if (picks.isEmpty) return;
+    if (picks.length > 20) {
+      Get.snackbar('Slideshow', 'Pick up to 20 photos at once.');
+      return;
+    }
+    await _previewController?.dispose();
+    if (!mounted) return;
+    setState(() {
+      _slideshowFiles = picks.map((x) => File(x.path)).toList();
+      _selectedFile = null;
+      _previewController = null;
+      _thumbnailBytes = null;
+      _showPostDetails = true;
+    });
+    _syncCreateFlowSubStep();
+    _snapshotDraftToFlow();
+  }
+
+  Future<void> _loadSelectedVideo(
+    File file, {
+    bool advanceToDetails = true,
+  }) async {
     await _previewController?.dispose();
     final previewController = VideoPlayerController.file(file);
     await previewController.initialize();
@@ -70,10 +196,14 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
     }
 
     setState(() {
+      _slideshowFiles = null;
       _selectedFile = file;
       _previewController = previewController;
       _thumbnailBytes = null;
+      _showPostDetails = advanceToDetails;
     });
+    _syncCreateFlowSubStep();
+    _snapshotDraftToFlow();
 
     await _generateFirstFrameThumbnail();
   }
@@ -117,9 +247,13 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
     _previewController?.dispose();
     setState(() {
       _selectedFile = null;
+      _slideshowFiles = null;
       _previewController = null;
       _thumbnailBytes = null;
+      _showPostDetails = false;
     });
+    _syncCreateFlowSubStep();
+    _snapshotDraftToFlow();
   }
 
   void _togglePreviewPlayback() {
@@ -132,33 +266,52 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
 
   Future<void> _publish() async {
     final file = _selectedFile;
+    final slides = _slideshowFiles;
     final caption = _captionController.text;
     final subject = _selectedSubject;
     final existingThumbnailBytes = _thumbnailBytes;
 
-    if (file == null || subject.isEmpty) return;
+    if (subject.isEmpty) return;
+    if (!_hasVideo && !_isSlideshow) return;
 
     _videoController.isPreparingVideoPost.value = true;
     Get.find<NavigationController>().updateIndex(2);
-    Get.back<void>();
+    if (widget.embeddedInCreateFlow && Get.isRegistered<CreateFlowController>()) {
+      Get.find<CreateFlowController>().discard();
+    } else {
+      Get.back<void>();
+    }
 
     () async {
       try {
-        final thumbnailBytes =
-            existingThumbnailBytes ?? await _createFirstFrameThumbnail(file);
         _videoController.isPreparingVideoPost.value = false;
-        final success = await _videoController.uploadVideo(
-          file: file,
-          caption: caption,
-          subject: subject,
-          thumbnailBytes: thumbnailBytes,
-        );
-
-        if (success) {
-          Get.snackbar('Posted', 'Your video is live on your profile.');
+        bool success;
+        if (_isSlideshow && slides != null) {
+          success = await _videoController.uploadSlideshow(
+            imageFiles: List<File>.from(slides),
+            caption: caption,
+            subject: subject,
+          );
+          if (success) {
+            Get.snackbar('Posted', 'Your slideshow is live on your profile.');
+          }
+        } else if (file != null) {
+          final thumbnailBytes =
+              existingThumbnailBytes ?? await _createFirstFrameThumbnail(file);
+          success = await _videoController.uploadVideo(
+            file: file,
+            caption: caption,
+            subject: subject,
+            thumbnailBytes: thumbnailBytes,
+          );
+          if (success) {
+            Get.snackbar('Posted', 'Your video is live on your profile.');
+          }
+        } else {
+          success = false;
         }
       } catch (e) {
-        Get.snackbar('Video Upload', 'Failed to publish: $e');
+        Get.snackbar('Upload', 'Failed to publish: $e');
       } finally {
         _videoController.isPreparingVideoPost.value = false;
       }
@@ -178,6 +331,7 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
           selectedSubject: _selectedSubject,
           onSelected: (subject) {
             setState(() => _selectedSubject = subject);
+            _snapshotDraftToFlow();
             Navigator.of(context).pop();
           },
         );
@@ -185,90 +339,211 @@ class _CreateVideoScreenState extends State<CreateVideoScreen> {
     );
   }
 
+  Widget _buildVideoStepSwitcher() {
+    final hideInnerTopBar = widget.embeddedInCreateFlow;
+
+    final pickChild = _PickVideoView(
+      key: const ValueKey('pick'),
+      showGlassTopBar: !hideInnerTopBar,
+      onClose: widget.embeddedInCreateFlow
+          ? _onEmbeddedPickClose
+          : () => Get.back<void>(),
+      onPickVideo: _pickVideo,
+      onPickSlideshow: _pickSlideshow,
+    );
+
+    final detailsChild = _PostDetailsView(
+      key: const ValueKey('details'),
+      showGlassTopBar: !hideInnerTopBar,
+      previewController: _previewController,
+      slideshowFiles: _slideshowFiles,
+      captionController: _captionController,
+      captionLength: _captionController.text.length,
+      selectedSubject: _selectedSubject,
+      thumbnailBytes: _thumbnailBytes,
+      isGeneratingThumbnail: _isGeneratingThumbnail,
+      readyForPublish: _hasPostDetails,
+      onClose: widget.embeddedInCreateFlow
+          ? _backFromDetailsToPick
+          : _clearVideo,
+      onPickSubject: _showSubjectPicker,
+      onPublish: _publish,
+      onTogglePlayback: _togglePreviewPlayback,
+    );
+
+    final stepChild = _hasSelectableMedia && _showPostDetails
+        ? detailsChild
+        : pickChild;
+
+    final switcher = AnimatedSwitcher(
+      duration: kCreateFlowFadeDuration,
+      switchInCurve: kCreateFlowFadeCurve,
+      switchOutCurve: kCreateFlowFadeCurve,
+      transitionBuilder: (child, animation) {
+        return RepaintBoundary(
+          child: kCreateFlowFadeTransition(child, animation),
+        );
+      },
+      layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+        return Stack(
+          fit: StackFit.expand,
+          alignment: Alignment.center,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      child: stepChild,
+    );
+
+    if (widget.embeddedInCreateFlow &&
+        Get.isRegistered<CreateFlowController>()) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 56,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Center(
+                child: _GlassTopBar(
+                  onClose: _hasSelectableMedia && _showPostDetails
+                      ? _backFromDetailsToPick
+                      : _onEmbeddedPickClose,
+                  title: _embeddedGlassTitle,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const _EmbeddedCreateVideoStepHeader(),
+          Expanded(child: switcher),
+        ],
+      );
+    }
+
+    return switcher;
+  }
+
+  Future<void> _onEmbeddedPickClose() async {
+    if (!widget.embeddedInCreateFlow) return;
+    final flow = Get.find<CreateFlowController>();
+    if (_hasSelectableMedia) {
+      final ok = await showGlassConfirmDialog(
+            context,
+            title: 'Leave this step?',
+            body:
+                'Your selected video or photos will be cleared if you return to the create menu.',
+            cancelText: 'Stay here',
+            confirmText: 'Go back',
+          ) ??
+          false;
+      if (!ok || !mounted) return;
+      _clearVideo();
+    }
+    flow.goToTypeChoice();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final standaloneBody = Stack(
+      fit: StackFit.expand,
+      children: [
+        const LumiCosmicBackdrop(),
+        SafeArea(child: _buildVideoStepSwitcher()),
+      ],
+    );
+
     return Scaffold(
       backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const _CreateBackdrop(),
-          SafeArea(
-            child: Obx(() {
-              final isUploading = _videoController.isUploading.value;
-              final uploadStatus = _videoController.uploadStatus.value;
-
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 320),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.04),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  );
-                },
-                child: _hasVideo
-                    ? _PostDetailsView(
-                        key: const ValueKey('details'),
-                        previewController: _previewController,
-                        captionController: _captionController,
-                        captionLength: _captionController.text.length,
-                        selectedSubject: _selectedSubject,
-                        thumbnailBytes: _thumbnailBytes,
-                        isGeneratingThumbnail: _isGeneratingThumbnail,
-                        isUploading: isUploading,
-                        uploadStatus: uploadStatus,
-                        canPublish: _hasPostDetails && !isUploading,
-                        onClose: _clearVideo,
-                        onPickSubject:
-                            isUploading ? null : _showSubjectPicker,
-                        onPublish: _publish,
-                        onTogglePlayback: _togglePreviewPlayback,
-                      )
-                    : _PickVideoView(
-                        key: const ValueKey('pick'),
-                        onClose: () => Get.back<void>(),
-                        onPickVideo: _pickVideo,
+      // Embedded: keyboard overlays the bottom. Caption step adds scroll slack
+      // only inside [_PostDetailsView] so fields can scroll up.
+      resizeToAvoidBottomInset: !widget.embeddedInCreateFlow,
+      body: widget.embeddedInCreateFlow
+          ? Builder(
+              builder: (context) {
+                final navReserve = createFlowContentBottomInset(context);
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    const Positioned.fill(child: LumiCosmicBackdrop()),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: navReserve),
+                      child: SafeArea(
+                        bottom: false,
+                        child: _buildVideoStepSwitcher(),
                       ),
-              );
-            }),
-          ),
-        ],
-      ),
+                    ),
+                  ],
+                );
+              },
+            )
+          : standaloneBody,
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Decorative background — soft cosmic gradient that lives behind every view.
+// Embedded create flow — step block matches course step indicator spacing
+// (56px header → 4px gap → same horizontal margins as CourseStepIndicator).
 // ---------------------------------------------------------------------------
 
-class _CreateBackdrop extends StatelessWidget {
-  const _CreateBackdrop();
+class _EmbeddedCreateVideoStepHeader extends StatelessWidget {
+  const _EmbeddedCreateVideoStepHeader();
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(-0.5, -0.7),
-          radius: 1.6,
-          colors: [
-            Color(0xFF1B1232),
-            Color(0xFF050505),
+    return Obx(() {
+      // Only depend on [videoSubStep]. Do not gate on [shellPage]: when leaving
+      // the video flow, [shellPage] becomes 0 before [AnimatedSwitcher] finishes
+      // fading this screen out, which used to hide the step strip one beat early.
+      final sub = Get.find<CreateFlowController>().videoSubStep.value;
+      final dim = Colors.white.withValues(alpha: 0.28);
+      final label = sub == 0 ? 'Step 2 — Media' : 'Step 3 — Publish';
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: sub >= 1 ? Colors.white : dim,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.25,
+              ),
+            ),
           ],
-          stops: [0, 0.85],
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -281,137 +556,157 @@ class _PickVideoView extends StatelessWidget {
     super.key,
     required this.onClose,
     required this.onPickVideo,
+    required this.onPickSlideshow,
+    this.showGlassTopBar = true,
   });
 
   final VoidCallback onClose;
   final VoidCallback onPickVideo;
+  final VoidCallback onPickSlideshow;
+  /// When false, the parent (embedded create hub) draws the top bar above the step strip.
+  final bool showGlassTopBar;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: EdgeInsets.fromLTRB(18, showGlassTopBar ? 6 : 0, 18, 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _GlassTopBar(
-            onClose: onClose,
-            title: 'New video',
-          ),
-          const Spacer(),
-          _PickVideoTile(onTap: onPickVideo),
-          const SizedBox(height: 22),
+          if (showGlassTopBar) ...[
+            _GlassTopBar(
+              onClose: onClose,
+              title: 'Create',
+            ),
+            const SizedBox(height: 22),
+          ],
           const Text(
-            'Choose your clip',
+            'Video or photo slideshow',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
               fontSize: 22,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+              letterSpacing: -0.35,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
-            "Pick a short video from your gallery — you'll add a "
-            'subject and caption next.',
+            'Upload a clip, or pick several photos for a swipeable slideshow '
+            'on the feed — then add subject and caption.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.62),
-              fontSize: 13.5,
-              height: 1.4,
+              color: Colors.white.withValues(alpha: 0.58),
+              fontSize: 14.5,
+              height: 1.45,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const Spacer(flex: 2),
+          const SizedBox(height: 28),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _VerticalMediaOption(
+                  icon: Icons.video_library_rounded,
+                  title: 'Upload video',
+                  subtitle: 'One clip from your library',
+                  onTap: onPickVideo,
+                ),
+                const SizedBox(height: 18),
+                _VerticalMediaOption(
+                  icon: Icons.collections_rounded,
+                  title: 'Photo slideshow',
+                  subtitle: 'Choose 2–20 photos',
+                  onTap: onPickSlideshow,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _PickVideoTile extends StatefulWidget {
-  const _PickVideoTile({required this.onTap});
+class _VerticalMediaOption extends StatelessWidget {
+  const _VerticalMediaOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
+  final IconData icon;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
 
   @override
-  State<_PickVideoTile> createState() => _PickVideoTileState();
-}
-
-class _PickVideoTileState extends State<_PickVideoTile>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _floatController;
-
-  @override
-  void initState() {
-    super.initState();
-    _floatController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _floatController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      behavior: HitTestBehavior.opaque,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(34),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-          child: Container(
-            width: 168,
-            height: 168,
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(34),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.14),
-                  Colors.white.withValues(alpha: 0.04),
-                ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
               ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.18),
-                width: 1,
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: Colors.white, size: 30),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF8E5CFF).withValues(alpha: 0.18),
-                  blurRadius: 30,
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  blurRadius: 22,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Center(
-              child: AnimatedBuilder(
-                animation: _floatController,
-                builder: (context, _) {
-                  final t = Curves.easeInOut.transform(_floatController.value);
-                  return Transform.translate(
-                    offset: Offset(0, -3 + t * 6),
-                    child: Icon(
-                      Icons.add_rounded,
-                      color: Colors.white.withValues(alpha: 0.95),
-                      size: 64,
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.25,
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 14.5,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white.withValues(alpha: 0.38),
+                size: 28,
+              ),
+            ],
           ),
         ),
       ),
@@ -427,83 +722,190 @@ class _PostDetailsView extends StatelessWidget {
   const _PostDetailsView({
     super.key,
     required this.previewController,
+    this.slideshowFiles,
     required this.captionController,
     required this.captionLength,
     required this.selectedSubject,
     required this.thumbnailBytes,
     required this.isGeneratingThumbnail,
-    required this.isUploading,
-    required this.uploadStatus,
-    required this.canPublish,
+    required this.readyForPublish,
     required this.onClose,
     required this.onPickSubject,
     required this.onPublish,
     required this.onTogglePlayback,
+    this.showGlassTopBar = true,
   });
 
   final VideoPlayerController? previewController;
+  final List<File>? slideshowFiles;
   final TextEditingController captionController;
   final int captionLength;
   final String selectedSubject;
   final Uint8List? thumbnailBytes;
   final bool isGeneratingThumbnail;
-  final bool isUploading;
-  final String uploadStatus;
-  final bool canPublish;
+  /// Subject (and media) ready; combined with upload state inside [Obx] for publish.
+  final bool readyForPublish;
   final VoidCallback onClose;
-  final VoidCallback? onPickSubject;
+  final VoidCallback onPickSubject;
   final VoidCallback onPublish;
   final VoidCallback onTogglePlayback;
+  /// When false, embedded create hub draws the top bar above the step strip.
+  final bool showGlassTopBar;
 
   @override
   Widget build(BuildContext context) {
-    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final isSlideshow =
+        slideshowFiles != null && slideshowFiles!.isNotEmpty;
+    final kb = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, showGlassTopBar ? 8 : 0, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _GlassTopBar(
-            onClose: onClose,
-            title: 'New video',
-          ),
-          const SizedBox(height: 14),
-          _VideoPreviewCard(
-            controller: previewController,
-            thumbnailBytes: thumbnailBytes,
-            isGenerating: isGeneratingThumbnail,
-            onTogglePlayback: onTogglePlayback,
-          ),
-          const SizedBox(height: 14),
-          _GlassCaptionField(
-            controller: captionController,
-            enabled: !isUploading,
-            length: captionLength,
-          ),
-          const SizedBox(height: 12),
-          _SubjectSelector(
-            subject: selectedSubject,
-            onTap: onPickSubject,
-          ),
-          const Spacer(),
-          if (isUploading) ...[
-            _UploadProgress(label: uploadStatus),
+          if (showGlassTopBar) ...[
+            _GlassTopBar(
+              onClose: onClose,
+              title: isSlideshow ? 'New slideshow' : 'New video',
+            ),
             const SizedBox(height: 14),
           ],
-          AnimatedOpacity(
-            opacity: keyboardOpen ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 180),
-            child: IgnorePointer(
-              ignoring: keyboardOpen,
-              child: _PostButton(
-                isUploading: isUploading,
-                canPublish: canPublish,
-                onTap: onPublish,
+          if (isSlideshow)
+            _SlideshowPreviewCard(files: slideshowFiles!)
+          else
+            _VideoPreviewCard(
+              controller: previewController,
+              thumbnailBytes: thumbnailBytes,
+              isGenerating: isGeneratingThumbnail,
+              onTogglePlayback: onTogglePlayback,
+            ),
+          const SizedBox(height: 18),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: kb + 12),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.10),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
+                    child: Obx(() {
+                      final vc = Get.find<VideoController>();
+                      final uploading = vc.isUploading.value;
+                      final uploadStatus = vc.uploadStatus.value;
+                      final canPublish = readyForPublish && !uploading;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _GlassCaptionField(
+                            controller: captionController,
+                            enabled: !uploading,
+                            length: captionLength,
+                          ),
+                          const SizedBox(height: 12),
+                          _SubjectSelector(
+                            subject: selectedSubject,
+                            onTap: uploading ? null : onPickSubject,
+                          ),
+                          if (uploading) ...[
+                            const SizedBox(height: 18),
+                            _UploadProgress(label: uploadStatus),
+                          ],
+                          const SizedBox(height: 18),
+                          _PostButton(
+                            isUploading: uploading,
+                            canPublish: canPublish,
+                            onTap: onPublish,
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SlideshowPreviewCard extends StatelessWidget {
+  const _SlideshowPreviewCard({required this.files});
+
+  final List<File> files;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        height: 200,
+        child: AspectRatio(
+          aspectRatio: 9 / 14,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  PageView.builder(
+                    itemCount: files.length,
+                    itemBuilder: (_, i) => Image.file(
+                      files[i],
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey.shade900,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 10,
+                    child: Text(
+                      '${files.length} photos · swipe to preview',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        shadows: const [
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -759,6 +1161,7 @@ class _GlassCaptionField extends StatelessWidget {
                 minLines: 3,
                 maxLines: 3,
                 maxLength: _maxLength,
+                scrollPadding: EdgeInsets.zero,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14.5,
@@ -841,12 +1244,12 @@ class _SubjectSelector extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8E5CFF).withValues(alpha: 0.22),
+                    color: Colors.white.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.school_rounded,
-                    color: Color(0xFF8E5CFF),
+                    color: Colors.white.withValues(alpha: 0.88),
                     size: 18,
                   ),
                 ),
@@ -903,12 +1306,12 @@ class _UploadProgress extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF8E5CFF),
+                      color: Colors.white.withValues(alpha: 0.85),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -930,7 +1333,9 @@ class _UploadProgress extends StatelessWidget {
                 child: LinearProgressIndicator(
                   minHeight: 4,
                   backgroundColor: Colors.white.withValues(alpha: 0.08),
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF8E5CFF)),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.white.withValues(alpha: 0.75),
+                  ),
                 ),
               ),
             ],

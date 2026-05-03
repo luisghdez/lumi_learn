@@ -113,6 +113,8 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF000029),
+      // Step 1 animates keyboard inset locally; avoid instant body shrink + avatar jump.
+      resizeToAvoidBottomInset: false,
       body: OnboardingVideoBackground(
         videoController: _videoController,
         child: AnimatedSwitcher(

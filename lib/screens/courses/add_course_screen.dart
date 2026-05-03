@@ -7,12 +7,14 @@ import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/screens/create/create_flow_transitions.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
 import 'package:lumi_learn_app/screens/courses/course_loading_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
+import 'package:lumi_learn_app/widgets/lumi_cosmic_backdrop.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_select_course_screen.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
@@ -49,7 +51,6 @@ class _CourseCreationState extends State<CourseCreation>
   late AnimationController _progressController;
   late AnimationController _entryController; // New controller for screen entry
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
   late Animation<double> _entryFadeAnimation; // New animation for screen entry
   late final AudioPlayer _audioPlayer;
   late final AudioPlayer _onboardingAudio;
@@ -85,9 +86,9 @@ class _CourseCreationState extends State<CourseCreation>
       curve: Curves.easeOut,
     );
 
-    // Initialize step transition animation
+    // Initialize step transition animation (matches create hub / video fades)
     _stepController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: kCreateFlowFadeDuration,
       vsync: this,
     );
 
@@ -102,15 +103,7 @@ class _CourseCreationState extends State<CourseCreation>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _stepController,
-      curve: Curves.easeInOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.3, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _stepController,
-      curve: Curves.easeOutCubic,
+      curve: kCreateFlowFadeCurve,
     ));
 
     // Start initial animations
@@ -512,12 +505,9 @@ class _CourseCreationState extends State<CourseCreation>
     return AnimatedBuilder(
       animation: _stepController,
       builder: (context, child) {
-        return SlideTransition(
-          position: _slideAnimation,
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: _getCurrentStepWidget(),
-          ),
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: _getCurrentStepWidget(),
         );
       },
     );
@@ -587,6 +577,8 @@ class _CourseCreationState extends State<CourseCreation>
           ),
         ],
       );
+    } else {
+      backgroundWidget = const LumiCosmicBackdrop();
     }
 
     return PopScope(

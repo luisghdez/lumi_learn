@@ -149,7 +149,7 @@ class ConfirmationScreen extends StatelessWidget {
                       final NavigationController navigationController =
                           Get.find();
                       navigationController
-                          .updateIndex(0); // 0 = Feed tab in the main shell
+                          .updateIndex(0); // 0 = Home tab in the main shell
                       Get.offAll(() =>
                           const MainScreen()); // Go back cleanly to the main structure
                     },
