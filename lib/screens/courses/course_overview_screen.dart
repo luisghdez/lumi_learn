@@ -132,6 +132,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
           .toList();
 
       final topSafe = MediaQuery.paddingOf(context).top;
+      // Keep lesson planets below the floating header so taps never hit the card.
+      final mapMinPlanetTop = topSafe +
+          (isTablet ? 24 : 10) +
+          CourseLessonMapLayout.approxHeaderCardHeight +
+          CourseLessonMapLayout.minPlanetTopGapBelowHeader;
 
       return Scaffold(
         extendBodyBehindAppBar: true,
@@ -168,6 +173,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                               lessonCount: lessonCount,
                               screenHeight: screenHeight,
                               nextLessonIndex: nextLessonIndex,
+                              minPlanetTop: mapMinPlanetTop,
                             ),
                           ),
                         ),
@@ -195,6 +201,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           final planetTop = CourseLessonMapLayout.planetTopY(
                             index,
                             screenHeight,
+                            minPlanetTop: mapMinPlanetTop,
                           );
                           const planetSize =
                               CourseLessonMapLayout.planetSize;
@@ -203,6 +210,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                               CourseLessonMapLayout.planetCenter(
                             index,
                             screenHeight,
+                            minPlanetTop: mapMinPlanetTop,
                           );
                           _lessonCenters.add(lessonCenter);
 

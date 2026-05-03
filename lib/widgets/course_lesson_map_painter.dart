@@ -26,12 +26,15 @@ class CourseLessonMapPainter extends CustomPainter {
     required this.lessonCount,
     required this.screenHeight,
     required this.nextLessonIndex,
+    this.minPlanetTop = 0,
   });
 
   final int lessonCount;
   final double screenHeight;
   /// First index not yet completed; path is highlighted through this node.
   final int nextLessonIndex;
+  /// Keeps route / nodes aligned with [CourseLessonMapLayout] when pushed down.
+  final double minPlanetTop;
 
   static Path _smoothRoute(List<Offset> points) {
     if (points.isEmpty) return Path();
@@ -55,10 +58,14 @@ class CourseLessonMapPainter extends CustomPainter {
     return path;
   }
 
-  static List<Offset> _centers(int count, double h) {
+  List<Offset> _centers(int count, double h) {
     return List.generate(
       count,
-      (i) => CourseLessonMapLayout.planetCenter(i, h),
+      (i) => CourseLessonMapLayout.planetCenter(
+            i,
+            h,
+            minPlanetTop: minPlanetTop,
+          ),
     );
   }
 
@@ -143,7 +150,11 @@ class CourseLessonMapPainter extends CustomPainter {
     for (var i = 0; i < lessonCount; i++) {
       final cx = CourseLessonMapLayout.planetLeftX(i) +
           CourseLessonMapLayout.planetSize / 2;
-      final cy = CourseLessonMapLayout.planetTopY(i, screenHeight) +
+      final cy = CourseLessonMapLayout.planetTopY(
+            i,
+            screenHeight,
+            minPlanetTop: minPlanetTop,
+          ) +
           CourseLessonMapLayout.planetSize / 2;
       for (var k = 0; k < 8; k++) {
         final t = (i * 17 + k * 13) % 1000 / 1000.0;
@@ -220,6 +231,7 @@ class CourseLessonMapPainter extends CustomPainter {
   bool shouldRepaint(covariant CourseLessonMapPainter oldDelegate) {
     return oldDelegate.lessonCount != lessonCount ||
         oldDelegate.screenHeight != screenHeight ||
-        oldDelegate.nextLessonIndex != nextLessonIndex;
+        oldDelegate.nextLessonIndex != nextLessonIndex ||
+        oldDelegate.minPlanetTop != minPlanetTop;
   }
 }

@@ -1,4 +1,4 @@
-/// Base URL for the Lumi HTTP API (courses, tutor, friends, videos, etc.).
+/// Base URL for the Lumi HTTP API (courses, tutor, friends, videos, podcasts, etc.).
 ///
 /// **Physical devices:** `http://localhost:3000` is wrong — it targets the
 /// phone, not your PC. This project defaults to the hosted dev API so

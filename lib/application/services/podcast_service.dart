@@ -4,10 +4,12 @@ import 'package:http/http.dart' as http;
 import 'dart:io'; // 👈 For File
 import 'package:http_parser/http_parser.dart'; // 👈 For MediaType
 import 'package:lumi_learn_app/application/models/podcast_model.dart';
+import 'package:lumi_learn_app/application/services/api_config.dart';
 
 class PodcastService {
-  // static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
-  static const String _baseUrl = 'http://localhost:3000'; // For local development
+  /// Same origin as [ApiService] — set `LUMI_API_BASE_URL` at compile time or
+  /// use the default dev API (see `ApiConfig` and README).
+  static String get _baseUrl => ApiConfig.origin;
 
   // Timeout durations
   static const Duration _standardTimeout = Duration(seconds: 30);
