@@ -444,24 +444,11 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
         final scope = _videoController.feedScope.value;
         final subject = _videoController.feedSubject.value;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        return Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.none,
           children: [
-            _FeedScopeBar(
-              onForYou: () {
-                HapticFeedback.selectionClick();
-                unawaited(_switchFeedScope(FeedScope.forYou));
-              },
-              onFriends: () {
-                HapticFeedback.selectionClick();
-                unawaited(_switchFeedScope(FeedScope.friends));
-              },
-              onSubject: () {
-                HapticFeedback.selectionClick();
-                unawaited(_openFeedSubjectPicker());
-              },
-            ),
-            Expanded(
+            Positioned.fill(
               child: videos.isEmpty
                   ? _FeedEmptyState(
                       isLoading: isLoading,
@@ -505,11 +492,32 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                             child: Align(
                               alignment: Alignment.topCenter,
                               child: LinearProgressIndicator(
-                                  color: Color(0xFFB79CFF)),
+                                color: Colors.white,
+                                minHeight: 2,
+                              ),
                             ),
                           ),
                       ],
                     ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _FeedScopeBar(
+                onForYou: () {
+                  HapticFeedback.selectionClick();
+                  unawaited(_switchFeedScope(FeedScope.forYou));
+                },
+                onFriends: () {
+                  HapticFeedback.selectionClick();
+                  unawaited(_switchFeedScope(FeedScope.friends));
+                },
+                onSubject: () {
+                  HapticFeedback.selectionClick();
+                  unawaited(_openFeedSubjectPicker());
+                },
+              ),
             ),
           ],
         );
@@ -2075,70 +2083,70 @@ class _FeedScopeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vc = Get.find<VideoController>();
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
-        child: Center(
-          child: Obx(() {
-            final scope = vc.feedScope.value;
-            final sub = vc.feedSubject.value;
-            final subjectLabel = sub.isEmpty
-                ? 'Subject'
-                : (sub.length > 13 ? '${sub.substring(0, 11)}…' : sub);
-            return DecoratedBox(
+    final topInset = MediaQuery.paddingOf(context).top;
+    // Tall enough for notch + tabs; fade reads on video without a separate “strip”.
+    final barHeight = topInset + 52;
+    return SizedBox(
+      height: barHeight,
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: [
+          const IgnorePointer(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.09),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.22),
-                        width: 1,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(3),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _FeedScopeSegment(
-                            label: 'For you',
-                            selected: scope == FeedScope.forYou,
-                            onTap: onForYou,
-                          ),
-                          _FeedScopeSegment(
-                            label: 'Friends',
-                            selected: scope == FeedScope.friends,
-                            onTap: onFriends,
-                          ),
-                          _FeedScopeSegment(
-                            label: subjectLabel,
-                            selected: scope == FeedScope.subject,
-                            onTap: onSubject,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x99000000),
+                    Color(0x00000000),
+                  ],
+                  stops: [0, 1],
                 ),
               ),
-            );
-          }),
-        ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Obx(() {
+                  final scope = vc.feedScope.value;
+                  final sub = vc.feedSubject.value;
+                  final subjectLabel = sub.isEmpty
+                      ? 'Subject'
+                      : (sub.length > 14 ? '${sub.substring(0, 12)}…' : sub);
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _FeedScopeSegment(
+                        label: 'For you',
+                        selected: scope == FeedScope.forYou,
+                        onTap: onForYou,
+                      ),
+                      const SizedBox(width: 4),
+                      _FeedScopeSegment(
+                        label: 'Friends',
+                        selected: scope == FeedScope.friends,
+                        onTap: onFriends,
+                      ),
+                      const SizedBox(width: 4),
+                      _FeedScopeSegment(
+                        label: subjectLabel,
+                        selected: scope == FeedScope.subject,
+                        onTap: onSubject,
+                      ),
+                    ],
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2157,39 +2165,53 @@ class _FeedScopeSegment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 1.5),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: selected
-                  ? Colors.white.withValues(alpha: 0.24)
-                  : Colors.transparent,
-              border: Border.all(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.42)
-                    : Colors.transparent,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: selected ? 1 : 0.52),
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 0.2,
+                  shadows: const [
+                    Shadow(
+                      blurRadius: 8,
+                      color: Colors.black45,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: selected ? 1 : 0.78),
-                fontSize: 13.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                letterSpacing: 0.15,
+              const SizedBox(height: 3),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                height: 2.5,
+                width: selected ? 22 : 0,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(1.5),
+                  boxShadow: const [
+                    BoxShadow(
+                      blurRadius: 6,
+                      color: Colors.black38,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
