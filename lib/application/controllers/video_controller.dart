@@ -160,14 +160,42 @@ class VideoController extends GetxController {
     }
   }
 
-  Future<VideoPost?> getVideoById(String videoId) async {
+  /// Loads a single post from `GET /videos/:id` (no feed/profile side effects).
+  Future<VideoPost?> _loadVideoPostById(String videoId) async {
     final token = await _tokenOrNotify();
     if (token == null) return null;
 
     final response = await _api.getVideoById(token: token, videoId: videoId);
     _ensureSuccess(response, expectedStatuses: const [200]);
-    final video =
-        VideoPost.fromJson(_asMap(_decodeBody(response.body)['video']));
+    return VideoPost.fromJson(_asMap(_decodeBody(response.body)['video']));
+  }
+
+  /// List endpoints often omit `slides` (or use unsigned URLs). Slideshow UI
+  /// requires [VideoPost.isSlideshow] to be true, so we merge full detail.
+  static bool _needsSlideshowHydration(VideoPost v) {
+    if (v.slides.isNotEmpty) return false;
+    if (v.contentKind == 'slideshow') return true;
+    if (v.mimeType.toLowerCase() == 'image/slideshow') return true;
+    return false;
+  }
+
+  Future<void> _hydrateSlideshowSummaries(List<VideoPost> items) async {
+    for (var i = 0; i < items.length; i++) {
+      final v = items[i];
+      if (!_needsSlideshowHydration(v) || v.id.isEmpty) continue;
+      try {
+        final full = await _loadVideoPostById(v.id);
+        if (full != null) items[i] = full;
+      } catch (e, st) {
+        debugPrint('Slideshow hydrate ${v.id}: $e\n$st');
+      }
+    }
+  }
+
+  Future<VideoPost?> getVideoById(String videoId) async {
+    final video = await _loadVideoPostById(videoId);
+    if (video == null) return null;
+
     final feedIdx = videos.indexWhere((item) => item.id == video.id);
     if (feedIdx != -1) {
       videos[feedIdx] = video;
@@ -492,6 +520,8 @@ class VideoController extends GetxController {
       final fetchedVideos = (body['videos'] as List<dynamic>? ?? [])
           .map((item) => VideoPost.fromJson(_asMap(item)))
           .toList();
+
+      await _hydrateSlideshowSummaries(fetchedVideos);
 
       _userVideoCursorsByUserId[userId] = body['nextCursor'] as String?;
       if (refresh) {

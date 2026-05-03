@@ -10,6 +10,7 @@ import 'package:lumi_learn_app/application/controllers/tutor_controller.dart';
 import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
 import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/application/services/deeplink.dart';
+import 'package:lumi_learn_app/notifications/push_notification_navigation.dart';
 import 'package:lumi_learn_app/dev_flags.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
 import 'package:lumi_learn_app/screens/auth/splash_screen.dart';
@@ -90,6 +91,10 @@ class AuthGate extends StatelessWidget {
           }
 
           DeepLinkHandler.instance.reinitialize();
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            PendingPushNavigation.flushAfterMainReady();
+          });
 
           precacheImage(const AssetImage('assets/images/milky_way.png'), context);
 
