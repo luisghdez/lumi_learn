@@ -10,11 +10,15 @@ class CreateFlowController extends GetxController {
 
   final RxBool visible = false.obs;
 
-  /// True while [Get.to] course creation is on the stack (hides tab navbar).
+  /// Legacy: was used when course opened via [Get.to]. Course is now [shellPage]
+  /// == 2 inside the same shell as video; kept false for compatibility.
   final RxBool courseCreationRouteOpen = false.obs;
 
-  /// 0 = choose course vs video, 1 = create video (pick + details in child).
+  /// 0 = type chooser, 1 = create video, 2 = create course (same [AnimatedSwitcher]).
   final RxInt shellPage = 0.obs;
+
+  /// Bumps when entering embedded course so [CourseCreation] remounts fresh.
+  final RxInt courseSessionKey = 0.obs;
 
   /// 0 = pick media, 1 = details / publish.
   final RxInt videoSubStep = 0.obs;
@@ -24,6 +28,9 @@ class CreateFlowController extends GetxController {
 
   /// Child [CreateVideoScreen] registers: return true if it handled back.
   bool Function()? onVideoEmbeddedBack;
+
+  /// Child [CourseCreation] (embedded) registers: return true if it handled back.
+  bool Function()? onCourseEmbeddedBack;
 
   /// Bump to force a fresh [CreateVideoScreen] (e.g. after discard).
   final RxInt sessionKey = 0.obs;
@@ -63,6 +70,7 @@ class CreateFlowController extends GetxController {
     videoSubStep.value = 0;
     courseCreationRouteOpen.value = false;
     onVideoEmbeddedBack = null;
+    onCourseEmbeddedBack = null;
     _nav.showNavBar();
   }
 
@@ -71,6 +79,7 @@ class CreateFlowController extends GetxController {
     videoSubStep.value = 0;
     courseCreationRouteOpen.value = false;
     onVideoEmbeddedBack = null;
+    onCourseEmbeddedBack = null;
     minimized.value = false;
     visible.value = false;
     _nav.showNavBar();
@@ -111,11 +120,32 @@ class CreateFlowController extends GetxController {
     _nav.hideNavBar();
   }
 
+  /// Embedded course: same shell transition as [goToVideoFlow] (no [Get.to]).
+  void goToCourseFlow() {
+    courseSessionKey.value++;
+    shellPage.value = 2;
+    videoSubStep.value = 0;
+    courseCreationRouteOpen.value = false;
+    _nav.hideNavBar();
+  }
+
   void goToTypeChoice() {
     shellPage.value = 0;
     videoSubStep.value = 0;
+    courseCreationRouteOpen.value = false;
+    onCourseEmbeddedBack = null;
     _clearVideoDraftSnapshots();
     sessionKey.value++;
+    _nav.showNavBar();
+  }
+
+  /// Pop embedded course from step 0 (replaces [Get.back] when there is no route).
+  void goBackFromEmbeddedCourseToType() {
+    shellPage.value = 0;
+    videoSubStep.value = 0;
+    courseCreationRouteOpen.value = false;
+    onCourseEmbeddedBack = null;
+    courseSessionKey.value++;
     _nav.showNavBar();
   }
 
@@ -138,6 +168,17 @@ class CreateFlowController extends GetxController {
       videoSubStep.value = 0;
       _clearVideoDraftSnapshots();
       sessionKey.value++;
+      _nav.showNavBar();
+      return true;
+    }
+    if (shellPage.value == 2) {
+      final handled = onCourseEmbeddedBack?.call() ?? false;
+      if (handled) return true;
+      shellPage.value = 0;
+      videoSubStep.value = 0;
+      courseCreationRouteOpen.value = false;
+      onCourseEmbeddedBack = null;
+      courseSessionKey.value++;
       _nav.showNavBar();
       return true;
     }

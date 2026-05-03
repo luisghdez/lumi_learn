@@ -9,14 +9,24 @@ import '../application/controllers/navigation_controller.dart';
 /// Visible height of the floating-pill navbar row (icon tap targets).
 const double kFloatingNavbarHeight = 68;
 
-/// Bottom padding used under the pill in [BottomNavbar] (floating layout).
-const double kFloatingNavbarOuterBottomPad = 30;
+/// Gap between the system safe-area bottom inset and the pill (above the
+/// home indicator). Use `0` to sit the pill as low as allowed by safe area.
+const double kFloatingNavbarOuterBottomPad = 0;
+
+/// Shifts the **whole** navbar down by this many logical pixels. Increase to
+/// move the bar closer to the physical bottom; [floatingNavbarBottomReserve]
+/// includes this so scroll content still clears the pill.
+const double kFloatingNavbarExtraDown = 8;
 
 /// Full bottom inset for full-bleed pages (e.g. feed) so content clears the
-/// same floating nav used on every tab: bar height + outer pad + safe area.
+/// same floating nav used on every tab: bar height + outer pad + safe area +
+/// [kFloatingNavbarExtraDown].
 double floatingNavbarBottomReserve(BuildContext context) {
   final safeBottom = MediaQuery.of(context).padding.bottom;
-  return kFloatingNavbarHeight + kFloatingNavbarOuterBottomPad + safeBottom;
+  return kFloatingNavbarHeight +
+      kFloatingNavbarOuterBottomPad +
+      safeBottom +
+      kFloatingNavbarExtraDown;
 }
 
 /// Bottom inset for create-flow: full reserve when the tab bar is shown (type
@@ -33,10 +43,9 @@ double createFlowContentBottomInset(BuildContext context) {
   return floatingNavbarBottomReserve(context);
 }
 
-/// Hide the floating tab bar during embedded create video or full-screen course.
+/// Hide the floating tab bar during embedded create video / course (same shell).
 bool createFlowHidesTabNavBar(CreateFlowController flow) {
-  return flow.visible.value &&
-      (flow.shellPage.value > 0 || flow.courseCreationRouteOpen.value);
+  return flow.visible.value && flow.shellPage.value > 0;
 }
 
 /// Bottom padding for full-bleed video overlays (caption + action rail).
@@ -60,7 +69,10 @@ class BottomNavbar extends StatelessWidget {
 
     return Align(
       alignment: Alignment.bottomCenter,
-      child: _buildAnimatedNavBar(context, navigationController),
+      child: Transform.translate(
+        offset: const Offset(0, kFloatingNavbarExtraDown),
+        child: _buildAnimatedNavBar(context, navigationController),
+      ),
     );
   }
 
@@ -77,7 +89,6 @@ class BottomNavbar extends StatelessWidget {
       final createOpen = createFlow?.visible.value ?? false;
       if (createFlow != null) {
         createFlow.shellPage.value;
-        createFlow.courseCreationRouteOpen.value;
       }
       final hideForCreateDeep = createFlow != null &&
           createFlowHidesTabNavBar(createFlow);
@@ -86,7 +97,7 @@ class BottomNavbar extends StatelessWidget {
       const double radius = 40;
       const double hPad = 28;
       const double bgAlpha = 0.06;
-      const double borderAlpha = 0.12;
+      const double borderAlpha = 0.28;
       const double shadowAlpha = 0.45;
       const double barHeight = kFloatingNavbarHeight;
       const double navTapSize = 48;

@@ -676,10 +676,17 @@ class ApiService {
     required String token,
     String? cursor,
     int limit = 20,
+    /// Optional; server may ignore until supported.
+    String? subject,
+    /// Optional; server may ignore until supported.
+    bool? friendsOnly,
   }) {
     final queryParameters = <String, String>{
       'limit': limit.toString(),
       if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      if (subject != null && subject.trim().isNotEmpty)
+        'subject': subject.trim(),
+      if (friendsOnly == true) 'friendsOnly': 'true',
     };
     final uri = Uri.parse('$_baseUrl/videos/feed').replace(
       queryParameters: queryParameters,

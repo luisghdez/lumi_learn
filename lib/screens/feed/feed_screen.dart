@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:share/share.dart';
 import 'package:video_player/video_player.dart';
@@ -11,7 +12,9 @@ import 'package:lumi_learn_app/application/controllers/create_flow_controller.da
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/application/controllers/video_controller.dart';
+import 'package:lumi_learn_app/application/models/feed_scope.dart';
 import 'package:lumi_learn_app/application/models/video_model.dart';
+import 'package:lumi_learn_app/data/subject_catalog.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/utils/profile_picture_image.dart';
 import 'package:lumi_learn_app/routing/app_route_observer.dart';
@@ -316,6 +319,40 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     _pauseAllFeedVideoPlayers();
     _currentIndex = 0;
     await _videoController.fetchFeed(refresh: true);
+    _jumpToFirstVideo();
+  }
+
+  void _jumpToFirstVideo() {
+    if (!mounted) return;
+    setState(() => _currentIndex = 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+    });
+  }
+
+  Future<void> _switchFeedScope(FeedScope scope) async {
+    await _videoController.setFeedScope(scope);
+    if (!mounted) return;
+    _pauseAllFeedVideoPlayers();
+    _jumpToFirstVideo();
+  }
+
+  Future<void> _openFeedSubjectPicker() async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (ctx) => const _FeedSubjectPickerSheet(),
+    );
+    if (!mounted || picked == null || picked.isEmpty) return;
+    await _videoController.setFeedScope(FeedScope.subject, subject: picked);
+    if (!mounted) return;
+    _pauseAllFeedVideoPlayers();
+    _jumpToFirstVideo();
   }
 
   Future<void> _openComments(VideoPost video) async {
@@ -404,49 +441,76 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
         final videos = _videoController.videos;
         final isLoading = _videoController.isLoadingFeed.value ||
             _videoController.isRefreshingFeed.value;
+        final scope = _videoController.feedScope.value;
+        final subject = _videoController.feedSubject.value;
 
-        if (videos.isEmpty) {
-          return _FeedEmptyState(
-            isLoading: isLoading,
-            error: _videoController.feedError.value,
-            onRetry: _refreshFeed,
-          );
-        }
-
-        return Stack(
-          fit: StackFit.expand,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.vertical,
-              itemCount: videos.length,
-              onPageChanged: _handlePageChanged,
-              itemBuilder: (context, index) {
-                final video = videos[index];
-                final controller = _videoPlayers[video.id];
-                return _FeedVideoPage(
-                  video: video,
-                  controller: controller,
-                  isCurrent:
-                      index == _currentIndex && _feedPlaybackAllowed,
-                  bottomOverlayPadding: bottomOverlayPad,
-                  onTap: _togglePlayback,
-                  onDoubleTapLike: () => _videoController.toggleLike(video),
-                  onLike: () => _videoController.toggleLike(video),
-                  onComment: () => _openComments(video),
-                  onUserTap: () => _openUserProfile(video),
-                  onRequestFriend: () => _requestFriendFromFeed(video),
-                  onShare: () => shareFeedVideo(video),
-                );
+            _FeedScopeBar(
+              onForYou: () {
+                HapticFeedback.selectionClick();
+                unawaited(_switchFeedScope(FeedScope.forYou));
+              },
+              onFriends: () {
+                HapticFeedback.selectionClick();
+                unawaited(_switchFeedScope(FeedScope.friends));
+              },
+              onSubject: () {
+                HapticFeedback.selectionClick();
+                unawaited(_openFeedSubjectPicker());
               },
             ),
-            if (isLoading)
-              const SafeArea(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: LinearProgressIndicator(color: Color(0xFFB79CFF)),
-                ),
-              ),
+            Expanded(
+              child: videos.isEmpty
+                  ? _FeedEmptyState(
+                      isLoading: isLoading,
+                      error: _videoController.feedError.value,
+                      onRetry: _refreshFeed,
+                      scope: scope,
+                      activeSubject: subject,
+                    )
+                  : Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        PageView.builder(
+                          controller: _pageController,
+                          scrollDirection: Axis.vertical,
+                          itemCount: videos.length,
+                          onPageChanged: _handlePageChanged,
+                          itemBuilder: (context, index) {
+                            final video = videos[index];
+                            final controller = _videoPlayers[video.id];
+                            return _FeedVideoPage(
+                              video: video,
+                              controller: controller,
+                              isCurrent: index == _currentIndex &&
+                                  _feedPlaybackAllowed,
+                              bottomOverlayPadding: bottomOverlayPad,
+                              onTap: _togglePlayback,
+                              onDoubleTapLike: () =>
+                                  _videoController.toggleLike(video),
+                              onLike: () => _videoController.toggleLike(video),
+                              onComment: () => _openComments(video),
+                              onUserTap: () => _openUserProfile(video),
+                              onRequestFriend: () =>
+                                  _requestFriendFromFeed(video),
+                              onShare: () => shareFeedVideo(video),
+                            );
+                          },
+                        ),
+                        if (isLoading)
+                          const SafeArea(
+                            bottom: false,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: LinearProgressIndicator(
+                                  color: Color(0xFFB79CFF)),
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
           ],
         );
       }),
@@ -738,7 +802,7 @@ class _SlideshowBackdropState extends State<_SlideshowBackdrop> {
             ),
           ),
           Positioned(
-            bottom: 24,
+            bottom: floatingNavbarBottomReserve(context) + 14,
             left: 0,
             right: 0,
             child: Row(
@@ -746,22 +810,33 @@ class _SlideshowBackdropState extends State<_SlideshowBackdrop> {
               children: List.generate(_slides.length, (i) {
                 final on = i == _page;
                 return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: on ? 9 : 6,
-                  height: on ? 9 : 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                  width: on ? 9 : 7,
+                  height: on ? 9 : 7,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: on
                         ? Colors.white
-                        : Colors.white.withValues(alpha: 0.35),
-                    boxShadow: on
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.45),
-                              blurRadius: 6,
-                            ),
-                          ]
-                        : null,
+                        : Colors.white.withValues(alpha: 0.62),
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      width: 0.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: on
+                            ? Colors.black.withValues(alpha: 0.55)
+                            : Colors.black.withValues(alpha: 0.4),
+                        blurRadius: on ? 8 : 5,
+                        spreadRadius: on ? 0.5 : 0,
+                      ),
+                      if (on)
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.45),
+                          blurRadius: 4,
+                          spreadRadius: 0,
+                        ),
+                    ],
                   ),
                 );
               }),
@@ -1986,16 +2061,316 @@ class _CommentInputBarState extends State<_CommentInputBar> {
   }
 }
 
+class _FeedScopeBar extends StatelessWidget {
+  const _FeedScopeBar({
+    required this.onForYou,
+    required this.onFriends,
+    required this.onSubject,
+  });
+
+  final VoidCallback onForYou;
+  final VoidCallback onFriends;
+  final VoidCallback onSubject;
+
+  @override
+  Widget build(BuildContext context) {
+    final vc = Get.find<VideoController>();
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+        child: Center(
+          child: Obx(() {
+            final scope = vc.feedScope.value;
+            final sub = vc.feedSubject.value;
+            final subjectLabel = sub.isEmpty
+                ? 'Subject'
+                : (sub.length > 13 ? '${sub.substring(0, 11)}…' : sub);
+            return DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        width: 1,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _FeedScopeSegment(
+                            label: 'For you',
+                            selected: scope == FeedScope.forYou,
+                            onTap: onForYou,
+                          ),
+                          _FeedScopeSegment(
+                            label: 'Friends',
+                            selected: scope == FeedScope.friends,
+                            onTap: onFriends,
+                          ),
+                          _FeedScopeSegment(
+                            label: subjectLabel,
+                            selected: scope == FeedScope.subject,
+                            onTap: onSubject,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedScopeSegment extends StatelessWidget {
+  const _FeedScopeSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 1.5),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: selected
+                  ? Colors.white.withValues(alpha: 0.24)
+                  : Colors.transparent,
+              border: Border.all(
+                color: selected
+                    ? Colors.white.withValues(alpha: 0.42)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: selected ? 1 : 0.78),
+                fontSize: 13.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: 0.15,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedSubjectPickerSheet extends StatefulWidget {
+  const _FeedSubjectPickerSheet();
+
+  @override
+  State<_FeedSubjectPickerSheet> createState() =>
+      _FeedSubjectPickerSheetState();
+}
+
+class _FeedSubjectPickerSheetState extends State<_FeedSubjectPickerSheet> {
+  final TextEditingController _q = TextEditingController();
+
+  @override
+  void dispose() {
+    _q.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final q = _q.text.trim().toLowerCase();
+    final filtered = q.isEmpty
+        ? allSubjects
+        : allSubjects.where((s) => s.toLowerCase().contains(q)).toList();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.58,
+        minChildSize: 0.38,
+        maxChildSize: 0.92,
+        builder: (context, scrollController) {
+          return ClipRRect(
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.72),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+                      child: Text(
+                        'Subject feed',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: TextField(
+                        controller: _q,
+                        onChanged: (_) => setState(() {}),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Search subjects…',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.45),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.08),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.35),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No matches',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scrollController,
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+                              itemCount: filtered.length,
+                              itemBuilder: (_, i) {
+                                final t = filtered[i];
+                                return ListTile(
+                                  title: Text(
+                                    t,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  onTap: () => Navigator.pop(context, t),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _FeedEmptyState extends StatelessWidget {
   const _FeedEmptyState({
     required this.isLoading,
     required this.error,
     required this.onRetry,
+    required this.scope,
+    required this.activeSubject,
   });
 
   final bool isLoading;
   final String error;
   final Future<void> Function() onRetry;
+  final FeedScope scope;
+  final String activeSubject;
+
+  String get _headline {
+    if (isLoading) return 'Loading…';
+    switch (scope) {
+      case FeedScope.friends:
+        return 'No friend posts here';
+      case FeedScope.subject:
+        return activeSubject.isEmpty
+            ? 'Pick a subject'
+            : 'Nothing for this subject yet';
+      case FeedScope.forYou:
+        return 'No videos yet';
+    }
+  }
+
+  String get _hint {
+    if (error.isNotEmpty) return error;
+    switch (scope) {
+      case FeedScope.friends:
+        return 'Add friends or switch to For you to see more posts in your area.';
+      case FeedScope.subject:
+        if (activeSubject.isEmpty) {
+          return 'Tap Subject above and choose a class — your feed will match that tag.';
+        }
+        return 'Try another subject, or go back to For you for the full mix.';
+      case FeedScope.forYou:
+        return 'Pull to refresh, or upload a clip from Create.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2009,14 +2384,18 @@ class _FeedEmptyState extends StatelessWidget {
               if (isLoading)
                 const CircularProgressIndicator(color: Color(0xFFB79CFF))
               else
-                const Icon(
-                  Icons.video_library_outlined,
-                  color: Color(0xFFB79CFF),
+                Icon(
+                  scope == FeedScope.friends
+                      ? Icons.group_outlined
+                      : scope == FeedScope.subject
+                          ? Icons.school_outlined
+                          : Icons.video_library_outlined,
+                  color: const Color(0xFFB79CFF),
                   size: 58,
                 ),
               const SizedBox(height: 18),
               Text(
-                isLoading ? 'Loading videos...' : 'No videos yet',
+                _headline,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
@@ -2026,9 +2405,7 @@ class _FeedEmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                error.isNotEmpty
-                    ? error
-                    : 'Upload a short lesson video to test the new feed routes.',
+                _hint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.68),

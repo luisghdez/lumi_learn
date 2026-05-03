@@ -8,7 +8,6 @@ import 'package:lumi_learn_app/screens/create/create_flow_transitions.dart';
 import 'package:lumi_learn_app/screens/videos/create_video_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart'
     show floatingNavbarBottomReserve;
-import 'package:lumi_learn_app/widgets/glass_confirm_dialog.dart';
 import 'package:lumi_learn_app/widgets/lumi_cosmic_backdrop.dart';
 
 /// Settings-style glass tiles (see [SettingsScreen._glassOptionTile]).
@@ -35,6 +34,27 @@ class CreateFlowShell extends StatelessWidget {
             Positioned.fill(
               child: Obx(() {
                 final page = flow.shellPage.value;
+                final courseKey = flow.courseSessionKey.value;
+                final Widget switchChild = switch (page) {
+                  0 => Padding(
+                        key: const ValueKey('type'),
+                        padding: EdgeInsets.only(bottom: bottomPad),
+                        child: _TypeChoicePage(flow: flow),
+                      ),
+                  1 => CreateVideoScreen(
+                        key: ValueKey('video_${flow.sessionKey.value}'),
+                        embeddedInCreateFlow: true,
+                      ),
+                  2 => CourseCreation(
+                        key: ValueKey('course_$courseKey'),
+                        embeddedInCreateFlow: true,
+                      ),
+                  _ => Padding(
+                        key: const ValueKey('type_fallback'),
+                        padding: EdgeInsets.only(bottom: bottomPad),
+                        child: _TypeChoicePage(flow: flow),
+                      ),
+                };
                 return AnimatedSwitcher(
                   duration: kCreateFlowFadeDuration,
                   switchInCurve: kCreateFlowFadeCurve,
@@ -50,16 +70,7 @@ class CreateFlowShell extends StatelessWidget {
                       ],
                     );
                   },
-                  child: page == 0
-                      ? Padding(
-                          key: const ValueKey('type'),
-                          padding: EdgeInsets.only(bottom: bottomPad),
-                          child: _TypeChoicePage(flow: flow),
-                        )
-                      : CreateVideoScreen(
-                          key: ValueKey('video_${flow.sessionKey.value}'),
-                          embeddedInCreateFlow: true,
-                        ),
+                  child: switchChild,
                 );
               }),
             ),
@@ -81,36 +92,22 @@ class _TypeChoicePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    if (flow.hasDraft) {
-                      _confirmDiscard(context, flow);
-                    } else {
-                      flow.visible.value = false;
-                    }
-                  },
-                  icon: const Icon(Icons.close_rounded,
-                      color: Colors.white, size: 24),
-                ),
-                const Expanded(
-                  child: Text(
-                    'Create',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: SizedBox(
+              height: 48,
+              child: Center(
+                child: Text(
+                  'Create',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
                   ),
                 ),
-                const SizedBox(width: 48),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -135,20 +132,7 @@ class _TypeChoicePage extends StatelessWidget {
                   subtitle: 'Lessons, flashcards, and quizzes',
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    flow.courseCreationRouteOpen.value = true;
-                    final courseNav = Get.to<void>(
-                      () => const CourseCreation(),
-                      transition: Transition.fadeIn,
-                      duration: kCreateFlowFadeDuration,
-                      curve: kCreateFlowFadeCurve,
-                    );
-                    (courseNav ?? Future<void>.value()).then((_) {
-                      flow.courseCreationRouteOpen.value = false;
-                      flow.shellPage.value = 0;
-                      flow.videoSubStep.value = 0;
-                      // Return to the create chooser instead of leaving the user on the tab shell alone.
-                      flow.visible.value = true;
-                    });
+                    flow.goToCourseFlow();
                   },
                 ),
                 const SizedBox(height: 18),
@@ -238,19 +222,5 @@ class _TypeChoicePage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static Future<void> _confirmDiscard(
-      BuildContext context, CreateFlowController flow) async {
-    final confirmed = await showGlassConfirmDialog(
-      context,
-      title: 'Discard draft?',
-      body:
-          'Your in-progress video, photos, and caption will be cleared and this screen will close.',
-      cancelText: 'Cancel',
-      confirmText: 'Discard',
-    );
-    if (!context.mounted) return;
-    if (confirmed == true) flow.discard();
   }
 }
