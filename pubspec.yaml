@@ -85,6 +85,8 @@ dependencies:
   flutter_timezone: ^5.0.0
   http_parser: ^4.1.2
   video_thumbnail: ^0.5.6
+  cloud_firestore: ^5.6.12
+  flutter_sound: ^9.28.0
 
 flutter_launcher_icons:
   android: true
@@ -142,6 +144,7 @@ flutter:
     - assets/onboarding/
     - assets/icons/
     - assets/videos/
+    - assets/podcast/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
