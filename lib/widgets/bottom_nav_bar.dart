@@ -37,7 +37,7 @@ double createFlowContentBottomInset(BuildContext context) {
     return floatingNavbarBottomReserve(context);
   }
   final flow = Get.find<CreateFlowController>();
-  if (createFlowHidesTabNavBar(flow)) {
+  if (createFlowHidesTabNavBar(flow)) { 
     return safeBottom + 24;
   }
   return floatingNavbarBottomReserve(context);
