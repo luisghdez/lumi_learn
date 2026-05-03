@@ -29,104 +29,96 @@ class CourseOverviewHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(15)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(140, 0, 0, 0),
-              borderRadius: const BorderRadius.all(Radius.circular(15)),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(Radius.circular(15)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(140, 0, 0, 0),
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Stack(
-                    alignment: Alignment.topCenter,
-                    children: [
-                      // Back button positioned to the left
-                      Align(
-                          alignment: Alignment.topLeft,
-                          child: SizedBox(
-                            width: 30,
-                            height: 20,
-                            child: IconButton(
-                              iconSize: 20,
-                              icon:
-                                  const Icon(Icons.arrow_back_ios_new_rounded),
-                              padding:
-                                  EdgeInsets.zero, // Remove default padding
-                              constraints:
-                                  const BoxConstraints(), // Remove default minimum size
-                              onPressed: () => onBack(),
-                            ),
-                          )),
-                      // Centered text
-                      Center(
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            text: courseTitle,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -1),
-                          ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: IconButton(
+                        iconSize: 20,
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => onBack(),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        courseTitle,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -1,
                         ),
                       ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Transform.translate(
-                          offset: const Offset(
-                              0, -2), // Move up slightly to visually center
-                          child: SizedBox(
-                            width: 30,
-                            height: 20,
-                            child: IconButton(
-                                iconSize: 20,
-                                icon: const Icon(Icons.more_horiz),
-                                padding:
-                                    EdgeInsets.zero, // Remove default padding
-                                constraints:
-                                    const BoxConstraints(), // Remove default minimum size
-                                onPressed: () {
-                                  showCourseOptionsDialog(
-                                    context: context,
-                                    courseId: courseId,
-                                    courseTitle: courseTitle,
-                                    onDelete: () async {
-                                      Navigator.of(context).pop();
+                    ),
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Transform.translate(
+                        offset: const Offset(0, -2),
+                        child: IconButton(
+                          iconSize: 20,
+                          icon: const Icon(Icons.more_horiz),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            showCourseOptionsDialog(
+                              context: context,
+                              courseId: courseId,
+                              courseTitle: courseTitle,
+                              onDelete: () async {
+                                Navigator.of(context).pop();
 
-                                      final success = await CourseDeleteHelper
-                                          .showDeleteConfirmationAndDelete(
-                                        context: context,
-                                        courseId: courseId,
-                                        courseTitle: courseTitle,
-                                      );
+                                final success =
+                                    await CourseDeleteHelper
+                                        .showDeleteConfirmationAndDelete(
+                                  context: context,
+                                  courseId: courseId,
+                                  courseTitle: courseTitle,
+                                );
 
-                                      if (success) {
-                                        onBack();
-                                      }
-                                    },
-                                  );
-                                }),
-                          ),
+                                if (success) {
+                                  onBack();
+                                }
+                              },
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Column(
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Row(
@@ -211,7 +203,6 @@ class CourseOverviewHeader extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

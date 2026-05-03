@@ -14,8 +14,9 @@ import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
 import 'package:lumi_learn_app/widgets/bottom_panel.dart';
 import 'package:lumi_learn_app/widgets/course_overview_header.dart';
-import 'package:lumi_learn_app/widgets/star_painter.dart';
-import 'package:lumi_learn_app/widgets/starry_app_scaffold.dart';
+import 'package:lumi_learn_app/widgets/course_lesson_map_layout.dart';
+import 'package:lumi_learn_app/widgets/course_lesson_map_painter.dart';
+import 'package:lumi_learn_app/widgets/course_map_sky_background.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart'; // <--- Import your AuthController
 import 'package:lumi_learn_app/widgets/rocket_animation.dart';
@@ -46,7 +47,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
   // Key to detect taps outside the panel
   final GlobalKey _panelKey = GlobalKey();
-  final StarPainter _starPainter = StarPainter(starCount: 200);
 
   // Capturing each lesson’s center (for planet positioning)
   final List<Offset> _lessonCenters = [];
@@ -71,11 +71,11 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       // Only auto-scroll if we're past the first lesson.
       if (nextLessonIndex == 0) return;
 
-      // Define the planet size as used in your layout.
-      const double planetSize = 100.0;
+      const planetSize = CourseLessonMapLayout.planetSize;
 
       // Calculate the center of the next lesson planet.
-      double planetCenterX = nextLessonIndex * 200.0 + planetSize / 2;
+      double planetCenterX =
+          nextLessonIndex * CourseLessonMapLayout.spacing + planetSize / 2;
       double screenWidth = MediaQuery.of(context).size.width;
 
       // Adjust the target offset so that the planet's center is aligned in the middle.
@@ -95,10 +95,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTablet = screenWidth >= 768;
 
-    // Horizontal wave layout parameters (optional for the “orbit” effect)
-    const double amplitude = 180.0;
-    const double frequency = pi / 3;
-
     // Clear & recalculate lesson centers each build
     _lessonCenters.clear();
 
@@ -107,7 +103,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       final String courseTitle = courseController.selectedCourseTitle.value;
       final lessons = courseController.lessons;
       final lessonCount = lessons.length;
-      final totalWidth = lessonCount * 200.0; // Space out lessons horizontally
+      final totalWidth = max(
+        screenWidth,
+        CourseLessonMapLayout.totalWidth(lessonCount),
+      );
       int completedCount = lessons.where((l) => l['completed'] == true).length;
       double progress = (lessonCount == 0) ? 0 : completedCount / lessonCount;
 
@@ -130,59 +129,80 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
           .map((item) => Flashcard.fromMap(item))
           .toList();
 
-      return StarryAppScaffold(
+      final topSafe = MediaQuery.paddingOf(context).top;
+
+      return Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: const Color(0xFF070b14),
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTapDown: (details) => _handleTapDown(context, details),
-          child: Stack(
-            children: [
-              // 1) Scrollable horizontal region
-              SingleChildScrollView(
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: totalWidth,
-                  height: screenHeight,
-                  child: Stack(
-                    children: [
-                      // Background stars
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _starPainter,
+          child: SizedBox.expand(
+            child: Stack(
+              // loose + expand parent: map stays full-screen; header Padding is not
+              // given tight full-height (that stretched BackdropFilter / grey card).
+              fit: StackFit.loose,
+              children: [
+              // 1) Scrollable horizontal region (edge-to-edge vertically)
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: totalWidth,
+                    height: screenHeight,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CourseMapSkyBackground(
+                            scrollController: _scrollController,
+                            width: totalWidth,
+                            height: screenHeight,
+                          ),
                         ),
-                      ),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: CourseLessonMapPainter(
+                              lessonCount: lessonCount,
+                              screenHeight: screenHeight,
+                              nextLessonIndex: nextLessonIndex,
+                            ),
+                          ),
+                        ),
 
-                      // 2) Lessons as “Planets”
-                      ...List.generate(lessonCount, (index) {
-                        final lesson = lessons[index];
-                        final bool shouldBlur = index > nextLessonIndex;
+                        // 2) Lessons as “Planets”
+                        ...List.generate(lessonCount, (index) {
+                          final lesson = lessons[index];
+                          final bool shouldBlur = index > nextLessonIndex;
 
-                        final lessonPlanetName = lesson['planetName'];
-                        final lessonTitle =
-                            lesson['title'] ?? 'Lesson ${index + 1}';
-                        final lessonId = lesson['id']; // Unique lesson ID
+                          final lessonPlanetName = lesson['planetName'];
+                          final lessonTitle =
+                              lesson['title'] ?? 'Lesson ${index + 1}';
+                          final lessonId = lesson['id']; // Unique lesson ID
 
-                        // Assign a planet image based on the lesson
-                        final lessonPlanet = getPlanetForLesson(
-                          courseId.value,
-                          lessonId,
-                          previousPlanet,
-                        );
-                        previousPlanet = lessonPlanet;
+                          // Assign a planet image based on the lesson
+                          final lessonPlanet = getPlanetForLesson(
+                            courseId.value,
+                            lessonId,
+                            previousPlanet,
+                          );
+                          previousPlanet = lessonPlanet;
 
-                        // Wave offset for a fun orbit effect
-                        final offsetY =
-                            amplitude * sin(index * frequency + pi / 2);
-                        final planetLeft = index * 200.0;
-                        final planetTop = screenHeight / 2 - offsetY - 60;
-                        const planetSize = 100.0;
+                          final planetLeft =
+                              CourseLessonMapLayout.planetLeftX(index);
+                          final planetTop = CourseLessonMapLayout.planetTopY(
+                            index,
+                            screenHeight,
+                          );
+                          const planetSize =
+                              CourseLessonMapLayout.planetSize;
 
-                        // Save the center of each planet for rocket animation
-                        final lessonCenter = Offset(
-                          planetLeft + planetSize / 2,
-                          planetTop + planetSize / 2,
-                        );
-                        _lessonCenters.add(lessonCenter);
+                          final lessonCenter =
+                              CourseLessonMapLayout.planetCenter(
+                            index,
+                            screenHeight,
+                          );
+                          _lessonCenters.add(lessonCenter);
 
                         const double flagSize = 30.0;
 
@@ -338,21 +358,22 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                               ),
                             ),
                           ),
-                        );
-                      }),
+                          );
+                        }),
 
-                      // 3) Rocket Animation
-                      Positioned.fill(
-                        child: _selectedLessonIndex == null
-                            ? const SizedBox()
-                            : RocketAnimation(
-                                planetCenter:
-                                    _lessonCenters[_selectedLessonIndex!],
-                                planetRadius: 20.0,
-                                isActive: _isPanelVisible,
-                              ),
-                      ),
-                    ],
+                        // 3) Rocket Animation
+                        Positioned.fill(
+                          child: _selectedLessonIndex == null
+                              ? const SizedBox()
+                              : RocketAnimation(
+                                  planetCenter: _lessonCenters[
+                                      _selectedLessonIndex!],
+                                  planetRadius: 20.0,
+                                  isActive: _isPanelVisible,
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -364,91 +385,99 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                 bottom: _isPanelVisible ? 0 : -250,
                 left: 0,
                 right: 0,
-                child: BottomPanel(
-                  key: _panelKey,
-                  selectedLessonIndex: _selectedLessonIndex,
-                  selectedLessonPlanetName: _selectedLessonPlanetName,
-                  selectedLessonDescription: _lessonDescription,
-                  onStartPressed: () {
-                    courseController.loadQuestions();
-                    Get.to(() => LessonScreenMain());
-                    _closePanel();
-                  },
-                  onClose: _closePanel,
+                child: SafeArea(
+                  top: false,
+                  minimum: EdgeInsets.zero,
+                  child: BottomPanel(
+                    key: _panelKey,
+                    selectedLessonIndex: _selectedLessonIndex,
+                    selectedLessonPlanetName: _selectedLessonPlanetName,
+                    selectedLessonDescription: _lessonDescription,
+                    onStartPressed: () {
+                      courseController.loadQuestions();
+                      Get.to(() => LessonScreenMain());
+                      _closePanel();
+                    },
+                    onClose: _closePanel,
+                  ),
                 ),
               ),
 
-              // 5) Top Header
+              // 5) Top Header (manual top inset so map is full-bleed under status bar)
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 32 : 16,
-                  vertical: isTablet ? 32 : 0,
+                padding: EdgeInsets.fromLTRB(
+                  isTablet ? 32 : 16,
+                  topSafe + (isTablet ? 24 : 10),
+                  isTablet ? 32 : 16,
+                  0,
                 ),
                 child: Builder(builder: (context) {
-                  final tutorController = Get.find<TutorController>();
-                  return Obx(() => CourseOverviewHeader(
-                        onBack: () => Get.offAll(
-                          () => MainScreen(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 1000),
-                        ),
-                        courseTitle: courseController.selectedCourseTitle.value,
-                        courseId: courseId.value,
-                        progress: progress,
-                        onViewFlashcards: () {
-                          Get.to(
-                            () => FlashcardScreen(flashcards: flashcards),
-                            duration: const Duration(milliseconds: 300),
-                          );
-                        },
-                        onViewNotes: () {
-                          if (!courseController
-                              .selectedCourseHasEmbeddings.value) {
-                            Get.dialog(
-                              const EmbeddingsPopup(),
-                              barrierDismissible: true,
-                            );
-                            return;
-                          }
-                          Get.to(
-                            () => NoteScreen(
-                              markdownText: courseMarkdown,
-                            ),
-                            duration: const Duration(milliseconds: 300),
-                          );
-                        },
-                        onViewLumiTutor: () {
-                          if (!courseController
-                              .selectedCourseHasEmbeddings.value) {
-                            Get.dialog(
-                              const EmbeddingsPopup(),
-                              barrierDismissible: true,
-                            );
-                            return;
-                          }
-                          tutorController
-                              .openTutorForCourse(
-                                  courseId: courseId.value,
-                                  courseTitle: courseTitle)
-                              .whenComplete(() {
+                    final tutorController = Get.find<TutorController>();
+                    return Obx(() => CourseOverviewHeader(
+                          onBack: () => Get.offAll(
+                            () => MainScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 1000),
+                          ),
+                          courseTitle:
+                              courseController.selectedCourseTitle.value,
+                          courseId: courseId.value,
+                          progress: progress,
+                          onViewFlashcards: () {
                             Get.to(
-                              () => LumiTutorMain(
-                                courseId: courseId.value,
-                                courseTitle: courseTitle,
+                              () => FlashcardScreen(flashcards: flashcards),
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          },
+                          onViewNotes: () {
+                            if (!courseController
+                                .selectedCourseHasEmbeddings.value) {
+                              Get.dialog(
+                                const EmbeddingsPopup(),
+                                barrierDismissible: true,
+                              );
+                              return;
+                            }
+                            Get.to(
+                              () => NoteScreen(
+                                markdownText: courseMarkdown,
                               ),
                               duration: const Duration(milliseconds: 300),
                             );
-                          });
-                        },
-                        isOpeningTutor:
-                            tutorController.isOpeningFromCourse.value,
-                      ));
-                }),
-              ),
-            ],
+                          },
+                          onViewLumiTutor: () {
+                            if (!courseController
+                                .selectedCourseHasEmbeddings.value) {
+                              Get.dialog(
+                                const EmbeddingsPopup(),
+                                barrierDismissible: true,
+                              );
+                              return;
+                            }
+                            tutorController
+                                .openTutorForCourse(
+                                    courseId: courseId.value,
+                                    courseTitle: courseTitle)
+                                .whenComplete(() {
+                              Get.to(
+                                () => LumiTutorMain(
+                                  courseId: courseId.value,
+                                  courseTitle: courseTitle,
+                                ),
+                                duration: const Duration(milliseconds: 300),
+                              );
+                            });
+                          },
+                          isOpeningTutor:
+                              tutorController.isOpeningFromCourse.value,
+                        ));
+                  }),
+                ),
+              ],
+            ),
           ),
         ),
-      );
+        );
     });
   }
 
