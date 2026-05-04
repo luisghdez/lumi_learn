@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
@@ -20,6 +21,13 @@ class AuthController extends GetxController {
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxBool isLoading = false.obs; // Track loading state
   Rxn<UserRole> userRole = Rxn<UserRole>();
+
+  /// Shown under login / sign-up fields (replaces snackbars).
+  final RxString authFormError = ''.obs;
+
+  void clearAuthFormError() {
+    authFormError.value = '';
+  }
 
   final RxBool hasCompletedOnboarding = false.obs;
   RxBool isAuthInitialized = false.obs;
@@ -42,18 +50,22 @@ class AuthController extends GetxController {
   void onReady() {
     super.onReady();
     _auth.authStateChanges().listen((User? user) async {
+      isAuthInitialized.value = false;
       firebaseUser.value = user;
-      isAuthInitialized.value = true;
 
-      if (user != null) {
-        // Link RevenueCat to Firebase user UID
-        await Purchases.logIn(user.uid);
-        await updateProStatus();
+      try {
+        if (user != null) {
+          // Link RevenueCat to Firebase user UID
+          await Purchases.logIn(user.uid);
+          await updateProStatus();
 
-        await fetchUserData();
-      } else {
-        // Clear out userDoc when logged out
-        userDoc.value = {};
+          await fetchUserData();
+        } else {
+          // Clear out userDoc when logged out
+          userDoc.value = {};
+        }
+      } finally {
+        isAuthInitialized.value = true;
       }
     });
   }
@@ -102,15 +114,24 @@ class AuthController extends GetxController {
       final response =
           await ApiService.getUserData(token: token, userId: userId);
       final data = jsonDecode(response.body);
+      final userData = data['user'] as Map<String, dynamic>? ?? {};
+      final hasOnboardingField = userData.containsKey('hasCompletedOnboarding');
+      if (!hasOnboardingField) {
+        userData['hasCompletedOnboarding'] = true;
+        data['user'] = userData;
+      }
 
       userDoc.value = data;
-      streakCount.value = data['user']['streakCount'] ?? 0;
-      xpCount.value = data['user']['xpCount'] ?? 0;
-      courseSlotsUsed.value = data['user']['courseSlotsUsed'] ?? 0;
-      maxCourseSlots.value = data['user']['maxCourseSlots'] ?? 2;
-      friendCount.value = data['user']['friendCount'] ?? 0;
-      name.value = data['user']['name'] ?? '';
-      final serverTimezone = data['user']['timezone'] ?? '';
+      streakCount.value = userData['streakCount'] ?? 0;
+      xpCount.value = userData['xpCount'] ?? 0;
+      courseSlotsUsed.value = userData['courseSlotsUsed'] ?? 0;
+      maxCourseSlots.value = userData['maxCourseSlots'] ?? 2;
+      friendCount.value = userData['friendCount'] ?? 0;
+      name.value = userData['name'] ?? '';
+      hasCompletedOnboarding.value = hasOnboardingField
+          ? userData['hasCompletedOnboarding'] == true
+          : true;
+      final serverTimezone = userData['timezone'] ?? '';
 
       // Get the current device timezone
       final currentTimezone = await getIanaTimezoneId();
@@ -127,66 +148,21 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> signUp(String email, String password, String name) async {
-    if (isLoading.value) return; // Prevent multiple requests
-    isLoading.value = true; // Start loading
-
-    try {
-      // Check if email already exists before creating an account
-      var signInMethods = await _auth.fetchSignInMethodsForEmail(email);
-      if (signInMethods.isNotEmpty) {
-        Get.snackbar("Error", "This email is already in use.");
-        isLoading.value = false;
-        return;
-      }
-
-      // Create user
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // If user is successfully created, update display name
-      if (userCredential.user != null) {
-        await userCredential.user!.updateDisplayName(name);
-        await userCredential.user!.reload();
-      }
-
-      final token = await getIdToken();
-      if (token == null) {
-        print('No user token found.');
-        return;
-      }
-
-      // Get the user's timezone
-      final timezone = await getIanaTimezoneId();
-
-      await ApiService.ensureUserExists(token,
-          email: email, name: name, profilePicture: "", timezone: timezone);
-
-      Get.snackbar("Success", "Account created successfully!");
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-    } finally {
-      isLoading.value = false; // Stop loading
-    }
-  }
-
   // Login Method
   Future<void> login(String email, String password) async {
+    clearAuthFormError();
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      // Get.snackbar("Success", "Logged in successfully!");
-      Get.offAll(() => AuthGate());
+      _navigateToAuthGate();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      authFormError.value = _authFailureMessage(e);
     }
   }
 
   // Google Sign-In Method
   Future<void> signInWithGoogle() async {
     if (isLoading.value) return;
+    clearAuthFormError();
     isLoading.value = true;
     try {
       // Trigger the authentication flow
@@ -217,7 +193,8 @@ class AuthController extends GetxController {
 
         final token = await getIdToken();
         if (token == null) {
-          print('No user token found.');
+          authFormError.value =
+              'Couldn\'t complete Google sign-in. Please try again.';
           return;
         }
 
@@ -231,17 +208,11 @@ class AuthController extends GetxController {
           profilePicture: "default",
           timezone: timezone,
         );
-
-        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-          Get.snackbar("Welcome!", "Account created via Google sign-in.");
-        } else {
-          // Get.snackbar("Success", "Logged in via Google!");
-        }
       }
 
-      Get.offAll(() => AuthGate());
+      _navigateToAuthGate();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      authFormError.value = _authFailureMessage(e);
     } finally {
       isLoading.value = false;
     }
@@ -249,11 +220,13 @@ class AuthController extends GetxController {
 
   Future<void> signInWithApple() async {
     if (isLoading.value) return;
+    clearAuthFormError();
     isLoading.value = true;
     try {
       // Check if Apple Sign In is available on the current device.
       if (!await SignInWithApple.isAvailable()) {
-        Get.snackbar("Error", "Apple Sign-In is not available on this device.");
+        authFormError.value =
+            'Sign in with Apple isn\'t available on this device.';
         isLoading.value = false;
         return;
       }
@@ -297,7 +270,8 @@ class AuthController extends GetxController {
         // Retrieve the ID token.
         final token = await getIdToken();
         if (token == null) {
-          print('No user token found.');
+          authFormError.value =
+              'Couldn\'t complete Apple sign-in. Please try again.';
           return;
         }
 
@@ -314,19 +288,11 @@ class AuthController extends GetxController {
           profilePicture: "default",
           timezone: timezone,
         );
-
-        // Notify user whether this is a new account.
-        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-          Get.snackbar("Welcome!", "Account created via Apple Sign-In.");
-        } else {
-          // Get.snackbar("Success", "Logged in via Apple!");
-        }
       }
 
-      // Navigate to your authenticated gate.
-      Get.offAll(() => AuthGate());
+      _navigateToAuthGate();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      authFormError.value = _authFailureMessage(e);
     } finally {
       isLoading.value = false;
     }
@@ -383,20 +349,27 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> updateDisplayName(String newName) async {
+  Future<bool> updateDisplayName(
+    String newName, {
+    bool showSuccessMessage = true,
+  }) async {
     try {
       final token = await getIdToken();
       if (token == null) {
-        return;
+        return false;
       }
 
       name.value = newName;
 
       await ApiService.updateUserName(token, newName);
 
-      Get.snackbar("Success", "Username updated!");
+      if (showSuccessMessage) {
+        Get.snackbar("Success", "Username updated!");
+      }
+      return true;
     } catch (e) {
       Get.snackbar("Error", "Failed to update display name: $e");
+      return false;
     }
   }
 
@@ -420,12 +393,47 @@ class AuthController extends GetxController {
       // 4) Finally delete the user in Firebase
       await user?.delete();
 
-      // Navigate user away
-      Get.offAll(() => AuthGate());
+      _navigateToAuthGate();
       Get.snackbar("Account Deleted", "Your account has been deleted.");
     } catch (e) {
       Get.snackbar("Error", "Failed to delete account: ${e.toString()}");
     }
+  }
+
+  Future<void> completeOnboarding() async {
+    // Update local state
+    hasCompletedOnboarding.value = true;
+    userDoc.update('user', (value) {
+      if (value is Map<String, dynamic>) {
+        return {
+          ...value,
+          'hasCompletedOnboarding': true,
+        };
+      }
+      return value;
+    }, ifAbsent: () => {'hasCompletedOnboarding': true});
+
+    // Send backend request to update onboarding status
+    try {
+      final token = await getIdToken();
+      if (token != null) {
+        await ApiService.updateOnboardingStatus(token, true);
+      }
+    } catch (e) {
+      print('Error updating onboarding status: $e');
+      // Continue even if API call fails
+    }
+  }
+
+  /// Fade into post-auth shell (onboarding “Make it yours”, main app, or splash).
+  void _navigateToAuthGate() {
+    clearAuthFormError();
+    Get.offAll<void>(
+      () => AuthGate(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _clearUserState() {
@@ -449,6 +457,7 @@ class AuthController extends GetxController {
     // If you want to reset loading / init flags:
     isAuthInitialized.value = false;
     isLoading.value = false;
+    authFormError.value = '';
 
     // If you want to reset user role
     userRole.value = null; // <-- add this!
@@ -458,6 +467,40 @@ class AuthController extends GetxController {
   void setUserRole(UserRole role) {
     userRole.value = role;
   }
+}
+
+String _authFailureMessage(Object e) {
+  if (e is FirebaseAuthException) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'That email address isn\'t valid.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Email or password is incorrect.';
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'weak-password':
+        return 'Choose a stronger password (at least 6 characters).';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      case 'operation-not-allowed':
+        return 'This sign-in method isn\'t enabled.';
+      case 'account-exists-with-different-credential':
+        return 'An account already exists for this email with a different sign-in method.';
+      case 'credential-already-in-use':
+        return 'This sign-in is already linked to another account.';
+      default:
+        final m = e.message;
+        if (m != null && m.length < 120) return m;
+        return 'Couldn\'t sign you in. Please try again.';
+    }
+  }
+  return 'Couldn\'t sign you in. Please try again.';
 }
 
 Future<String> getIanaTimezoneId() async {

@@ -4,10 +4,26 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/screens/profile/components/info_stat_card.dart';
 import 'package:lumi_learn_app/screens/social/components/pfp_viewer.dart';
-import 'package:lumi_learn_app/screens/social/components/xp_chart_box.dart';
+import 'package:lumi_learn_app/screens/social/widgets/remove_friend_dialog.dart';
+import 'package:lumi_learn_app/screens/social/widgets/saved_courses_list_screen.dart';
+import 'package:lumi_learn_app/screens/social/widgets/user_friends_list_screen.dart';
+import 'package:lumi_learn_app/widgets/profile_videos_grid.dart';
 
-class FriendProfile extends StatelessWidget {
+class FriendProfile extends StatefulWidget {
   const FriendProfile({super.key});
+
+  @override
+  State<FriendProfile> createState() => _FriendProfileState();
+}
+
+class _FriendProfileState extends State<FriendProfile> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   bool hasNotch(BuildContext context) {
     final double topInset = MediaQuery.of(context).padding.top;
@@ -17,7 +33,7 @@ class FriendProfile extends StatelessWidget {
   String getProfilePicturePath(String? profilePicture) {
     if (profilePicture == null ||
         profilePicture.isEmpty ||
-        profilePicture == "default") {
+        profilePicture == 'default') {
       return 'assets/pfp/pfp28.png';
     }
     return 'assets/pfp/pfp$profilePicture.png';
@@ -42,15 +58,14 @@ class FriendProfile extends StatelessWidget {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // 🌌 Fullscreen Galaxy Image
             Positioned.fill(
               child: Image.asset(
                 'assets/images/black_moons_lighter.png',
                 fit: BoxFit.cover,
               ),
             ),
-            // 👇 Scrollable body content
             SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.only(top: 0, left: 16, right: 16),
               child: Column(
                 children: [
@@ -58,11 +73,11 @@ class FriendProfile extends StatelessWidget {
                     child: PfpViewer(
                       offsetUp: -70,
                       backgroundImage: AssetImage(
-                          getProfilePicturePath(friend.profilePicture)),
+                        getProfilePicturePath(friend.profilePicture),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Info box
                   Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF1A1A1A),
@@ -85,16 +100,29 @@ class FriendProfile extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           friend.email,
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 14),
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 14),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            InfoStatCard(
-                              label: 'Courses',
-                              value: '${friend.courseSlotsUsed}',
-                              background: false,
+                            GestureDetector(
+                              onTap: () {
+                                Get.to(
+                                  () => SavedCoursesListScreen(
+                                    forUserId: friend.id,
+                                    ownerDisplayName: friend.name,
+                                  ),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: InfoStatCard(
+                                label: 'Courses',
+                                value: '${friend.courseSlotsUsed}',
+                                background: false,
+                              ),
                             ),
                             const SizedBox(
                               height: 60,
@@ -103,20 +131,31 @@ class FriendProfile extends StatelessWidget {
                                 thickness: 1,
                               ),
                             ),
-                            InfoStatCard(
-                              icon: Icons.people,
-                              label: 'Friends',
-                              value: '${friend.friendCount}',
-                              background: false,
+                            GestureDetector(
+                              onTap: () {
+                                Get.to(
+                                  () => UserFriendsListScreen(
+                                    userId: friend.id,
+                                    ownerDisplayName: friend.name,
+                                  ),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: InfoStatCard(
+                                icon: Icons.people,
+                                label: 'Friends',
+                                value: '${friend.friendCount}',
+                                background: false,
+                              ),
                             ),
                           ],
                         )
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   Obx(() {
                     final alreadyFriend = controller.isFriend(friend.id);
                     final String requestStatus =
@@ -134,65 +173,75 @@ class FriendProfile extends StatelessWidget {
                                 size: 24, color: Colors.orangeAccent)
                             : const Icon(Icons.person_add_alt,
                                 size: 24, color: Color(0xFFB388FF));
-                    final bool isDisabled =
-                        alreadyFriend || requestStatus != 'none';
+                    final bool pendingBlock =
+                        requestStatus != 'none' && !alreadyFriend;
+
+                    final ButtonStyle friendStyle = alreadyFriend
+                        ? ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E3D2F),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor:
+                                Colors.white.withValues(alpha: 0.22),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          )
+                        : ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            disabledBackgroundColor:
+                                Colors.white.withValues(alpha: 0.35),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          );
 
                     return SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: isDisabled
+                        onPressed: pendingBlock
                             ? null
                             : () async {
+                                if (alreadyFriend) {
+                                  final ok = await showRemoveFriendDialog(
+                                    context,
+                                    displayName: friend.name,
+                                  );
+                                  if (ok && context.mounted) {
+                                    await controller.removeFriend(friend.id);
+                                  }
+                                  return;
+                                }
                                 try {
-                                  await controller.sendFriendRequest(friend.id);
-                                } catch (e) {}
+                                  await controller
+                                      .sendFriendRequest(friend.id);
+                                } catch (error) {
+                                  debugPrint(
+                                    'Failed to send friend request: $error',
+                                  );
+                                }
                               },
                         icon: buttonIcon,
                         label: Text(
                           buttonText,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: alreadyFriend || requestStatus != 'none'
-                                ? Colors.white
-                                : Colors.black,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
+                        style: friendStyle,
                       ),
                     );
                   }),
-
-                  const SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InfoStatCard(
-                            icon: Icons.rocket_launch,
-                            label: 'Day streak',
-                            value: friend.streakCount.toString()),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: InfoStatCard(
-                            icon: Icons.star,
-                            label: 'Total Stars',
-                            value: friend.xpCount.toString()),
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  ProfileVideosGrid(
+                    userId: friend.id,
+                    showPendingUploadSlot: false,
+                    scrollController: _scrollController,
                   ),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
-
-            // Back button with notch handling
             SafeArea(
               child: Align(
                 alignment: Alignment.topLeft,

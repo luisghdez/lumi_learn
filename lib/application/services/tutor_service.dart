@@ -3,13 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
+import 'package:lumi_learn_app/application/services/api_config.dart';
+
 class TutorService {
-  //LOCAL
-  // static const String _baseUrl = 'http://localhost:3000';
-  //DEV
-  // static const String _baseUrl = 'https://lumi-api-dev.onrender.com';
-  //PROD
-  static const String _baseUrl = 'https://lumi-api-e2zy.onrender.com';
+  static String get _baseUrl => ApiConfig.origin;
 
   Future<http.Response> getThreads({
     required String token,

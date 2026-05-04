@@ -46,19 +46,16 @@ class HorizontalCategoryCard extends StatelessWidget {
   Future<void> _navigateToUserProfile(String userId) async {
     try {
       final friendsController = Get.find<FriendsController>();
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
       await friendsController.setActiveFriend(userId);
-      Get.back(); // Close loading dialog
-      Get.to(
-        () => const FriendProfile(),
-        transition: Transition.fadeIn,
-      );
+      if (friendsController.activeFriend.value != null) {
+        await Get.to<void>(
+          () => const FriendProfile(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     } catch (e) {
-      Get.back(); // Close loading dialog
       Get.snackbar("Error", "Could not load profile: $e");
     }
   }

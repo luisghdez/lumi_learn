@@ -1,27 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'input_type_card.dart';
 
 class InputTypeSelectionStep extends StatelessWidget {
   final String? selectedInputType;
   final Function(String) onInputTypeSelected;
+  final bool fromOnboarding;
 
   const InputTypeSelectionStep({
     Key? key,
     required this.selectedInputType,
     required this.onInputTypeSelected,
+    this.fromOnboarding = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 768;
+
     return Column(
       children: [
-        const Text(
-          "Select Input Type",
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+        Text(
+          fromOnboarding ? "Create your first course" : "Select Input Type",
+          style: fromOnboarding
+              ? GoogleFonts.playfairDisplay(
+                  fontSize: isTablet ? 34 : 28,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white,
+                  letterSpacing: -1.5,
+                )
+              : const TextStyle(
+                  fontSize: 18,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
         ),
         const SizedBox(height: 8),
         Text(

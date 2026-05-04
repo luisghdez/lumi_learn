@@ -4,11 +4,10 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/login_screen.dart';
+import 'package:lumi_learn_app/widgets/auth_inline_error.dart';
+import 'package:lumi_learn_app/widgets/lumi_cosmic_backdrop.dart';
 
 class SignupScreen extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
   final AuthController authController = Get.find<AuthController>();
 
   @override
@@ -48,90 +47,133 @@ class SignupScreen extends StatelessWidget {
             ? 24
             : size.height * 0.08;
 
-    final double spacingSmall = isSmallPhone ? 6 : 14;
-    final double spacingMedium = isSmallPhone ? 12 : 24;
     final double spacingLarge = isSmallPhone ? 20 : 32;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/galaxies/galaxy22.png'),
-            fit: BoxFit.cover,
-            alignment: Alignment.centerLeft,
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: topPadding),
+      backgroundColor: const Color(0xFF050505),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned.fill(child: LumiCosmicBackdrop()),
+          SingleChildScrollView(
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: topPadding),
 
-                  // Title
-                  RichText(
-                    text: TextSpan(
-                      text: "Let's\n",
-                      style: TextStyle(
-                        fontSize: titleFontSize.toDouble(),
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        height: 1.1,
+                    // Title
+                    RichText(
+                      text: TextSpan(
+                        text: "Let's\n",
+                        style: TextStyle(
+                          fontSize: titleFontSize.toDouble(),
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          height: 1.1,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Start",
+                            style: GoogleFonts.poppins(
+                              fontSize: subTitleFontSize.toDouble(),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+
+                    SizedBox(height: betweenTitleAndFields),
+
+                    const AuthInlineError(),
+
+                    SizedBox(height: spacingLarge),
+
+                    // Divider
+                    Row(
                       children: [
-                        TextSpan(
-                          text: "Start",
-                          style: GoogleFonts.poppins(
-                            fontSize: subTitleFontSize.toDouble(),
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        Expanded(
+                          child: Divider(
+                            color: Colors.white.withOpacity(0.5),
+                            thickness: 1.2,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            "Sign up with",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: Colors.white.withOpacity(0.5),
+                            thickness: 1.2,
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                  SizedBox(height: betweenTitleAndFields),
+                    SizedBox(height: spacingLarge),
 
-                  // _buildInputField("Your Name", Icons.person,
-                  //     controller: nameController),
-                  // SizedBox(height: spacingMedium),
+                    Obx(() {
+                      final busy = authController.isLoading.value;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _buildSocialButton(
+                                "Google",
+                                FontAwesomeIcons.google,
+                                busy
+                                    ? null
+                                    : () async {
+                                        await authController
+                                            .signInWithGoogle();
+                                      }),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: _buildSocialButton(
+                                "Apple",
+                                FontAwesomeIcons.apple,
+                                busy
+                                    ? null
+                                    : () async {
+                                        await authController
+                                            .signInWithApple();
+                                      }),
+                          ),
+                        ],
+                      );
+                    }),
 
-                  // _buildInputField("Email", Icons.email,
-                  //     controller: emailController),
-                  // SizedBox(height: spacingMedium),
+                    SizedBox(height: spacingLarge),
 
-                  // _buildInputField("Password", Icons.lock,
-                  //     controller: passwordController, isPassword: true),
-                  // SizedBox(height: spacingMedium),
-
-                  // _buildPrimaryButton("Sign Up", () {
-                  //   authController.signUp(
-                  //     emailController.text.trim(),
-                  //     passwordController.text.trim(),
-                  //     nameController.text.trim(),
-                  //   );
-                  // }),
-
-                  SizedBox(height: spacingLarge),
-
-                  // Divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.white.withOpacity(0.5),
-                          thickness: 1.2,
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          authController.clearAuthFormError();
+                          Get.offAll(
+                            () => LoginScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 500),
+                          );
+                        },
+                        style: ButtonStyle(
+                          overlayColor: MaterialStateProperty.all(
+                            Colors.transparent,
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          "Sign up with",
+                          "Already have an account? Login",
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -139,128 +181,19 @@ class SignupScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: Divider(
-                          color: Colors.white.withOpacity(0.5),
-                          thickness: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: spacingLarge),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSocialButton(
-                            "Google", FontAwesomeIcons.google, () async {
-                          await authController.signInWithGoogle();
-                        }),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: _buildSocialButton(
-                            "Apple", FontAwesomeIcons.apple, () async {
-                          await authController.signInWithApple();
-                        }),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: spacingLarge),
-
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Get.offAll(
-                          () => LoginScreen(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        );
-                      },
-                      style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all(
-                          Colors.transparent,
-                        ),
-                      ),
-                      child: Text(
-                        "Already have an account? Login",
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
-
-  // Primary Button
-  Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
-    return SizedBox(
-      width: double.infinity,
-      child: Obx(() => ElevatedButton(
-            onPressed: authController.isLoading.value
-                ? null
-                : onPressed, // Disable button when loading
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
-              padding: const EdgeInsets.symmetric(vertical: 24),
-            ),
-            child: authController.isLoading.value
-                ? const SizedBox(
-                    height: 26,
-                    width: 26,
-                    child: CircularProgressIndicator(
-                      color: Colors.black,
-                    ),
-                  ) // Show loading indicator
-                : Text(
-                    text,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-          )),
     );
   }
 }
 
-// Input Field
-Widget _buildInputField(String label, IconData icon,
-    {bool isPassword = false, required TextEditingController controller}) {
-  return TextField(
-    controller: controller,
-    obscureText: isPassword,
-    style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
-      suffixIcon: Icon(icon, color: Colors.white, size: 22),
-      enabledBorder: UnderlineInputBorder(
-        borderSide:
-            BorderSide(color: Colors.white.withOpacity(0.6), width: 1.5),
-      ),
-      focusedBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.white, width: 2),
-      ),
-    ),
-  );
-}
-
-Widget _buildSocialButton(String text, IconData icon, VoidCallback onPressed) {
+Widget _buildSocialButton(String text, IconData icon, VoidCallback? onPressed) {
   return ElevatedButton.icon(
     onPressed: onPressed,
     style: ElevatedButton.styleFrom(
@@ -268,7 +201,7 @@ Widget _buildSocialButton(String text, IconData icon, VoidCallback onPressed) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
     ),
-    icon: Icon(icon, color: Colors.black, size: 20), // Use built-in icons
+    icon: Icon(icon, color: Colors.black, size: 20),
     label: Text(
       text,
       style: const TextStyle(

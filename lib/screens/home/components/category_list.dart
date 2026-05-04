@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/constants.dart';
@@ -6,7 +5,7 @@ import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
-import 'package:crypto/crypto.dart';
+import 'package:lumi_learn_app/utils/course_galaxy_image.dart';
 import 'category_card.dart';
 
 class CategoryList extends StatelessWidget {
@@ -123,7 +122,8 @@ class CategoryList extends StatelessWidget {
 
       return Column(
         children: displayCourses.map<Widget>((course) {
-          final galaxyImagePath = getGalaxyForCourse(course['id']);
+          final galaxyImagePath =
+              galaxyAssetPathForCourseId(course['id'].toString());
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Stack(
@@ -194,13 +194,4 @@ class CategoryList extends StatelessWidget {
       );
     });
   }
-}
-
-// This helper is unchanged – it just picks a galaxy image based on a hash of the courseId.
-String getGalaxyForCourse(String courseId) {
-  final bytes = utf8.encode(courseId);
-  final hash = md5.convert(bytes).toString();
-  final numericHash = int.parse(hash.substring(0, 6), radix: 16);
-  final galaxyIndex = (numericHash % 17) + 1; // 1-17 for 17 images
-  return 'assets/galaxies/galaxy$galaxyIndex.png';
 }

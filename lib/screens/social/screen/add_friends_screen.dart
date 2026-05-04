@@ -9,7 +9,13 @@ import 'package:lumi_learn_app/screens/social/widgets/friend_requests_tab.dart';
 import 'package:lumi_learn_app/application/models/userSearch_model.dart';
 
 class AddFriendsScreen extends StatefulWidget {
-  const AddFriendsScreen({super.key});
+  const AddFriendsScreen({
+    super.key,
+    /// `0` = Add Friends, `1` = Friend Requests (e.g. push notification tap).
+    this.initialTabIndex = 0,
+  });
+
+  final int initialTabIndex;
 
   @override
   State<AddFriendsScreen> createState() => _AddFriendsScreenState();
@@ -26,7 +32,8 @@ class _AddFriendsScreenState extends State<AddFriendsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final initial = widget.initialTabIndex.clamp(0, 1);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: initial);
     _checkInitialPermission();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

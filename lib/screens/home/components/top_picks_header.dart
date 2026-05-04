@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
-import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
+import 'package:lumi_learn_app/screens/search/search_main.dart';
 
 class TopPicksHeader extends StatelessWidget {
   final VoidCallback onAddTap;
@@ -11,13 +11,13 @@ class TopPicksHeader extends StatelessWidget {
   final TextStyle titleStyle;
 
   const TopPicksHeader({
-    Key? key,
+    super.key,
     required this.onAddTap,
     required this.slotsUsed,
     required this.maxSlots,
     required this.isPremium,
     required this.titleStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +35,11 @@ class TopPicksHeader extends StatelessWidget {
                 Get.find<LumiSearchController>();
             searchController.showSavedCourses();
 
-            // Navigate to search screen using navigation controller
-            final NavigationController navigationController =
-                Get.find<NavigationController>();
-            navigationController.updateIndex(1);
+            Get.to(
+              () => const SearchMain(),
+              transition: Transition.fadeIn,
+              duration: const Duration(milliseconds: 300),
+            );
           },
           child: Row(
             children: [
@@ -47,7 +48,7 @@ class TopPicksHeader extends StatelessWidget {
                 style: titleStyle.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(width: 4),

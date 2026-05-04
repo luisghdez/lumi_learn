@@ -1,11 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_card.dart';
-import 'package:crypto/crypto.dart';
+import 'package:lumi_learn_app/utils/course_galaxy_image.dart';
 
 class HorizontalCategoryList extends StatelessWidget {
   final double initialPadding;
@@ -39,7 +38,8 @@ class HorizontalCategoryList extends StatelessWidget {
           itemCount: courses.length,
           itemBuilder: (context, index) {
             final course = courses[index];
-            String galaxyImagePath = getGalaxyForCourse(course['id']);
+            String galaxyImagePath =
+                galaxyAssetPathForCourseId(course['id'].toString());
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
@@ -123,12 +123,4 @@ class HorizontalCategoryList extends StatelessWidget {
       );
     });
   }
-}
-
-String getGalaxyForCourse(String courseId) {
-  final bytes = utf8.encode(courseId);
-  final hash = md5.convert(bytes).toString();
-  final numericHash = int.parse(hash.substring(0, 6), radix: 16);
-  final galaxyIndex = (numericHash % 17) + 1; // 1-17 for 17 images
-  return 'assets/galaxies/galaxy$galaxyIndex.png';
 }

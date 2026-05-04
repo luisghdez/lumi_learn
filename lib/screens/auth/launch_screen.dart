@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../onboarding/onboarding_screen.dart'; // Import the onboarding screen
+import '../onboarding/onboarding_container.dart';
 
 class LaunchScreen extends StatelessWidget {
   @override
@@ -9,10 +9,9 @@ class LaunchScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF030026),
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/onboarding/bg_1.png', // Path to the background image
+              'assets/onboarding/bg_1.png',
               fit: BoxFit.fitWidth,
             ),
           ),
@@ -65,11 +64,9 @@ class LaunchScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navigate to the Onboarding Screen
-                        // Get.to(() => OnboardingScreen());
-                        // animate fade in here
+                        // Navigate to the Onboarding Container
                         Get.to(
-                          () => OnboardingScreen(),
+                          () => const OnboardingContainer(),
                           transition: Transition.fadeIn,
                           duration: const Duration(milliseconds: 500),
                         );

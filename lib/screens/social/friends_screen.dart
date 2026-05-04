@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/models/friends_model.dart';
+import 'package:lumi_learn_app/screens/social/screen/add_friends_screen.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_tile.dart';
 
 import 'components/search_bar.dart' as custom;
 
 class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({Key? key}) : super(key: key);
+  const FriendsScreen({super.key});
 
   @override
   State<FriendsScreen> createState() => _FriendsScreenState();
@@ -20,7 +21,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   // Local state to decide which list to display.
   String _searchQuery = "";
   // Local loading flag; could be replaced with the controller's isLoading if desired.
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   final friendsController = Get.find<FriendsController>();
 
@@ -97,6 +98,50 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           letterSpacing: -1.2,
                         ),
                       ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => const AddFriendsScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.16),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_add_alt_1_rounded,
+                                color: Colors.white,
+                                size: 17,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Add',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 22),
@@ -134,22 +179,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   child: FriendTile(
                                       friend: friend,
                                       onTap: () async {
-                                        Get.dialog(
-                                            const Center(
-                                                child:
-                                                    CircularProgressIndicator()),
-                                            barrierDismissible: false);
-
                                         try {
                                           await friendsController
                                               .setActiveFriend(friend.id);
-                                          Get.back();
-                                          Get.to(
-                                            () => const FriendProfile(),
-                                            transition: Transition.fadeIn,
-                                          );
+                                          if (friendsController
+                                                  .activeFriend.value !=
+                                              null) {
+                                            await Get.to<void>(
+                                              () => const FriendProfile(),
+                                              transition: Transition.fadeIn,
+                                              duration: const Duration(
+                                                  milliseconds: 300),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          }
                                         } catch (e) {
-                                          Get.back();
                                           Get.snackbar("Error",
                                               "Could not load profile: $e");
                                         }

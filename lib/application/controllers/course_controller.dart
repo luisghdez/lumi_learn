@@ -13,6 +13,8 @@ import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 import 'package:lumi_learn_app/screens/streak/streakScreen.dart';
+import 'package:lumi_learn_app/application/services/podcast_service.dart';
+
 
 class CourseController extends GetxController {
   final AuthController authController = Get.find();
@@ -34,6 +36,8 @@ class CourseController extends GetxController {
   var hasPreviousPage = false.obs;
   var totalCount = 0.obs;
   var currentSubject = ''.obs; // Track current subject filter
+  var onboardingSelectedSubjects =
+      <String>[].obs; // Subjects selected during onboarding
   var selectedCourseId = ''.obs;
   var selectedCourseTitle = ''.obs;
   var selectedCourseHasEmbeddings = false.obs;
@@ -431,9 +435,22 @@ class CourseController extends GetxController {
         final lessonCount = responseData['lessonCount'];
         final hasEmbeddings = responseData['hasEmbeddings'] ?? true;
         final courseTitle = responseData['title'] ?? 'New Course';
-        final courseDescription =
-            responseData['description'] ?? 'Course description';
+        final courseDescription =responseData['description'] ?? 'Course description';
         final courseSubject = responseData['subject'] ?? '';
+
+        // 🎙️ Automatically start podcast generation for the new course
+          try {
+            final podcastService = PodcastService();
+            await podcastService.createPodcast(
+              token: token,
+              courseId: courseId,
+              title: courseTitle,
+            );
+            print("✅ Podcast generation started for course $courseId");
+          } catch (e) {
+            print("⚠️ Podcast generation failed or skipped: $e");
+          }
+
 
         final newCourse = {
           'id': courseId,
@@ -706,6 +723,44 @@ class CourseController extends GetxController {
     await fetchCourses(page: page, limit: limit, subject: subject);
   }
 
+  // Method to fetch all courses by subject (for onboarding)
+  Future<List<Map<String, dynamic>>> fetchAllCoursesBySubject({
+    String? subject,
+    int page = 1,
+    int limit = 3,
+  }) async {
+    try {
+      final token = await authController.getIdToken();
+      if (token == null) {
+        print('No user token found.');
+        return [];
+      }
+
+      final apiService = ApiService();
+      final response = await apiService.getAllCourses(
+        token: token,
+        page: page,
+        limit: limit,
+        subject: subject,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final coursesList = data['courses'] as List?;
+        if (coursesList != null) {
+          return coursesList
+              .map((course) => course as Map<String, dynamic>)
+              .toList();
+        }
+      } else {
+        print('Failed to fetch all courses: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching all courses: $e');
+    }
+    return [];
+  }
+
   // Method for home screen to fetch limited courses
   Future<void> fetchCoursesForHome() async {
     print('CourseController: fetchCoursesForHome called');
@@ -784,9 +839,29 @@ class CourseController extends GetxController {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         lessons.value = List<Map<String, dynamic>>.from(data['lessons']);
-        flashcards.value =
-            List<Map<String, dynamic>>.from(data['mergedFlashcards']);
+        flashcards.value =List<Map<String, dynamic>>.from(data['mergedFlashcards']);
         selectedCourseSummary.value = data['summary'];
+
+      try {
+        final podcastService = PodcastService();
+        final exists = await podcastService.podcastExists(
+          token: token,
+          courseId: courseId,
+        );
+
+        if (exists) {
+          final metadata = await podcastService.getPodcastMetadata(
+            token: token,
+            courseId: courseId,
+          );
+          print("🎧 Podcast metadata loaded for $courseId: ${metadata!.title}");
+        } else {
+          print("ℹ️ No podcast yet for this course. You can generate it later.");
+        }
+      } catch (e) {
+        print("⚠️ Could not load podcast metadata: $e");
+      }
+
       } else {
         print(
             'Error fetching lessons: ${response.statusCode} - ${response.body}');
