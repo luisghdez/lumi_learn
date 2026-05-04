@@ -7,18 +7,23 @@ import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
+import 'package:lumi_learn_app/screens/create/create_flow_transitions.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/content_upload_step.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_navigation_buttons.dart';
 import 'package:lumi_learn_app/screens/courses/course_loading_screen.dart';
 import 'package:lumi_learn_app/widgets/app_scaffold_home.dart';
+import 'package:lumi_learn_app/widgets/lumi_cosmic_backdrop.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_select_course_screen.dart';
 
 /// A Flutter version of the React "CourseCreation" component.
 class CourseCreation extends StatefulWidget {
   final String? classId;
   final bool fromOnboarding;
+  /// When true, shown inside [CreateFlowShell] (same fade as create video).
+  final bool embeddedInCreateFlow;
   final VideoPlayerController? videoController;
   final AudioPlayer? onboardingAudioPlayer;
 
@@ -26,6 +31,7 @@ class CourseCreation extends StatefulWidget {
     Key? key,
     this.classId,
     this.fromOnboarding = false,
+    this.embeddedInCreateFlow = false,
     this.videoController,
     this.onboardingAudioPlayer,
   }) : super(key: key);
@@ -49,7 +55,6 @@ class _CourseCreationState extends State<CourseCreation>
   late AnimationController _progressController;
   late AnimationController _entryController; // New controller for screen entry
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
   late Animation<double> _entryFadeAnimation; // New animation for screen entry
   late final AudioPlayer _audioPlayer;
   late final AudioPlayer _onboardingAudio;
@@ -74,7 +79,9 @@ class _CourseCreationState extends State<CourseCreation>
       _playEntrySound();
     }
 
-    // Initialize entry animation
+    // Entry fade: only when [fromOnboarding] (route uses [Transition.noTransition]).
+    // Otherwise [Get.to] already applies Transition.fadeIn — a second fade here
+    // stacks and feels muddy (e.g. create hub → course).
     _entryController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -85,9 +92,9 @@ class _CourseCreationState extends State<CourseCreation>
       curve: Curves.easeOut,
     );
 
-    // Initialize step transition animation
+    // Initialize step transition animation (matches create hub / video fades)
     _stepController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: kCreateFlowFadeDuration,
       vsync: this,
     );
 
@@ -102,21 +109,33 @@ class _CourseCreationState extends State<CourseCreation>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _stepController,
-      curve: Curves.easeInOut,
+      curve: kCreateFlowFadeCurve,
     ));
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.3, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _stepController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // Start initial animations
-    _stepController.forward();
+    // Start initial animations — skip entry + step fades when a route fade already
+    // runs (Get.to fadeIn from create / home / etc.); keep them for onboarding.
     _progressController.forward();
-    _entryController.forward();
+    if (widget.fromOnboarding) {
+      _entryController.forward();
+      _stepController.forward();
+    } else {
+      _entryController.value = 1.0;
+      _stepController.value = 1.0;
+    }
+
+    if (widget.embeddedInCreateFlow && Get.isRegistered<CreateFlowController>()) {
+      Get.find<CreateFlowController>().onCourseEmbeddedBack =
+          _handleCourseOverlayBack;
+    }
+  }
+
+  /// System back on create overlay: step back within flow, or let shell pop to type.
+  bool _handleCourseOverlayBack() {
+    if (_currentStep > 0) {
+      _previousStep();
+      return true;
+    }
+    return false;
   }
 
   Future<void> _playEntrySound() async {
@@ -131,6 +150,12 @@ class _CourseCreationState extends State<CourseCreation>
 
   @override
   void dispose() {
+    if (widget.embeddedInCreateFlow && Get.isRegistered<CreateFlowController>()) {
+      final flow = Get.find<CreateFlowController>();
+      if (flow.onCourseEmbeddedBack == _handleCourseOverlayBack) {
+        flow.onCourseEmbeddedBack = null;
+      }
+    }
     _stepController.dispose();
     _progressController.dispose();
     _entryController.dispose();
@@ -300,10 +325,11 @@ class _CourseCreationState extends State<CourseCreation>
 
   void _handleBackNavigation() {
     if (_currentStep > 0) {
-      // If on step 1, go back to step 0
       _previousStep();
+    } else if (widget.embeddedInCreateFlow &&
+        Get.isRegistered<CreateFlowController>()) {
+      Get.find<CreateFlowController>().goBackFromEmbeddedCourseToType();
     } else {
-      // Otherwise, use default back navigation
       Get.back();
     }
   }
@@ -496,6 +522,10 @@ class _CourseCreationState extends State<CourseCreation>
       visibility: "Public", // Default visibility
     );
 
+    if (widget.embeddedInCreateFlow && Get.isRegistered<CreateFlowController>()) {
+      Get.find<CreateFlowController>().close();
+    }
+
     // Navigate immediately to the new loading screen with the Future
     Get.offAll(
         () => CourseLoadingScreen(courseCreationFuture: courseCreationFuture));
@@ -512,12 +542,9 @@ class _CourseCreationState extends State<CourseCreation>
     return AnimatedBuilder(
       animation: _stepController,
       builder: (context, child) {
-        return SlideTransition(
-          position: _slideAnimation,
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: _getCurrentStepWidget(),
-          ),
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: _getCurrentStepWidget(),
         );
       },
     );
@@ -587,6 +614,8 @@ class _CourseCreationState extends State<CourseCreation>
           ),
         ],
       );
+    } else {
+      backgroundWidget = const LumiCosmicBackdrop();
     }
 
     return PopScope(

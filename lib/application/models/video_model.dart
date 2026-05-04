@@ -1,3 +1,24 @@
+/// One image in a native slideshow post (`contentKind: slideshow`).
+class VideoSlide {
+  const VideoSlide({
+    required this.url,
+    required this.order,
+    this.durationMs,
+  });
+
+  final String url;
+  final int order;
+  final int? durationMs;
+
+  factory VideoSlide.fromJson(Map<String, dynamic> json) {
+    return VideoSlide(
+      url: _stringValue(json['url']),
+      order: _intValue(json['order']),
+      durationMs: _nullableInt(json['durationMs']),
+    );
+  }
+}
+
 class VideoPost {
   const VideoPost({
     required this.id,
@@ -19,6 +40,8 @@ class VideoPost {
     required this.likedByMe,
     required this.createdAt,
     required this.updatedAt,
+    this.contentKind = 'video',
+    this.slides = const [],
   });
 
   final String id;
@@ -41,7 +64,24 @@ class VideoPost {
   final String? createdAt;
   final String? updatedAt;
 
+  /// `video` (default) or `slideshow` (Option B — native multi-image feed).
+  final String contentKind;
+  final List<VideoSlide> slides;
+
+  bool get isSlideshow =>
+      contentKind == 'slideshow' && slides.isNotEmpty;
+
   factory VideoPost.fromJson(Map<String, dynamic> json) {
+    final slideList = <VideoSlide>[];
+    final rawSlides = json['slides'];
+    if (rawSlides is List) {
+      for (final e in rawSlides) {
+        if (e is Map) {
+          slideList.add(VideoSlide.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+      slideList.sort((a, b) => a.order.compareTo(b.order));
+    }
     return VideoPost(
       id: _stringValue(json['id']),
       ownerId: _stringValue(json['ownerId']),
@@ -65,6 +105,8 @@ class VideoPost {
       likedByMe: json['likedByMe'] == true,
       createdAt: _nullableString(json['createdAt']),
       updatedAt: _nullableString(json['updatedAt']),
+      contentKind: _stringValue(json['contentKind'], fallback: 'video'),
+      slides: slideList,
     );
   }
 
@@ -74,6 +116,8 @@ class VideoPost {
     int? likeCount,
     int? commentCount,
     bool? likedByMe,
+    String? contentKind,
+    List<VideoSlide>? slides,
   }) {
     return VideoPost(
       id: id,
@@ -95,6 +139,8 @@ class VideoPost {
       likedByMe: likedByMe ?? this.likedByMe,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      contentKind: contentKind ?? this.contentKind,
+      slides: slides ?? this.slides,
     );
   }
 }
@@ -107,6 +153,8 @@ class VideoComment {
     required this.authorProfilePicture,
     required this.text,
     required this.likeCount,
+    required this.likedByMe,
+    this.parentCommentId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -117,10 +165,15 @@ class VideoComment {
   final String authorProfilePicture;
   final String text;
   final int likeCount;
+  /// Whether the authenticated user liked this comment (from API).
+  final bool likedByMe;
+  /// Null or empty = top-level comment; otherwise id of parent comment.
+  final String? parentCommentId;
   final String? createdAt;
   final String? updatedAt;
 
   factory VideoComment.fromJson(Map<String, dynamic> json) {
+    final parent = _nullableString(json['parentCommentId']);
     return VideoComment(
       id: _stringValue(json['id']),
       authorId: _stringValue(json['authorId']),
@@ -131,10 +184,87 @@ class VideoComment {
       ),
       text: _stringValue(json['text']),
       likeCount: _intValue(json['likeCount']),
+      likedByMe: json['likedByMe'] == true,
+      parentCommentId: parent != null && parent.isEmpty ? null : parent,
       createdAt: _nullableString(json['createdAt']),
       updatedAt: _nullableString(json['updatedAt']),
     );
   }
+
+  VideoComment copyWith({
+    String? authorName,
+    String? authorProfilePicture,
+    int? likeCount,
+    bool? likedByMe,
+  }) {
+    return VideoComment(
+      id: id,
+      authorId: authorId,
+      authorName: authorName ?? this.authorName,
+      authorProfilePicture:
+          authorProfilePicture ?? this.authorProfilePicture,
+      text: text,
+      likeCount: likeCount ?? this.likeCount,
+      likedByMe: likedByMe ?? this.likedByMe,
+      parentCommentId: parentCommentId,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+}
+
+/// One top-level comment plus every reply in that thread (nested, DFS order).
+class VideoCommentThreadGroup {
+  const VideoCommentThreadGroup({
+    required this.root,
+    required this.replies,
+  });
+
+  final VideoComment root;
+  /// All descendants of [root], depth-first (sorted children at each level).
+  final List<VideoComment> replies;
+}
+
+/// Builds one [VideoCommentThreadGroup] per root (newest roots first). Replies
+/// stay nested under their root for collapsible UI. Orphans are roots.
+List<VideoCommentThreadGroup> groupVideoCommentsForFeed(List<VideoComment> all) {
+  if (all.isEmpty) return const [];
+  final byId = {for (final c in all) c.id: c};
+  final childrenOf = <String, List<VideoComment>>{};
+  for (final c in all) {
+    final p = c.parentCommentId;
+    if (p != null && p.isNotEmpty && byId.containsKey(p)) {
+      childrenOf.putIfAbsent(p, () => []).add(c);
+    }
+  }
+  for (final list in childrenOf.values) {
+    list.sort((a, b) => (a.createdAt ?? '').compareTo(b.createdAt ?? ''));
+  }
+  bool isRoot(VideoComment c) {
+    final p = c.parentCommentId;
+    return p == null || p.isEmpty || !byId.containsKey(p);
+  }
+
+  void appendSubtree(VideoComment parent, List<VideoComment> acc) {
+    for (final ch in childrenOf[parent.id] ?? []) {
+      acc.add(ch);
+      appendSubtree(ch, acc);
+    }
+  }
+
+  final roots = all.where(isRoot).toList()
+    ..sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
+  return [
+    for (final r in roots)
+      VideoCommentThreadGroup(
+        root: r,
+        replies: () {
+          final acc = <VideoComment>[];
+          appendSubtree(r, acc);
+          return acc;
+        }(),
+      ),
+  ];
 }
 
 class SignedVideoUpload {
@@ -157,24 +287,65 @@ class SignedVideoUpload {
   }
 }
 
+/// Presigned PUT slot for one slideshow image (order matches [Image] list).
+class SlideUploadSlot {
+  const SlideUploadSlot({
+    required this.order,
+    required this.uploadUrl,
+    required this.storagePath,
+    required this.expiresAt,
+  });
+
+  final int order;
+  final String uploadUrl;
+  final String storagePath;
+  final String expiresAt;
+
+  factory SlideUploadSlot.fromJson(Map<String, dynamic> json) {
+    final orderRaw = json['order'] ?? json['index'];
+    return SlideUploadSlot(
+      order: orderRaw is int ? orderRaw : int.tryParse('$orderRaw') ?? 0,
+      uploadUrl: _stringValue(json['uploadUrl']),
+      storagePath: _stringValue(json['storagePath']),
+      expiresAt: _stringValue(json['expiresAt']),
+    );
+  }
+}
+
 class CreateVideoUploadResponse {
   const CreateVideoUploadResponse({
     required this.video,
-    required this.upload,
-    required this.thumbnailUpload,
+    this.upload,
+    this.thumbnailUpload,
+    this.slideUploads = const [],
   });
 
   final VideoPost video;
-  final SignedVideoUpload upload;
+  final SignedVideoUpload? upload;
   final SignedVideoUpload? thumbnailUpload;
+  final List<SlideUploadSlot> slideUploads;
 
   factory CreateVideoUploadResponse.fromJson(Map<String, dynamic> json) {
+    final rawSlides = json['slideUploads'] as List<dynamic>?;
+    final List<SlideUploadSlot> slots;
+    if (rawSlides == null) {
+      slots = const [];
+    } else {
+      slots = rawSlides
+          .map((e) => SlideUploadSlot.fromJson(_mapValue(e)))
+          .toList();
+      slots.sort((a, b) => a.order.compareTo(b.order));
+    }
+
     return CreateVideoUploadResponse(
       video: VideoPost.fromJson(_mapValue(json['video'])),
-      upload: SignedVideoUpload.fromJson(_mapValue(json['upload'])),
+      upload: json['upload'] == null
+          ? null
+          : SignedVideoUpload.fromJson(_mapValue(json['upload'])),
       thumbnailUpload: json['thumbnailUpload'] == null
           ? null
           : SignedVideoUpload.fromJson(_mapValue(json['thumbnailUpload'])),
+      slideUploads: slots,
     );
   }
 }

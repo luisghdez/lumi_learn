@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../onboarding/onboarding_container.dart'; // Import the onboarding container
+import '../onboarding/onboarding_container.dart';
 
 class LaunchScreen extends StatelessWidget {
   @override
@@ -9,10 +9,9 @@ class LaunchScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF030026),
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/onboarding/bg_1.png', // Path to the background image
+              'assets/onboarding/bg_1.png',
               fit: BoxFit.fitWidth,
             ),
           ),

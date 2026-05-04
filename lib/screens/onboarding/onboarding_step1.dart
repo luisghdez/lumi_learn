@@ -18,7 +18,6 @@ class _OnboardingStep1State extends State<OnboardingStep1>
     with SingleTickerProviderStateMixin {
   final TextEditingController _usernameController = TextEditingController();
   final FocusNode _usernameFocusNode = FocusNode();
-  bool _isUsernameFocused = false;
   int _selectedAvatarIndex = 0;
 
   // Auto-scroll functionality
@@ -82,18 +81,19 @@ class _OnboardingStep1State extends State<OnboardingStep1>
   @override
   void initState() {
     super.initState();
-    _usernameFocusNode.addListener(() {
-      if (mounted) {
-        setState(() {
-          _isUsernameFocused = _usernameFocusNode.hasFocus;
-        });
-      }
-    });
+    _usernameFocusNode.addListener(_onUsernameFocusChanged);
 
     // Start auto-scrolling after a short delay
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startAutoScroll();
     });
+  }
+
+  void _onUsernameFocusChanged() {
+    if (!mounted) return;
+    if (_usernameFocusNode.hasFocus) {
+      _stopAutoScroll();
+    }
   }
 
   void _startAutoScroll() {
@@ -138,6 +138,7 @@ class _OnboardingStep1State extends State<OnboardingStep1>
 
   @override
   void dispose() {
+    _usernameFocusNode.removeListener(_onUsernameFocusChanged);
     _stopAutoScroll();
     _scrollController.dispose();
     _usernameController.dispose();
@@ -262,163 +263,157 @@ class _OnboardingStep1State extends State<OnboardingStep1>
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth >= 768;
 
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return SafeArea(
-      child: Column(
-        children: [
-          // Top 30% - Title and Input
-          Expanded(
-            flex: 30,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isTablet ? screenWidth * 0.15 : 24,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  // Header
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: isTablet ? 60 : 44,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                          letterSpacing: -1.5,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Make it '),
-                          TextSpan(
-                            text: 'yours',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: isTablet ? 60 : 44,
-                              fontWeight: FontWeight.w400,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.white,
-                              letterSpacing: -1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: isTablet ? 16 : 8),
-
-                  Text(
-                    "Choose a username and avatar",
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.only(bottom: keyboardInset),
+        child: Column(
+          children: [
+          // Title + field: intrinsic height so short screens never overflow a
+          // fixed flex slice (was Expanded flex 30 + Spacers vs min content).
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? screenWidth * 0.15 : 24,
+              8,
+              isTablet ? screenWidth * 0.15 : 24,
+              12,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: RichText(
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
-                      fontSize: isTablet ? 20 : 16,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-
-                  SizedBox(height: isTablet ? 24 : 16),
-
-                  // Username text field
-                  Container(
-                    width: double.infinity,
-                    constraints: BoxConstraints(
-                      maxWidth: isTablet ? 600 : double.infinity,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(60),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.08),
-                          Colors.white.withOpacity(0.02),
-                        ],
+                    text: TextSpan(
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: isTablet ? 60 : 44,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                        letterSpacing: -1.5,
                       ),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 1.4,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.85),
-                          blurRadius: 18,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
                       children: [
-                        TextField(
-                          controller: _usernameController,
-                          focusNode: _usernameFocusNode,
-                          textAlign: TextAlign.center,
-                          textAlignVertical: TextAlignVertical.center,
-                          style: TextStyle(
+                        const TextSpan(text: 'Make it '),
+                        TextSpan(
+                          text: 'yours',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: isTablet ? 60 : 44,
+                            fontWeight: FontWeight.w400,
+                            fontStyle: FontStyle.italic,
                             color: Colors.white,
-                            fontSize: isTablet ? 20 : 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: (!_isUsernameFocused &&
-                                    _usernameController.text.isEmpty)
-                                ? 'Username'
-                                : null,
-                            hintStyle: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: isTablet ? 20 : 16,
-                              letterSpacing: 0.6,
-                            ),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 6),
-                          ),
-                        ),
-                        Positioned(
-                          left: isTablet ? 12 : 1,
-                          child: Container(
-                            width: isTablet ? 36 : 36,
-                            height: isTablet ? 36 : 36,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withOpacity(0.4),
-                                  Colors.white.withOpacity(0.1),
-                                ],
-                              ),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.6),
-                                width: isTablet ? 3.2 : 1.6,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: Image.asset(
-                                avatars[_selectedAvatarIndex],
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                            letterSpacing: -1.5,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Spacer(),
-                ],
-              ),
+                ),
+                SizedBox(height: isTablet ? 16 : 8),
+                Text(
+                  "Choose a username and avatar",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.75),
+                    fontSize: isTablet ? 20 : 16,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                SizedBox(height: isTablet ? 24 : 16),
+                Container(
+                  width: double.infinity,
+                  constraints: BoxConstraints(
+                    maxWidth: isTablet ? 600 : double.infinity,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(60),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.08),
+                        Colors.white.withOpacity(0.02),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.4),
+                      width: 1.4,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.85),
+                        blurRadius: 18,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 10,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      TextField(
+                        controller: _usernameController,
+                        focusNode: _usernameFocusNode,
+                        textAlign: TextAlign.center,
+                        textAlignVertical: TextAlignVertical.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isTablet ? 20 : 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Username',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: isTablet ? 20 : 16,
+                            letterSpacing: 0.6,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 6),
+                        ),
+                      ),
+                      Positioned(
+                        left: isTablet ? 12 : 1,
+                        child: Container(
+                          width: isTablet ? 36 : 36,
+                          height: isTablet ? 36 : 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withOpacity(0.4),
+                                Colors.white.withOpacity(0.1),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.6),
+                              width: isTablet ? 3.2 : 1.6,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              avatars[_selectedAvatarIndex],
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // Middle 50% - Avatar Selection
           Expanded(
-            flex: 50,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return Container(
@@ -430,44 +425,40 @@ class _OnboardingStep1State extends State<OnboardingStep1>
             ),
           ),
 
-          // Bottom 20% - Continue Button
-          Expanded(
-            flex: 20,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isTablet ? screenWidth * 0.15 : 24,
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? screenWidth * 0.15 : 24,
+              8,
+              isTablet ? screenWidth * 0.15 : 24,
+              8,
+            ),
+            child: Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxWidth: isTablet ? 500 : double.infinity,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    constraints: BoxConstraints(
-                        maxWidth: isTablet ? 500 : double.infinity),
-                    child: ElevatedButton(
-                      onPressed: _handleContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                      ),
-                      child: const Text(
-                        "Continue",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+              child: ElevatedButton(
+                onPressed: _handleContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                ),
+                child: const Text(
+                  "Continue",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ),
         ],
+        ),
       ),
     );
   }

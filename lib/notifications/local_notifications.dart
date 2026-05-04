@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:get/get.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+import 'package:lumi_learn_app/notifications/push_notification_navigation.dart';
 
 class LocalNotificationsService {
   // Private constructor for singleton pattern
@@ -58,8 +61,19 @@ class LocalNotificationsService {
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        final route = "/";
-        Get.toNamed(route);
+        final payload = response.payload;
+        if (payload == null || payload.isEmpty) {
+          return;
+        }
+        try {
+          final decoded = jsonDecode(payload);
+          if (decoded is Map<String, dynamic>) {
+            PushNotificationNavigation.handleTapFromPayload(decoded);
+            return;
+          }
+        } catch (_) {
+          // ignore invalid payload
+        }
       },
     );
 

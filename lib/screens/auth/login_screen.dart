@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/screens/auth/signup_screen.dart';
+import 'package:lumi_learn_app/widgets/auth_inline_error.dart';
+import 'package:lumi_learn_app/widgets/lumi_cosmic_backdrop.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -55,23 +57,18 @@ class LoginScreen extends StatelessWidget {
     final double spacingLarge = isSmallPhone ? 20 : 32;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/galaxies/galaxy22.png'),
-            fit: BoxFit.cover,
-            alignment: Alignment.centerLeft,
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      backgroundColor: const Color(0xFF050505),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned.fill(child: LumiCosmicBackdrop()),
+          SingleChildScrollView(
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   SizedBox(height: topPadding),
 
                   // Title
@@ -103,6 +100,7 @@ class LoginScreen extends StatelessWidget {
                     "Email Address",
                     Icons.email,
                     controller: emailController,
+                    onChanged: (_) => authController.clearAuthFormError(),
                   ),
                   SizedBox(height: spacingMedium),
 
@@ -111,8 +109,10 @@ class LoginScreen extends StatelessWidget {
                     Icons.lock,
                     isPassword: true,
                     controller: passwordController,
+                    onChanged: (_) => authController.clearAuthFormError(),
                   ),
 
+                  const AuthInlineError(),
                   SizedBox(height: spacingSmall),
 
                   Align(
@@ -177,29 +177,41 @@ class LoginScreen extends StatelessWidget {
 
                   SizedBox(height: spacingLarge),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSocialButton(
-                            "Google", FontAwesomeIcons.google, () async {
-                          await authController.signInWithGoogle();
-                        }),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: _buildSocialButton(
-                            "Apple", FontAwesomeIcons.apple, () async {
-                          await authController.signInWithApple();
-                        }),
-                      ),
-                    ],
-                  ),
+                  Obx(() {
+                    final busy = authController.isLoading.value;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _buildSocialButton(
+                              "Google",
+                              FontAwesomeIcons.google,
+                              busy
+                                  ? null
+                                  : () async {
+                                      await authController.signInWithGoogle();
+                                    }),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: _buildSocialButton(
+                              "Apple",
+                              FontAwesomeIcons.apple,
+                              busy
+                                  ? null
+                                  : () async {
+                                      await authController.signInWithApple();
+                                    }),
+                        ),
+                      ],
+                    );
+                  }),
 
                   SizedBox(height: spacingLarge),
 
                   Center(
                     child: TextButton(
                       onPressed: () {
+                        authController.clearAuthFormError();
                         Get.offAll(
                           () => SignupScreen(),
                           transition: Transition.fadeIn,
@@ -221,11 +233,12 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -263,9 +276,12 @@ class LoginScreen extends StatelessWidget {
 }
 
 Widget _buildInputField(String label, IconData icon,
-    {bool isPassword = false, TextEditingController? controller}) {
+    {bool isPassword = false,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged}) {
   return TextField(
     controller: controller,
+    onChanged: onChanged,
     obscureText: isPassword,
     style: GoogleFonts.poppins(color: Colors.white, fontSize: 18),
     decoration: InputDecoration(
@@ -283,7 +299,7 @@ Widget _buildInputField(String label, IconData icon,
   );
 }
 
-Widget _buildSocialButton(String text, IconData icon, VoidCallback onPressed) {
+Widget _buildSocialButton(String text, IconData icon, VoidCallback? onPressed) {
   return ElevatedButton.icon(
     onPressed: onPressed,
     style: ElevatedButton.styleFrom(

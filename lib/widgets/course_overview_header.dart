@@ -13,6 +13,7 @@ class CourseOverviewHeader extends StatelessWidget {
   final VoidCallback onViewFlashcards;
   final VoidCallback onViewNotes;
   final VoidCallback onViewLumiTutor;
+  final VoidCallback onViewPodcast;
   final bool isOpeningTutor;
 
   const CourseOverviewHeader({
@@ -24,109 +25,102 @@ class CourseOverviewHeader extends StatelessWidget {
     required this.onViewFlashcards,
     required this.onViewNotes,
     required this.onViewLumiTutor,
+    required this.onViewPodcast,
     this.isOpeningTutor = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(15)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(140, 0, 0, 0),
-              borderRadius: const BorderRadius.all(Radius.circular(15)),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(Radius.circular(15)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(140, 0, 0, 0),
+            borderRadius: const BorderRadius.all(Radius.circular(15)),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Stack(
-                    alignment: Alignment.topCenter,
-                    children: [
-                      // Back button positioned to the left
-                      Align(
-                          alignment: Alignment.topLeft,
-                          child: SizedBox(
-                            width: 30,
-                            height: 20,
-                            child: IconButton(
-                              iconSize: 20,
-                              icon:
-                                  const Icon(Icons.arrow_back_ios_new_rounded),
-                              padding:
-                                  EdgeInsets.zero, // Remove default padding
-                              constraints:
-                                  const BoxConstraints(), // Remove default minimum size
-                              onPressed: () => onBack(),
-                            ),
-                          )),
-                      // Centered text
-                      Center(
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            text: courseTitle,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -1),
-                          ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: IconButton(
+                        iconSize: 20,
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => onBack(),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        courseTitle,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -1,
                         ),
                       ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Transform.translate(
-                          offset: const Offset(
-                              0, -2), // Move up slightly to visually center
-                          child: SizedBox(
-                            width: 30,
-                            height: 20,
-                            child: IconButton(
-                                iconSize: 20,
-                                icon: const Icon(Icons.more_horiz),
-                                padding:
-                                    EdgeInsets.zero, // Remove default padding
-                                constraints:
-                                    const BoxConstraints(), // Remove default minimum size
-                                onPressed: () {
-                                  showCourseOptionsDialog(
-                                    context: context,
-                                    courseId: courseId,
-                                    courseTitle: courseTitle,
-                                    onDelete: () async {
-                                      Navigator.of(context).pop();
+                    ),
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Transform.translate(
+                        offset: const Offset(0, -2),
+                        child: IconButton(
+                          iconSize: 20,
+                          icon: const Icon(Icons.more_horiz),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            showCourseOptionsDialog(
+                              context: context,
+                              courseId: courseId,
+                              courseTitle: courseTitle,
+                              onDelete: () async {
+                                Navigator.of(context).pop();
 
-                                      final success = await CourseDeleteHelper
-                                          .showDeleteConfirmationAndDelete(
-                                        context: context,
-                                        courseId: courseId,
-                                        courseTitle: courseTitle,
-                                      );
+                                final success =
+                                    await CourseDeleteHelper
+                                        .showDeleteConfirmationAndDelete(
+                                  context: context,
+                                  courseId: courseId,
+                                  courseTitle: courseTitle,
+                                );
 
-                                      if (success) {
-                                        onBack();
-                                      }
-                                    },
-                                  );
-                                }),
-                          ),
+                                if (success) {
+                                  onBack();
+                                }
+                              },
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Column(
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Row(
@@ -176,6 +170,7 @@ class CourseOverviewHeader extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Fixed: Use flexible layout for 4 buttons
                       Row(
                         children: [
                           Expanded(
@@ -189,7 +184,7 @@ class CourseOverviewHeader extends StatelessWidget {
                           Expanded(
                             child: _HeaderButton(
                               icon: Icons.menu_book_outlined,
-                              label: 'Flashcards',
+                              label: 'Cards',
                               onTap: onViewFlashcards,
                             ),
                           ),
@@ -197,9 +192,17 @@ class CourseOverviewHeader extends StatelessWidget {
                           Expanded(
                             child: _HeaderButton(
                               icon: Icons.chat_bubble_outline,
-                              label: 'LumiTutor',
+                              label: 'Tutor',
                               onTap: onViewLumiTutor,
                               isLoading: isOpeningTutor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: _HeaderButton(
+                              icon: Icons.podcasts,
+                              label: 'Cast',
+                              onTap: onViewPodcast,
                             ),
                           ),
                         ],
@@ -211,7 +214,6 @@ class CourseOverviewHeader extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -234,8 +236,8 @@ class _HeaderButton extends StatelessWidget {
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       child: Container(
-        alignment: Alignment.center, // center the Row
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: const Color.fromARGB(140, 0, 0, 0),
           borderRadius: BorderRadius.circular(12),
@@ -244,30 +246,34 @@ class _HeaderButton extends StatelessWidget {
             width: 1,
           ),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center, // center contents
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (!isLoading) ...[
-              Icon(icon, color: Colors.white, size: 14),
-              const SizedBox(width: 8),
+              Icon(icon, color: Colors.white, size: 16),
+              const SizedBox(height: 4),
             ] else ...[
               SizedBox(
-                width: 14,
-                height: 14,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 4),
             ],
             Text(
               label,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

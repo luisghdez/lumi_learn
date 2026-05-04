@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
-import 'package:lumi_learn_app/application/models/friends_model.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
-import 'glass_tile.dart';
 import 'glass_tile_with_field.dart';
 
 class AddFriendsTab extends StatelessWidget {
@@ -77,20 +75,17 @@ class AddFriendsTab extends StatelessWidget {
                 subtitle: Text(user.email ?? "",
                     style: const TextStyle(color: Colors.white60)),
                 onTap: () async {
-                  Get.dialog(
-                    const Center(child: CircularProgressIndicator()),
-                    barrierDismissible: false,
-                  );
-
                   try {
                     await controller.setActiveFriend(user.id);
-                    Get.back();
-                    Get.to(
-                      () => const FriendProfile(),
-                      transition: Transition.fadeIn,
-                    );
+                    if (controller.activeFriend.value != null) {
+                      await Get.to<void>(
+                        () => const FriendProfile(),
+                        transition: Transition.fadeIn,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
                   } catch (e) {
-                    Get.back();
                     Get.snackbar("Error", "Could not load profile: $e");
                   }
                 },

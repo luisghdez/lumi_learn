@@ -179,22 +179,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   child: FriendTile(
                                       friend: friend,
                                       onTap: () async {
-                                        Get.dialog(
-                                            const Center(
-                                                child:
-                                                    CircularProgressIndicator()),
-                                            barrierDismissible: false);
-
                                         try {
                                           await friendsController
                                               .setActiveFriend(friend.id);
-                                          Get.back();
-                                          Get.to(
-                                            () => const FriendProfile(),
-                                            transition: Transition.fadeIn,
-                                          );
+                                          if (friendsController
+                                                  .activeFriend.value !=
+                                              null) {
+                                            await Get.to<void>(
+                                              () => const FriendProfile(),
+                                              transition: Transition.fadeIn,
+                                              duration: const Duration(
+                                                  milliseconds: 300),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          }
                                         } catch (e) {
-                                          Get.back();
                                           Get.snackbar("Error",
                                               "Could not load profile: $e");
                                         }

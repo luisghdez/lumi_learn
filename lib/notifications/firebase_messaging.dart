@@ -1,124 +1,125 @@
 import 'dart:convert';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'local_notifications.dart';
-// import '../application/services/notif_service.dart';
+import 'package:flutter/widgets.dart';
+
 import 'package:lumi_learn_app/application/services/notif_service.dart';
-import 'package:get/get.dart';
-
-
+import 'package:lumi_learn_app/firebase_options.dart';
+import 'package:lumi_learn_app/notifications/local_notifications.dart';
+import 'package:lumi_learn_app/notifications/push_notification_contract.dart';
+import 'package:lumi_learn_app/notifications/push_notification_navigation.dart';
 
 class FirebaseMessagingService {
-  // Private constructor for singleton pattern
   FirebaseMessagingService._internal();
 
-  // Singleton instance
-  static final FirebaseMessagingService _instance = FirebaseMessagingService._internal();
+  static final FirebaseMessagingService _instance =
+      FirebaseMessagingService._internal();
 
-  // Factory constructor to provide singleton instance
   factory FirebaseMessagingService.instance() => _instance;
 
-  // Reference to local notifications service for displaying notifications
   LocalNotificationsService? _localNotificationsService;
+  final NotifService _notifService = NotifService();
 
-  /// Initialize Firebase Messaging and sets up all message listeners
-  Future<void> init({required LocalNotificationsService localNotificationsService}) async {
-    // Init local notifications service
+  Future<void> init({
+    required LocalNotificationsService localNotificationsService,
+  }) async {
     _localNotificationsService = localNotificationsService;
 
-    // Handle FCM token
     _handlePushNotificationsToken();
+    await _requestPermission();
 
-    // Request user permission for notifications
-    _requestPermission();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-    // Register handler for background messages (app terminated)
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Listen for messages when the app is in foreground
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
-
-    // Listen for notification taps when the app is in background but not terminated
     FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
 
-    // Check for initial message that opened the app from terminated state
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    final initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
-      _onMessageOpenedApp(initialMessage);
+      PendingPushNavigation.queue(
+        Map<String, dynamic>.from(initialMessage.data),
+      );
     }
   }
 
-  final service = NotifService();
-
-
-  /// Retrieves and manages the FCM token for push notifications
   Future<void> _handlePushNotificationsToken() async {
     final token = await FirebaseMessaging.instance.getToken();
-    print('Push notifications token: $token');
 
     if (token != null) {
-      await service.sendFcmTokenToServer(token); // ✅ Send to backend here
+      await _notifService.sendFcmTokenToServer(token);
     }
 
     FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
-      print('FCM token refreshed: $fcmToken');
-      await service.sendFcmTokenToServer(fcmToken); // ✅ Update on refresh too
-    }).onError((error) {
-      print('Error refreshing FCM token: $error');
+      await _notifService.sendFcmTokenToServer(fcmToken);
     });
   }
 
-
-  /// Requests notification permission from the user
   Future<void> _requestPermission() async {
-    // Request permission for alerts, badges, and sounds
-    final result = await FirebaseMessaging.instance.requestPermission(
+    await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
-
-
-    // Log the user's permission decision
-    print('User granted permission: ${result.authorizationStatus}');
   }
 
-  /// Handles messages received while the app is in the foreground
-  void _onForegroundMessage(RemoteMessage message) {
-    print('Foreground message received: ${message.data.toString()}');
-    final notificationData = message.notification;
-    if (notificationData != null) {
-      // Display a local notification using the service
-    _localNotificationsService?.showNotification(
-      notificationData.title,
-      notificationData.body,
+  /// Foreground: show a heads-up via local notifications. Uses FCM
+  /// [RemoteMessage.notification] when present; otherwise builds copy from
+  /// [RemoteMessage.data] using [PushNotificationTypes].
+  Future<void> _onForegroundMessage(RemoteMessage message) async {
+    final display = _resolveDisplay(message);
+    if (display == null) return;
+
+    await _localNotificationsService?.showNotification(
+      display.$1,
+      display.$2,
       jsonEncode(message.data),
     );
-    }
   }
 
-  /// Handles notification taps when app is opened from the background or terminated state
-void _onMessageOpenedApp(RemoteMessage message) {
-  print('Notification tapped: ${message.data}');
-  final route = message.data['route'];
-  if (route != null) {
-    switch (route) {
-      case "/streak":
-        Get.toNamed("/streakScreen", arguments: message.data);
-        break;
-      case "/reengage":
-        Get.toNamed("/");
-        break;
-      default:
-        Get.toNamed("/");
-    }
+  void _onMessageOpenedApp(RemoteMessage message) {
+    PushNotificationNavigation.handleOpenedAppAsync(
+      Map<String, dynamic>.from(message.data),
+    );
   }
 }
 
+(String title, String body)? _resolveDisplay(RemoteMessage message) {
+  final n = message.notification;
+  final title = n?.title?.trim();
+  if (title != null && title.isNotEmpty) {
+    return (title, n?.body?.trim() ?? '');
+  }
+
+  // Some marketing / streak pushes are data-only with `title` + `body` keys.
+  final dataTitle = message.data['title']?.toString().trim();
+  if (dataTitle != null && dataTitle.isNotEmpty) {
+    return (dataTitle, message.data['body']?.toString().trim() ?? '');
+  }
+
+  final type = message.data[PushDataKeys.type]?.toString() ?? '';
+  final actorRaw = message.data[PushDataKeys.actorName]?.toString().trim();
+  final actor =
+      (actorRaw != null && actorRaw.isNotEmpty) ? actorRaw : 'Someone';
+
+  switch (type) {
+    case PushNotificationTypes.friendRequest:
+      return ('Friend request', '$actor wants to connect on Lumi.');
+    case PushNotificationTypes.videoLiked:
+      return ('New like', '$actor liked your video.');
+    case PushNotificationTypes.friendVideoPosted:
+      return ('Friend posted', '$actor shared a new video.');
+    default:
+      return null;
+  }
 }
 
-/// Background message handler (must be top-level function or static)
-/// Handles messages when the app is fully terminated
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Background message received: ${message.data.toString()}');
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  /// When the payload includes FCM **`notification`**, the OS already shows
+  /// the tray banner — do **not** mirror with a local notification (duplicate).
+  /// Data-only / silent pushes: no banner here unless you add native logic.
 }
