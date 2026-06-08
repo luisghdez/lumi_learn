@@ -497,9 +497,18 @@ class LumiSearchController extends GetxController {
   }
 
   // Methods to configure search screen from other parts of the app
+  void showAllCourses() {
+    selectedSubject.value = subjects.first;
+    showSavedOnly.value = false;
+    searchQuery.value = '';
+    currentPage.value = 1;
+    fetchAllCourses(page: 1, limit: 10);
+  }
+
   void showSavedCourses() {
     showSavedOnly.value = true;
     selectedSubject.value = subjects.first; // All subjects
+    searchQuery.value = '';
 
     // Fetch courses with subject filter when navigating from "view all"
     savedCurrentPage.value = 1;

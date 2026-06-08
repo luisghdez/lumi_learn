@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
@@ -17,7 +18,6 @@ import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 
 import 'components/category_list.dart';
 import 'components/top_picks_header.dart';
-import 'components/home_header.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -61,6 +61,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   double _getHorizontalPadding(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     return screenWidth > _tabletBreakpoint ? 32.0 : 16.0;
+  }
+
+  void _openCourseSearch() {
+    final searchController = Get.find<LumiSearchController>();
+    searchController.showAllCourses();
+    Get.to(
+      () => const SearchMain(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 300),
+    );
   }
 
   @override
@@ -117,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header - Index 0
                           FadeTransition(
                             opacity: CurvedAnimation(
                               parent: _animationController,
@@ -127,15 +136,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             child: Padding(
                               padding: EdgeInsets.symmetric(
                                   horizontal: horizontalPadding),
-                              child: Obx(() => HomeHeader(
-                                    streakCount:
-                                        authController.streakCount.value,
-                                    xpCount: authController.xpCount.value,
-                                    isPremium: authController.isPremium.value,
-                                  )),
+                              child: _CourseSearchEntry(
+                                onTap: _openCourseSearch,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
                           // Feature Cards - Index 1
                           // FadeTransition(
                           //   opacity: CurvedAnimation(
@@ -162,56 +168,56 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           //       ),
                           //       child: Row(
                           //         children: [
-                                    // FeatureCard(
-                                    //   gradientColors: const [],
-                                    //   icon: Symbols.document_scanner,
-                                    //   title: 'AI Scanner',
-                                    //   subtitle: 'Scan & learn instantly',
-                                    //   onTap: () {
-                                    //     if (_cameras != null) {
-                                    //       Get.to(() => AiScannerMain(
-                                    //           cameras: _cameras!));
-                                    //     } else {
-                                    //       Get.snackbar('Camera Error',
-                                    //           'Cameras not ready yet');
-                                    //     }
-                                    //   },
-                                    // ),
-                                    // const SizedBox(width: 12),
-                                    // FeatureCard(
-                                    //   gradientColors: const [],
-                                    //   icon: Symbols.note_add,
-                                    //   title: 'Add Course',
-                                    //   subtitle: 'Create new course',
-                                    //   onTap: () {
-                                    //     Get.to(() => const CourseCreation(),
-                                    //         transition: Transition.fadeIn,
-                                    //         duration: const Duration(
-                                    //             milliseconds: 500));
-                                    //   },
-                                    // ),
-                                    // const SizedBox(width: 12),
-                                    // FeatureCard(
-                                    //   gradientColors: const [],
-                                    //   icon: Symbols.forum,
-                                    //   title: 'LumiTutor',
-                                    //   subtitle: 'AI study companion',
-                                    //   onTap: () {
-                                    //     Get.to(
-                                    //       () => const LumiTutorMain(
-                                    //         initialArgs: {
-                                    //           'type': 'text',
-                                    //           'paths': [],
-                                    //           'category': 'Anything',
-                                    //         },
-                                    //       ),
-                                    //       transition: Transition.fadeIn,
-                                    //       duration:
-                                    //           const Duration(milliseconds: 300),
-                                    //     );
-                                    //   },
-                                    // ),
-                                  // ],
+                          // FeatureCard(
+                          //   gradientColors: const [],
+                          //   icon: Symbols.document_scanner,
+                          //   title: 'AI Scanner',
+                          //   subtitle: 'Scan & learn instantly',
+                          //   onTap: () {
+                          //     if (_cameras != null) {
+                          //       Get.to(() => AiScannerMain(
+                          //           cameras: _cameras!));
+                          //     } else {
+                          //       Get.snackbar('Camera Error',
+                          //           'Cameras not ready yet');
+                          //     }
+                          //   },
+                          // ),
+                          // const SizedBox(width: 12),
+                          // FeatureCard(
+                          //   gradientColors: const [],
+                          //   icon: Symbols.note_add,
+                          //   title: 'Add Course',
+                          //   subtitle: 'Create new course',
+                          //   onTap: () {
+                          //     Get.to(() => const CourseCreation(),
+                          //         transition: Transition.fadeIn,
+                          //         duration: const Duration(
+                          //             milliseconds: 500));
+                          //   },
+                          // ),
+                          // const SizedBox(width: 12),
+                          // FeatureCard(
+                          //   gradientColors: const [],
+                          //   icon: Symbols.forum,
+                          //   title: 'LumiTutor',
+                          //   subtitle: 'AI study companion',
+                          //   onTap: () {
+                          //     Get.to(
+                          //       () => const LumiTutorMain(
+                          //         initialArgs: {
+                          //           'type': 'text',
+                          //           'paths': [],
+                          //           'category': 'Anything',
+                          //         },
+                          //       ),
+                          //       transition: Transition.fadeIn,
+                          //       duration:
+                          //           const Duration(milliseconds: 300),
+                          //     );
+                          //   },
+                          // ),
+                          // ],
                           //       ),
                           //     ),
                           //   ),
@@ -350,6 +356,71 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CourseSearchEntry extends StatelessWidget {
+  const _CourseSearchEntry({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.24),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.search_rounded,
+                color: Colors.white.withValues(alpha: 0.72),
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Search courses, topics, or subjects',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.62),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white.withValues(alpha: 0.42),
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );

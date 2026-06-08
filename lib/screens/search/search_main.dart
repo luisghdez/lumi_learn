@@ -26,10 +26,14 @@ class SearchMain extends StatefulWidget {
 class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _paginationLoadingController;
+  late final TextEditingController _courseSearchController;
 
   @override
   void initState() {
     super.initState();
+    final searchController = Get.find<LumiSearchController>();
+    _courseSearchController =
+        TextEditingController(text: searchController.searchQuery.value);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -44,6 +48,7 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _paginationLoadingController.dispose();
+    _courseSearchController.dispose();
     super.dispose();
   }
 
@@ -88,6 +93,13 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
     final double topScrollViewPadding =
         MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
+    final searchQuery = searchController.searchQuery.value;
+    if (_courseSearchController.text != searchQuery) {
+      _courseSearchController.value = TextEditingValue(
+        text: searchQuery,
+        selection: TextSelection.collapsed(offset: searchQuery.length),
+      );
+    }
 
     return Scaffold(
       body: GestureDetector(
@@ -134,16 +146,19 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
                                       ? 'All saved courses'
                                       : 'Find your next lesson',
                                 ),
-                                const SizedBox(height: 20),
-                                // CustomSearchBar(
-                                //   controller: TextEditingController(
-                                //       text: searchController.searchQuery.value),
-                                //   hintText: 'Search courses, topics or tags...',
-                                //   onChanged: (query) {
-                                //     searchController.setSearchQuery(query);
-                                //   },
-                                // ),
-                                // const SizedBox(height: 20),
+                                const SizedBox(height: 18),
+                                _CourseSearchInput(
+                                  controller: _courseSearchController,
+                                  hintText: searchController.showSavedOnly.value
+                                      ? 'Search saved courses'
+                                      : 'Search courses, topics, or tags',
+                                  onChanged: searchController.setSearchQuery,
+                                  onClear: () {
+                                    _courseSearchController.clear();
+                                    searchController.setSearchQuery('');
+                                  },
+                                ),
+                                const SizedBox(height: 16),
                                 // Subject and Saved Filters
                                 Row(
                                   children: [
@@ -262,6 +277,80 @@ class _SearchScreenHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CourseSearchInput extends StatelessWidget {
+  const _CourseSearchInput({
+    required this.controller,
+    required this.hintText,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final hasQuery = value.text.isNotEmpty;
+        return Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            textInputAction: TextInputAction.search,
+            cursorColor: Colors.white,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.52),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Colors.white.withValues(alpha: 0.66),
+                size: 21,
+              ),
+              suffixIcon: hasQuery
+                  ? IconButton(
+                      onPressed: onClear,
+                      splashRadius: 20,
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white.withValues(alpha: 0.62),
+                        size: 20,
+                      ),
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 15,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
