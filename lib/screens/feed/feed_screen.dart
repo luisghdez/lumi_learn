@@ -54,6 +54,14 @@ VideoFormat? _formatHintForPlaybackUrl(String url) {
   return null;
 }
 
+bool _isLandscapeVideo(VideoPlayerController? controller) {
+  final value = controller?.value;
+  if (value == null || !value.isInitialized) return false;
+  final size = value.size;
+  if (size.width <= 0 || size.height <= 0) return false;
+  return size.width / size.height > 1.05;
+}
+
 /// Full-feed canvas (video loading state + area under the floating nav) so
 /// there is no solid black band at the bottom.
 const BoxDecoration _kFeedCanvasDecoration = BoxDecoration(
@@ -91,6 +99,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   int _currentIndex = 0;
   PageRoute<void>? _boundListRoute;
   bool _obscuredByChildRoute = false;
+  bool _fullscreenVideoRouteOpen = false;
 
   @override
   void initState() {
@@ -160,7 +169,9 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   @override
   void didPushNext() {
     _obscuredByChildRoute = true;
-    _pauseAllFeedVideoPlayers();
+    if (!_fullscreenVideoRouteOpen) {
+      _pauseAllFeedVideoPlayers();
+    }
     setState(() {});
   }
 
@@ -168,6 +179,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   void didPopNext() {
     _obscuredByChildRoute = false;
     setState(() {});
+    if (_fullscreenVideoRouteOpen) return;
     if (_feedPlaybackAllowed) {
       final currentVideo = _currentVideo;
       final controller =
@@ -315,6 +327,29 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     setState(() {});
   }
 
+  Future<void> _openFullscreenVideo(VideoPlayerController? controller) async {
+    if (controller == null || !controller.value.isInitialized) return;
+    final initiallyPlaying = controller.value.isPlaying;
+    setState(() => _fullscreenVideoRouteOpen = true);
+    try {
+      await Get.to<void>(
+        () => _FullscreenFeedVideoPlayer(
+          controller: controller,
+          initiallyPlaying: initiallyPlaying,
+        ),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 180),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _fullscreenVideoRouteOpen = false;
+          _obscuredByChildRoute = false;
+        });
+      }
+    }
+  }
+
   Future<void> _refreshFeed() async {
     _pauseAllFeedVideoPlayers();
     _currentIndex = 0;
@@ -433,10 +468,9 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     return DecoratedBox(
       decoration: _kFeedCanvasDecoration,
       child: Obx(() {
-        final bottomOverlayPad =
-            _navigationController.isNavBarVisible.value
-                ? floatingNavbarBottomReserve(context)
-                : feedVideoOverlayBottomPadding(context);
+        final bottomOverlayPad = _navigationController.isNavBarVisible.value
+            ? floatingNavbarBottomReserve(context)
+            : feedVideoOverlayBottomPadding(context);
 
         final videos = _videoController.videos;
         final isLoading = _videoController.isLoadingFeed.value ||
@@ -483,6 +517,8 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                               onRequestFriend: () =>
                                   _requestFriendFromFeed(video),
                               onShare: () => shareFeedVideo(video),
+                              onExpandFullscreen: () =>
+                                  _openFullscreenVideo(controller),
                             );
                           },
                         ),
@@ -539,6 +575,7 @@ class _FeedVideoPage extends StatelessWidget {
     required this.onUserTap,
     required this.onRequestFriend,
     required this.onShare,
+    required this.onExpandFullscreen,
   });
 
   final VideoPost video;
@@ -554,6 +591,7 @@ class _FeedVideoPage extends StatelessWidget {
   final VoidCallback onUserTap;
   final VoidCallback onRequestFriend;
   final VoidCallback onShare;
+  final VoidCallback onExpandFullscreen;
 
   @override
   Widget build(BuildContext context) {
@@ -562,6 +600,7 @@ class _FeedVideoPage extends StatelessWidget {
         isCurrent &&
         playbackController?.value.isInitialized == true &&
         playbackController?.value.isPlaying == false;
+    final isLandscape = _isLandscapeVideo(playbackController);
 
     final backdrop = video.isSlideshow
         ? GestureDetector(
@@ -586,8 +625,7 @@ class _FeedVideoPage extends StatelessWidget {
           child: AnimatedPadding(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeInOutCubic,
-            padding:
-                EdgeInsets.fromLTRB(20, 12, 20, 14 + bottomOverlayPadding),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, 14 + bottomOverlayPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -628,6 +666,17 @@ class _FeedVideoPage extends StatelessWidget {
             ),
           ),
         ),
+        if (!video.isSlideshow && isLandscape)
+          SafeArea(
+            bottom: false,
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 60, right: 16),
+                child: _FullscreenExpandButton(onTap: onExpandFullscreen),
+              ),
+            ),
+          ),
         if (isPaused)
           const Center(
             child: Icon(
@@ -658,13 +707,200 @@ class _VideoBackdrop extends StatelessWidget {
       );
     }
 
+    Widget video() {
+      final videoSize = playbackController.value.size;
+      return SizedBox(
+        width: videoSize.width,
+        height: videoSize.height,
+        child: VideoPlayer(playbackController),
+      );
+    }
+
+    if (_isLandscapeVideo(playbackController)) {
+      return ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: video(),
+              ),
+            ),
+            ColoredBox(color: Colors.black.withValues(alpha: 0.42)),
+            Center(
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: video(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return FittedBox(
       fit: BoxFit.cover,
       clipBehavior: Clip.hardEdge,
-      child: SizedBox(
-        width: playbackController.value.size.width,
-        height: playbackController.value.size.height,
-        child: VideoPlayer(playbackController),
+      child: video(),
+    );
+  }
+}
+
+class _FullscreenExpandButton extends StatelessWidget {
+  const _FullscreenExpandButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Material(
+          color: Colors.white.withValues(alpha: 0.12),
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.28),
+                ),
+              ),
+              child: const Icon(
+                Icons.fullscreen_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FullscreenFeedVideoPlayer extends StatefulWidget {
+  const _FullscreenFeedVideoPlayer({
+    required this.controller,
+    required this.initiallyPlaying,
+  });
+
+  final VideoPlayerController controller;
+  final bool initiallyPlaying;
+
+  @override
+  State<_FullscreenFeedVideoPlayer> createState() =>
+      _FullscreenFeedVideoPlayerState();
+}
+
+class _FullscreenFeedVideoPlayerState
+    extends State<_FullscreenFeedVideoPlayer> {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !widget.controller.value.isInitialized) return;
+      if (widget.initiallyPlaying) {
+        widget.controller.play();
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  void _togglePlayback() {
+    if (!widget.controller.value.isInitialized) return;
+    setState(() {
+      widget.controller.value.isPlaying
+          ? widget.controller.pause()
+          : widget.controller.play();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = widget.controller;
+    final isPaused =
+        controller.value.isInitialized && !controller.value.isPlaying;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          GestureDetector(
+            onTap: _togglePlayback,
+            behavior: HitTestBehavior.opaque,
+            child: Center(
+              child: controller.value.isInitialized
+                  ? AspectRatio(
+                      aspectRatio: controller.value.aspectRatio,
+                      child: VideoPlayer(controller),
+                    )
+                  : const CircularProgressIndicator(color: Colors.white),
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: _FullscreenCloseButton(
+                  onTap: () => Get.back<void>(),
+                ),
+              ),
+            ),
+          ),
+          if (isPaused)
+            const Center(
+              child: Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 92,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FullscreenCloseButton extends StatelessWidget {
+  const _FullscreenCloseButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Material(
+          color: Colors.white.withValues(alpha: 0.12),
+          shape: const CircleBorder(),
+          child: IconButton(
+            onPressed: onTap,
+            icon: const Icon(Icons.close_rounded, color: Colors.white),
+            tooltip: 'Close fullscreen',
+          ),
+        ),
       ),
     );
   }
@@ -1255,6 +1491,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   final TextEditingController _textController = TextEditingController();
   String? _replyParentId;
   String? _replyParentName;
+
   /// Root comment ids whose reply lists are expanded in the sheet.
   final Set<String> _expandedThreadRootIds = {};
 
@@ -1590,12 +1827,8 @@ class _CommentAuthorAvatar extends StatelessWidget {
     }
 
     return Obx(() {
-      final live = Get.find<AuthController>()
-              .firebaseUser
-              .value
-              ?.photoURL
-              ?.trim() ??
-          '';
+      final live =
+          Get.find<AuthController>().firebaseUser.value?.photoURL?.trim() ?? '';
       final raw = live.isNotEmpty ? live : comment.authorProfilePicture;
       return avatar(raw);
     });
@@ -2253,8 +2486,7 @@ class _FeedSubjectPickerSheetState extends State<_FeedSubjectPickerSheet> {
         maxChildSize: 0.92,
         builder: (context, scrollController) {
           return ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
               child: Material(
@@ -2465,7 +2697,8 @@ class ProfileUserVideoFeedScreen extends StatefulWidget {
       _ProfileUserVideoFeedScreenState();
 }
 
-class _ProfileUserVideoFeedScreenState extends State<ProfileUserVideoFeedScreen> {
+class _ProfileUserVideoFeedScreenState
+    extends State<ProfileUserVideoFeedScreen> {
   late final PageController _pageController;
   final VideoController _videoController = Get.find();
   final NavigationController _navigationController = Get.find();
@@ -2611,6 +2844,20 @@ class _ProfileUserVideoFeedScreenState extends State<ProfileUserVideoFeedScreen>
     setState(() {});
   }
 
+  Future<void> _openFullscreenVideo(VideoPlayerController? controller) async {
+    if (controller == null || !controller.value.isInitialized) return;
+    final initiallyPlaying = controller.value.isPlaying;
+    await Get.to<void>(
+      () => _FullscreenFeedVideoPlayer(
+        controller: controller,
+        initiallyPlaying: initiallyPlaying,
+      ),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 180),
+    );
+    if (mounted) setState(() {});
+  }
+
   Future<void> _openComments(VideoPost video) async {
     showModalBottomSheet<void>(
       context: context,
@@ -2698,7 +2945,8 @@ class _ProfileUserVideoFeedScreenState extends State<ProfileUserVideoFeedScreen>
               if (videos.isEmpty)
                 Center(
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Color(0xFFB79CFF))
+                      ? const CircularProgressIndicator(
+                          color: Color(0xFFB79CFF))
                       : Text(
                           'No videos',
                           style: TextStyle(
@@ -2729,6 +2977,8 @@ class _ProfileUserVideoFeedScreenState extends State<ProfileUserVideoFeedScreen>
                       onUserTap: () => _openUserProfile(video),
                       onRequestFriend: () => _requestFriendFromFeed(video),
                       onShare: () => shareFeedVideo(video),
+                      onExpandFullscreen: () =>
+                          _openFullscreenVideo(controller),
                     );
                   },
                 ),
