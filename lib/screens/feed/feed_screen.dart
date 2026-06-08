@@ -808,7 +808,13 @@ class _FullscreenFeedVideoPlayerState
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    unawaited(SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]));
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !widget.controller.value.isInitialized) return;
       if (widget.initiallyPlaying) {
@@ -820,7 +826,11 @@ class _FullscreenFeedVideoPlayerState
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    unawaited(
+      SystemChrome.setPreferredOrientations(
+          const [DeviceOrientation.portraitUp]),
+    );
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     super.dispose();
   }
 
