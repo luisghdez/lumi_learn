@@ -126,6 +126,15 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                _SearchScreenHeader(
+                                  title: searchController.showSavedOnly.value
+                                      ? 'My Courses'
+                                      : 'Explore Courses',
+                                  subtitle: searchController.showSavedOnly.value
+                                      ? 'All saved courses'
+                                      : 'Find your next lesson',
+                                ),
+                                const SizedBox(height: 20),
                                 // CustomSearchBar(
                                 //   controller: TextEditingController(
                                 //       text: searchController.searchQuery.value),
@@ -181,6 +190,78 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SearchScreenHeader extends StatelessWidget {
+  const _SearchScreenHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Get.back<void>(),
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.56),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -468,9 +468,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     return DecoratedBox(
       decoration: _kFeedCanvasDecoration,
       child: Obx(() {
-        final bottomOverlayPad = _navigationController.isNavBarVisible.value
-            ? floatingNavbarBottomReserve(context)
-            : feedVideoOverlayBottomPadding(context);
+        final bottomOverlayPad = floatingNavbarBottomReserve(context);
 
         final videos = _videoController.videos;
         final isLoading = _videoController.isLoadingFeed.value ||
