@@ -28,6 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   static const double _tabletBreakpoint = 800.0;
+  static const bool _showLumiTutorSection = false;
   List<CameraDescription>? _cameras;
   late AnimationController _animationController;
 
@@ -283,30 +284,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           //       initialPadding: horizontalPadding),
                           // ),
                           // const SizedBox(height: 18),
-                          // LumiTutor Section - Index 4
-                          FadeTransition(
-                            opacity: CurvedAnimation(
-                              parent: _animationController,
-                              curve: const Interval(0.4, 1.0,
-                                  curve: Curves.easeOut),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'LumiTutor',
-                                    style: sectionTitleStyle,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const LumiTutorCard(),
-                                ],
+                          // Flip [_showLumiTutorSection] back on when the tutor
+                          // card belongs on the Home surface again.
+                          if (_showLumiTutorSection) ...[
+                            // LumiTutor Section - Index 4
+                            FadeTransition(
+                              opacity: CurvedAnimation(
+                                parent: _animationController,
+                                curve: const Interval(0.4, 1.0,
+                                    curve: Curves.easeOut),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: horizontalPadding),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'LumiTutor',
+                                      style: sectionTitleStyle,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const LumiTutorCard(),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 18),
+                            const SizedBox(height: 18),
+                          ],
                           // Top Picks Header - Index 5
                           FadeTransition(
                             opacity: CurvedAnimation(
