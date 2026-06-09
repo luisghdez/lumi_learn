@@ -97,7 +97,7 @@ class BottomNavbar extends StatelessWidget {
             iconSize: navIconSize,
           ),
           _NavIcon(
-            icon: Icons.dynamic_feed_rounded,
+            icon: Icons.play_circle_rounded,
             isSelected: currentIndex == 1 && !createOpen,
             onTap: () => navigationController.updateIndex(1),
             tapSize: navTapSize,
