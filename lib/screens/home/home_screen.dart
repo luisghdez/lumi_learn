@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
@@ -31,6 +33,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   static const bool _showLumiTutorSection = false;
   List<CameraDescription>? _cameras;
   late AnimationController _animationController;
+  late AnimationController _courseSearchOverlayController;
+  final LayerLink _courseSearchLayerLink = LayerLink();
+  OverlayEntry? _courseSearchOverlayEntry;
+  bool _courseSearchFiltersOpen = false;
+  bool _courseSearchSubjectMenuOpen = false;
+  Subject? _courseSearchSubject;
+  bool _courseSearchSavedOnly = false;
 
   @override
   void initState() {
@@ -40,6 +49,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    _courseSearchOverlayController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+      reverseDuration: const Duration(milliseconds: 200),
+    );
     // Trigger animation after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
@@ -48,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _removeCourseSearchOverlay();
     _animationController.dispose();
+    _courseSearchOverlayController.dispose();
     super.dispose();
   }
 
@@ -64,9 +80,123 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return screenWidth > _tabletBreakpoint ? 32.0 : 16.0;
   }
 
+  void _toggleCourseSearchFilters() {
+    if (_courseSearchFiltersOpen) {
+      _hideCourseSearchFilters();
+    } else {
+      _showCourseSearchFilters();
+    }
+  }
+
+  void _showCourseSearchFilters() {
+    if (_courseSearchOverlayEntry != null) return;
+    _courseSearchSubjectMenuOpen = false;
+    setState(() => _courseSearchFiltersOpen = true);
+    _courseSearchOverlayEntry = OverlayEntry(
+      builder: (context) {
+        final searchController = Get.find<LumiSearchController>();
+        final double horizontalPadding = _getHorizontalPadding(context);
+        final double panelWidth =
+            MediaQuery.of(context).size.width - horizontalPadding * 2;
+        return AnimatedBuilder(
+          animation: _courseSearchOverlayController,
+          builder: (context, _) {
+            final double progress = Curves.easeOutCubic
+                .transform(_courseSearchOverlayController.value);
+            return Stack(
+              children: [
+                // Scrim: a dimmed, gently blurred backdrop so the surrounding
+                // content recedes while the search surface stays in focus.
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _hideCourseSearchFilters,
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(
+                        sigmaX: 6 * progress,
+                        sigmaY: 6 * progress,
+                      ),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.45 * progress),
+                      ),
+                    ),
+                  ),
+                ),
+                CompositedTransformFollower(
+                  link: _courseSearchLayerLink,
+                  showWhenUnlinked: false,
+                  offset: Offset.zero,
+                  child: SizedBox(
+                    width: panelWidth,
+                    child: _CourseSearchExpandedPanel(
+                      progress: progress,
+                      selectedSubject: _courseSearchSubject ??
+                          searchController.subjects.first,
+                      subjects: searchController.subjects,
+                      savedOnly: _courseSearchSavedOnly,
+                      subjectMenuOpen: _courseSearchSubjectMenuOpen,
+                      onClose: _hideCourseSearchFilters,
+                      onToggleSubjectMenu: () {
+                        setState(() => _courseSearchSubjectMenuOpen =
+                            !_courseSearchSubjectMenuOpen);
+                        _courseSearchOverlayEntry?.markNeedsBuild();
+                      },
+                      onSubjectChanged: (subject) {
+                        setState(() {
+                          _courseSearchSubject = subject;
+                          _courseSearchSubjectMenuOpen = false;
+                        });
+                        _courseSearchOverlayEntry?.markNeedsBuild();
+                      },
+                      onSavedOnlyChanged: (savedOnly) {
+                        setState(() => _courseSearchSavedOnly = savedOnly);
+                        _courseSearchOverlayEntry?.markNeedsBuild();
+                      },
+                      onSearch: _openCourseSearch,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    Overlay.of(context).insert(_courseSearchOverlayEntry!);
+    _courseSearchOverlayController.forward(from: 0);
+  }
+
+  void _hideCourseSearchFilters() {
+    if (_courseSearchOverlayEntry == null) {
+      if (mounted) {
+        setState(() => _courseSearchFiltersOpen = false);
+      }
+      return;
+    }
+    _courseSearchOverlayController.reverse().whenComplete(() {
+      _removeCourseSearchOverlay();
+      if (mounted) {
+        setState(() => _courseSearchFiltersOpen = false);
+      }
+    });
+  }
+
+  void _removeCourseSearchOverlay() {
+    _courseSearchOverlayEntry?.remove();
+    _courseSearchOverlayEntry = null;
+  }
+
   void _openCourseSearch() {
+    _removeCourseSearchOverlay();
+    _courseSearchOverlayController.value = 0;
+    if (mounted) {
+      setState(() => _courseSearchFiltersOpen = false);
+    }
     final searchController = Get.find<LumiSearchController>();
-    searchController.showAllCourses();
+    searchController.showCourseSearch(
+      subject: _courseSearchSubject ?? searchController.subjects.first,
+      savedOnly: _courseSearchSavedOnly,
+    );
     Get.to(
       () => const SearchMain(),
       transition: Transition.fadeIn,
@@ -137,8 +267,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             child: Padding(
                               padding: EdgeInsets.symmetric(
                                   horizontal: horizontalPadding),
-                              child: _CourseSearchEntry(
-                                onTap: _openCourseSearch,
+                              child: CompositedTransformTarget(
+                                link: _courseSearchLayerLink,
+                                child: _CourseSearchEntry(
+                                  isExpanded: _courseSearchFiltersOpen,
+                                  onTap: _toggleCourseSearchFilters,
+                                ),
                               ),
                             ),
                           ),
@@ -369,9 +503,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 class _CourseSearchEntry extends StatelessWidget {
   const _CourseSearchEntry({
+    required this.isExpanded,
     required this.onTap,
   });
 
+  final bool isExpanded;
   final VoidCallback onTap;
 
   @override
@@ -420,9 +556,442 @@ class _CourseSearchEntry extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white.withValues(alpha: 0.42),
-                size: 20,
+                isExpanded
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                color: Colors.white.withValues(alpha: 0.5),
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The expanded search surface. Its header is an exact match of
+/// [_CourseSearchEntry] so it reads as the *same* component growing in place,
+/// while the filter body reveals beneath it on a single continuous surface.
+class _CourseSearchExpandedPanel extends StatelessWidget {
+  const _CourseSearchExpandedPanel({
+    required this.progress,
+    required this.selectedSubject,
+    required this.subjects,
+    required this.savedOnly,
+    required this.subjectMenuOpen,
+    required this.onClose,
+    required this.onToggleSubjectMenu,
+    required this.onSubjectChanged,
+    required this.onSavedOnlyChanged,
+    required this.onSearch,
+  });
+
+  final double progress;
+  final Subject selectedSubject;
+  final List<Subject> subjects;
+  final bool savedOnly;
+  final bool subjectMenuOpen;
+  final VoidCallback onClose;
+  final VoidCallback onToggleSubjectMenu;
+  final ValueChanged<Subject> onSubjectChanged;
+  final ValueChanged<bool> onSavedOnlyChanged;
+  final VoidCallback onSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: 18 * progress,
+            sigmaY: 18 * progress,
+          ),
+          child: Container(
+            width: double.infinity,
+            // Same fill + border as the collapsed search bar so the surface
+            // feels like one continuous piece of the component.
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.14),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.24),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header — pixel-matched to the collapsed bar.
+                InkWell(
+                  onTap: onClose,
+                  child: SizedBox(
+                    height: 52,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.search_rounded,
+                            color: Colors.white.withValues(alpha: 0.72),
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Search courses, topics, or subjects',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.62),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Transform.rotate(
+                            angle: progress * 3.14159265,
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.white.withValues(alpha: 0.5),
+                              size: 24,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Body — clipped + scaled vertically so it grows out of the
+                // header rather than popping in as a detached card.
+                ClipRect(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    heightFactor: progress,
+                    child: Opacity(
+                      opacity: progress.clamp(0.0, 1.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 1,
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            color: Colors.white.withValues(alpha: 0.10),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _HomeSubjectFilterButton(
+                                        selectedSubject: selectedSubject,
+                                        isOpen: subjectMenuOpen,
+                                        onTap: onToggleSubjectMenu,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    _HomeSavedToggle(
+                                      isSelected: savedOnly,
+                                      onTap: () => onSavedOnlyChanged(!savedOnly),
+                                    ),
+                                  ],
+                                ),
+                                // Inline subject list — lives inside this same
+                                // overlay so it always renders above the panel
+                                // and open/close is fully controlled.
+                                _HomeSubjectMenu(
+                                  isOpen: subjectMenuOpen,
+                                  selectedSubject: selectedSubject,
+                                  subjects: subjects,
+                                  onSubjectChanged: onSubjectChanged,
+                                ),
+                                const SizedBox(height: 12),
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: onSearch,
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Ink(
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.92),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            savedOnly
+                                                ? Icons.bookmark_rounded
+                                                : Icons.travel_explore_rounded,
+                                            color: Colors.black,
+                                            size: 19,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            savedOnly
+                                                ? 'Search saved courses'
+                                                : 'Search courses',
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeSubjectFilterButton extends StatelessWidget {
+  const _HomeSubjectFilterButton({
+    required this.selectedSubject,
+    required this.isOpen,
+    required this.onTap,
+  });
+
+  final Subject selectedSubject;
+  final bool isOpen;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Ink(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: isOpen ? 0.14 : 0.08),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isOpen ? 0.22 : 0.12),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selectedSubject.icon,
+                color: Colors.white.withValues(alpha: 0.78),
+                size: 19,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  selectedSubject.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              AnimatedRotation(
+                turns: isOpen ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.white.withValues(alpha: 0.56),
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Inline, animated subject picker rendered inside the search overlay so it is
+/// always above the panel and its open/close state is fully controlled.
+class _HomeSubjectMenu extends StatelessWidget {
+  const _HomeSubjectMenu({
+    required this.isOpen,
+    required this.selectedSubject,
+    required this.subjects,
+    required this.onSubjectChanged,
+  });
+
+  final bool isOpen;
+  final Subject selectedSubject;
+  final List<Subject> subjects;
+  final ValueChanged<Subject> onSubjectChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: !isOpen
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: 260),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  shrinkWrap: true,
+                  itemCount: subjects.length,
+                  itemBuilder: (context, index) {
+                    final subject = subjects[index];
+                    if (subject.isHeader) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+                        child: Text(
+                          subject.name.toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      );
+                    }
+                    final bool selected = subject.id == selectedSubject.id;
+                    return InkWell(
+                      onTap: () => onSubjectChanged(subject),
+                      child: Container(
+                        color: selected
+                            ? Colors.white.withValues(alpha: 0.10)
+                            : Colors.transparent,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        child: Row(
+                          children: [
+                            Icon(
+                              subject.icon,
+                              color: selected ? Colors.white : Colors.white70,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                subject.name,
+                                style: TextStyle(
+                                  color: selected ? Colors.white : Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            if (selected)
+                              const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _HomeSavedToggle extends StatelessWidget {
+  const _HomeSavedToggle({
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.white.withValues(alpha: 0.92)
+                : Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.white.withValues(alpha: 0.92)
+                  : Colors.white.withValues(alpha: 0.12),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSelected
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
+                color: isSelected ? Colors.black : Colors.white70,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Saved',
+                style: TextStyle(
+                  color: isSelected ? Colors.black : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),

@@ -497,22 +497,31 @@ class LumiSearchController extends GetxController {
   }
 
   // Methods to configure search screen from other parts of the app
-  void showAllCourses() {
-    selectedSubject.value = subjects.first;
-    showSavedOnly.value = false;
+  void showCourseSearch({
+    Subject? subject,
+    bool savedOnly = false,
+  }) {
+    final nextSubject = subject ?? subjects.first;
+    selectedSubject.value = nextSubject;
+    showSavedOnly.value = savedOnly;
     searchQuery.value = '';
-    currentPage.value = 1;
-    fetchAllCourses(page: 1, limit: 10);
+
+    final subjectFilter = nextSubject.id == 'all' ? null : nextSubject.name;
+    if (savedOnly) {
+      savedCurrentPage.value = 1;
+      fetchSavedCourses(subject: subjectFilter, page: 1, limit: 10);
+    } else {
+      currentPage.value = 1;
+      fetchAllCourses(subject: subjectFilter, page: 1, limit: 10);
+    }
+  }
+
+  void showAllCourses() {
+    showCourseSearch();
   }
 
   void showSavedCourses() {
-    showSavedOnly.value = true;
-    selectedSubject.value = subjects.first; // All subjects
-    searchQuery.value = '';
-
-    // Fetch courses with subject filter when navigating from "view all"
-    savedCurrentPage.value = 1;
-    fetchSavedCourses(page: 1, limit: 10);
+    showCourseSearch(savedOnly: true);
   }
 
   void showCoursesForSubject(String subjectId) {
