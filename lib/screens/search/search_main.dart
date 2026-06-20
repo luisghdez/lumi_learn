@@ -26,10 +26,14 @@ class SearchMain extends StatefulWidget {
 class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _paginationLoadingController;
+  late final TextEditingController _courseSearchController;
 
   @override
   void initState() {
     super.initState();
+    final searchController = Get.find<LumiSearchController>();
+    _courseSearchController =
+        TextEditingController(text: searchController.searchQuery.value);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -44,6 +48,7 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _paginationLoadingController.dispose();
+    _courseSearchController.dispose();
     super.dispose();
   }
 
@@ -88,6 +93,13 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
     final double topScrollViewPadding =
         MediaQuery.of(context).padding.top + horizontalPadding;
     const double bottomScrollViewPadding = 40.0;
+    final searchQuery = searchController.searchQuery.value;
+    if (_courseSearchController.text != searchQuery) {
+      _courseSearchController.value = TextEditingValue(
+        text: searchQuery,
+        selection: TextSelection.collapsed(offset: searchQuery.length),
+      );
+    }
 
     return Scaffold(
       body: GestureDetector(
@@ -126,15 +138,27 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // CustomSearchBar(
-                                //   controller: TextEditingController(
-                                //       text: searchController.searchQuery.value),
-                                //   hintText: 'Search courses, topics or tags...',
-                                //   onChanged: (query) {
-                                //     searchController.setSearchQuery(query);
-                                //   },
-                                // ),
-                                // const SizedBox(height: 20),
+                                _SearchScreenHeader(
+                                  title: searchController.showSavedOnly.value
+                                      ? 'My Courses'
+                                      : 'Explore Courses',
+                                  subtitle: searchController.showSavedOnly.value
+                                      ? 'All saved courses'
+                                      : 'Find your next lesson',
+                                ),
+                                const SizedBox(height: 18),
+                                _CourseSearchInput(
+                                  controller: _courseSearchController,
+                                  hintText: searchController.showSavedOnly.value
+                                      ? 'Search saved courses'
+                                      : 'Search courses, topics, or tags',
+                                  onChanged: searchController.setSearchQuery,
+                                  onClear: () {
+                                    _courseSearchController.clear();
+                                    searchController.setSearchQuery('');
+                                  },
+                                ),
+                                const SizedBox(height: 16),
                                 // Subject and Saved Filters
                                 Row(
                                   children: [
@@ -181,6 +205,152 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SearchScreenHeader extends StatelessWidget {
+  const _SearchScreenHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Get.back<void>(),
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.56),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CourseSearchInput extends StatelessWidget {
+  const _CourseSearchInput({
+    required this.controller,
+    required this.hintText,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final hasQuery = value.text.isNotEmpty;
+        return Container(
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            textInputAction: TextInputAction.search,
+            cursorColor: Colors.white,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.52),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Colors.white.withValues(alpha: 0.66),
+                size: 21,
+              ),
+              suffixIcon: hasQuery
+                  ? IconButton(
+                      onPressed: onClear,
+                      splashRadius: 20,
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white.withValues(alpha: 0.62),
+                        size: 20,
+                      ),
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 15,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

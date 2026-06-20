@@ -29,23 +29,9 @@ double floatingNavbarBottomReserve(BuildContext context) {
       kFloatingNavbarExtraDown;
 }
 
-/// Bottom inset for create-flow: full reserve when the tab bar is shown (type
-/// chooser); smaller inset when the bar is hidden (embedded video / course).
+/// Bottom inset for create-flow content so it always clears the tab bar.
 double createFlowContentBottomInset(BuildContext context) {
-  final safeBottom = MediaQuery.paddingOf(context).bottom;
-  if (!Get.isRegistered<CreateFlowController>()) {
-    return floatingNavbarBottomReserve(context);
-  }
-  final flow = Get.find<CreateFlowController>();
-  if (createFlowHidesTabNavBar(flow)) { 
-    return safeBottom + 24;
-  }
   return floatingNavbarBottomReserve(context);
-}
-
-/// Hide the floating tab bar during embedded create video / course (same shell).
-bool createFlowHidesTabNavBar(CreateFlowController flow) {
-  return flow.visible.value && flow.shellPage.value > 0;
 }
 
 /// Bottom padding for full-bleed video overlays (caption + action rail).
@@ -82,17 +68,11 @@ class BottomNavbar extends StatelessWidget {
   ) {
     return Obx(() {
       final currentIndex = navigationController.currentIndex.value;
-      final scrollVisible = navigationController.isNavBarVisible.value;
       final createFlow = Get.isRegistered<CreateFlowController>()
           ? Get.find<CreateFlowController>()
           : null;
       final createOpen = createFlow?.visible.value ?? false;
-      if (createFlow != null) {
-        createFlow.shellPage.value;
-      }
-      final hideForCreateDeep = createFlow != null &&
-          createFlowHidesTabNavBar(createFlow);
-      final visible = scrollVisible && !hideForCreateDeep;
+      const visible = true;
 
       const double radius = 40;
       const double hPad = 28;
@@ -117,7 +97,7 @@ class BottomNavbar extends StatelessWidget {
             iconSize: navIconSize,
           ),
           _NavIcon(
-            icon: Icons.dynamic_feed_rounded,
+            icon: Icons.play_circle_rounded,
             isSelected: currentIndex == 1 && !createOpen,
             onTap: () => navigationController.updateIndex(1),
             tapSize: navTapSize,
