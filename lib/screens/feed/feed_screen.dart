@@ -62,6 +62,21 @@ bool _isLandscapeVideo(VideoPlayerController? controller) {
   return size.width / size.height > 1.05;
 }
 
+const List<DeviceOrientation> _kFeedOrientations = [
+  DeviceOrientation.portraitUp,
+];
+
+const List<DeviceOrientation> _kFullscreenExitOrientations = [
+  DeviceOrientation.portraitUp,
+  DeviceOrientation.landscapeLeft,
+  DeviceOrientation.landscapeRight,
+];
+
+Future<void> _restoreFeedOrientationAfterFullscreen() async {
+  await SystemChrome.setPreferredOrientations(_kFeedOrientations);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+}
+
 /// Full-feed canvas (video loading state + area under the floating nav) so
 /// there is no solid black band at the bottom.
 const BoxDecoration _kFeedCanvasDecoration = BoxDecoration(
@@ -341,6 +356,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
         duration: const Duration(milliseconds: 180),
       );
     } finally {
+      await _restoreFeedOrientationAfterFullscreen();
       if (mounted) {
         setState(() {
           _fullscreenVideoRouteOpen = false;
@@ -803,6 +819,8 @@ class _FullscreenFeedVideoPlayer extends StatefulWidget {
 
 class _FullscreenFeedVideoPlayerState
     extends State<_FullscreenFeedVideoPlayer> {
+  bool _isClosing = false;
+
   @override
   void initState() {
     super.initState();
@@ -824,12 +842,24 @@ class _FullscreenFeedVideoPlayerState
 
   @override
   void dispose() {
-    unawaited(
-      SystemChrome.setPreferredOrientations(
-          const [DeviceOrientation.portraitUp]),
-    );
-    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     super.dispose();
+  }
+
+  Future<void> _closeFullscreen() async {
+    if (_isClosing) return;
+    _isClosing = true;
+
+    // Avoid showing the feed in landscape during the pop transition. iOS first
+    // needs the active view controller to support portrait, then we can request
+    // portrait while the black fullscreen route still covers the feed.
+    await SystemChrome.setPreferredOrientations(_kFullscreenExitOrientations);
+    await Future<void>.delayed(const Duration(milliseconds: 16));
+    await _restoreFeedOrientationAfterFullscreen();
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+
+    if (mounted) {
+      Get.back<void>();
+    }
   }
 
   void _togglePlayback() {
@@ -847,43 +877,51 @@ class _FullscreenFeedVideoPlayerState
     final isPaused =
         controller.value.isInitialized && !controller.value.isPlaying;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          GestureDetector(
-            onTap: _togglePlayback,
-            behavior: HitTestBehavior.opaque,
-            child: Center(
-              child: controller.value.isInitialized
-                  ? AspectRatio(
-                      aspectRatio: controller.value.aspectRatio,
-                      child: VideoPlayer(controller),
-                    )
-                  : const CircularProgressIndicator(color: Colors.white),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          unawaited(_closeFullscreen());
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            GestureDetector(
+              onTap: _togglePlayback,
+              behavior: HitTestBehavior.opaque,
+              child: Center(
+                child: controller.value.isInitialized
+                    ? AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: VideoPlayer(controller),
+                      )
+                    : const CircularProgressIndicator(color: Colors.white),
+              ),
             ),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: _FullscreenCloseButton(
-                  onTap: () => Get.back<void>(),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: _FullscreenCloseButton(
+                    onTap: () => unawaited(_closeFullscreen()),
+                  ),
                 ),
               ),
             ),
-          ),
-          if (isPaused)
-            const Center(
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 92,
+            if (isPaused)
+              const Center(
+                child: Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 92,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2863,6 +2901,7 @@ class _ProfileUserVideoFeedScreenState
       transition: Transition.fadeIn,
       duration: const Duration(milliseconds: 180),
     );
+    await _restoreFeedOrientationAfterFullscreen();
     if (mounted) setState(() {});
   }
 
