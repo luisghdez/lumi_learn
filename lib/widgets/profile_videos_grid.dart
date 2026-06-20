@@ -1,6 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/application/models/video_model.dart';
@@ -338,40 +340,35 @@ class _VideoTileVideoFrame extends StatefulWidget {
 }
 
 class _VideoTileVideoFrameState extends State<_VideoTileVideoFrame> {
-  VideoPlayerController? _controller;
-  bool _failedToLoadFrame = false;
+  Uint8List? _thumbnail;
+  bool _failed = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.video.isSlideshow && widget.video.slides.isNotEmpty) {
-      return;
-    }
+    if (widget.video.isSlideshow && widget.video.slides.isNotEmpty) return;
     final playbackUrl = widget.video.playbackUrl;
     if (playbackUrl == null || playbackUrl.isEmpty) {
-      _failedToLoadFrame = true;
+      _failed = true;
       return;
     }
-
-    final controller = VideoPlayerController.networkUrl(Uri.parse(playbackUrl));
-    _controller = controller;
-    controller.initialize().then((_) async {
-      if (!mounted) return;
-      await controller.seekTo(Duration.zero);
-      await controller.pause();
-      if (!mounted) return;
-      setState(() {});
-    }).catchError((error) {
-      if (!mounted) return;
-      debugPrint('Unable to load profile video frame: $error');
-      setState(() => _failedToLoadFrame = true);
-    });
+    _loadThumbnail(playbackUrl);
   }
 
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
+  Future<void> _loadThumbnail(String url) async {
+    try {
+      final data = await VideoThumbnail.thumbnailData(
+        video: url,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 200,
+        quality: 65,
+      );
+      if (!mounted) return;
+      setState(() => _thumbnail = data);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _failed = true);
+    }
   }
 
   @override
@@ -383,20 +380,13 @@ class _VideoTileVideoFrameState extends State<_VideoTileVideoFrame> {
         errorBuilder: (_, __, ___) => const _VideoTileFallback(),
       );
     }
-    final controller = _controller;
-    if (_failedToLoadFrame ||
-        controller == null ||
-        !controller.value.isInitialized) {
+    final thumbnail = _thumbnail;
+    if (_failed || thumbnail == null) {
       return const _VideoTileFallback();
     }
-
-    return FittedBox(
+    return Image.memory(
+      thumbnail,
       fit: BoxFit.cover,
-      child: SizedBox(
-        width: controller.value.size.width,
-        height: controller.value.size.height,
-        child: VideoPlayer(controller),
-      ),
     );
   }
 }
