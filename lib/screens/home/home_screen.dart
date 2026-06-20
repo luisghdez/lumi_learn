@@ -37,9 +37,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final LayerLink _courseSearchLayerLink = LayerLink();
   OverlayEntry? _courseSearchOverlayEntry;
   bool _courseSearchFiltersOpen = false;
+  bool _courseSearchTypeMenuOpen = false;
   bool _courseSearchSubjectMenuOpen = false;
+  late CourseCollection _courseSearchCollection = courseCollections.first;
   Subject? _courseSearchSubject;
   bool _courseSearchSavedOnly = false;
+
+  Subject get _effectiveSearchSubject =>
+      _courseSearchSubject ?? _courseSearchCollection.defaultSubject;
 
   @override
   void initState() {
@@ -90,11 +95,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _showCourseSearchFilters() {
     if (_courseSearchOverlayEntry != null) return;
+    _courseSearchTypeMenuOpen = false;
     _courseSearchSubjectMenuOpen = false;
     setState(() => _courseSearchFiltersOpen = true);
     _courseSearchOverlayEntry = OverlayEntry(
       builder: (context) {
-        final searchController = Get.find<LumiSearchController>();
         final double horizontalPadding = _getHorizontalPadding(context);
         final double panelWidth =
             MediaQuery.of(context).size.width - horizontalPadding * 2;
@@ -130,15 +135,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     width: panelWidth,
                     child: _CourseSearchExpandedPanel(
                       progress: progress,
-                      selectedSubject: _courseSearchSubject ??
-                          searchController.subjects.first,
-                      subjects: searchController.subjects,
+                      collection: _courseSearchCollection,
+                      collections: courseCollections,
+                      selectedSubject: _effectiveSearchSubject,
                       savedOnly: _courseSearchSavedOnly,
+                      typeMenuOpen: _courseSearchTypeMenuOpen,
                       subjectMenuOpen: _courseSearchSubjectMenuOpen,
                       onClose: _hideCourseSearchFilters,
+                      onToggleTypeMenu: () {
+                        setState(() {
+                          _courseSearchTypeMenuOpen =
+                              !_courseSearchTypeMenuOpen;
+                          if (_courseSearchTypeMenuOpen) {
+                            _courseSearchSubjectMenuOpen = false;
+                          }
+                        });
+                        _courseSearchOverlayEntry?.markNeedsBuild();
+                      },
+                      onTypeChanged: (collection) {
+                        setState(() {
+                          _courseSearchCollection = collection;
+                          _courseSearchSubject = collection.defaultSubject;
+                          _courseSearchTypeMenuOpen = false;
+                          _courseSearchSubjectMenuOpen = false;
+                        });
+                        _courseSearchOverlayEntry?.markNeedsBuild();
+                      },
                       onToggleSubjectMenu: () {
-                        setState(() => _courseSearchSubjectMenuOpen =
-                            !_courseSearchSubjectMenuOpen);
+                        setState(() {
+                          _courseSearchSubjectMenuOpen =
+                              !_courseSearchSubjectMenuOpen;
+                          if (_courseSearchSubjectMenuOpen) {
+                            _courseSearchTypeMenuOpen = false;
+                          }
+                        });
                         _courseSearchOverlayEntry?.markNeedsBuild();
                       },
                       onSubjectChanged: (subject) {
@@ -194,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
     final searchController = Get.find<LumiSearchController>();
     searchController.showCourseSearch(
-      subject: _courseSearchSubject ?? searchController.subjects.first,
+      subject: _effectiveSearchSubject,
       savedOnly: _courseSearchSavedOnly,
     );
     Get.to(
@@ -576,11 +606,15 @@ class _CourseSearchEntry extends StatelessWidget {
 class _CourseSearchExpandedPanel extends StatelessWidget {
   const _CourseSearchExpandedPanel({
     required this.progress,
+    required this.collection,
+    required this.collections,
     required this.selectedSubject,
-    required this.subjects,
     required this.savedOnly,
+    required this.typeMenuOpen,
     required this.subjectMenuOpen,
     required this.onClose,
+    required this.onToggleTypeMenu,
+    required this.onTypeChanged,
     required this.onToggleSubjectMenu,
     required this.onSubjectChanged,
     required this.onSavedOnlyChanged,
@@ -588,11 +622,15 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
   });
 
   final double progress;
+  final CourseCollection collection;
+  final List<CourseCollection> collections;
   final Subject selectedSubject;
-  final List<Subject> subjects;
   final bool savedOnly;
+  final bool typeMenuOpen;
   final bool subjectMenuOpen;
   final VoidCallback onClose;
+  final VoidCallback onToggleTypeMenu;
+  final ValueChanged<CourseCollection> onTypeChanged;
   final VoidCallback onToggleSubjectMenu;
   final ValueChanged<Subject> onSubjectChanged;
   final ValueChanged<bool> onSavedOnlyChanged;
@@ -691,11 +729,36 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                             padding: const EdgeInsets.all(12),
                             child: Column(
                               children: [
+                                // Drop 1 — course type (All Courses / AP Courses).
+                                _HomeDropdownButton(
+                                  icon: collection.icon,
+                                  label: collection.label,
+                                  isOpen: typeMenuOpen,
+                                  onTap: onToggleTypeMenu,
+                                ),
+                                _HomeSubjectMenu(
+                                  isOpen: typeMenuOpen,
+                                  selectedId: collection.id,
+                                  subjects: collections
+                                      .map((c) => Subject(
+                                            id: c.id,
+                                            name: c.label,
+                                            icon: c.icon,
+                                          ))
+                                      .toList(),
+                                  onSubjectChanged: (subject) => onTypeChanged(
+                                    collections.firstWhere(
+                                        (c) => c.id == subject.id),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                // Drop 2 — subject, scoped to the chosen type.
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: _HomeSubjectFilterButton(
-                                        selectedSubject: selectedSubject,
+                                      child: _HomeDropdownButton(
+                                        icon: selectedSubject.icon,
+                                        label: selectedSubject.name,
                                         isOpen: subjectMenuOpen,
                                         onTap: onToggleSubjectMenu,
                                       ),
@@ -712,8 +775,8 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                                 // and open/close is fully controlled.
                                 _HomeSubjectMenu(
                                   isOpen: subjectMenuOpen,
-                                  selectedSubject: selectedSubject,
-                                  subjects: subjects,
+                                  selectedId: selectedSubject.id,
+                                  subjects: collection.subjects,
                                   onSubjectChanged: onSubjectChanged,
                                 ),
                                 const SizedBox(height: 12),
@@ -773,14 +836,16 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
   }
 }
 
-class _HomeSubjectFilterButton extends StatelessWidget {
-  const _HomeSubjectFilterButton({
-    required this.selectedSubject,
+class _HomeDropdownButton extends StatelessWidget {
+  const _HomeDropdownButton({
+    required this.icon,
+    required this.label,
     required this.isOpen,
     required this.onTap,
   });
 
-  final Subject selectedSubject;
+  final IconData icon;
+  final String label;
   final bool isOpen;
   final VoidCallback onTap;
 
@@ -804,14 +869,14 @@ class _HomeSubjectFilterButton extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                selectedSubject.icon,
+                icon,
                 color: Colors.white.withValues(alpha: 0.78),
                 size: 19,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  selectedSubject.name,
+                  label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -844,13 +909,13 @@ class _HomeSubjectFilterButton extends StatelessWidget {
 class _HomeSubjectMenu extends StatelessWidget {
   const _HomeSubjectMenu({
     required this.isOpen,
-    required this.selectedSubject,
+    required this.selectedId,
     required this.subjects,
     required this.onSubjectChanged,
   });
 
   final bool isOpen;
-  final Subject selectedSubject;
+  final String selectedId;
   final List<Subject> subjects;
   final ValueChanged<Subject> onSubjectChanged;
 
@@ -895,7 +960,7 @@ class _HomeSubjectMenu extends StatelessWidget {
                         ),
                       );
                     }
-                    final bool selected = subject.id == selectedSubject.id;
+                    final bool selected = subject.id == selectedId;
                     return InkWell(
                       onTap: () => onSubjectChanged(subject),
                       child: Container(
