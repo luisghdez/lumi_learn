@@ -134,7 +134,7 @@ class CategoryList extends StatelessWidget {
                   completedLessons: course['completedLessons'] ?? 0,
                   totalLessons: course['totalLessons'] ?? 0,
                   imagePath: galaxyImagePath,
-                  tags: course['tags'] ?? [],
+                  tags: List<String>.from(course['tags'] ?? []),
                   subject: course['subject'],
                   hasEmbeddings: course['hasEmbeddings'] ?? false,
                   onTap: () async {
