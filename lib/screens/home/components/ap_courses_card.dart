@@ -61,7 +61,7 @@ class ApCoursesCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '12 subjects available',
+                        '36 subjects available',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontSize: 12,
