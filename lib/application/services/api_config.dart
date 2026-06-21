@@ -17,8 +17,8 @@ abstract final class ApiConfig {
     'LUMI_API_BASE_URL',
   );
 
-  /// Prefer [LUMI_API_BASE_URL] when set at compile time; otherwise dev deploy.
+  /// Prefer [LUMI_API_BASE_URL] when set at compile time; otherwise prod deploy.
   static String get origin => _fromEnvironment.isNotEmpty
       ? _fromEnvironment
-      : 'https://lumi-api-dev.onrender.com';
+      : 'https://lumilearnapp.com';
 }
