@@ -19,6 +19,7 @@ class ApCourseOverviewScreen extends StatelessWidget {
     final courseController = Get.find<CourseController>();
 
     return CourseOverviewScreen(
+      useUnitLabels: true,
       onViewNotesOverride: () {
         // Extract unique units from already-loaded lessons.
         final units = <int, String>{};

@@ -9,6 +9,7 @@ import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
+import 'package:lumi_learn_app/screens/ap_catalog/ap_unit_notes_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/note_screen.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
 import 'package:lumi_learn_app/screens/main/main_screen.dart';
@@ -31,7 +32,20 @@ class CourseOverviewScreen extends StatefulWidget {
   /// callback here that opens the per-unit notes picker instead.
   final VoidCallback? onViewNotesOverride;
 
-  const CourseOverviewScreen({Key? key, this.onViewNotesOverride}) : super(key: key);
+  /// When true, the planet map shows "Unit N" (instead of the planet name) as
+  /// the bold label and the unit name (instead of "Lesson N") as the sub-label.
+  /// The bottom panel title also uses the unit name.
+  ///
+  /// When null (default), the screen auto-detects AP courses by checking
+  /// whether the loaded lessons contain a non-null `unitNumber` field — so no
+  /// callsite changes are needed when navigating from My Courses or elsewhere.
+  final bool? useUnitLabels;
+
+  const CourseOverviewScreen({
+    Key? key,
+    this.onViewNotesOverride,
+    this.useUnitLabels,
+  }) : super(key: key);
 
   @override
   _CourseOverviewScreenState createState() => _CourseOverviewScreenState();
@@ -41,6 +55,14 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
   final CourseController courseController = Get.find();
   final AuthController authController =
       Get.find(); // <--- Grab the AuthController here
+
+  /// True when we should render unit labels instead of planet names.
+  /// Explicit override wins; otherwise auto-detected from lesson data.
+  bool get _useUnitLabels {
+    if (widget.useUnitLabels != null) return widget.useUnitLabels!;
+    final lessons = courseController.lessons;
+    return lessons.isNotEmpty && lessons.first['unitNumber'] != null;
+  }
 
   final ScrollController _scrollController = ScrollController();
 
@@ -188,9 +210,12 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           final lesson = lessons[index];
                           final bool shouldBlur = index > nextLessonIndex;
 
-                          final lessonPlanetName = lesson['planetName'];
-                          final lessonTitle =
-                              lesson['title'] ?? 'Lesson ${index + 1}';
+                          final lessonPlanetName = _useUnitLabels
+                              ? 'Unit ${lesson['unitNumber'] ?? index + 1}'
+                              : lesson['planetName'];
+                          final lessonTitle = _useUnitLabels
+                              ? (lesson['unitName'] ?? 'Unit ${index + 1}')
+                              : (lesson['title'] ?? 'Lesson ${index + 1}');
                           final lessonId = lesson['id']; // Unique lesson ID
 
                           // Assign a planet image based on the lesson
@@ -445,10 +470,32 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           );
                         },
                         onViewNotes: () {
+                          // Explicit override wins (e.g. ApCourseOverviewScreen).
                           if (widget.onViewNotesOverride != null) {
                             widget.onViewNotesOverride!();
                             return;
                           }
+                          // AP courses: open per-unit notes picker.
+                          if (_useUnitLabels) {
+                            final units = <int, String>{};
+                            for (final l in courseController.lessons) {
+                              final n = l['unitNumber'] as int?;
+                              final name = l['unitName'] as String?;
+                              if (n != null && name != null && !units.containsKey(n)) {
+                                units[n] = name;
+                              }
+                            }
+                            Get.to(
+                              () => ApUnitNotesScreen(
+                                courseId: courseController.selectedCourseId.value,
+                                units: units,
+                              ),
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 300),
+                            );
+                            return;
+                          }
+                          // Regular courses: require embeddings for note access.
                           if (!courseController
                               .selectedCourseHasEmbeddings.value) {
                             Get.dialog(
@@ -613,7 +660,9 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() {
         _selectedLessonIndex = index;
-        _selectedLessonPlanetName = lessons[index]['planetName'];
+        _selectedLessonPlanetName = _useUnitLabels
+            ? (lessons[index]['unitName'] ?? lessons[index]['planetName'])
+            : lessons[index]['planetName'];
         _lessonDescription = lessons[index]['planetDescription'];
         _isPanelVisible = true;
       });
