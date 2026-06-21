@@ -15,6 +15,12 @@ class BottomPanel extends StatelessWidget {
   /// When null (default) the pill is not rendered, preserving existing layout.
   final String? unitLabel;
 
+  /// When provided, a "Notes" icon-button is shown beside the Start button.
+  final VoidCallback? onViewUnitNotes;
+
+  /// When provided, a "Cards" icon-button is shown beside the Start button.
+  final VoidCallback? onViewUnitFlashcards;
+
   const BottomPanel({
     Key? key,
     required this.selectedLessonIndex,
@@ -23,6 +29,8 @@ class BottomPanel extends StatelessWidget {
     required this.onStartPressed,
     required this.onClose,
     this.unitLabel,
+    this.onViewUnitNotes,
+    this.onViewUnitFlashcards,
   }) : super(key: key);
 
   @override
@@ -132,6 +140,29 @@ class BottomPanel extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 16),
+                              // Secondary action row — Notes + Cards (AP only)
+                              if (onViewUnitNotes != null || onViewUnitFlashcards != null) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (onViewUnitNotes != null)
+                                      _PanelIconButton(
+                                        icon: Icons.note_alt_outlined,
+                                        label: 'Notes',
+                                        onTap: onViewUnitNotes!,
+                                      ),
+                                    if (onViewUnitNotes != null && onViewUnitFlashcards != null)
+                                      const SizedBox(width: 10),
+                                    if (onViewUnitFlashcards != null)
+                                      _PanelIconButton(
+                                        icon: Icons.menu_book_outlined,
+                                        label: 'Cards',
+                                        onTap: onViewUnitFlashcards!,
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                              ],
                               FractionallySizedBox(
                                 widthFactor: 0.7,
                                 child: ElevatedButton(
@@ -164,6 +195,51 @@ class BottomPanel extends StatelessWidget {
                     )
                   ],
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PanelIconButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _PanelIconButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.25),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 14),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );

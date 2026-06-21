@@ -9,6 +9,7 @@ import 'package:lumi_learn_app/data/assets_data.dart';
 import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/flash_card_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/lesson_screen_main.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/screens/ap_catalog/ap_unit_notes_screen.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/note_screen.dart';
 import 'package:lumi_learn_app/screens/lumiTutor/lumi_tutor_main.dart';
@@ -68,6 +69,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
   bool _isPanelVisible = false;
   int? _selectedLessonIndex;
+  int? _selectedUnitNumber;
   String? _selectedLessonPlanetName;
   String? _lessonDescription;
 
@@ -439,6 +441,12 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                       _closePanel();
                     },
                     onClose: _closePanel,
+                    onViewUnitNotes: _useUnitLabels && _selectedUnitNumber != null
+                        ? () => _openUnitNote(_selectedUnitNumber!)
+                        : null,
+                    onViewUnitFlashcards: _useUnitLabels && _selectedUnitNumber != null
+                        ? () => _openUnitFlashcards(_selectedUnitNumber!)
+                        : null,
                   ),
                 ),
               ),
@@ -559,6 +567,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                         },
                         isOpeningTutor:
                             tutorController.isOpeningFromCourse.value,
+                        showExtendedActions: !_useUnitLabels,
                       ));
                 }),
               ),
@@ -660,10 +669,13 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() {
         _selectedLessonIndex = index;
+        _selectedUnitNumber = lessons[index]['unitNumber'] as int?;
         _selectedLessonPlanetName = _useUnitLabels
-            ? (lessons[index]['unitName'] ?? lessons[index]['planetName'])
+            ? 'Unit ${lessons[index]['unitNumber'] ?? index + 1}'
             : lessons[index]['planetName'];
-        _lessonDescription = lessons[index]['planetDescription'];
+        _lessonDescription = _useUnitLabels
+            ? (lessons[index]['unitName'] ?? lessons[index]['planetDescription'])
+            : lessons[index]['planetDescription'];
         _isPanelVisible = true;
       });
       // Also update the CourseController’s active lesson & planet
@@ -707,5 +719,67 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
       _isPanelVisible = false;
       _highlightedPlanetIndex = null;
     });
+  }
+
+  // ─── AP unit helpers ────────────────────────────────────────────────────────
+
+  Future<void> _openUnitNote(int unitNumber) async {
+    final auth = Get.find<AuthController>();
+    final token = await auth.getIdToken();
+    if (token == null) return;
+
+    final response = await ApiService().getAPUnitNote(
+      token: token,
+      courseId: courseController.selectedCourseId.value,
+      unitNumber: unitNumber,
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final note = data['note'] as Map<String, dynamic>?;
+      final content = note?['content'] as String? ?? '';
+      Get.to(
+        () => NoteScreen(markdownText: content),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+      );
+    } else {
+      Get.snackbar(
+        'Note',
+        'No note available for this unit yet.',
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
+  void _openUnitFlashcards(int unitNumber) {
+    final unitLessons = courseController.lessons
+        .where((l) => l['unitNumber'] == unitNumber)
+        .toList();
+
+    final flashcards = unitLessons
+        .expand((l) => (l['flashcards'] as List<dynamic>? ?? []))
+        .map((f) => Flashcard.fromMap(f as Map<String, dynamic>))
+        .toList();
+
+    if (flashcards.isEmpty) {
+      Get.snackbar(
+        'Cards',
+        'No flashcards available for this unit yet.',
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+      return;
+    }
+
+    Get.to(
+      () => FlashcardScreen(flashcards: flashcards),
+      duration: const Duration(milliseconds: 300),
+    );
   }
 }
