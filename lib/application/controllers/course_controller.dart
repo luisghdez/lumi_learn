@@ -299,20 +299,7 @@ class CourseController extends GetxController {
         questions[0].lessonType == LessonType.flashcards) {
       final flashcards = questions[0].flashcards;
       if (flashcards.isNotEmpty) {
-        const int chunkSize = 4;
-        final List<Question> matchQuestions = [];
-        for (int i = 0; i < flashcards.length; i += chunkSize) {
-          final chunk =
-              flashcards.sublist(i, min(i + chunkSize, flashcards.length));
-          matchQuestions.add(Question(
-            questionText: "Match the Terms", // Customize as needed
-            options: [],
-            lessonType: LessonType.matchTheTerms,
-            flashcards: chunk,
-          ));
-        }
-        // Append the new matchTheTerms questions to the list.
-        questions.addAll(matchQuestions);
+        questions.addAll(_buildMatchChunks(flashcards));
       }
     }
     // Case 2: More than one question.
@@ -323,21 +310,8 @@ class CourseController extends GetxController {
       if (flashcardsIndex != -1) {
         final flashcards = questions[flashcardsIndex].flashcards;
         if (flashcards.isNotEmpty) {
-          const int chunkSize = 4;
-          final List<Question> matchQuestions = [];
-          for (int i = 0; i < flashcards.length; i += chunkSize) {
-            final chunk =
-                flashcards.sublist(i, min(i + chunkSize, flashcards.length));
-            matchQuestions.add(Question(
-              questionText: "Match the Terms", // Customize as needed
-              options: [],
-              lessonType: LessonType.matchTheTerms,
-              flashcards: chunk,
-            ));
-          }
-          // Replace the original flashcards question with the new matchTheTerms ones.
           questions.removeAt(flashcardsIndex);
-          questions.addAll(matchQuestions);
+          questions.addAll(_buildMatchChunks(flashcards));
         }
       }
       questions.shuffle();
@@ -392,6 +366,42 @@ class CourseController extends GetxController {
         // Handle unknown or unimplemented lesson types safely
         return LessonType.multipleChoice;
     }
+  }
+
+  /// Splits [flashcards] into match-the-terms chunks of up to 4 cards each.
+  /// Any chunk smaller than [minChunkSize] is padded by borrowing cards from
+  /// elsewhere in the full list so the match game always has enough pairs.
+  List<Question> _buildMatchChunks(
+    List<Flashcard> flashcards, {
+    int chunkSize = 4,
+    int minChunkSize = 3,
+  }) {
+    final List<Question> matchQuestions = [];
+
+    for (int i = 0; i < flashcards.length; i += chunkSize) {
+      List<Flashcard> chunk =
+          List<Flashcard>.from(flashcards.sublist(i, min(i + chunkSize, flashcards.length)));
+
+      // Pad short final chunks so the match game always has at least minChunkSize pairs.
+      if (chunk.length < minChunkSize && flashcards.length >= minChunkSize) {
+        final chunkTerms = chunk.map((c) => c.term).toSet();
+        final candidates = flashcards.where((c) => !chunkTerms.contains(c.term)).toList()
+          ..shuffle(Random());
+        for (final card in candidates) {
+          if (chunk.length >= minChunkSize) break;
+          chunk.add(card);
+        }
+      }
+
+      matchQuestions.add(Question(
+        questionText: "Match the Terms",
+        options: [],
+        lessonType: LessonType.matchTheTerms,
+        flashcards: chunk,
+      ));
+    }
+
+    return matchQuestions;
   }
 
   Future<Map<String, dynamic>> createCourse({

@@ -12,6 +12,8 @@ import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/home/components/feature_card.dart';
 import 'package:lumi_learn_app/screens/home/components/horizontal_category_list.dart';
+import 'package:lumi_learn_app/screens/ap_catalog/ap_catalog_screen.dart';
+import 'package:lumi_learn_app/screens/home/components/ap_courses_card.dart';
 import 'package:lumi_learn_app/screens/home/components/lumi_tutor_card.dart';
 import 'package:lumi_learn_app/screens/search/search_main.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -476,6 +478,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                             const SizedBox(height: 18),
                           ],
+                          // AP Courses Card
+                          FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _animationController,
+                              curve: const Interval(0.45, 1.0,
+                                  curve: Curves.easeOut),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding),
+                              child: ApCoursesCard(
+                                onBrowseTap: () {
+                                  Get.to(
+                                    () => const ApCatalogScreen(),
+                                    transition: Transition.fadeIn,
+                                    duration:
+                                        const Duration(milliseconds: 300),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                           // Top Picks Header - Index 5
                           FadeTransition(
                             opacity: CurvedAnimation(

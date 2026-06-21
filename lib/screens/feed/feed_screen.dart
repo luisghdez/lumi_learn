@@ -211,13 +211,20 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     }
   }
 
+  // Only initialize controllers within ±2 of the current page and dispose
+  // those that drift beyond ±3, so we never open more than ~5 network
+  // connections at once instead of one per fetched batch (20+).
+  static const int _initWindowRadius = 2;
+  static const int _keepWindowRadius = 3;
+
   Future<void> _syncVideoControllers() async {
     final videos = _videoController.videos;
     final activeIds = videos.map((video) => video.id).toSet();
+
+    // Dispose controllers for videos no longer in the list at all.
     final staleIds = _videoPlayers.keys
         .where((id) => !activeIds.contains(id))
         .toList(growable: false);
-
     for (final id in staleIds) {
       await _videoPlayers.remove(id)?.dispose();
       _videoPlayerUrls.remove(id);
@@ -227,7 +234,21 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
       _currentIndex = videos.length - 1;
     }
 
-    for (final video in videos) {
+    // Dispose controllers that are too far from the current index to free
+    // memory and network buffers.
+    for (int i = 0; i < videos.length; i++) {
+      if ((i - _currentIndex).abs() <= _keepWindowRadius) continue;
+      final id = videos[i].id;
+      if (_videoPlayers.containsKey(id)) {
+        await _videoPlayers.remove(id)?.dispose();
+        _videoPlayerUrls.remove(id);
+      }
+    }
+
+    // Initialize controllers only for videos within the init window.
+    for (int i = 0; i < videos.length; i++) {
+      if ((i - _currentIndex).abs() > _initWindowRadius) continue;
+      final video = videos[i];
       if (video.isSlideshow) continue;
       final playbackUrl = video.playbackUrl;
       if (playbackUrl == null || playbackUrl.isEmpty) continue;
@@ -295,6 +316,11 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     }
 
     _currentIndex = index;
+
+    // Slide the init/keep window to the new position: pre-loads the next
+    // video and frees memory for controllers far behind.
+    _syncVideoControllers();
+
     final currentVideo = _currentVideo;
     if (currentVideo != null) {
       final controller = _videoPlayers[currentVideo.id];
