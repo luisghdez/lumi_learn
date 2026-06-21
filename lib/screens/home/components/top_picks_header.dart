@@ -44,7 +44,7 @@ class TopPicksHeader extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'View All',
+                'View Saved',
                 style: titleStyle.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,

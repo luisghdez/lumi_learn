@@ -50,7 +50,7 @@ class HorizontalCategoryList extends StatelessWidget {
                     height: responsiveHeight,
                     title: course['title'] ?? 'Untitled',
                     imagePath: galaxyImagePath,
-                    tags: course['tags'] ?? [],
+                    tags: List<String>.from(course['tags'] ?? []),
                     subject: course['subject'],
                     hasEmbeddings: course['hasEmbeddings'] ?? false,
                     createdByName: course['createdByName'],

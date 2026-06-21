@@ -5,12 +5,14 @@ class HomeHeader extends StatelessWidget {
   final int streakCount;
   final int xpCount;
   final bool isPremium;
+  final bool showStats;
 
   const HomeHeader({
     Key? key,
-    required this.streakCount,
-    required this.xpCount,
     required this.isPremium,
+    this.streakCount = 0,
+    this.xpCount = 0,
+    this.showStats = true,
   }) : super(key: key);
 
   @override
@@ -58,43 +60,44 @@ class HomeHeader extends StatelessWidget {
           ],
         ),
 
-        // Right side: icons and numbers
-        Row(
-          children: [
-            // Star Icon + XP Count
-            Row(
-              children: [
-                Image.asset(
-                  'assets/icons/star.png',
-                  width: 22,
-                  height: 22,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  NumberFormat.decimalPattern().format(xpCount),
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ],
-            ),
-            const SizedBox(width: 18),
+        if (showStats)
+          // Right side: icons and numbers
+          Row(
+            children: [
+              // Star Icon + XP Count
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/icons/star.png',
+                    width: 22,
+                    height: 22,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    NumberFormat.decimalPattern().format(xpCount),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 18),
 
-            // Meteor Icon + Streak Count
-            Row(
-              children: [
-                Image.asset(
-                  'assets/icons/meteor.png',
-                  width: 24,
-                  height: 24,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  streakCount.toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ],
-            ),
-          ],
-        )
+              // Meteor Icon + Streak Count
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/icons/meteor.png',
+                    width: 24,
+                    height: 24,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    streakCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
+            ],
+          )
       ],
     );
   }

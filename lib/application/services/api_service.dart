@@ -90,6 +90,37 @@ class ApiService {
     return response;
   }
 
+  Future<http.Response> getApCatalogCourses({
+    required String token,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/courses/ap-catalog');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
+  Future<http.Response> getAPUnitNote({
+    required String token,
+    required String courseId,
+    required int unitNumber,
+  }) async {
+    final uri =
+        Uri.parse('$_baseUrl/courses/$courseId/notes/$unitNumber');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response;
+  }
+
   Future<http.Response> getFeaturedCourses({
     required String token,
   }) async {

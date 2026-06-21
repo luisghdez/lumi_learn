@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
@@ -60,17 +62,23 @@ class CategoryCard extends StatelessWidget {
             width: 1,
           ),
           borderRadius: BorderRadius.circular(16),
-          image: DecorationImage(
-            image: AssetImage(imagePath),
-            fit: BoxFit.cover,
-          ),
         ),
-        child: Stack(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
           children: [
+            Positioned.fill(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.black.withOpacity(0.65),
               ),
             ),
             Align(
@@ -177,6 +185,7 @@ class CategoryCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

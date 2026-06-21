@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class ClassCourseCard extends StatelessWidget {
@@ -27,12 +28,21 @@ class ClassCourseCard extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
+            // Blur + darken overlay
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                child: Container(
+                  color: Colors.black.withOpacity(0.35),
+                ),
+              ),
+            ),
             // Dark gradient overlay
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                   ),

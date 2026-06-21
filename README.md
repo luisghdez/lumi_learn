@@ -29,7 +29,7 @@ Welcome to **Lumi Learn**! This is a Flutter-based application. Follow these ins
 
 All HTTP clients (including **podcasts**) use [`lib/application/services/api_config.dart`](lib/application/services/api_config.dart):
 
-- **Default:** if you do not pass a define, the app uses **`https://lumi-api-dev.onrender.com`** so a physical device works without pointing at your laptop.
+- **Default:** if you do not pass a define, the app uses **`https://lumilearnapp.com`** (prod) so a physical device works without extra setup.
 - **Local backend** (API running on your machine — use the host the **phone/emulator** can reach, not always `localhost`):
 
   ```bash

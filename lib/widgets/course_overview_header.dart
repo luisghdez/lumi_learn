@@ -16,6 +16,9 @@ class CourseOverviewHeader extends StatelessWidget {
   final VoidCallback onViewPodcast;
   final bool isOpeningTutor;
 
+  /// When false, the Tutor and Cast buttons are hidden (e.g. for AP courses).
+  final bool showExtendedActions;
+
   const CourseOverviewHeader({
     Key? key,
     required this.onBack,
@@ -27,6 +30,7 @@ class CourseOverviewHeader extends StatelessWidget {
     required this.onViewLumiTutor,
     required this.onViewPodcast,
     this.isOpeningTutor = false,
+    this.showExtendedActions = true,
   }) : super(key: key);
 
   @override
@@ -169,44 +173,45 @@ class CourseOverviewHeader extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      // Fixed: Use flexible layout for 4 buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _HeaderButton(
-                              icon: Icons.note_alt_outlined,
-                              label: 'Note',
-                              onTap: onViewNotes,
+                      if (showExtendedActions) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _HeaderButton(
+                                icon: Icons.note_alt_outlined,
+                                label: 'Note',
+                                onTap: onViewNotes,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: _HeaderButton(
-                              icon: Icons.menu_book_outlined,
-                              label: 'Cards',
-                              onTap: onViewFlashcards,
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _HeaderButton(
+                                icon: Icons.menu_book_outlined,
+                                label: 'Cards',
+                                onTap: onViewFlashcards,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: _HeaderButton(
-                              icon: Icons.chat_bubble_outline,
-                              label: 'Tutor',
-                              onTap: onViewLumiTutor,
-                              isLoading: isOpeningTutor,
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _HeaderButton(
+                                icon: Icons.chat_bubble_outline,
+                                label: 'Tutor',
+                                onTap: onViewLumiTutor,
+                                isLoading: isOpeningTutor,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: _HeaderButton(
-                              icon: Icons.podcasts,
-                              label: 'Cast',
-                              onTap: onViewPodcast,
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: _HeaderButton(
+                                icon: Icons.podcasts,
+                                label: 'Cast',
+                                onTap: onViewPodcast,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ],
