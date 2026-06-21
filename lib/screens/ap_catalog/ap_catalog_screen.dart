@@ -1,33 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:lumi_learn_app/application/controllers/ap_catalog_controller.dart';
 import 'package:lumi_learn_app/screens/ap_catalog/components/ap_subject_card.dart';
 import 'package:lumi_learn_app/screens/ap_catalog/components/ap_unit_flow_card.dart';
 import 'package:lumi_learn_app/screens/ap_catalog/models/ap_subject.dart';
 
-class ApCatalogScreen extends StatefulWidget {
+class ApCatalogScreen extends StatelessWidget {
   const ApCatalogScreen({super.key});
 
   @override
-  State<ApCatalogScreen> createState() => _ApCatalogScreenState();
-}
-
-class _ApCatalogScreenState extends State<ApCatalogScreen> {
-  // null = "All"
-  ApCategory? _selectedCategory;
-
-  List<ApSubject> get _filteredSubjects {
-    if (_selectedCategory == null) return kApSubjects;
-    return kApSubjects
-        .where((s) => s.category == _selectedCategory)
-        .toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Create the controller lazily when the screen opens, dispose when it closes.
+    final controller = Get.put(ApCatalogController());
+
     final double screenWidth = MediaQuery.of(context).size.width;
     final double horizontalPadding = screenWidth >= 800 ? 32 : 16;
-    final subjects = _filteredSubjects;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -41,56 +29,171 @@ class _ApCatalogScreenState extends State<ApCatalogScreen> {
           ),
           SafeArea(
             bottom: false,
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                        horizontalPadding, 12, horizontalPadding, 0),
-                    child: const _CatalogHeader(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                        horizontalPadding, 20, horizontalPadding, 0),
-                    child: const ApUnitFlowCard(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 20, bottom: 16),
-                    child: _CategoryFilterBar(
-                      horizontalPadding: horizontalPadding,
-                      selected: _selectedCategory,
-                      onSelected: (category) {
-                        setState(() => _selectedCategory = category);
-                      },
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                      horizontalPadding, 0, horizontalPadding, 32),
-                  sliver: SliverList.separated(
-                    itemCount: subjects.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
-                    itemBuilder: (context, index) {
-                      return ApSubjectCard(
-                        subject: subjects[index],
-                        onStart: () {},
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return _buildLoading(horizontalPadding);
+              }
+              if (controller.error.value.isNotEmpty) {
+                return _buildError(controller, horizontalPadding);
+              }
+              return _CatalogBody(
+                controller: controller,
+                horizontalPadding: horizontalPadding,
+              );
+            }),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildLoading(double hp) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(hp, 12, hp, 0),
+            child: const _CatalogHeader(),
+          ),
+        ),
+        const SliverFillRemaining(
+          child: Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF4FC3F7),
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError(ApCatalogController controller, double hp) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(hp, 12, hp, 0),
+            child: const _CatalogHeader(),
+          ),
+        ),
+        SliverFillRemaining(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  controller.error.value,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: controller.fetchCatalog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15)),
+                    ),
+                    child: const Text(
+                      'Try again',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
+
+// ─── Main body ────────────────────────────────────────────────────────────────
+
+class _CatalogBody extends StatefulWidget {
+  final ApCatalogController controller;
+  final double horizontalPadding;
+
+  const _CatalogBody({
+    required this.controller,
+    required this.horizontalPadding,
+  });
+
+  @override
+  State<_CatalogBody> createState() => _CatalogBodyState();
+}
+
+class _CatalogBodyState extends State<_CatalogBody> {
+  ApCategory? _selectedCategory;
+
+  List<ApSubject> get _filtered {
+    final all = widget.controller.subjects;
+    if (_selectedCategory == null) return all;
+    return all.where((s) => s.category == _selectedCategory).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hp = widget.horizontalPadding;
+
+    return Obx(() {
+      final subjects = _filtered;
+
+      return CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(hp, 12, hp, 0),
+              child: const _CatalogHeader(),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(hp, 20, hp, 0),
+              child: const ApUnitFlowCard(),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 16),
+              child: _CategoryFilterBar(
+                horizontalPadding: hp,
+                selected: _selectedCategory,
+                onSelected: (category) {
+                  setState(() => _selectedCategory = category);
+                },
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(hp, 0, hp, 32),
+            sliver: SliverList.separated(
+              itemCount: subjects.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              itemBuilder: (context, index) {
+                return ApSubjectCard(
+                  subject: subjects[index],
+                  onStart: () => widget.controller.startCourse(subjects[index]),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    });
+  }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
 
 class _CatalogHeader extends StatelessWidget {
   const _CatalogHeader();
@@ -148,6 +251,8 @@ class _CatalogHeader extends StatelessWidget {
     );
   }
 }
+
+// ─── Filter bar ───────────────────────────────────────────────────────────────
 
 class _CategoryFilterBar extends StatelessWidget {
   final double horizontalPadding;

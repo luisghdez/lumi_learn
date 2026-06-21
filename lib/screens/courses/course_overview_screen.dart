@@ -26,7 +26,12 @@ import 'package:lumi_learn_app/screens/podcast/podcast_screen.dart';
 
 
 class CourseOverviewScreen extends StatefulWidget {
-  const CourseOverviewScreen({Key? key}) : super(key: key);
+  /// When provided, this callback completely replaces the default "Note" button
+  /// navigation (which opens a course-level NoteScreen). AP courses pass a
+  /// callback here that opens the per-unit notes picker instead.
+  final VoidCallback? onViewNotesOverride;
+
+  const CourseOverviewScreen({Key? key, this.onViewNotesOverride}) : super(key: key);
 
   @override
   _CourseOverviewScreenState createState() => _CourseOverviewScreenState();
@@ -440,6 +445,10 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                           );
                         },
                         onViewNotes: () {
+                          if (widget.onViewNotesOverride != null) {
+                            widget.onViewNotesOverride!();
+                            return;
+                          }
                           if (!courseController
                               .selectedCourseHasEmbeddings.value) {
                             Get.dialog(

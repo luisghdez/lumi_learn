@@ -10,6 +10,11 @@ class BottomPanel extends StatelessWidget {
   final VoidCallback onStartPressed;
   final VoidCallback onClose;
 
+  /// Optional unit label shown as a small pill below the planet name.
+  /// Pass a value like "Unit 3 • Atomic Structure" for AP courses.
+  /// When null (default) the pill is not rendered, preserving existing layout.
+  final String? unitLabel;
+
   const BottomPanel({
     Key? key,
     required this.selectedLessonIndex,
@@ -17,6 +22,7 @@ class BottomPanel extends StatelessWidget {
     required this.selectedLessonDescription,
     required this.onStartPressed,
     required this.onClose,
+    this.unitLabel,
   }) : super(key: key);
 
   @override
@@ -88,6 +94,33 @@ class BottomPanel extends StatelessWidget {
                                   fontWeight: FontWeight.w200,
                                 ),
                               ),
+                              if (unitLabel != null) ...[
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.25),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    unitLabel!,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color.fromARGB(200, 255, 255, 255),
+                                      fontWeight: FontWeight.w400,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
                               Text(
                                 selectedLessonDescription ?? '',
                                 maxLines: 5,
