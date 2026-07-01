@@ -1,7 +1,6 @@
 import UIKit
 import Flutter
 import UserNotifications
-import flutter_local_notifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -11,9 +10,7 @@ import flutter_local_notifications
   ) -> Bool {
 
     // Needed for background isolates to register plugins
-    FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { registry in
-      GeneratedPluginRegistrant.register(with: registry)
-    }
+    LocalNotificationsPluginRegistrant.setPluginRegistrantCallback()
 
     // Set the notification center delegate
     UNUserNotificationCenter.current().delegate = self
