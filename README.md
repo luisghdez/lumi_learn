@@ -57,6 +57,11 @@ If you see **`Connection refused` to `localhost`** on a real device, the phone i
    flutter run
    ```
 
+## Releasing to the App Store
+
+See [docs/ios-release.md](docs/ios-release.md) for the full step-by-step release checklist,
+including how to update version numbers and build the IPA.
+
 ## Project Structure
 
    ```bash
