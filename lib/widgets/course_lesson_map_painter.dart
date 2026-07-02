@@ -19,8 +19,72 @@ Rect _boundsForPoints(List<Offset> pts) {
   return Rect.fromLTRB(minX, minY, maxX, maxY);
 }
 
-/// Scrolls with the lesson row: deep space gradient, soft nebula tied to each
-/// planet, a dim “full route”, and a bright path for the unlocked / current leg.
+/// Neutral dark veil that dims the starfield for legibility. Fixed to the
+/// viewport (not the scrollable lesson row) so it always covers the full
+/// visible area and never "cuts off" at the map's edges during scroll /
+/// overscroll bounce.
+class CourseMapVeilPainter extends CustomPainter {
+  const CourseMapVeilPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+
+    // --- Neutral dark veil (lets stargazing / galaxy show through — avoid
+    //    saturated teal & blue washes that hid the starfield). ---
+    final base = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment(-0.85, -1),
+        end: Alignment(0.9, 1.05),
+        colors: [
+          const Color(0xFF020203).withValues(alpha: 0.38),
+          const Color(0xFF050508).withValues(alpha: 0.52),
+          const Color(0xFF030305).withValues(alpha: 0.58),
+          const Color(0xFF06060a).withValues(alpha: 0.62),
+        ],
+        stops: const [0.0, 0.22, 0.55, 1.0],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, base);
+
+    // --- Hint of warm dust (very low alpha, not green/teal) ---
+    final dust = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment(-0.85, 0.1),
+        end: Alignment(0.75, 0.65),
+        colors: [
+          const Color(0xFF2a2435).withValues(alpha: 0.07),
+          const Color(0xFF18141c).withValues(alpha: 0.05),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.42, 1.0],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, dust);
+
+    // --- Bottom read legibility only (neutral, no cyan “horizon”) ---
+    final floorDim = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          const Color(0xFF010102).withValues(alpha: 0.45),
+        ],
+        stops: const [0.55, 1.0],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, floorDim);
+  }
+
+  @override
+  bool shouldRepaint(covariant CourseMapVeilPainter oldDelegate) => false;
+}
+
+/// Scrolls with the lesson row: soft nebula tied to each planet, constellation
+/// specks, a dim “full route”, and a bright path for the unlocked / current
+/// leg. The atmospheric veil itself is drawn separately by
+/// [CourseMapVeilPainter] as a fixed viewport layer — see that class' doc.
 class CourseLessonMapPainter extends CustomPainter {
   CourseLessonMapPainter({
     required this.lessonCount,
@@ -71,57 +135,6 @@ class CourseLessonMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final rect = Offset.zero & size;
-
-    // --- Neutral dark veil (lets stargazing / galaxy show through — avoid
-    //    saturated teal & blue washes that hid the starfield). ---
-    final base = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          const Color(0xFF020203).withValues(alpha: 0.38),
-          const Color(0xFF050508).withValues(alpha: 0.52),
-          const Color(0xFF030305).withValues(alpha: 0.58),
-          const Color(0xFF06060a).withValues(alpha: 0.62),
-        ],
-        stops: const [0.0, 0.22, 0.55, 1.0],
-      ).createShader(rect);
-
-    canvas.drawRect(rect, base);
-
-    // --- Hint of warm dust (very low alpha, not green/teal) ---
-    final dust = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment(-0.85, 0.1),
-        end: Alignment(0.75, 0.65),
-        colors: [
-          const Color(0xFF2a2435).withValues(alpha: 0.07),
-          const Color(0xFF18141c).withValues(alpha: 0.05),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.42, 1.0],
-      ).createShader(rect);
-
-    canvas.drawRect(rect, dust);
-
-    // --- Bottom read legibility only (neutral, no cyan “horizon”) ---
-    final floorDim = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.transparent,
-          const Color(0xFF010102).withValues(alpha: 0.45),
-        ],
-        stops: const [0.55, 1.0],
-      ).createShader(rect);
-
-    canvas.drawRect(rect, floorDim);
-
     if (lessonCount == 0) return;
 
     final centers = _centers(lessonCount, screenHeight);
@@ -143,30 +156,6 @@ class CourseLessonMapPainter extends CustomPainter {
           ],
         ).createShader(Rect.fromCircle(center: c, radius: r));
       canvas.drawCircle(c, r, glowPaint);
-    }
-
-    // --- Constellation specks (deterministic from index) ---
-    final speck = Paint()..style = PaintingStyle.fill;
-    for (var i = 0; i < lessonCount; i++) {
-      final cx = CourseLessonMapLayout.planetLeftX(i) +
-          CourseLessonMapLayout.planetSize / 2;
-      final cy = CourseLessonMapLayout.planetTopY(
-            i,
-            screenHeight,
-            minPlanetTop: minPlanetTop,
-          ) +
-          CourseLessonMapLayout.planetSize / 2;
-      for (var k = 0; k < 8; k++) {
-        final t = (i * 17 + k * 13) % 1000 / 1000.0;
-        final angle = t * pi * 2;
-        final dist = 55 + (i * 11 + k * 7) % 45;
-        final px = cx + cos(angle) * dist;
-        final py = cy + sin(angle) * dist * 0.85;
-        if (px < 0 || px > w || py < 0 || py > h) continue;
-        final a = 0.08 + (k % 3) * 0.06;
-        speck.color = Colors.white.withValues(alpha: a);
-        canvas.drawCircle(Offset(px, py), 1.1 + (k % 2) * 0.6, speck);
-      }
     }
 
     // --- Full route (locked / future tone) ---

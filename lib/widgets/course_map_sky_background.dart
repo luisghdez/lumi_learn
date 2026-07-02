@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
+import 'package:lumi_learn_app/widgets/starry_background.dart'
+    show ShootingStar, ShootingStarDirection;
 
-/// Galaxy image + drifting / twinkling stars that parallax with horizontal scroll.
-/// Sits under [CourseLessonMapPainter]; keep map gradient slightly transparent at top
-/// so this reads through near the status bar.
+/// Pure-black deep-space gradient + drifting / twinkling procedural stars,
+/// plus the occasional shooting star, that parallax with horizontal scroll.
+/// Sits under [CourseLessonMapPainter]; keep map gradient slightly
+/// transparent at top so this reads through near the status bar.
 class CourseMapSkyBackground extends StatefulWidget {
   const CourseMapSkyBackground({
     super.key,
@@ -26,6 +30,11 @@ class _CourseMapSkyBackgroundState extends State<CourseMapSkyBackground>
     with SingleTickerProviderStateMixin {
   Ticker? _ticker;
   Duration _elapsed = Duration.zero;
+  Duration _lastTick = Duration.zero;
+
+  final List<ShootingStar> _shootingStars = [];
+  final Random _random = Random();
+  Timer? _shootingStarTimer;
 
   void _onScroll() {
     if (mounted) setState(() {});
@@ -33,7 +42,97 @@ class _CourseMapSkyBackgroundState extends State<CourseMapSkyBackground>
 
   void _onTick(Duration elapsed) {
     if (!mounted) return;
-    setState(() => _elapsed = elapsed);
+    final deltaTime = (elapsed - _lastTick).inMicroseconds / 1e6;
+    _lastTick = elapsed;
+
+    setState(() {
+      _elapsed = elapsed;
+      for (final star in List<ShootingStar>.from(_shootingStars)) {
+        star.position += star.velocity * deltaTime;
+        star.opacity -= deltaTime * 0.3;
+        if (star.opacity <= 0 ||
+            star.position.dx < -100 ||
+            star.position.dx > widget.width + 100 ||
+            star.position.dy < -100 ||
+            star.position.dy > widget.height + 100) {
+          _shootingStars.remove(star);
+        }
+      }
+    });
+  }
+
+  void _scheduleNextShootingStar() {
+    final nextInterval = Duration(milliseconds: 3000 + _random.nextInt(11000));
+    _shootingStarTimer = Timer(nextInterval, () {
+      if (mounted) _addShootingStar();
+      _scheduleNextShootingStar();
+    });
+  }
+
+  void _addShootingStar() {
+    final w = widget.width;
+    final h = widget.height;
+    if (w <= 0 || h <= 0) return;
+
+    final direction = ShootingStarDirection
+        .values[_random.nextInt(ShootingStarDirection.values.length)];
+
+    Offset startPosition;
+    Offset velocity;
+
+    switch (direction) {
+      case ShootingStarDirection.leftToRight:
+        startPosition = Offset(-50, _random.nextDouble() * h * 0.5);
+        velocity = Offset(
+            _random.nextDouble() * 200 + 300, _random.nextDouble() * 100 + 150);
+        break;
+      case ShootingStarDirection.rightToLeft:
+        startPosition = Offset(w + 50, _random.nextDouble() * h * 0.5);
+        velocity = Offset(-(_random.nextDouble() * 200 + 300),
+            _random.nextDouble() * 100 + 150);
+        break;
+      case ShootingStarDirection.topToBottom:
+        startPosition = Offset(_random.nextDouble() * w, -50);
+        velocity = Offset(
+            _random.nextDouble() * 100 + 150, _random.nextDouble() * 200 + 300);
+        break;
+      case ShootingStarDirection.bottomToTop:
+        startPosition = Offset(_random.nextDouble() * w, h + 50);
+        velocity = Offset(_random.nextDouble() * 100 + 150,
+            -(_random.nextDouble() * 200 + 300));
+        break;
+      case ShootingStarDirection.topLeftToBottomRight:
+        startPosition = const Offset(-50, -50);
+        velocity = Offset(
+            _random.nextDouble() * 200 + 300, _random.nextDouble() * 200 + 300);
+        break;
+      case ShootingStarDirection.topRightToBottomLeft:
+        startPosition = Offset(w + 50, -50);
+        velocity = Offset(-(_random.nextDouble() * 200 + 300),
+            _random.nextDouble() * 200 + 300);
+        break;
+      case ShootingStarDirection.bottomLeftToTopRight:
+        startPosition = Offset(-50, h + 50);
+        velocity = Offset(_random.nextDouble() * 200 + 300,
+            -(_random.nextDouble() * 200 + 300));
+        break;
+      case ShootingStarDirection.bottomRightToTopLeft:
+        startPosition = Offset(w + 50, h + 50);
+        velocity = Offset(-(_random.nextDouble() * 200 + 300),
+            -(_random.nextDouble() * 200 + 300));
+        break;
+    }
+
+    setState(() {
+      _shootingStars.add(ShootingStar(
+        position: startPosition,
+        velocity: velocity,
+        opacity: 1.0,
+        size: 3.0 + _random.nextDouble() * 2.0,
+        trailLength: 100.0 + _random.nextDouble() * 50.0,
+        color: Colors.white,
+      ));
+    });
   }
 
   @override
@@ -41,6 +140,7 @@ class _CourseMapSkyBackgroundState extends State<CourseMapSkyBackground>
     super.initState();
     widget.scrollController.addListener(_onScroll);
     _ticker = createTicker(_onTick)..start();
+    _scheduleNextShootingStar();
   }
 
   @override
@@ -56,6 +156,7 @@ class _CourseMapSkyBackgroundState extends State<CourseMapSkyBackground>
   void dispose() {
     widget.scrollController.removeListener(_onScroll);
     _ticker?.dispose();
+    _shootingStarTimer?.cancel();
     super.dispose();
   }
 
@@ -77,21 +178,6 @@ class _CourseMapSkyBackgroundState extends State<CourseMapSkyBackground>
                 painter: _DeepSpaceBackdropPainter(),
               ),
             ),
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.34,
-                child: Image.asset(
-                  'assets/images/milky_way.png',
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  alignment: Alignment(
-                    (-0.88 + (scrollX * 0.00012).clamp(-0.35, 0.35))
-                        .clamp(-1.0, 1.0),
-                    -0.15,
-                  ),
-                ),
-              ),
-            ),
             CustomPaint(
               size: Size(widget.width, widget.height),
               painter: _StargazingStarfieldPainter(
@@ -100,6 +186,10 @@ class _CourseMapSkyBackgroundState extends State<CourseMapSkyBackground>
                 scrollX: scrollX,
                 elapsedSec: _elapsed.inMicroseconds / 1e6,
               ),
+            ),
+            CustomPaint(
+              size: Size(widget.width, widget.height),
+              painter: _ShootingStarPainter(shootingStars: _shootingStars),
             ),
           ],
         ),
@@ -275,10 +365,20 @@ class _StargazingStarfieldPainter extends CustomPainter {
     }
   }
 
+  // Thomas Wang's 32-bit integer mix hash. The previous simple LCG
+  // (`n * 1103515245 + 12345`) has very poor low-bit diffusion — since every
+  // star's inputs are linear functions of its index (e.g. `i * 13 + 7`),
+  // that weak mixing showed up as visible diagonal/straight-line lattices in
+  // the star field. This hash fully avalanches the bits so nearby / linearly
+  // related inputs no longer produce correlated outputs.
   static double _hash01(int n) {
-    var x = n * 1103515245 + 12345;
-    x &= 0x7fffffff;
-    return x / 0x7fffffff;
+    var h = n & 0xffffffff;
+    h = (h ^ 61) ^ (h >>> 16);
+    h = (h + (h << 3)) & 0xffffffff;
+    h = h ^ (h >>> 4);
+    h = (h * 0x27d4eb2d) & 0xffffffff;
+    h = h ^ (h >>> 15);
+    return (h & 0x7fffffff) / 0x7fffffff;
   }
 
   @override
@@ -288,4 +388,48 @@ class _StargazingStarfieldPainter extends CustomPainter {
         oldDelegate.width != width ||
         oldDelegate.height != height;
   }
+}
+
+/// Occasional streaking shooting star — the "touch" that was dropped when the
+/// screen moved off [ShootingStar]'s original home, [GalaxyBackground] (see
+/// `starry_background.dart`). Reuses that same data model here so the two
+/// backgrounds stay visually consistent.
+class _ShootingStarPainter extends CustomPainter {
+  _ShootingStarPainter({required this.shootingStars});
+
+  final List<ShootingStar> shootingStars;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final star in shootingStars) {
+      final direction = star.velocity / star.velocity.distance;
+      final tail = star.position - direction * star.trailLength;
+
+      final trailPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.center,
+          end: Alignment(-direction.dx, -direction.dy),
+          colors: [
+            star.color.withValues(alpha: star.opacity),
+            star.color.withValues(alpha: 0.0),
+          ],
+        ).createShader(Rect.fromPoints(star.position, tail))
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(star.position, tail, trailPaint);
+
+      final glowPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            star.color.withValues(alpha: star.opacity),
+            star.color.withValues(alpha: 0.0),
+          ],
+        ).createShader(Rect.fromCircle(center: star.position, radius: star.size))
+        ..blendMode = BlendMode.srcOver;
+      canvas.drawCircle(star.position, star.size, glowPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ShootingStarPainter oldDelegate) => true;
 }

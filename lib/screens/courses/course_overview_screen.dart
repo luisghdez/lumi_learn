@@ -169,7 +169,7 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
 
       return Scaffold(
         extendBodyBehindAppBar: true,
-        backgroundColor: const Color(0xFF070b14),
+        backgroundColor: Colors.black,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTapDown: (details) => _handleTapDown(context, details),
@@ -179,6 +179,27 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
               // given tight full-height (that stretched BackdropFilter / grey card).
               fit: StackFit.loose,
               children: [
+              // 0) Fixed full-viewport sky (outside the scroll view so it
+              //    never scrolls away / can't reveal the Scaffold behind it,
+              //    even during horizontal overscroll bounce). Stars still
+              //    parallax via scrollX passed to the painter.
+              Positioned.fill(
+                child: CourseMapSkyBackground(
+                  scrollController: _scrollController,
+                  width: screenWidth,
+                  height: screenHeight,
+                ),
+              ),
+              // 0b) Fixed atmospheric veil (also outside the scroll view, for
+              //    the same reason as the sky above — otherwise it cuts off
+              //    at the map's edges during scroll / overscroll bounce).
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: CourseMapVeilPainter(),
+                  ),
+                ),
+              ),
               // 1) Scrollable horizontal region (edge-to-edge vertically)
               Positioned.fill(
                 child: SingleChildScrollView(
@@ -189,13 +210,6 @@ class _CourseOverviewScreenState extends State<CourseOverviewScreen> {
                     height: screenHeight,
                     child: Stack(
                       children: [
-                        Positioned.fill(
-                          child: CourseMapSkyBackground(
-                            scrollController: _scrollController,
-                            width: totalWidth,
-                            height: screenHeight,
-                          ),
-                        ),
                         Positioned.fill(
                           child: CustomPaint(
                             painter: CourseLessonMapPainter(
