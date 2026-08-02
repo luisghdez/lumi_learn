@@ -769,6 +769,24 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
     widget.onPinchingChanged(false);
   }
 
+  void _exitPinchActivatedView() {
+    _clearPinchActivation();
+    if (mounted) setState(() {});
+  }
+
+  void _cyclePlaybackSpeed() {
+    final controller = widget.controller;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    const speeds = <double>[1.0, 1.5, 2.0];
+    final currentIndex = speeds.indexWhere(
+      (speed) => (speed - controller.value.playbackSpeed).abs() < 0.01,
+    );
+    final nextSpeed = speeds[(currentIndex + 1) % speeds.length];
+    unawaited(controller.setPlaybackSpeed(nextSpeed));
+    setState(() {});
+  }
+
   @override
   void didUpdateWidget(covariant _FeedVideoPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -936,6 +954,14 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
           const Center(
             child: _PlaybackSpeedIndicator(),
           ),
+        if (_isChromeHiddenByPinch)
+          _PinchActivatedVideoControls(
+            controller: playbackController,
+            onScrubbingChanged: _setScrubbing,
+            onExit: _exitPinchActivatedView,
+            onTogglePlayback: widget.onTap,
+            onCyclePlaybackSpeed: _cyclePlaybackSpeed,
+          ),
       ],
     );
   }
@@ -966,16 +992,175 @@ class _PlaybackSpeedIndicator extends StatelessWidget {
   }
 }
 
+/// Minimal playback controls shown only in the pinch-activated clean view.
+class _PinchActivatedVideoControls extends StatelessWidget {
+  const _PinchActivatedVideoControls({
+    required this.controller,
+    required this.onScrubbingChanged,
+    required this.onExit,
+    required this.onTogglePlayback,
+    required this.onCyclePlaybackSpeed,
+  });
+
+  final VideoPlayerController? controller;
+  final ValueChanged<bool> onScrubbingChanged;
+  final VoidCallback onExit;
+  final VoidCallback onTogglePlayback;
+  final VoidCallback onCyclePlaybackSpeed;
+
+  @override
+  Widget build(BuildContext context) {
+    final playbackController = controller;
+    if (playbackController == null) return const SizedBox.shrink();
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(36, 0, 36, 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _FeedVideoProgressBar(
+              controller: playbackController,
+              onScrubbingChanged: onScrubbingChanged,
+              showThumb: true,
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                _CleanViewIconButton(
+                  icon: Icons.close_rounded,
+                  onTap: onExit,
+                ),
+                const Spacer(),
+                _CleanViewPlaybackPill(
+                  controller: playbackController,
+                  onTogglePlayback: onTogglePlayback,
+                  onCyclePlaybackSpeed: onCyclePlaybackSpeed,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CleanViewIconButton extends StatelessWidget {
+  const _CleanViewIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.14),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 60,
+          height: 60,
+          child:
+              Icon(icon, color: Colors.white.withValues(alpha: 0.82), size: 36),
+        ),
+      ),
+    );
+  }
+}
+
+class _CleanViewPlaybackPill extends StatelessWidget {
+  const _CleanViewPlaybackPill({
+    required this.controller,
+    required this.onTogglePlayback,
+    required this.onCyclePlaybackSpeed,
+  });
+
+  final VideoPlayerController controller;
+  final VoidCallback onTogglePlayback;
+  final VoidCallback onCyclePlaybackSpeed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<VideoPlayerValue>(
+      valueListenable: controller,
+      builder: (context, value, child) {
+        final speed = value.playbackSpeed;
+        final speedLabel = speed == speed.roundToDouble()
+            ? '${speed.round()}×'
+            : '${speed.toStringAsFixed(1)}×';
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(36),
+          ),
+          child: SizedBox(
+            width: 196,
+            height: 60,
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: onTogglePlayback,
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(36),
+                    ),
+                    child: Icon(
+                      value.isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      color: Colors.white.withValues(alpha: 0.82),
+                      size: 42,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 2,
+                  height: 32,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: onCyclePlaybackSpeed,
+                    borderRadius: const BorderRadius.horizontal(
+                      right: Radius.circular(36),
+                    ),
+                    child: Center(
+                      child: Text(
+                        speedLabel,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.82),
+                          fontSize: 22,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// A compact, scrubbable playback indicator placed between the caption and
 /// the floating navigation bar.
 class _FeedVideoProgressBar extends StatefulWidget {
   const _FeedVideoProgressBar({
     required this.controller,
     required this.onScrubbingChanged,
+    this.showThumb = false,
   });
 
   final VideoPlayerController? controller;
   final ValueChanged<bool> onScrubbingChanged;
+  final bool showThumb;
 
   @override
   State<_FeedVideoProgressBar> createState() => _FeedVideoProgressBarState();
@@ -1100,6 +1285,17 @@ class _FeedVideoProgressBarState extends State<_FeedVideoProgressBar> {
                       backgroundColor: Colors.white.withValues(alpha: 0.34),
                     ),
                   ),
+                  if (widget.showThumb)
+                    Align(
+                      alignment: Alignment(-1 + (2 * progress), 0),
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: SizedBox(width: 14, height: 14),
+                      ),
+                    ),
                   if (_isScrubbing)
                     Positioned(
                       bottom: 18,
