@@ -116,6 +116,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   bool _obscuredByChildRoute = false;
   bool _fullscreenVideoRouteOpen = false;
   bool _isSpeedHoldActive = false;
+  bool _isVideoScrubbing = false;
 
   @override
   void initState() {
@@ -514,6 +515,12 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     if (mounted) setState(() {});
   }
 
+  void _setVideoScrubbing(bool active) {
+    if (_isVideoScrubbing == active) return;
+    _isVideoScrubbing = active;
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
@@ -567,6 +574,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                                   _requestFriendFromFeed(video),
                               onShare: () => shareFeedVideo(video),
                               onAccelerationChanged: _setSpeedHoldActive,
+                              onScrubbingChanged: _setVideoScrubbing,
                               onExpandFullscreen: () =>
                                   _openFullscreenVideo(controller),
                             );
@@ -588,11 +596,11 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
             ),
             Positioned.fill(
               child: IgnorePointer(
-                ignoring: _isSpeedHoldActive,
+                ignoring: _isSpeedHoldActive || _isVideoScrubbing,
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 160),
                   curve: Curves.easeOut,
-                  opacity: _isSpeedHoldActive ? 0 : 1,
+                  opacity: _isSpeedHoldActive || _isVideoScrubbing ? 0 : 1,
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: _FeedScopeBar(
@@ -634,6 +642,7 @@ class _FeedVideoPage extends StatefulWidget {
     required this.onRequestFriend,
     required this.onShare,
     required this.onAccelerationChanged,
+    required this.onScrubbingChanged,
     required this.onExpandFullscreen,
   });
 
@@ -651,6 +660,7 @@ class _FeedVideoPage extends StatefulWidget {
   final VoidCallback onRequestFriend;
   final VoidCallback onShare;
   final ValueChanged<bool> onAccelerationChanged;
+  final ValueChanged<bool> onScrubbingChanged;
   final VoidCallback onExpandFullscreen;
 
   @override
@@ -663,6 +673,9 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
   VideoPlayerController? _speedControlledController;
   double? _playbackSpeedBeforeHold;
   bool _isAccelerating = false;
+  bool _isScrubbing = false;
+
+  bool get _isChromeHidden => _isAccelerating || _isScrubbing;
 
   /// Starts accelerated playback only from the outer thirds of the video.
   /// The middle third remains gesture-free for future feed interactions.
@@ -704,6 +717,13 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
     if (notify && mounted) setState(() {});
   }
 
+  void _setScrubbing(bool scrubbing) {
+    if (_isScrubbing == scrubbing) return;
+    _isScrubbing = scrubbing;
+    widget.onScrubbingChanged(scrubbing);
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _stopAcceleratedPlayback(notify: false);
@@ -743,11 +763,11 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
       children: [
         backdrop,
         IgnorePointer(
-          ignoring: _isAccelerating,
+          ignoring: _isChromeHidden,
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOut,
-            opacity: _isAccelerating ? 0 : 1,
+            opacity: _isChromeHidden ? 0 : 1,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -824,22 +844,30 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
                       size: 86,
                     ),
                   ),
-                if (!video.isSlideshow)
-                  Positioned(
-                    left: 20,
-                    right: 20,
-                    // The floating navbar is translated down by 8 px, so this
-                    // offset visually centers the 4 px track in the gap below
-                    // the caption instead of biasing it toward the caption.
-                    bottom: widget.bottomOverlayPadding - 3,
-                    child: _FeedVideoProgressBar(
-                      controller: playbackController,
-                    ),
-                  ),
               ],
             ),
           ),
         ),
+        if (!video.isSlideshow)
+          Positioned(
+            left: 20,
+            right: 20,
+            // Account for the 20 px drag target and the navbar's 8 px
+            // translation so its centered 4 px track sits in the visual gap.
+            bottom: widget.bottomOverlayPadding - 11,
+            child: IgnorePointer(
+              ignoring: _isAccelerating,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOut,
+                opacity: _isAccelerating ? 0 : 1,
+                child: _FeedVideoProgressBar(
+                  controller: playbackController,
+                  onScrubbingChanged: _setScrubbing,
+                ),
+              ),
+            ),
+          ),
         if (_isAccelerating)
           const Center(
             child: _PlaybackSpeedIndicator(),
@@ -874,16 +902,101 @@ class _PlaybackSpeedIndicator extends StatelessWidget {
   }
 }
 
-/// A compact, non-interactive playback indicator styled for the space between
-/// the feed caption and the floating navigation bar.
-class _FeedVideoProgressBar extends StatelessWidget {
-  const _FeedVideoProgressBar({required this.controller});
+/// A compact, scrubbable playback indicator placed between the caption and
+/// the floating navigation bar.
+class _FeedVideoProgressBar extends StatefulWidget {
+  const _FeedVideoProgressBar({
+    required this.controller,
+    required this.onScrubbingChanged,
+  });
 
   final VideoPlayerController? controller;
+  final ValueChanged<bool> onScrubbingChanged;
+
+  @override
+  State<_FeedVideoProgressBar> createState() => _FeedVideoProgressBarState();
+}
+
+class _FeedVideoProgressBarState extends State<_FeedVideoProgressBar> {
+  Duration? _previewPosition;
+  Duration? _pendingSeek;
+  Future<void>? _seekOperation;
+  bool _isScrubbing = false;
+  bool _resumePlaybackAfterScrub = false;
+
+  VideoPlayerController? get _controller => widget.controller;
+
+  void _startScrub() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    _resumePlaybackAfterScrub = controller.value.isPlaying;
+    if (_resumePlaybackAfterScrub) unawaited(controller.pause());
+    _previewPosition = controller.value.position;
+    _isScrubbing = true;
+    widget.onScrubbingChanged(true);
+    setState(() {});
+  }
+
+  void _updateScrub(DragUpdateDetails details, double width) {
+    final controller = _controller;
+    final duration = controller?.value.duration;
+    if (!_isScrubbing || controller == null || duration == null || width <= 0) {
+      return;
+    }
+
+    final fraction = (details.localPosition.dx / width).clamp(0.0, 1.0);
+    final target = Duration(
+      milliseconds: (duration.inMilliseconds * fraction).round(),
+    );
+    _previewPosition = target;
+    unawaited(_seekTo(target));
+    setState(() {});
+  }
+
+  Future<void> _seekTo(Duration target) {
+    _pendingSeek = target;
+    return _seekOperation ??= _drainPendingSeeks();
+  }
+
+  Future<void> _drainPendingSeeks() async {
+    final controller = _controller;
+    if (controller == null) return;
+
+    while (_pendingSeek != null) {
+      final target = _pendingSeek!;
+      _pendingSeek = null;
+      await controller.seekTo(target);
+    }
+    _seekOperation = null;
+  }
+
+  Future<void> _finishScrub() async {
+    if (!_isScrubbing) return;
+
+    final target = _previewPosition;
+    if (target != null) await _seekTo(target);
+    final controller = _controller;
+    if (_resumePlaybackAfterScrub && controller?.value.isInitialized == true) {
+      await controller!.play();
+    }
+
+    if (!mounted) return;
+    _isScrubbing = false;
+    _previewPosition = null;
+    widget.onScrubbingChanged(false);
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    if (_isScrubbing) widget.onScrubbingChanged(false);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final playbackController = controller;
+    final playbackController = _controller;
     if (playbackController == null) return const SizedBox.shrink();
 
     return ValueListenableBuilder<VideoPlayerValue>(
@@ -894,23 +1007,75 @@ class _FeedVideoProgressBar extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
+        final position = _previewPosition ?? value.position;
         final progress =
-            (value.position.inMilliseconds / duration.inMilliseconds)
-                .clamp(0.0, 1.0);
+            (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
         return Semantics(
           label: 'Video progress',
           value: '${(progress * 100).round()}%',
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              color: Colors.white,
-              backgroundColor: Colors.white.withValues(alpha: 0.34),
+          child: SizedBox(
+            height: 20,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragStart: (_) => _startScrub(),
+              onHorizontalDragUpdate: (details) {
+                _updateScrub(details, context.size?.width ?? 0);
+              },
+              onHorizontalDragEnd: (_) => unawaited(_finishScrub()),
+              onHorizontalDragCancel: () => unawaited(_finishScrub()),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 4,
+                      color: Colors.white,
+                      backgroundColor: Colors.white.withValues(alpha: 0.34),
+                    ),
+                  ),
+                  if (_isScrubbing)
+                    Positioned(
+                      bottom: 18,
+                      child: _ScrubTimeLabel(position: position),
+                    ),
+                ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _ScrubTimeLabel extends StatelessWidget {
+  const _ScrubTimeLabel({required this.position});
+
+  final Duration position;
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = position.inMinutes;
+    final seconds = position.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.64),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Text(
+          '$minutes:$seconds',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -3236,6 +3401,7 @@ class _ProfileUserVideoFeedScreenState
                       onRequestFriend: () => _requestFriendFromFeed(video),
                       onShare: () => shareFeedVideo(video),
                       onAccelerationChanged: (_) {},
+                      onScrubbingChanged: (_) {},
                       onExpandFullscreen: () =>
                           _openFullscreenVideo(controller),
                     );
