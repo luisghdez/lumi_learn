@@ -1791,7 +1791,7 @@ class _FeedGradientOverlay extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.black.withValues(alpha: 0.45),
+            Colors.transparent,
             Colors.transparent,
             Colors.black.withValues(alpha: 0.78),
           ],
@@ -1922,13 +1922,13 @@ class _ActionRail extends StatelessWidget {
             isActive: video.likedByMe,
             activeTint: const Color(0xFFFF4D6D),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _LiquidGlassAction(
             icon: Icons.mode_comment_outlined,
             label: _formatCount(video.commentCount),
             onTap: onComment,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _LiquidGlassAction(
             icon: Icons.more_horiz_rounded,
             label: '',
@@ -2045,10 +2045,8 @@ class _FeedOwnerAvatarChip extends StatelessWidget {
   }
 }
 
-/// iOS-inspired liquid glass action button. Uses a true backdrop blur, a
-/// vertical specular gradient (top-bright → bottom-soft), and a hairline
-/// border. Activating swaps the glass tint to [activeTint] while keeping the
-/// glassy quality.
+/// Minimal feed action button with a subtle translucent surface and hairline
+/// border. Activating swaps the tint to [activeTint].
 class _LiquidGlassAction extends StatelessWidget {
   const _LiquidGlassAction({
     required this.icon,
@@ -2068,16 +2066,15 @@ class _LiquidGlassAction extends StatelessWidget {
   final bool showLabel;
   final double iconSize;
 
-  static const double _size = 50;
+  static const double _size = 44;
 
   @override
   Widget build(BuildContext context) {
     final tint = isActive ? (activeTint ?? Colors.white) : Colors.white;
-    final highlightAlpha = isActive ? 0.55 : 0.22;
-    final lowlightAlpha = isActive ? 0.18 : 0.06;
-    final borderAlpha = isActive ? 0.65 : 0.28;
+    final highlightAlpha = isActive ? 0.42 : 0.14;
+    final lowlightAlpha = isActive ? 0.12 : 0.04;
+    final borderAlpha = isActive ? 0.52 : 0.22;
     final iconColor = isActive ? Colors.white : Colors.white;
-    final glowAlpha = isActive ? 0.35 : 0.0;
 
     return GestureDetector(
       onTap: onTap,
@@ -2090,20 +2087,8 @@ class _LiquidGlassAction extends StatelessWidget {
             curve: Curves.easeOut,
             width: _size,
             height: _size,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: tint.withValues(alpha: glowAlpha),
-                  blurRadius: 18,
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.28),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
-                ),
-              ],
             ),
             child: ClipOval(
               child: BackdropFilter(
@@ -2139,20 +2124,13 @@ class _LiquidGlassAction extends StatelessWidget {
             ),
           ),
           if (showLabel) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               label,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                shadows: [
-                  Shadow(
-                    color: Colors.black54,
-                    blurRadius: 4,
-                    offset: Offset(0, 1),
-                  ),
-                ],
               ),
             ),
           ],
