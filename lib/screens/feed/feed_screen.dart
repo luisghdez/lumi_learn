@@ -824,6 +824,18 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
                       size: 86,
                     ),
                   ),
+                if (!video.isSlideshow)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    // The floating navbar is translated down by 8 px, so this
+                    // offset visually centers the 4 px track in the gap below
+                    // the caption instead of biasing it toward the caption.
+                    bottom: widget.bottomOverlayPadding - 3,
+                    child: _FeedVideoProgressBar(
+                      controller: playbackController,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -858,6 +870,47 @@ class _PlaybackSpeedIndicator extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A compact, non-interactive playback indicator styled for the space between
+/// the feed caption and the floating navigation bar.
+class _FeedVideoProgressBar extends StatelessWidget {
+  const _FeedVideoProgressBar({required this.controller});
+
+  final VideoPlayerController? controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final playbackController = controller;
+    if (playbackController == null) return const SizedBox.shrink();
+
+    return ValueListenableBuilder<VideoPlayerValue>(
+      valueListenable: playbackController,
+      builder: (context, value, child) {
+        final duration = value.duration;
+        if (!value.isInitialized || duration <= Duration.zero) {
+          return const SizedBox.shrink();
+        }
+
+        final progress =
+            (value.position.inMilliseconds / duration.inMilliseconds)
+                .clamp(0.0, 1.0);
+        return Semantics(
+          label: 'Video progress',
+          value: '${(progress * 100).round()}%',
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              color: Colors.white,
+              backgroundColor: Colors.white.withValues(alpha: 0.34),
+            ),
+          ),
+        );
+      },
     );
   }
 }
