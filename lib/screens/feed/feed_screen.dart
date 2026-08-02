@@ -919,11 +919,14 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
                     ),
                   ),
                 if (isPaused)
-                  const Center(
-                    child: Icon(
-                      Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 86,
+                  Center(
+                    child: GestureDetector(
+                      onTap: widget.onTap,
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Color.fromRGBO(255, 255, 255, 0.82),
+                        size: 86,
+                      ),
                     ),
                   ),
               ],
@@ -1549,11 +1552,14 @@ class _FullscreenFeedVideoPlayerState
               ),
             ),
             if (isPaused)
-              const Center(
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 92,
+              Center(
+                child: GestureDetector(
+                  onTap: _togglePlayback,
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: Color.fromRGBO(255, 255, 255, 0.82),
+                    size: 92,
+                  ),
                 ),
               ),
           ],
