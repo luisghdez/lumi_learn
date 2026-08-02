@@ -117,6 +117,10 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   bool _fullscreenVideoRouteOpen = false;
   bool _isSpeedHoldActive = false;
   bool _isVideoScrubbing = false;
+  bool _isVideoPinching = false;
+
+  bool get _isFeedChromeHidden =>
+      _isSpeedHoldActive || _isVideoScrubbing || _isVideoPinching;
 
   @override
   void initState() {
@@ -312,6 +316,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
       _isFeedActive && !_obscuredByChildRoute && !_createHubOpen;
 
   void _handlePageChanged(int index) {
+    _setVideoPinching(false);
     final previousVideo = _currentVideo;
     if (previousVideo != null) {
       _videoPlayers[previousVideo.id]?.pause();
@@ -511,13 +516,20 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   void _setSpeedHoldActive(bool active) {
     if (_isSpeedHoldActive == active) return;
     _isSpeedHoldActive = active;
-    _navigationController.setFeedChromeHidden(active);
+    _navigationController.setFeedChromeHidden(_isFeedChromeHidden);
     if (mounted) setState(() {});
   }
 
   void _setVideoScrubbing(bool active) {
     if (_isVideoScrubbing == active) return;
     _isVideoScrubbing = active;
+    if (mounted) setState(() {});
+  }
+
+  void _setVideoPinching(bool active) {
+    if (_isVideoPinching == active) return;
+    _isVideoPinching = active;
+    _navigationController.setFeedChromeHidden(_isFeedChromeHidden);
     if (mounted) setState(() {});
   }
 
@@ -575,6 +587,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                               onShare: () => shareFeedVideo(video),
                               onAccelerationChanged: _setSpeedHoldActive,
                               onScrubbingChanged: _setVideoScrubbing,
+                              onPinchingChanged: _setVideoPinching,
                               onExpandFullscreen: () =>
                                   _openFullscreenVideo(controller),
                             );
@@ -596,11 +609,11 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
             ),
             Positioned.fill(
               child: IgnorePointer(
-                ignoring: _isSpeedHoldActive || _isVideoScrubbing,
+                ignoring: _isFeedChromeHidden,
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 160),
                   curve: Curves.easeOut,
-                  opacity: _isSpeedHoldActive || _isVideoScrubbing ? 0 : 1,
+                  opacity: _isFeedChromeHidden ? 0 : 1,
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: _FeedScopeBar(
@@ -643,6 +656,7 @@ class _FeedVideoPage extends StatefulWidget {
     required this.onShare,
     required this.onAccelerationChanged,
     required this.onScrubbingChanged,
+    required this.onPinchingChanged,
     required this.onExpandFullscreen,
   });
 
@@ -661,6 +675,7 @@ class _FeedVideoPage extends StatefulWidget {
   final VoidCallback onShare;
   final ValueChanged<bool> onAccelerationChanged;
   final ValueChanged<bool> onScrubbingChanged;
+  final ValueChanged<bool> onPinchingChanged;
   final VoidCallback onExpandFullscreen;
 
   @override
@@ -674,8 +689,12 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
   double? _playbackSpeedBeforeHold;
   bool _isAccelerating = false;
   bool _isScrubbing = false;
+  bool _isPinching = false;
+  bool _isChromeHiddenByPinch = false;
+  double _pinchScale = 1;
 
-  bool get _isChromeHidden => _isAccelerating || _isScrubbing;
+  bool get _isChromeHidden =>
+      _isAccelerating || _isScrubbing || _isChromeHiddenByPinch;
 
   /// Starts accelerated playback only from the outer thirds of the video.
   /// The middle third remains gesture-free for future feed interactions.
@@ -724,8 +743,44 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
     if (mounted) setState(() {});
   }
 
+  void _handlePinchUpdate(ScaleUpdateDetails details) {
+    if (details.pointerCount < 2) return;
+    if (!_isPinching) {
+      _isPinching = true;
+      if (!_isChromeHiddenByPinch) {
+        _isChromeHiddenByPinch = true;
+        widget.onPinchingChanged(true);
+      }
+    }
+    _pinchScale = details.scale.clamp(1.0, 3.0);
+    setState(() {});
+  }
+
+  void _finishPinch(ScaleEndDetails _) {
+    if (!_isPinching) return;
+    _isPinching = false;
+    _pinchScale = 1;
+    setState(() {});
+  }
+
+  void _clearPinchActivation() {
+    if (!_isChromeHiddenByPinch) return;
+    _isChromeHiddenByPinch = false;
+    widget.onPinchingChanged(false);
+  }
+
+  @override
+  void didUpdateWidget(covariant _FeedVideoPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isCurrent && !widget.isCurrent) {
+      _clearPinchActivation();
+    }
+  }
+
   @override
   void dispose() {
+    _clearPinchActivation();
+    if (_isScrubbing) widget.onScrubbingChanged(false);
     _stopAcceleratedPlayback(notify: false);
     super.dispose();
   }
@@ -754,8 +809,17 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
             onLongPressStart: _startAcceleratedPlayback,
             onLongPressEnd: (_) => _stopAcceleratedPlayback(),
             onLongPressCancel: _stopAcceleratedPlayback,
+            onScaleUpdate: _handlePinchUpdate,
+            onScaleEnd: _finishPinch,
             behavior: HitTestBehavior.deferToChild,
-            child: _VideoBackdrop(controller: playbackController),
+            child: AnimatedScale(
+              duration: _isPinching
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              scale: _pinchScale,
+              child: _VideoBackdrop(controller: playbackController),
+            ),
           );
 
     return Stack(
@@ -856,11 +920,11 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
             // translation so its centered 4 px track sits in the visual gap.
             bottom: widget.bottomOverlayPadding - 11,
             child: IgnorePointer(
-              ignoring: _isAccelerating,
+              ignoring: _isAccelerating || _isChromeHiddenByPinch,
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOut,
-                opacity: _isAccelerating ? 0 : 1,
+                opacity: _isAccelerating || _isChromeHiddenByPinch ? 0 : 1,
                 child: _FeedVideoProgressBar(
                   controller: playbackController,
                   onScrubbingChanged: _setScrubbing,
@@ -3402,6 +3466,7 @@ class _ProfileUserVideoFeedScreenState
                       onShare: () => shareFeedVideo(video),
                       onAccelerationChanged: (_) {},
                       onScrubbingChanged: (_) {},
+                      onPinchingChanged: (_) {},
                       onExpandFullscreen: () =>
                           _openFullscreenVideo(controller),
                     );
