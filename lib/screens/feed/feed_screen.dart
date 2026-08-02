@@ -73,56 +73,56 @@ String _downloadFileExtension(VideoPost video) {
   return '.mp4';
 }
 
-/// Downloads a video to a temporary file. iOS saves that file directly to the
-/// Photos library; other platforms receive it through their share sheet.
-Future<void> downloadFeedVideo(BuildContext context, VideoPost video) async {
+/// Downloads a video to a temporary file while reporting byte-level progress.
+Future<File> _downloadFeedVideoFile(
+  VideoPost video, {
+  required http.Client client,
+  required ValueChanged<double?> onProgress,
+}) async {
   final url = video.playbackUrl;
-  final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
   if (!_canDownloadFeedVideo(video) || url == null) {
-    Get.snackbar('Download unavailable', 'This video cannot be downloaded.');
-    return;
+    throw StateError('This video cannot be downloaded.');
   }
 
+  final response = await client
+      .send(http.Request('GET', Uri.parse(url)))
+      .timeout(const Duration(seconds: 60));
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw StateError('Request failed with status ${response.statusCode}');
+  }
+
+  final directory = await getTemporaryDirectory();
+  final safeId = video.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+  final file = File(
+    path.join(
+        directory.path, 'lumi-video-$safeId${_downloadFileExtension(video)}'),
+  );
+  final sink = file.openWrite();
+  var receivedBytes = 0;
+  final totalBytes = response.contentLength;
+  onProgress(totalBytes == null ? null : 0);
   try {
-    Get.snackbar('Preparing video', 'Your download will open in a moment.');
-    final response = await http.get(Uri.parse(url)).timeout(
-          const Duration(seconds: 60),
-        );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw StateError('Request failed with status ${response.statusCode}');
+    await for (final chunk in response.stream) {
+      sink.add(chunk);
+      receivedBytes += chunk.length;
+      if (totalBytes != null && totalBytes > 0) {
+        onProgress((receivedBytes / totalBytes).clamp(0.0, 1.0));
+      }
     }
-
-    final directory = await getTemporaryDirectory();
-    final safeId = video.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    final file = File(
-      path.join(
-          directory.path, 'lumi-video-$safeId${_downloadFileExtension(video)}'),
-    );
-    await file.writeAsBytes(response.bodyBytes, flush: true);
-
-    if (isIOS) {
-      await _videoLibraryChannel.invokeMethod<void>(
-        'saveVideoToPhotos',
-        {'filePath': file.path},
-      );
-      Get.snackbar('Video saved', 'The video is now in your Photos library.');
-      return;
-    }
-
-    await Share.shareFiles(
-      [file.path],
-      mimeTypes: [video.mimeType],
-      subject: 'Lumi video',
-    );
-  } on TimeoutException {
-    Get.snackbar(
-        'Download timed out', 'Please check your connection and try again.');
+    await sink.close();
+    return file;
   } catch (_) {
-    Get.snackbar('Could not download video', 'Please try again shortly.');
+    await sink.close();
+    if (await file.exists()) await file.delete();
+    rethrow;
   }
 }
 
-Future<void> showFeedVideoOptions(BuildContext context, VideoPost video) async {
+Future<void> showFeedVideoOptions(
+  BuildContext context,
+  VideoPost video, {
+  required Future<void> Function() onDownload,
+}) async {
   final canDownload = _canDownloadFeedVideo(video);
   if (Theme.of(context).platform == TargetPlatform.iOS) {
     await showCupertinoModalPopup<void>(
@@ -140,7 +140,7 @@ Future<void> showFeedVideoOptions(BuildContext context, VideoPost video) async {
             CupertinoActionSheetAction(
               onPressed: () {
                 Navigator.pop(sheetContext);
-                unawaited(downloadFeedVideo(context, video));
+                unawaited(onDownload());
               },
               child: const Text('Download Video'),
             ),
@@ -174,7 +174,7 @@ Future<void> showFeedVideoOptions(BuildContext context, VideoPost video) async {
               title: const Text('Download video'),
               onTap: () {
                 Navigator.pop(sheetContext);
-                unawaited(downloadFeedVideo(context, video));
+                unawaited(onDownload());
               },
             ),
         ],
@@ -723,8 +723,6 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                               onUserTap: () => _openUserProfile(video),
                               onRequestFriend: () =>
                                   _requestFriendFromFeed(video),
-                              onShare: () =>
-                                  showFeedVideoOptions(context, video),
                               onAccelerationChanged: _setSpeedHoldActive,
                               onScrubbingChanged: _setVideoScrubbing,
                               onPinchingChanged: _setVideoPinching,
@@ -793,7 +791,6 @@ class _FeedVideoPage extends StatefulWidget {
     required this.onComment,
     required this.onUserTap,
     required this.onRequestFriend,
-    required this.onShare,
     required this.onAccelerationChanged,
     required this.onScrubbingChanged,
     required this.onPinchingChanged,
@@ -812,7 +809,6 @@ class _FeedVideoPage extends StatefulWidget {
   final VoidCallback onComment;
   final VoidCallback onUserTap;
   final VoidCallback onRequestFriend;
-  final VoidCallback onShare;
   final ValueChanged<bool> onAccelerationChanged;
   final ValueChanged<bool> onScrubbingChanged;
   final ValueChanged<bool> onPinchingChanged;
@@ -825,6 +821,12 @@ class _FeedVideoPage extends StatefulWidget {
 class _FeedVideoPageState extends State<_FeedVideoPage> {
   static const double _acceleratedPlaybackSpeed = 2.0;
 
+  http.Client? _downloadClient;
+  Timer? _downloadCompleteTimer;
+  bool _downloadWasCancelled = false;
+  bool _isDownloading = false;
+  bool _isDownloadComplete = false;
+  double? _downloadProgress;
   VideoPlayerController? _speedControlledController;
   double? _playbackSpeedBeforeHold;
   bool _isAccelerating = false;
@@ -927,6 +929,90 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
     setState(() {});
   }
 
+  Future<void> _downloadVideo() async {
+    if (_isDownloading) return;
+
+    final client = http.Client();
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    _downloadClient = client;
+    _downloadWasCancelled = false;
+    _isDownloading = true;
+    _isDownloadComplete = false;
+    _downloadProgress = 0;
+    setState(() {});
+
+    try {
+      final file = await _downloadFeedVideoFile(
+        widget.video,
+        client: client,
+        onProgress: (progress) {
+          if (!mounted || _downloadClient != client) return;
+          _downloadProgress = progress;
+          setState(() {});
+        },
+      );
+      if (_downloadWasCancelled || _downloadClient != client) return;
+
+      if (isIOS) {
+        await _videoLibraryChannel.invokeMethod<void>(
+          'saveVideoToPhotos',
+          {'filePath': file.path},
+        );
+      } else {
+        await Share.shareFiles(
+          [file.path],
+          mimeTypes: [widget.video.mimeType],
+          subject: 'Lumi video',
+        );
+      }
+      if (!mounted || _downloadWasCancelled || _downloadClient != client) {
+        return;
+      }
+
+      HapticFeedback.mediumImpact();
+      _isDownloading = false;
+      _isDownloadComplete = true;
+      _downloadProgress = 1;
+      setState(() {});
+      _downloadCompleteTimer?.cancel();
+      _downloadCompleteTimer = Timer(const Duration(seconds: 3), () {
+        if (!mounted) return;
+        _isDownloadComplete = false;
+        setState(() {});
+      });
+    } on TimeoutException {
+      if (!_downloadWasCancelled && mounted) {
+        Get.snackbar(
+          'Download timed out',
+          'Please check your connection and try again.',
+        );
+      }
+    } catch (_) {
+      if (!_downloadWasCancelled && mounted) {
+        Get.snackbar('Could not download video', 'Please try again shortly.');
+      }
+    } finally {
+      client.close();
+      if (_downloadClient == client) _downloadClient = null;
+      if (mounted && !_isDownloadComplete) {
+        _isDownloading = false;
+        _downloadProgress = null;
+        setState(() {});
+      }
+    }
+  }
+
+  void _cancelDownload() {
+    if (!_isDownloading) return;
+    _downloadWasCancelled = true;
+    _downloadClient?.close();
+    _downloadClient = null;
+    _isDownloading = false;
+    _downloadProgress = null;
+    HapticFeedback.selectionClick();
+    setState(() {});
+  }
+
   @override
   void didUpdateWidget(covariant _FeedVideoPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -937,6 +1023,8 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
 
   @override
   void dispose() {
+    _downloadCompleteTimer?.cancel();
+    _downloadClient?.close();
     _clearPinchActivation();
     if (_isScrubbing) widget.onScrubbingChanged(false);
     _stopAcceleratedPlayback(notify: false);
@@ -1035,7 +1123,11 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
                                   onComment: widget.onComment,
                                   onUserTap: widget.onUserTap,
                                   onRequestFriend: widget.onRequestFriend,
-                                  onShare: widget.onShare,
+                                  onShare: () => showFeedVideoOptions(
+                                    context,
+                                    video,
+                                    onDownload: _downloadVideo,
+                                  ),
                                 ),
                               ],
                             ),
@@ -1086,10 +1178,16 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOut,
                 opacity: _isAccelerating || _isChromeHiddenByPinch ? 0 : 1,
-                child: _FeedVideoProgressBar(
-                  controller: playbackController,
-                  onScrubbingChanged: _setScrubbing,
-                ),
+                child: _isDownloading || _isDownloadComplete
+                    ? _FeedDownloadStatusBar(
+                        progress: _downloadProgress,
+                        isComplete: _isDownloadComplete,
+                        onCancel: _cancelDownload,
+                      )
+                    : _FeedVideoProgressBar(
+                        controller: playbackController,
+                        onScrubbingChanged: _setScrubbing,
+                      ),
               ),
             ),
           ),
@@ -1367,6 +1465,95 @@ class _FeedVideoProgressBar extends StatefulWidget {
 
   @override
   State<_FeedVideoProgressBar> createState() => _FeedVideoProgressBarState();
+}
+
+/// Temporarily replaces the playback scrubber while a feed video is saving.
+/// It intentionally keeps the scrubber's compact 20 px footprint.
+class _FeedDownloadStatusBar extends StatelessWidget {
+  const _FeedDownloadStatusBar({
+    required this.progress,
+    required this.isComplete,
+    required this.onCancel,
+  });
+
+  final double? progress;
+  final bool isComplete;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isComplete) {
+      return SizedBox(
+        height: 20,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFF09A8C8),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: const Row(
+            children: [
+              SizedBox(width: 6),
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 15),
+              SizedBox(width: 5),
+              Text(
+                'Downloaded',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final percentage = progress == null ? null : (progress! * 100).round();
+    return SizedBox(
+      height: 20,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              color: Colors.white,
+              backgroundColor: Colors.white.withValues(alpha: 0.34),
+            ),
+          ),
+          Row(
+            children: [
+              Text(
+                percentage == null
+                    ? 'Downloading…'
+                    : '$percentage% Downloading…',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: onCancel,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FeedVideoProgressBarState extends State<_FeedVideoProgressBar> {
@@ -3843,7 +4030,6 @@ class _ProfileUserVideoFeedScreenState
                       onComment: () => _openComments(video),
                       onUserTap: () => _openUserProfile(video),
                       onRequestFriend: () => _requestFriendFromFeed(video),
-                      onShare: () => showFeedVideoOptions(context, video),
                       onAccelerationChanged: (_) {},
                       onScrubbingChanged: (_) {},
                       onPinchingChanged: (_) {},
