@@ -953,10 +953,30 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
               ),
             ),
           ),
-        if (_isAccelerating)
-          const Center(
-            child: _PlaybackSpeedIndicator(),
+        Positioned(
+          left: 20,
+          right: 20,
+          // The navbar hides while holding, so use the actual system inset
+          // rather than the reserved navbar height and sit the chip low in
+          // the newly available space.
+          bottom: MediaQuery.paddingOf(context).bottom + 12,
+          child: IgnorePointer(
+            child: Align(
+              alignment: Alignment.center,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                offset: _isAccelerating ? Offset.zero : const Offset(0, 0.35),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOut,
+                  opacity: _isAccelerating ? 1 : 0,
+                  child: const _PlaybackSpeedIndicator(),
+                ),
+              ),
+            ),
           ),
+        ),
         if (_isChromeHiddenByPinch)
           _PinchActivatedVideoControls(
             controller: playbackController,
@@ -975,19 +995,59 @@ class _PlaybackSpeedIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.56),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Text(
-          '2×',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.42),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.24),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.28),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Padding(
+            padding: EdgeInsets.fromLTRB(11, 7, 13, 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.fast_forward_rounded,
+                  color: Colors.white,
+                  size: 17,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  '2×',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'HOLD',
+                  style: TextStyle(
+                    color: Color.fromRGBO(255, 255, 255, 0.68),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                    height: 1,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
