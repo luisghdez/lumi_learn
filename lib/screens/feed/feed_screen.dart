@@ -602,7 +602,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   }
 }
 
-class _FeedVideoPage extends StatelessWidget {
+class _FeedVideoPage extends StatefulWidget {
   const _FeedVideoPage({
     required this.video,
     required this.controller,
@@ -634,7 +634,64 @@ class _FeedVideoPage extends StatelessWidget {
   final VoidCallback onExpandFullscreen;
 
   @override
+  State<_FeedVideoPage> createState() => _FeedVideoPageState();
+}
+
+class _FeedVideoPageState extends State<_FeedVideoPage> {
+  static const double _acceleratedPlaybackSpeed = 2.0;
+
+  VideoPlayerController? _speedControlledController;
+  double? _playbackSpeedBeforeHold;
+  bool _isAccelerating = false;
+
+  /// Starts accelerated playback only from the outer thirds of the video.
+  /// The middle third remains gesture-free for future feed interactions.
+  void _startAcceleratedPlayback(LongPressStartDetails details) {
+    final controller = widget.controller;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isOnOuterThird = details.globalPosition.dx <= screenWidth / 3 ||
+        details.globalPosition.dx >= screenWidth * 2 / 3;
+    if (!widget.isCurrent ||
+        controller == null ||
+        !controller.value.isInitialized ||
+        !isOnOuterThird) {
+      return;
+    }
+
+    _speedControlledController = controller;
+    _playbackSpeedBeforeHold = controller.value.playbackSpeed;
+    _isAccelerating = true;
+    HapticFeedback.selectionClick();
+    unawaited(controller.setPlaybackSpeed(_acceleratedPlaybackSpeed));
+    setState(() {});
+  }
+
+  /// Restores the speed that was active before the hold, rather than assuming
+  /// normal playback is always 1x.
+  void _stopAcceleratedPlayback({bool notify = true}) {
+    final controller = _speedControlledController;
+    final speedToRestore = _playbackSpeedBeforeHold;
+    _speedControlledController = null;
+    _playbackSpeedBeforeHold = null;
+    _isAccelerating = false;
+
+    if (controller != null && speedToRestore != null) {
+      unawaited(controller.setPlaybackSpeed(speedToRestore));
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _stopAcceleratedPlayback(notify: false);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final video = widget.video;
+    final controller = widget.controller;
+    final isCurrent = widget.isCurrent;
     final playbackController = controller;
     final isPaused = !video.isSlideshow &&
         isCurrent &&
@@ -644,13 +701,16 @@ class _FeedVideoPage extends StatelessWidget {
 
     final backdrop = video.isSlideshow
         ? GestureDetector(
-            onDoubleTap: onDoubleTapLike,
+            onDoubleTap: widget.onDoubleTapLike,
             behavior: HitTestBehavior.deferToChild,
             child: _SlideshowBackdrop(video: video, isActive: isCurrent),
           )
         : GestureDetector(
-            onTap: onTap,
-            onDoubleTap: onDoubleTapLike,
+            onTap: widget.onTap,
+            onDoubleTap: widget.onDoubleTapLike,
+            onLongPressStart: _startAcceleratedPlayback,
+            onLongPressEnd: (_) => _stopAcceleratedPlayback(),
+            onLongPressCancel: _stopAcceleratedPlayback,
             behavior: HitTestBehavior.deferToChild,
             child: _VideoBackdrop(controller: playbackController),
           );
@@ -665,7 +725,12 @@ class _FeedVideoPage extends StatelessWidget {
           child: AnimatedPadding(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeInOutCubic,
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 14 + bottomOverlayPadding),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              14 + widget.bottomOverlayPadding,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -678,7 +743,7 @@ class _FeedVideoPage extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 40),
                   child: GestureDetector(
-                    onDoubleTap: onDoubleTapLike,
+                    onDoubleTap: widget.onDoubleTapLike,
                     behavior: HitTestBehavior.translucent,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -686,17 +751,17 @@ class _FeedVideoPage extends StatelessWidget {
                         Expanded(
                           child: _VideoDetails(
                             video: video,
-                            onUserTap: onUserTap,
+                            onUserTap: widget.onUserTap,
                           ),
                         ),
                         const SizedBox(width: 16),
                         _ActionRail(
                           video: video,
-                          onLike: onLike,
-                          onComment: onComment,
-                          onUserTap: onUserTap,
-                          onRequestFriend: onRequestFriend,
-                          onShare: onShare,
+                          onLike: widget.onLike,
+                          onComment: widget.onComment,
+                          onUserTap: widget.onUserTap,
+                          onRequestFriend: widget.onRequestFriend,
+                          onShare: widget.onShare,
                         ),
                       ],
                     ),
@@ -713,7 +778,8 @@ class _FeedVideoPage extends StatelessWidget {
               alignment: Alignment.topRight,
               child: Padding(
                 padding: const EdgeInsets.only(top: 60, right: 16),
-                child: _FullscreenExpandButton(onTap: onExpandFullscreen),
+                child:
+                    _FullscreenExpandButton(onTap: widget.onExpandFullscreen),
               ),
             ),
           ),
@@ -725,7 +791,36 @@ class _FeedVideoPage extends StatelessWidget {
               size: 86,
             ),
           ),
+        if (_isAccelerating)
+          const Center(
+            child: _PlaybackSpeedIndicator(),
+          ),
       ],
+    );
+  }
+}
+
+class _PlaybackSpeedIndicator extends StatelessWidget {
+  const _PlaybackSpeedIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Text(
+          '2×',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }
