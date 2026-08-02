@@ -115,6 +115,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   PageRoute<void>? _boundListRoute;
   bool _obscuredByChildRoute = false;
   bool _fullscreenVideoRouteOpen = false;
+  bool _isSpeedHoldActive = false;
 
   @override
   void initState() {
@@ -491,6 +492,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
 
   @override
   void dispose() {
+    _navigationController.setFeedChromeHidden(false);
     if (_boundListRoute != null) {
       appRouteObserver.unsubscribe(this);
     }
@@ -503,6 +505,13 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  void _setSpeedHoldActive(bool active) {
+    if (_isSpeedHoldActive == active) return;
+    _isSpeedHoldActive = active;
+    _navigationController.setFeedChromeHidden(active);
+    if (mounted) setState(() {});
   }
 
   @override
@@ -557,6 +566,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                               onRequestFriend: () =>
                                   _requestFriendFromFeed(video),
                               onShare: () => shareFeedVideo(video),
+                              onAccelerationChanged: _setSpeedHoldActive,
                               onExpandFullscreen: () =>
                                   _openFullscreenVideo(controller),
                             );
@@ -576,23 +586,31 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                       ],
                     ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _FeedScopeBar(
-                onForYou: () {
-                  HapticFeedback.selectionClick();
-                  unawaited(_switchFeedScope(FeedScope.forYou));
-                },
-                onFriends: () {
-                  HapticFeedback.selectionClick();
-                  unawaited(_switchFeedScope(FeedScope.friends));
-                },
-                onSubject: () {
-                  HapticFeedback.selectionClick();
-                  unawaited(_openFeedSubjectPicker());
-                },
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: _isSpeedHoldActive,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOut,
+                  opacity: _isSpeedHoldActive ? 0 : 1,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: _FeedScopeBar(
+                      onForYou: () {
+                        HapticFeedback.selectionClick();
+                        unawaited(_switchFeedScope(FeedScope.forYou));
+                      },
+                      onFriends: () {
+                        HapticFeedback.selectionClick();
+                        unawaited(_switchFeedScope(FeedScope.friends));
+                      },
+                      onSubject: () {
+                        HapticFeedback.selectionClick();
+                        unawaited(_openFeedSubjectPicker());
+                      },
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -615,6 +633,7 @@ class _FeedVideoPage extends StatefulWidget {
     required this.onUserTap,
     required this.onRequestFriend,
     required this.onShare,
+    required this.onAccelerationChanged,
     required this.onExpandFullscreen,
   });
 
@@ -631,6 +650,7 @@ class _FeedVideoPage extends StatefulWidget {
   final VoidCallback onUserTap;
   final VoidCallback onRequestFriend;
   final VoidCallback onShare;
+  final ValueChanged<bool> onAccelerationChanged;
   final VoidCallback onExpandFullscreen;
 
   @override
@@ -661,6 +681,7 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
     _speedControlledController = controller;
     _playbackSpeedBeforeHold = controller.value.playbackSpeed;
     _isAccelerating = true;
+    widget.onAccelerationChanged(true);
     HapticFeedback.selectionClick();
     unawaited(controller.setPlaybackSpeed(_acceleratedPlaybackSpeed));
     setState(() {});
@@ -673,7 +694,9 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
     final speedToRestore = _playbackSpeedBeforeHold;
     _speedControlledController = null;
     _playbackSpeedBeforeHold = null;
+    final wasAccelerating = _isAccelerating;
     _isAccelerating = false;
+    if (wasAccelerating) widget.onAccelerationChanged(false);
 
     if (controller != null && speedToRestore != null) {
       unawaited(controller.setPlaybackSpeed(speedToRestore));
@@ -719,78 +742,92 @@ class _FeedVideoPageState extends State<_FeedVideoPage> {
       fit: StackFit.expand,
       children: [
         backdrop,
-        const IgnorePointer(child: _FeedGradientOverlay()),
-        SafeArea(
-          bottom: false,
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeInOutCubic,
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              14 + widget.bottomOverlayPadding,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        IgnorePointer(
+          ignoring: _isAccelerating,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            opacity: _isAccelerating ? 0 : 1,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                const Expanded(
-                  child: IgnorePointer(
-                    child: SizedBox.expand(),
-                  ),
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: GestureDetector(
-                    onDoubleTap: widget.onDoubleTapLike,
-                    behavior: HitTestBehavior.translucent,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                const IgnorePointer(child: _FeedGradientOverlay()),
+                SafeArea(
+                  bottom: false,
+                  child: AnimatedPadding(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeInOutCubic,
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      12,
+                      20,
+                      14 + widget.bottomOverlayPadding,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _VideoDetails(
-                            video: video,
-                            onUserTap: widget.onUserTap,
-                          ),
+                        const Expanded(
+                          child: IgnorePointer(child: SizedBox.expand()),
                         ),
-                        const SizedBox(width: 16),
-                        _ActionRail(
-                          video: video,
-                          onLike: widget.onLike,
-                          onComment: widget.onComment,
-                          onUserTap: widget.onUserTap,
-                          onRequestFriend: widget.onRequestFriend,
-                          onShare: widget.onShare,
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
+                          child: GestureDetector(
+                            onDoubleTap: widget.onDoubleTapLike,
+                            behavior: HitTestBehavior.translucent,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: _VideoDetails(
+                                    video: video,
+                                    onUserTap: widget.onUserTap,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                _ActionRail(
+                                  video: video,
+                                  onLike: widget.onLike,
+                                  onComment: widget.onComment,
+                                  onUserTap: widget.onUserTap,
+                                  onRequestFriend: widget.onRequestFriend,
+                                  onShare: widget.onShare,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
+                if (!video.isSlideshow && isLandscape)
+                  SafeArea(
+                    bottom: false,
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 60, right: 16),
+                        child: _FullscreenExpandButton(
+                          onTap: widget.onExpandFullscreen,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (isPaused)
+                  const Center(
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 86,
+                    ),
+                  ),
               ],
             ),
           ),
         ),
-        if (!video.isSlideshow && isLandscape)
-          SafeArea(
-            bottom: false,
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 60, right: 16),
-                child:
-                    _FullscreenExpandButton(onTap: widget.onExpandFullscreen),
-              ),
-            ),
-          ),
-        if (isPaused)
-          const Center(
-            child: Icon(
-              Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 86,
-            ),
-          ),
         if (_isAccelerating)
           const Center(
             child: _PlaybackSpeedIndicator(),
@@ -3145,6 +3182,7 @@ class _ProfileUserVideoFeedScreenState
                       onUserTap: () => _openUserProfile(video),
                       onRequestFriend: () => _requestFriendFromFeed(video),
                       onShare: () => shareFeedVideo(video),
+                      onAccelerationChanged: (_) {},
                       onExpandFullscreen: () =>
                           _openFullscreenVideo(controller),
                     );

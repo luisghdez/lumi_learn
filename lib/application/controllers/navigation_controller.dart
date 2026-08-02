@@ -7,12 +7,22 @@ class NavigationController extends GetxController {
   RxInt currentIndex = 0.obs;
   RxBool isNavBarVisible = true.obs;
 
+  /// Temporarily hides feed chrome during press-and-hold accelerated playback.
+  final RxBool isFeedChromeHidden = false.obs;
+
+  void setFeedChromeHidden(bool hidden) {
+    if (isFeedChromeHidden.value != hidden) {
+      isFeedChromeHidden.value = hidden;
+    }
+  }
+
   void updateIndex(int index) {
     if (Get.isRegistered<CreateFlowController>()) {
       Get.find<CreateFlowController>().onMainTabBarSelection();
     }
     final previousIndex = currentIndex.value;
     currentIndex.value = index;
+    setFeedChromeHidden(false);
     showNavBar();
 
     // When returning to the home tab, refresh the short “my courses” strip.

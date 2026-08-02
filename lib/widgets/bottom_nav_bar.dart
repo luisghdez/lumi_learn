@@ -72,7 +72,7 @@ class BottomNavbar extends StatelessWidget {
           ? Get.find<CreateFlowController>()
           : null;
       final createOpen = createFlow?.visible.value ?? false;
-      const visible = true;
+      final visible = !navigationController.isFeedChromeHidden.value;
 
       const double radius = 40;
       const double hPad = 28;
