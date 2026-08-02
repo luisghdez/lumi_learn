@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:share/share.dart';
 import 'package:video_player/video_player.dart';
 
@@ -20,6 +25,8 @@ import 'package:lumi_learn_app/utils/profile_picture_image.dart';
 import 'package:lumi_learn_app/routing/app_route_observer.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart'
     show feedVideoOverlayBottomPadding, floatingNavbarBottomReserve;
+
+const _videoLibraryChannel = MethodChannel('com.lumilearnapp/video_library');
 
 /// Human-facing share URL (`/video/:id`, singular).
 ///
@@ -42,6 +49,138 @@ Future<void> shareFeedVideo(VideoPost video) async {
       ? 'Check out @${video.ownerName} on Lumi.\n$link'
       : '@${video.ownerName}: $preview\n$link';
   await Share.share(body, subject: 'Lumi video');
+}
+
+bool _canDownloadFeedVideo(VideoPost video) {
+  final url = video.playbackUrl;
+  if (video.isSlideshow || url == null || url.isEmpty) return false;
+  final lowerUrl = url.toLowerCase();
+  final lowerMimeType = video.mimeType.toLowerCase();
+  return !lowerUrl.contains('.m3u8') &&
+      !lowerUrl.contains('.mpd') &&
+      !lowerMimeType.contains('mpegurl') &&
+      !lowerMimeType.contains('dash');
+}
+
+String _downloadFileExtension(VideoPost video) {
+  final urlPath = Uri.tryParse(video.playbackUrl ?? '')?.path ?? '';
+  final extension = path.extension(urlPath).toLowerCase();
+  if (const {'.mp4', '.mov', '.m4v', '.webm'}.contains(extension)) {
+    return extension;
+  }
+  if (video.mimeType.toLowerCase().contains('quicktime')) return '.mov';
+  if (video.mimeType.toLowerCase().contains('webm')) return '.webm';
+  return '.mp4';
+}
+
+/// Downloads a video to a temporary file. iOS saves that file directly to the
+/// Photos library; other platforms receive it through their share sheet.
+Future<void> downloadFeedVideo(BuildContext context, VideoPost video) async {
+  final url = video.playbackUrl;
+  final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+  if (!_canDownloadFeedVideo(video) || url == null) {
+    Get.snackbar('Download unavailable', 'This video cannot be downloaded.');
+    return;
+  }
+
+  try {
+    Get.snackbar('Preparing video', 'Your download will open in a moment.');
+    final response = await http.get(Uri.parse(url)).timeout(
+          const Duration(seconds: 60),
+        );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError('Request failed with status ${response.statusCode}');
+    }
+
+    final directory = await getTemporaryDirectory();
+    final safeId = video.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    final file = File(
+      path.join(
+          directory.path, 'lumi-video-$safeId${_downloadFileExtension(video)}'),
+    );
+    await file.writeAsBytes(response.bodyBytes, flush: true);
+
+    if (isIOS) {
+      await _videoLibraryChannel.invokeMethod<void>(
+        'saveVideoToPhotos',
+        {'filePath': file.path},
+      );
+      Get.snackbar('Video saved', 'The video is now in your Photos library.');
+      return;
+    }
+
+    await Share.shareFiles(
+      [file.path],
+      mimeTypes: [video.mimeType],
+      subject: 'Lumi video',
+    );
+  } on TimeoutException {
+    Get.snackbar(
+        'Download timed out', 'Please check your connection and try again.');
+  } catch (_) {
+    Get.snackbar('Could not download video', 'Please try again shortly.');
+  }
+}
+
+Future<void> showFeedVideoOptions(BuildContext context, VideoPost video) async {
+  final canDownload = _canDownloadFeedVideo(video);
+  if (Theme.of(context).platform == TargetPlatform.iOS) {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (sheetContext) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              unawaited(shareFeedVideo(video));
+            },
+            child: const Text('Share Post'),
+          ),
+          if (canDownload)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(sheetContext);
+                unawaited(downloadFeedVideo(context, video));
+              },
+              child: const Text('Download Video'),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(sheetContext),
+          isDefaultAction: true,
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+    return;
+  }
+
+  await showModalBottomSheet<void>(
+    context: context,
+    builder: (sheetContext) => SafeArea(
+      child: Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.share_outlined),
+            title: const Text('Share post'),
+            onTap: () {
+              Navigator.pop(sheetContext);
+              unawaited(shareFeedVideo(video));
+            },
+          ),
+          if (canDownload)
+            ListTile(
+              leading: const Icon(Icons.download_outlined),
+              title: const Text('Download video'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                unawaited(downloadFeedVideo(context, video));
+              },
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 VideoFormat? _formatHintForPlaybackUrl(String url) {
@@ -584,7 +723,8 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                               onUserTap: () => _openUserProfile(video),
                               onRequestFriend: () =>
                                   _requestFriendFromFeed(video),
-                              onShare: () => shareFeedVideo(video),
+                              onShare: () =>
+                                  showFeedVideoOptions(context, video),
                               onAccelerationChanged: _setSpeedHoldActive,
                               onScrubbingChanged: _setVideoScrubbing,
                               onPinchingChanged: _setVideoPinching,
@@ -3703,7 +3843,7 @@ class _ProfileUserVideoFeedScreenState
                       onComment: () => _openComments(video),
                       onUserTap: () => _openUserProfile(video),
                       onRequestFriend: () => _requestFriendFromFeed(video),
-                      onShare: () => shareFeedVideo(video),
+                      onShare: () => showFeedVideoOptions(context, video),
                       onAccelerationChanged: (_) {},
                       onScrubbingChanged: (_) {},
                       onPinchingChanged: (_) {},
