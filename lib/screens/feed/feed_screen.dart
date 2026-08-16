@@ -40,7 +40,28 @@ String shareableVideoUrl(VideoPost video) {
   return 'https://www.lumilearnapp.com/video/${video.id}';
 }
 
+/// Public, ready posts are the only posts that may be shared as broad links.
+///
+/// The web endpoint intentionally returns 404 for friends-only and private
+/// posts, so offering a public link for either would give recipients a broken
+/// share. Recipient-specific sharing can extend this rule in a later release.
+bool canShareVideoByLink(VideoPost video) {
+  return video.id.isNotEmpty &&
+      video.status.toLowerCase() == 'ready' &&
+      video.visibility.toLowerCase() == 'public';
+}
+
 Future<void> shareFeedVideo(VideoPost video) async {
+  if (!canShareVideoByLink(video)) {
+    Get.snackbar(
+      'Link unavailable',
+      'Only public posts can be shared by link right now.',
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+    );
+    return;
+  }
+
   final link = shareableVideoUrl(video);
   final cap = video.caption.trim();
   final preview =
