@@ -74,6 +74,23 @@ restart controls for frontend-only changes:
 Use a fresh `flutter run` only when native iOS changes, dependency changes, or
 an unavailable debug session require a rebuild.
 
+### Local-backend unavailable check
+
+To confirm the Simulator is using the local backend, run it with an explicit
+host and device ID:
+
+```bash
+flutter run -d 88A77B2E-73BD-4659-95CB-E41A59EED971 \
+  --dart-define=LUMI_API_BASE_URL=http://localhost:3000
+```
+
+If no service is listening on port 3000, requests are expected to fail. The app
+shows its unavailable/empty error state (for example, **“Video Feed — Failed to
+load videos.”**) rather than silently falling back to production. A fresh
+Simulator app state may instead remain on profile onboarding while its initial
+feed request fails; complete onboarding only when testing the authenticated
+empty-feed screen.
+
 Use the connected physical iPhone only when a change needs real-device
 validation (for example permissions, camera, push notifications, networking,
 performance, or touch behaviour). Keep the Simulator running; deploying to the
