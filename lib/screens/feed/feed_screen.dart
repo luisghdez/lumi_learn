@@ -278,6 +278,9 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   bool _isSpeedHoldActive = false;
   bool _isVideoScrubbing = false;
   bool _isVideoPinching = false;
+  bool _isChangingFeedScope = false;
+  int? _feedSwipePointer;
+  Offset? _feedSwipeStart;
 
   bool get _isFeedChromeHidden =>
       _isSpeedHoldActive || _isVideoScrubbing || _isVideoPinching;
@@ -578,13 +581,23 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   }
 
   Future<void> _switchFeedScope(FeedScope scope) async {
-    await _videoController.setFeedScope(scope);
-    if (!mounted) return;
-    _pauseAllFeedVideoPlayers();
-    _jumpToFirstVideo();
+    if (_isChangingFeedScope || scope == _videoController.feedScope.value) {
+      return;
+    }
+    _isChangingFeedScope = true;
+    try {
+      await _videoController.setFeedScope(scope);
+      if (!mounted) return;
+      _pauseAllFeedVideoPlayers();
+      _jumpToFirstVideo();
+    } finally {
+      _isChangingFeedScope = false;
+    }
   }
 
   Future<void> _openFeedSubjectPicker() async {
+    if (_isChangingFeedScope) return;
+    _isChangingFeedScope = true;
     final picked = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -592,11 +605,64 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
       barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (ctx) => const _FeedSubjectPickerSheet(),
     );
-    if (!mounted || picked == null || picked.isEmpty) return;
-    await _videoController.setFeedScope(FeedScope.subject, subject: picked);
-    if (!mounted) return;
-    _pauseAllFeedVideoPlayers();
-    _jumpToFirstVideo();
+    try {
+      if (!mounted || picked == null || picked.isEmpty) return;
+      await _videoController.setFeedScope(FeedScope.subject, subject: picked);
+      if (!mounted) return;
+      _pauseAllFeedVideoPlayers();
+      _jumpToFirstVideo();
+    } finally {
+      _isChangingFeedScope = false;
+    }
+  }
+
+  /// Tracks horizontal drags before child video controls resolve their own
+  /// gestures. Vertical movement stays with the video [PageView].
+  void _startFeedScopeSwipe(PointerDownEvent event) {
+    if (_feedSwipePointer != null) return;
+    _feedSwipePointer = event.pointer;
+    _feedSwipeStart = event.localPosition;
+  }
+
+  void _endFeedScopeSwipe(PointerUpEvent event) {
+    if (event.pointer != _feedSwipePointer) return;
+    final start = _feedSwipeStart;
+    _feedSwipePointer = null;
+    _feedSwipeStart = null;
+    if (start == null) return;
+
+    final delta = event.localPosition - start;
+    const minSwipeDistance = 72.0;
+    if (delta.dx.abs() < minSwipeDistance || delta.dx.abs() <= delta.dy.abs()) {
+      return;
+    }
+
+    // Keep the timeline scrubber and the floating bottom navigation reserved
+    // for their own horizontal interactions.
+    final bottomGestureExclusion = MediaQuery.sizeOf(context).height -
+        floatingNavbarBottomReserve(context) -
+        120;
+    if (start.dy >= bottomGestureExclusion) return;
+
+    final currentIndex = FeedScope.values.indexOf(
+      _videoController.feedScope.value,
+    );
+    final nextIndex = delta.dx < 0 ? currentIndex + 1 : currentIndex - 1;
+    if (nextIndex < 0 || nextIndex >= FeedScope.values.length) return;
+
+    HapticFeedback.selectionClick();
+    final nextScope = FeedScope.values[nextIndex];
+    if (nextScope == FeedScope.subject) {
+      unawaited(_openFeedSubjectPicker());
+    } else {
+      unawaited(_switchFeedScope(nextScope));
+    }
+  }
+
+  void _cancelFeedScopeSwipe(PointerCancelEvent event) {
+    if (event.pointer != _feedSwipePointer) return;
+    _feedSwipePointer = null;
+    _feedSwipeStart = null;
   }
 
   Future<void> _openComments(VideoPost video) async {
@@ -711,60 +777,67 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
           clipBehavior: Clip.none,
           children: [
             Positioned.fill(
-              child: videos.isEmpty
-                  ? _FeedEmptyState(
-                      isLoading: isLoading,
-                      error: _videoController.feedError.value,
-                      onRetry: _refreshFeed,
-                      scope: scope,
-                      activeSubject: subject,
-                    )
-                  : Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        PageView.builder(
-                          controller: _pageController,
-                          scrollDirection: Axis.vertical,
-                          itemCount: videos.length,
-                          onPageChanged: _handlePageChanged,
-                          itemBuilder: (context, index) {
-                            final video = videos[index];
-                            final controller = _videoPlayers[video.id];
-                            return _FeedVideoPage(
-                              video: video,
-                              controller: controller,
-                              isCurrent: index == _currentIndex &&
-                                  _feedPlaybackAllowed,
-                              bottomOverlayPadding: bottomOverlayPad,
-                              onTap: _togglePlayback,
-                              onDoubleTapLike: () =>
-                                  _videoController.toggleLike(video),
-                              onLike: () => _videoController.toggleLike(video),
-                              onComment: () => _openComments(video),
-                              onUserTap: () => _openUserProfile(video),
-                              onRequestFriend: () =>
-                                  _requestFriendFromFeed(video),
-                              onAccelerationChanged: _setSpeedHoldActive,
-                              onScrubbingChanged: _setVideoScrubbing,
-                              onPinchingChanged: _setVideoPinching,
-                              onExpandFullscreen: () =>
-                                  _openFullscreenVideo(controller),
-                            );
-                          },
-                        ),
-                        if (isLoading)
-                          const SafeArea(
-                            bottom: false,
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              child: LinearProgressIndicator(
-                                color: Colors.white,
-                                minHeight: 2,
+              child: Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: _startFeedScopeSwipe,
+                onPointerUp: _endFeedScopeSwipe,
+                onPointerCancel: _cancelFeedScopeSwipe,
+                child: videos.isEmpty
+                    ? _FeedEmptyState(
+                        isLoading: isLoading,
+                        error: _videoController.feedError.value,
+                        onRetry: _refreshFeed,
+                        scope: scope,
+                        activeSubject: subject,
+                      )
+                    : Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          PageView.builder(
+                            controller: _pageController,
+                            scrollDirection: Axis.vertical,
+                            itemCount: videos.length,
+                            onPageChanged: _handlePageChanged,
+                            itemBuilder: (context, index) {
+                              final video = videos[index];
+                              final controller = _videoPlayers[video.id];
+                              return _FeedVideoPage(
+                                video: video,
+                                controller: controller,
+                                isCurrent: index == _currentIndex &&
+                                    _feedPlaybackAllowed,
+                                bottomOverlayPadding: bottomOverlayPad,
+                                onTap: _togglePlayback,
+                                onDoubleTapLike: () =>
+                                    _videoController.toggleLike(video),
+                                onLike: () =>
+                                    _videoController.toggleLike(video),
+                                onComment: () => _openComments(video),
+                                onUserTap: () => _openUserProfile(video),
+                                onRequestFriend: () =>
+                                    _requestFriendFromFeed(video),
+                                onAccelerationChanged: _setSpeedHoldActive,
+                                onScrubbingChanged: _setVideoScrubbing,
+                                onPinchingChanged: _setVideoPinching,
+                                onExpandFullscreen: () =>
+                                    _openFullscreenVideo(controller),
+                              );
+                            },
+                          ),
+                          if (isLoading)
+                            const SafeArea(
+                              bottom: false,
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: LinearProgressIndicator(
+                                  color: Colors.white,
+                                  minHeight: 2,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
+                        ],
+                      ),
+              ),
             ),
             Positioned.fill(
               child: IgnorePointer(

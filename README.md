@@ -57,6 +57,38 @@ If you see **`Connection refused` to `localhost`** on a real device, the phone i
    flutter run
    ```
 
+### Development device workflow
+
+Use the iOS Simulator for the normal frontend development loop. It is the
+fastest place to make changes, relaunch the app, inspect logs, and capture
+screenshots or recordings.
+
+When the app is already running through `flutter run`, prefer its interactive
+restart controls for frontend-only changes:
+
+- Press `r` for a **hot reload**, which keeps the current app state whenever
+  possible.
+- Press `R` for a **hot restart**, which restarts the Dart app and clears its
+  in-memory state, without rebuilding the iOS app.
+
+Use a fresh `flutter run` only when native iOS changes, dependency changes, or
+an unavailable debug session require a rebuild.
+
+Use the connected physical iPhone only when a change needs real-device
+validation (for example permissions, camera, push notifications, networking,
+performance, or touch behaviour). Keep the Simulator running; deploying to the
+phone does not require shutting it down.
+
+```bash
+# Connected development iPhone
+flutter run -d 00008140-000E55D930A2201C
+```
+
+Running this command installs/relaunches the debug build on the phone. Treat it
+as a deliberate device-validation step, especially if the app is already open.
+For backend work, configure `LUMI_API_BASE_URL` with a LAN-reachable server URL
+as described above; a physical phone cannot reach your laptop's `localhost`.
+
 ## Releasing to the App Store
 
 See [docs/ios-release.md](docs/ios-release.md) for the full step-by-step release checklist,
@@ -81,4 +113,3 @@ including how to update version numbers and build the IPA.
     ├── widgets                   # General-purpose widgets for the app
     └── main.dart                 # Entry point of the Flutter application
    ```
-
