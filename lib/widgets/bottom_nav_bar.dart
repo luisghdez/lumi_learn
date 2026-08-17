@@ -99,7 +99,13 @@ class BottomNavbar extends StatelessWidget {
           _NavIcon(
             icon: Icons.play_circle_rounded,
             isSelected: currentIndex == 1 && !createOpen,
-            onTap: () => navigationController.updateIndex(1),
+            onTap: () {
+              if (currentIndex == 1 && !createOpen) {
+                navigationController.requestFeedRefresh();
+              } else {
+                navigationController.updateIndex(1);
+              }
+            },
             tapSize: navTapSize,
             iconSize: navIconSize,
           ),

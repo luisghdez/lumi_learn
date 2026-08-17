@@ -745,6 +745,20 @@ class ApiService {
     );
   }
 
+  /// Idempotently records that the authenticated user activated this clip.
+  Future<http.Response> recordVideoView({
+    required String token,
+    required String videoId,
+  }) {
+    return http.post(
+      Uri.parse('$_baseUrl/videos/$videoId/view'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
   Future<http.Response> deleteVideo({
     required String token,
     required String videoId,

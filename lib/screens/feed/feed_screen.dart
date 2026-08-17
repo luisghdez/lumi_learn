@@ -268,6 +268,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   final Map<String, String> _videoPlayerUrls = {};
 
   late final Worker _navIndexWorker;
+  late final Worker _feedRefreshWorker;
   late final Worker _videosWorker;
   late final Worker _pendingFeedScrollWorker;
   Worker? _createFlowVisibilityWorker;
@@ -291,6 +292,10 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     _navIndexWorker = ever<int>(
       _navigationController.currentIndex,
       _handleNavIndexChanged,
+    );
+    _feedRefreshWorker = ever<int>(
+      _navigationController.feedRefreshRequests,
+      (_) => _refreshFeed(),
     );
     _videosWorker = ever<List<VideoPost>>(
       _videoController.videos,
@@ -487,12 +492,18 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
 
     _currentIndex = index;
 
+    if (index >= _videoController.videos.length) {
+      setState(() {});
+      return;
+    }
+
     // Slide the init/keep window to the new position: pre-loads the next
     // video and frees memory for controllers far behind.
     _syncVideoControllers();
 
     final currentVideo = _currentVideo;
     if (currentVideo != null) {
+      _videoController.recordFeedView(currentVideo);
       final controller = _videoPlayers[currentVideo.id];
       if (_feedPlaybackAllowed && controller?.value.isInitialized == true) {
         controller?.play();
@@ -729,6 +740,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
       appRouteObserver.unsubscribe(this);
     }
     _navIndexWorker.dispose();
+    _feedRefreshWorker.dispose();
     _videosWorker.dispose();
     _pendingFeedScrollWorker.dispose();
     _createFlowVisibilityWorker?.dispose();
@@ -769,6 +781,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
         final videos = _videoController.videos;
         final isLoading = _videoController.isLoadingFeed.value ||
             _videoController.isRefreshingFeed.value;
+        final isExhausted = _videoController.isFeedExhausted.value;
         final scope = _videoController.feedScope.value;
         final subject = _videoController.feedSubject.value;
 
@@ -786,6 +799,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                     ? _FeedEmptyState(
                         isLoading: isLoading,
                         error: _videoController.feedError.value,
+                        exhausted: _videoController.isFeedExhausted.value,
                         onRetry: _refreshFeed,
                         scope: scope,
                         activeSubject: subject,
@@ -796,9 +810,13 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
                           PageView.builder(
                             controller: _pageController,
                             scrollDirection: Axis.vertical,
-                            itemCount: videos.length,
+                            itemCount: videos.length +
+                                (isExhausted && videos.isNotEmpty ? 1 : 0),
                             onPageChanged: _handlePageChanged,
                             itemBuilder: (context, index) {
+                              if (index >= videos.length) {
+                                return const _FeedCaughtUpPage();
+                              }
                               final video = videos[index];
                               final controller = _videoPlayers[video.id];
                               return _FeedVideoPage(
@@ -3729,10 +3747,44 @@ class _FeedSubjectPickerSheetState extends State<_FeedSubjectPickerSheet> {
   }
 }
 
+class _FeedCaughtUpPage extends StatelessWidget {
+  const _FeedCaughtUpPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SafeArea(
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle_outline_rounded,
+                  color: Color(0xFFB79CFF), size: 58),
+              SizedBox(height: 18),
+              Text('You’re all caught up',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800)),
+              SizedBox(height: 8),
+              Text('New videos will appear here when they are posted.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xB3FFFFFF), height: 1.35)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FeedEmptyState extends StatelessWidget {
   const _FeedEmptyState({
     required this.isLoading,
     required this.error,
+    required this.exhausted,
     required this.onRetry,
     required this.scope,
     required this.activeSubject,
@@ -3740,12 +3792,14 @@ class _FeedEmptyState extends StatelessWidget {
 
   final bool isLoading;
   final String error;
+  final bool exhausted;
   final Future<void> Function() onRetry;
   final FeedScope scope;
   final String activeSubject;
 
   String get _headline {
     if (isLoading) return 'Loading…';
+    if (exhausted) return 'You’re all caught up';
     switch (scope) {
       case FeedScope.friends:
         return 'No friend posts here';
@@ -3760,6 +3814,7 @@ class _FeedEmptyState extends StatelessWidget {
 
   String get _hint {
     if (error.isNotEmpty) return error;
+    if (exhausted) return 'New videos will appear here when they are posted.';
     switch (scope) {
       case FeedScope.friends:
         return 'Add friends or switch to For you to see more posts in your area.';

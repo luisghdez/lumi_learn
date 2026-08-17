@@ -36,6 +36,7 @@ class VideoPost {
     required this.status,
     required this.visibility,
     required this.likeCount,
+    required this.viewCount,
     required this.commentCount,
     required this.likedByMe,
     required this.createdAt,
@@ -59,6 +60,7 @@ class VideoPost {
   final String status;
   final String visibility;
   final int likeCount;
+  final int viewCount;
   final int commentCount;
   final bool likedByMe;
   final String? createdAt;
@@ -101,6 +103,7 @@ class VideoPost {
       status: _stringValue(json['status'], fallback: 'uploading'),
       visibility: _stringValue(json['visibility'], fallback: 'public'),
       likeCount: _intValue(json['likeCount']),
+      viewCount: _intValue(json['viewCount']),
       commentCount: _intValue(json['commentCount']),
       likedByMe: json['likedByMe'] == true,
       createdAt: _nullableString(json['createdAt']),
@@ -114,6 +117,7 @@ class VideoPost {
     String? playbackUrl,
     String? subject,
     int? likeCount,
+    int? viewCount,
     int? commentCount,
     bool? likedByMe,
     String? contentKind,
@@ -135,6 +139,7 @@ class VideoPost {
       status: status,
       visibility: visibility,
       likeCount: likeCount ?? this.likeCount,
+      viewCount: viewCount ?? this.viewCount,
       commentCount: commentCount ?? this.commentCount,
       likedByMe: likedByMe ?? this.likedByMe,
       createdAt: createdAt,

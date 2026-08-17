@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import 'package:mime/mime.dart';
 
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
-import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/controllers/navigation_controller.dart';
 import 'package:lumi_learn_app/application/models/feed_scope.dart';
 import 'package:lumi_learn_app/application/models/video_model.dart';
@@ -31,6 +30,7 @@ class VideoController extends GetxController {
   final RxBool isPreparingVideoPost = false.obs;
   final RxString uploadStatus = ''.obs;
   final RxString feedError = ''.obs;
+  final RxBool isFeedExhausted = false.obs;
 
   /// Top-of-feed filter (For you / Friends / Subject).
   final Rx<FeedScope> feedScope = FeedScope.forYou.obs;
@@ -42,6 +42,7 @@ class VideoController extends GetxController {
   final RxnString pendingScrollFeedToVideoId = RxnString();
 
   String? _nextFeedCursor;
+  final Set<String> _viewReportedVideoIds = <String>{};
   final Map<String, String?> _userVideoCursorsByUserId = {};
   final Map<String, String?> _commentCursorsByVideoId = {};
 
@@ -58,7 +59,7 @@ class VideoController extends GetxController {
     fetchFeed(refresh: true);
   }
 
-  /// Changes filter and reloads the feed (same API; friends/subject also refined client-side).
+  /// Changes filter and reloads the server-ranked feed.
   Future<void> setFeedScope(FeedScope scope, {String? subject}) async {
     final subj = subject?.trim() ?? '';
     if (scope != FeedScope.subject && scope == feedScope.value) {
@@ -89,6 +90,7 @@ class VideoController extends GetxController {
     if (refresh) {
       isRefreshingFeed.value = true;
       _nextFeedCursor = null;
+      isFeedExhausted.value = false;
     } else {
       isLoadingFeed.value = true;
     }
@@ -111,40 +113,23 @@ class VideoController extends GetxController {
       _ensureSuccess(response, expectedStatuses: const [200]);
 
       final body = _decodeBody(response.body);
-      var fetchedVideos = (body['videos'] as List<dynamic>? ?? [])
+      final fetchedVideos = (body['videos'] as List<dynamic>? ?? [])
           .map((item) => VideoPost.fromJson(_asMap(item)))
           .where((video) =>
               video.isSlideshow ||
               (video.playbackUrl != null && video.playbackUrl!.isNotEmpty))
           .toList();
 
-      if (scope == FeedScope.friends && Get.isRegistered<FriendsController>()) {
-        final ids = Get.find<FriendsController>()
-            .friends
-            .map((f) => f.id)
-            .toSet();
-        if (ids.isNotEmpty) {
-          fetchedVideos =
-              fetchedVideos.where((v) => ids.contains(v.ownerId)).toList();
-        } else {
-          fetchedVideos = [];
-        }
-      }
-
-      if (scope == FeedScope.subject && feedSubject.value.trim().isNotEmpty) {
-        final needle = feedSubject.value.trim().toLowerCase();
-        fetchedVideos = fetchedVideos
-            .where(
-              (v) => v.subject.trim().toLowerCase() == needle,
-            )
-            .toList();
-      }
-
       _nextFeedCursor = body['nextCursor'] as String?;
+      isFeedExhausted.value = fetchedVideos.isEmpty && _nextFeedCursor == null;
       if (refresh) {
         videos.assignAll(fetchedVideos);
       } else {
-        videos.addAll(fetchedVideos);
+        final existingIds = videos.map((video) => video.id).toSet();
+        videos.addAll(fetchedVideos.where((video) => existingIds.add(video.id)));
+      }
+      if (refresh && fetchedVideos.isNotEmpty) {
+        recordFeedView(fetchedVideos.first);
       }
     } catch (e) {
       feedError.value = e.toString();
@@ -157,6 +142,21 @@ class VideoController extends GetxController {
     } finally {
       isLoadingFeed.value = false;
       isRefreshingFeed.value = false;
+    }
+  }
+
+  /// Best-effort analytics/ranking signal; a failed report never interrupts playback.
+  Future<void> recordFeedView(VideoPost video) async {
+    if (video.id.isEmpty || !_viewReportedVideoIds.add(video.id)) return;
+    try {
+      final token = await _tokenOrNotify();
+      if (token == null) return;
+      final response = await _api.recordVideoView(token: token, videoId: video.id);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _viewReportedVideoIds.remove(video.id);
+      }
+    } catch (_) {
+      _viewReportedVideoIds.remove(video.id);
     }
   }
 
