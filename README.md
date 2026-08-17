@@ -45,6 +45,20 @@ All HTTP clients (including **podcasts**) use [`lib/application/services/api_con
 
 If you see **`Connection refused` to `localhost`** on a real device, the phone is trying to open port 3000 **on itself** — use your machine’s LAN IP or the dev URL above.
 
+### Run against the local API
+
+Start the API first from the sibling `lumi-api` project with `npm run dev`.
+Then run this app on the iOS Simulator with the local API explicitly selected:
+
+```bash
+flutter run -d 88A77B2E-73BD-4659-95CB-E41A59EED971 \
+  --dart-define=LUMI_API_BASE_URL=http://localhost:3000
+```
+
+Stop the Flutter development session by pressing `q` in that terminal. The
+Simulator app may remain installed, but it no longer has an attached dev
+session. Stop the API separately with `Ctrl-C` in its terminal.
+
 3. **Set up Firebase**
 
    ```bash
