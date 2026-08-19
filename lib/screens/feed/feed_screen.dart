@@ -643,6 +643,9 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   /// Tracks horizontal drags before child video controls resolve their own
   /// gestures. Vertical movement stays with the video [PageView].
   void _startFeedScopeSwipe(PointerDownEvent event) {
+    // A slideshow owns horizontal gestures so users can browse its photos
+    // without accidentally changing the feed scope.
+    if (_currentVideo?.isSlideshow == true) return;
     if (_feedSwipePointer != null) return;
     _feedSwipePointer = event.pointer;
     _feedSwipeStart = event.localPosition;
@@ -653,6 +656,7 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     final start = _feedSwipeStart;
     _feedSwipePointer = null;
     _feedSwipeStart = null;
+    if (_currentVideo?.isSlideshow == true) return;
     if (start == null) return;
 
     final delta = event.localPosition - start;
