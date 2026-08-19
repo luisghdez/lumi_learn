@@ -23,6 +23,7 @@ import 'package:lumi_learn_app/data/subject_catalog.dart';
 import 'package:lumi_learn_app/screens/social/widgets/friend_body.dart';
 import 'package:lumi_learn_app/utils/profile_picture_image.dart';
 import 'package:lumi_learn_app/routing/app_route_observer.dart';
+import 'package:lumi_learn_app/utils/video_player_window.dart';
 import 'package:lumi_learn_app/widgets/bottom_nav_bar.dart'
     show feedVideoOverlayBottomPadding, floatingNavbarBottomReserve;
 
@@ -388,8 +389,10 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
   // Only initialize controllers within ±2 of the current page and dispose
   // those that drift beyond ±3, so we never open more than ~5 network
   // connections at once instead of one per fetched batch (20+).
-  static const int _initWindowRadius = 2;
-  static const int _keepWindowRadius = 3;
+  static const _playerWindow = VideoPlayerWindow(
+    initializeRadius: 2,
+    keepAliveRadius: 3,
+  );
 
   Future<void> _syncVideoControllers() async {
     final videos = _videoController.videos;
@@ -411,7 +414,12 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
     // Dispose controllers that are too far from the current index to free
     // memory and network buffers.
     for (int i = 0; i < videos.length; i++) {
-      if ((i - _currentIndex).abs() <= _keepWindowRadius) continue;
+      if (_playerWindow.shouldKeepAlive(
+        pageIndex: i,
+        currentIndex: _currentIndex,
+      )) {
+        continue;
+      }
       final id = videos[i].id;
       if (_videoPlayers.containsKey(id)) {
         await _videoPlayers.remove(id)?.dispose();
@@ -421,7 +429,12 @@ class _FeedScreenState extends State<FeedScreen> with RouteAware {
 
     // Initialize controllers only for videos within the init window.
     for (int i = 0; i < videos.length; i++) {
-      if ((i - _currentIndex).abs() > _initWindowRadius) continue;
+      if (!_playerWindow.shouldInitialize(
+        pageIndex: i,
+        currentIndex: _currentIndex,
+      )) {
+        continue;
+      }
       final video = videos[i];
       if (video.isSlideshow) continue;
       final playbackUrl = video.playbackUrl;
@@ -3905,6 +3918,10 @@ class _ProfileUserVideoFeedScreenState
   final VideoController _videoController = Get.find();
   final NavigationController _navigationController = Get.find();
   final Map<String, VideoPlayerController> _videoPlayers = {};
+  static const _playerWindow = VideoPlayerWindow(
+    initializeRadius: 2,
+    keepAliveRadius: 3,
+  );
   late final Worker _videosWorker;
   int _currentIndex = 0;
 
@@ -3935,6 +3952,10 @@ class _ProfileUserVideoFeedScreenState
       (_) => _syncVideoControllers(),
     );
 
+    // The profile grid deliberately omits signed playback URLs. Hydrate the
+    // full list only after the user chooses to enter the video pager.
+    unawaited(_videoController.fetchUserVideos(widget.userId, refresh: true));
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _syncVideoControllers();
@@ -3963,7 +3984,27 @@ class _ProfileUserVideoFeedScreenState
       _currentIndex = videos.length - 1;
     }
 
-    for (final video in videos) {
+    // Match the main feed's bounded lifecycle. A profile can contain many
+    // posts, but only nearby pages should consume decoders and network buffers.
+    for (var i = 0; i < videos.length; i++) {
+      if (_playerWindow.shouldKeepAlive(
+        pageIndex: i,
+        currentIndex: _currentIndex,
+      )) {
+        continue;
+      }
+      final id = videos[i].id;
+      await _videoPlayers.remove(id)?.dispose();
+    }
+
+    for (var i = 0; i < videos.length; i++) {
+      if (!_playerWindow.shouldInitialize(
+        pageIndex: i,
+        currentIndex: _currentIndex,
+      )) {
+        continue;
+      }
+      final video = videos[i];
       if (video.isSlideshow) continue;
       final playbackUrl = video.playbackUrl;
       if (playbackUrl == null || playbackUrl.isEmpty) continue;

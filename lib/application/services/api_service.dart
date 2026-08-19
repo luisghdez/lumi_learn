@@ -317,9 +317,11 @@ class ApiService {
     required String userId,
     String? cursor,
     int limit = 30,
+    bool includePlayback = true,
   }) {
     final queryParameters = <String, String>{
       'limit': limit.toString(),
+      'includePlayback': includePlayback.toString(),
       if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
     };
     final uri = Uri.parse("$_baseUrl/users/$userId/videos").replace(

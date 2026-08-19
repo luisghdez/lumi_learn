@@ -1,12 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'package:lumi_learn_app/application/controllers/video_controller.dart';
 import 'package:lumi_learn_app/application/models/video_model.dart';
 import 'package:lumi_learn_app/screens/feed/feed_screen.dart';
+import 'package:lumi_learn_app/utils/profile_video_poster.dart';
 
 /// Same 3-column video grid as the account profile; works for any [userId].
 class ProfileVideosGrid extends StatefulWidget {
@@ -32,7 +30,11 @@ class _ProfileVideosGridState extends State<ProfileVideosGrid> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (Get.isRegistered<VideoController>()) {
-        Get.find<VideoController>().fetchUserVideos(widget.userId, refresh: true);
+        Get.find<VideoController>().fetchUserVideos(
+          widget.userId,
+          refresh: true,
+          includePlayback: false,
+        );
       }
     });
     widget.scrollController?.addListener(_onScrollLoadMore);
@@ -48,7 +50,11 @@ class _ProfileVideosGridState extends State<ProfileVideosGrid> {
     if (oldWidget.userId != widget.userId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Get.find<VideoController>().fetchUserVideos(widget.userId, refresh: true);
+        Get.find<VideoController>().fetchUserVideos(
+          widget.userId,
+          refresh: true,
+          includePlayback: false,
+        );
       });
     }
   }
@@ -69,7 +75,7 @@ class _ProfileVideosGridState extends State<ProfileVideosGrid> {
     final isLoading = videoController.loadingUserVideosByUserId[uid] == true;
     if (isLoading || !videoController.hasMoreUserVideos(uid)) return;
 
-    videoController.fetchUserVideos(uid, refresh: false);
+    videoController.fetchUserVideos(uid, refresh: false, includePlayback: false);
   }
 
   @override
@@ -199,12 +205,10 @@ class _UploadingVideoTile extends StatelessWidget {
 }
 
 String? _posterImageUrl(VideoPost video) {
-  final t = video.thumbnailUrl;
-  if (t != null && t.isNotEmpty) return t;
-  if (video.isSlideshow && video.slides.isNotEmpty) {
-    return video.slides.first.url;
-  }
-  return null;
+  return profileVideoPosterUrl(
+    thumbnailUrl: video.thumbnailUrl,
+    firstSlideUrl: video.slides.isEmpty ? null : video.slides.first.url,
+  );
 }
 
 class _ProfileVideoTile extends StatelessWidget {
@@ -242,10 +246,15 @@ class _ProfileVideoTile extends StatelessWidget {
               Image.network(
                 poster,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _VideoTileVideoFrame(video: video),
+                // Tiles are displayed at roughly 120 logical pixels wide.
+                // Limiting the decode avoids retaining full-size poster images
+                // for every tile in a large profile grid.
+                cacheWidth: 360,
+                filterQuality: FilterQuality.low,
+                errorBuilder: (_, __, ___) => const _VideoTileFallback(),
               )
             else
-              _VideoTileVideoFrame(video: video),
+              const _VideoTileFallback(),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -330,67 +339,6 @@ class _VideoTileFallback extends StatelessWidget {
   }
 }
 
-class _VideoTileVideoFrame extends StatefulWidget {
-  const _VideoTileVideoFrame({required this.video});
-
-  final VideoPost video;
-
-  @override
-  State<_VideoTileVideoFrame> createState() => _VideoTileVideoFrameState();
-}
-
-class _VideoTileVideoFrameState extends State<_VideoTileVideoFrame> {
-  Uint8List? _thumbnail;
-  bool _failed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.video.isSlideshow && widget.video.slides.isNotEmpty) return;
-    final playbackUrl = widget.video.playbackUrl;
-    if (playbackUrl == null || playbackUrl.isEmpty) {
-      _failed = true;
-      return;
-    }
-    _loadThumbnail(playbackUrl);
-  }
-
-  Future<void> _loadThumbnail(String url) async {
-    try {
-      final data = await VideoThumbnail.thumbnailData(
-        video: url,
-        imageFormat: ImageFormat.JPEG,
-        maxWidth: 200,
-        quality: 65,
-      );
-      if (!mounted) return;
-      setState(() => _thumbnail = data);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _failed = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.video.isSlideshow && widget.video.slides.isNotEmpty) {
-      return Image.network(
-        widget.video.slides.first.url,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _VideoTileFallback(),
-      );
-    }
-    final thumbnail = _thumbnail;
-    if (_failed || thumbnail == null) {
-      return const _VideoTileFallback();
-    }
-    return Image.memory(
-      thumbnail,
-      fit: BoxFit.cover,
-    );
-  }
-}
-
 class _EmptyProfileVideos extends StatelessWidget {
   const _EmptyProfileVideos();
 
@@ -433,4 +381,3 @@ class _EmptyProfileVideos extends StatelessWidget {
     );
   }
 }
-

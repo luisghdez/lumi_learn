@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -44,6 +45,8 @@ class VideoController extends GetxController {
   String? _nextFeedCursor;
   final Set<String> _viewReportedVideoIds = <String>{};
   final Map<String, String?> _userVideoCursorsByUserId = {};
+  final Map<String, bool> _userVideoFetchIncludesPlayback = {};
+  final Set<String> _queuedUserVideoPlaybackRefresh = <String>{};
   final Map<String, String?> _commentCursorsByVideoId = {};
 
   String? get currentUserId => authController.firebaseUser.value?.uid;
@@ -498,13 +501,26 @@ class VideoController extends GetxController {
     }
   }
 
-  Future<void> fetchUserVideos(String userId, {bool refresh = true}) async {
-    if (loadingUserVideosByUserId[userId] == true) return;
+  Future<void> fetchUserVideos(
+    String userId, {
+    bool refresh = true,
+    bool includePlayback = true,
+  }) async {
+    if (loadingUserVideosByUserId[userId] == true) {
+      // A tile-only profile request may already be running when the user taps
+      // into the pager. Do not lose that upgrade; start it once the lightweight
+      // request has released the per-user loading lock.
+      if (includePlayback && _userVideoFetchIncludesPlayback[userId] != true) {
+        _queuedUserVideoPlaybackRefresh.add(userId);
+      }
+      return;
+    }
 
     final token = await _tokenOrNotify();
     if (token == null) return;
 
     loadingUserVideosByUserId[userId] = true;
+    _userVideoFetchIncludesPlayback[userId] = includePlayback;
     if (refresh) {
       _userVideoCursorsByUserId[userId] = null;
     }
@@ -514,6 +530,7 @@ class VideoController extends GetxController {
         token: token,
         userId: userId,
         cursor: refresh ? null : _userVideoCursorsByUserId[userId],
+        includePlayback: includePlayback,
       );
       _ensureSuccess(response, expectedStatuses: const [200]);
       final body = _decodeBody(response.body);
@@ -546,6 +563,14 @@ class VideoController extends GetxController {
       Get.snackbar('Profile Videos', e.toString());
     } finally {
       loadingUserVideosByUserId[userId] = false;
+      _userVideoFetchIncludesPlayback.remove(userId);
+      if (_queuedUserVideoPlaybackRefresh.remove(userId)) {
+        unawaited(fetchUserVideos(
+          userId,
+          refresh: true,
+          includePlayback: true,
+        ));
+      }
     }
   }
 
