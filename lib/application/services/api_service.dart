@@ -317,9 +317,11 @@ class ApiService {
     required String userId,
     String? cursor,
     int limit = 30,
+    bool includePlayback = true,
   }) {
     final queryParameters = <String, String>{
       'limit': limit.toString(),
+      'includePlayback': includePlayback.toString(),
       if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
     };
     final uri = Uri.parse("$_baseUrl/users/$userId/videos").replace(
@@ -738,6 +740,20 @@ class ApiService {
     final uri = Uri.parse('$_baseUrl/videos/$videoId');
     return http.get(
       uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
+  /// Idempotently records that the authenticated user activated this clip.
+  Future<http.Response> recordVideoView({
+    required String token,
+    required String videoId,
+  }) {
+    return http.post(
+      Uri.parse('$_baseUrl/videos/$videoId/view'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

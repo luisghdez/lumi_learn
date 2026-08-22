@@ -51,7 +51,11 @@ class _ProfileBodyState extends State<ProfileBody> {
           if (!mounted) return;
           final userId = Get.find<AuthController>().firebaseUser.value?.uid;
           if (userId != null && Get.isRegistered<VideoController>()) {
-            Get.find<VideoController>().fetchUserVideos(userId, refresh: true);
+            Get.find<VideoController>().fetchUserVideos(
+              userId,
+              refresh: true,
+              includePlayback: false,
+            );
           }
         });
       }
@@ -84,7 +88,11 @@ class _ProfileBodyState extends State<ProfileBody> {
     final authController = Get.find<AuthController>();
     final userId = authController.firebaseUser.value?.uid;
     if (userId != null && Get.isRegistered<VideoController>()) {
-      await Get.find<VideoController>().fetchUserVideos(userId, refresh: true);
+      await Get.find<VideoController>().fetchUserVideos(
+        userId,
+        refresh: true,
+        includePlayback: false,
+      );
     }
     await authController.fetchUserData();
   }
@@ -629,4 +637,3 @@ class _EditUsernameScreenState extends State<_EditUsernameScreen> {
     );
   }
 }
-
