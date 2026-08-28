@@ -13,10 +13,12 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:permission_handler/permission_handler.dart';
 
 enum SpeakRecordingState {
   initializing,
   ready,
+  starting,
   listening,
   stopping,
   submitting,
@@ -63,6 +65,7 @@ class SpeakController extends GetxController {
   String? _diagnosticSessionId;
   Stopwatch? _diagnosticStopwatch;
   int _diagnosticSequence = 0;
+  Timer? _listeningStartTimeout;
 
   final RxList<Map<String, String>> conversationHistory =
       <Map<String, String>>[].obs;
@@ -88,6 +91,7 @@ class SpeakController extends GetxController {
   @override
   void onClose() {
     _trace('controller_closed');
+    _listeningStartTimeout?.cancel();
     _speechToText.stop();
     audioPlayer.dispose();
     super.onClose();
@@ -103,6 +107,7 @@ class SpeakController extends GetxController {
       audioPlayer.stop();
     }
     _speechToText.stop();
+    _listeningStartTimeout?.cancel();
 
     terms.clear();
     termProgress.clear();
@@ -253,7 +258,14 @@ class SpeakController extends GetxController {
 
     transcript.value = "";
     _hasSubmitted = false;
-    _setRecordingState(SpeakRecordingState.listening);
+    _setRecordingState(SpeakRecordingState.starting);
+    _listeningStartTimeout?.cancel();
+    _listeningStartTimeout = Timer(const Duration(seconds: 4), () {
+      if (recordingState.value == SpeakRecordingState.starting) {
+        _trace('listen_start_timed_out');
+        _handleSpeechUnavailable();
+      }
+    });
 
     try {
       await _speechToText.listen(
@@ -305,7 +317,7 @@ class SpeakController extends GetxController {
       _trace('silence_fallback_started');
       await playSilenceAudio();
       feedbackMessage.value =
-          "Uhhh... you there? I didn’t hear ANYTHING, let’s try that again!";
+          "I didn’t hear an explanation that time. Try speaking a little closer to your microphone.";
       isLoading.value = false;
       transcript.value = "";
       _setRecordingState(SpeakRecordingState.ready);
@@ -341,7 +353,7 @@ class SpeakController extends GetxController {
   void _onStatus(String status) {
     _trace('speech_status_changed', details: {'status': status});
     if (status == 'listening' &&
-        recordingState.value == SpeakRecordingState.ready) {
+        recordingState.value == SpeakRecordingState.starting) {
       _setRecordingState(SpeakRecordingState.listening);
     }
 
@@ -589,9 +601,10 @@ class SpeakController extends GetxController {
   }
 
   static const _speechUnavailableMessage =
-      "Lumi couldn't start speech recognition. Check Microphone and Speech Recognition access in Settings, then reopen the app.";
+      "Lumi needs microphone access to hear your explanation. Turn on Microphone and Speech Recognition in Settings, then reopen Lumi.";
 
   void _handleSpeechUnavailable() {
+    _listeningStartTimeout?.cancel();
     speechEnabled.value = false;
     isLoading.value = false;
     _setRecordingState(SpeakRecordingState.error);
@@ -601,11 +614,26 @@ class SpeakController extends GetxController {
   void _setRecordingState(SpeakRecordingState nextState) {
     if (recordingState.value == nextState) return;
     final previousState = recordingState.value;
+    if (previousState == SpeakRecordingState.starting &&
+        nextState != SpeakRecordingState.starting) {
+      _listeningStartTimeout?.cancel();
+    }
     recordingState.value = nextState;
     _trace('recording_state_changed', details: {
       'from': previousState.name,
       'to': nextState.name,
     });
+  }
+
+  Future<void> openMicrophoneSettings() async {
+    _trace('microphone_settings_requested');
+    final opened = await openAppSettings();
+    if (!opened) {
+      Get.snackbar(
+        'Settings unavailable',
+        'Open Settings and allow Lumi to use the Microphone and Speech Recognition.',
+      );
+    }
   }
 
   void _showAudioUnavailableMessage() {

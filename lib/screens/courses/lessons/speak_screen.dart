@@ -134,24 +134,55 @@ class _SpeakScreenState extends State<SpeakScreen> {
                         () {
                           final recordingState =
                               speakController.recordingState.value;
-                          final isLoading = recordingState ==
-                                  SpeakRecordingState.stopping ||
+                          final isStarting =
+                              recordingState == SpeakRecordingState.starting;
+                          final isLoading = isStarting ||
+                              recordingState == SpeakRecordingState.stopping ||
                               recordingState == SpeakRecordingState.submitting;
                           final isSpeechUnavailable =
                               recordingState == SpeakRecordingState.error;
 
-                          return RecordButton(
-                            onStartRecording: speakController.startListening,
-                            onStopRecording: speakController.stopListening,
-                            isRecording:
-                                recordingState == SpeakRecordingState.listening,
-                            isLoading: isLoading,
-                            isSpeechUnavailable: isSpeechUnavailable,
-                            isDisabled: speakController.isAudioPlaying.value ||
-                                isLoading ||
-                                recordingState ==
-                                    SpeakRecordingState.initializing ||
-                                isSpeechUnavailable,
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              RecordButton(
+                                onStartRecording:
+                                    speakController.startListening,
+                                onStopRecording: speakController.stopListening,
+                                isRecording: recordingState ==
+                                    SpeakRecordingState.listening,
+                                isLoading: isLoading,
+                                loadingLabel: isStarting
+                                    ? 'Starting microphone…'
+                                    : recordingState ==
+                                            SpeakRecordingState.stopping
+                                        ? 'Finishing up…'
+                                        : 'Reviewing…',
+                                isSpeechUnavailable: isSpeechUnavailable,
+                                isDisabled:
+                                    speakController.isAudioPlaying.value ||
+                                        isLoading ||
+                                        recordingState ==
+                                            SpeakRecordingState.initializing ||
+                                        isSpeechUnavailable,
+                              ),
+                              if (isSpeechUnavailable)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: OutlinedButton.icon(
+                                    onPressed:
+                                        speakController.openMicrophoneSettings,
+                                    icon: const Icon(Icons.settings_outlined),
+                                    label: const Text('Open Settings'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      side: const BorderSide(
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           );
                         },
                       ),
@@ -197,6 +228,7 @@ class RecordButton extends StatelessWidget {
   final bool isLoading;
   final bool isDisabled;
   final bool isSpeechUnavailable;
+  final String loadingLabel;
 
   const RecordButton({
     super.key,
@@ -206,6 +238,7 @@ class RecordButton extends StatelessWidget {
     required this.isLoading,
     required this.isDisabled,
     required this.isSpeechUnavailable,
+    required this.loadingLabel,
   });
 
   void _toggleRecording() {
@@ -284,7 +317,7 @@ class RecordButton extends StatelessWidget {
                   : isDisabled
                       ? ""
                       : isLoading
-                          ? "Loading..."
+                          ? loadingLabel
                           : (isRecording ? "Tap to stop" : "Tap to record"),
               style: const TextStyle(
                 color: Color.fromARGB(129, 255, 255, 255),
