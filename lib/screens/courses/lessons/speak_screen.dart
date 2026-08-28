@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,10 +11,10 @@ import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speec
 
 class SpeakScreen extends StatefulWidget {
   final Question question;
-  const SpeakScreen({Key? key, required this.question}) : super(key: key);
+  const SpeakScreen({super.key, required this.question});
 
   @override
-  _SpeakScreenState createState() => _SpeakScreenState();
+  State<SpeakScreen> createState() => _SpeakScreenState();
 }
 
 class _SpeakScreenState extends State<SpeakScreen> {
@@ -86,7 +85,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
                         height: astronautSize,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           border: Border.all(color: Colors.white30, width: 2),
                           image: const DecorationImage(
                             image: AssetImage('assets/astronaut/thinking.png'),
@@ -132,16 +131,29 @@ class _SpeakScreenState extends State<SpeakScreen> {
                     // Record button
                     Center(
                       child: Obx(
-                        () => RecordButton(
-                          onStartRecording: speakController.startListening,
-                          onStopRecording: () {
-                            speakController.isLoading.value = true;
-                            speakController.stopListening();
-                          },
-                          isLoading: speakController.isLoading.value,
-                          isDisabled: speakController.isAudioPlaying.value ||
-                              speakController.isLoading.value,
-                        ),
+                        () {
+                          final recordingState =
+                              speakController.recordingState.value;
+                          final isLoading = recordingState ==
+                                  SpeakRecordingState.stopping ||
+                              recordingState == SpeakRecordingState.submitting;
+                          final isSpeechUnavailable =
+                              recordingState == SpeakRecordingState.error;
+
+                          return RecordButton(
+                            onStartRecording: speakController.startListening,
+                            onStopRecording: speakController.stopListening,
+                            isRecording:
+                                recordingState == SpeakRecordingState.listening,
+                            isLoading: isLoading,
+                            isSpeechUnavailable: isSpeechUnavailable,
+                            isDisabled: speakController.isAudioPlaying.value ||
+                                isLoading ||
+                                recordingState ==
+                                    SpeakRecordingState.initializing ||
+                                isSpeechUnavailable,
+                          );
+                        },
                       ),
                     ),
 
@@ -178,47 +190,38 @@ class _SpeakScreenState extends State<SpeakScreen> {
   }
 }
 
-class RecordButton extends StatefulWidget {
+class RecordButton extends StatelessWidget {
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
+  final bool isRecording;
   final bool isLoading;
   final bool isDisabled;
+  final bool isSpeechUnavailable;
 
   const RecordButton({
-    Key? key,
+    super.key,
     required this.onStartRecording,
     required this.onStopRecording,
+    required this.isRecording,
     required this.isLoading,
     required this.isDisabled,
-  }) : super(key: key);
-
-  @override
-  State<RecordButton> createState() => _RecordButtonState();
-}
-
-class _RecordButtonState extends State<RecordButton> {
-  bool isRecording = false;
+    required this.isSpeechUnavailable,
+  });
 
   void _toggleRecording() {
-    if (widget.isDisabled) return;
+    if (isDisabled) return;
 
     if (isRecording) {
-      widget.onStopRecording();
-      setState(() {
-        isRecording = false;
-      });
+      onStopRecording();
     } else {
-      setState(() {
-        isRecording = true;
-      });
-      widget.onStartRecording();
+      onStartRecording();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     // Visually fade out if disabled
-    final double opacityValue = widget.isDisabled ? 0.5 : 1.0;
+    final double opacityValue = isDisabled ? 0.5 : 1.0;
 
     return GestureDetector(
       onTap: _toggleRecording,
@@ -232,15 +235,17 @@ class _RecordButtonState extends State<RecordButton> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: widget.isDisabled
-                    ? Colors.grey.withOpacity(0.3)
-                    : widget.isLoading
-                        ? Colors.white.withOpacity(0.3)
-                        : isRecording
-                            ? Colors.redAccent.withOpacity(0.5)
-                            : Colors.white.withOpacity(0.9),
+                color: isSpeechUnavailable
+                    ? Colors.redAccent.withValues(alpha: 0.25)
+                    : isDisabled
+                        ? Colors.grey.withValues(alpha: 0.3)
+                        : isLoading
+                            ? Colors.white.withValues(alpha: 0.3)
+                            : isRecording
+                                ? Colors.redAccent.withValues(alpha: 0.5)
+                                : Colors.white.withValues(alpha: 0.9),
               ),
-              child: widget.isLoading
+              child: isLoading
                   ? const Stack(
                       alignment: Alignment.center,
                       children: [
@@ -261,18 +266,26 @@ class _RecordButtonState extends State<RecordButton> {
                       ],
                     )
                   : Icon(
-                      isRecording ? Icons.mic_off : Icons.mic_outlined,
-                      color: isRecording ? Colors.white : Colors.black87,
+                      isSpeechUnavailable
+                          ? Icons.mic_off_outlined
+                          : isRecording
+                              ? Icons.mic_off
+                              : Icons.mic_outlined,
+                      color: isSpeechUnavailable || isRecording
+                          ? Colors.white
+                          : Colors.black87,
                       size: 28,
                     ),
             ),
             const SizedBox(height: 8),
             Text(
-              widget.isDisabled
-                  ? ""
-                  : widget.isLoading
-                      ? "Loading..."
-                      : (isRecording ? "Tap to stop" : "Tap to record"),
+              isSpeechUnavailable
+                  ? "Speech unavailable"
+                  : isDisabled
+                      ? ""
+                      : isLoading
+                          ? "Loading..."
+                          : (isRecording ? "Tap to stop" : "Tap to record"),
               style: const TextStyle(
                 color: Color.fromARGB(129, 255, 255, 255),
                 fontSize: 14,
