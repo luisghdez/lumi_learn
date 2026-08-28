@@ -10,6 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_core
   flutter_doc_scanner
   flutter_timezone
+  flutter_webrtc
   pdfx
   permission_handler_windows
   record_windows

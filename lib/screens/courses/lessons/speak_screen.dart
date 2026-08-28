@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +8,9 @@ import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
 import 'package:lumi_learn_app/application/models/question.dart';
+import 'package:lumi_learn_app/application/services/api_service.dart';
+import 'package:lumi_learn_app/application/services/talk_to_lumi_realtime_service.dart';
+import 'package:uuid/uuid.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/terms_deck.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speech_bubble.dart';
 
@@ -18,8 +23,17 @@ class SpeakScreen extends StatefulWidget {
 }
 
 class _SpeakScreenState extends State<SpeakScreen> {
+  static const bool _realtimeTalkEnabled =
+      bool.fromEnvironment('talk_to_lumi_realtime', defaultValue: false);
   final SpeakController speakController = Get.find<SpeakController>();
   final CourseController courseController = Get.find<CourseController>();
+  TalkToLumiRealtimeService? _realtimeTalk;
+  TalkRealtimeSession? _realtimeSession;
+  StreamSubscription<TalkRealtimeEvent>? _realtimeEventsSubscription;
+  StreamSubscription<TalkRealtimeConnectionState>? _realtimeStateSubscription;
+  TalkRealtimeConnectionState _realtimeState = TalkRealtimeConnectionState.idle;
+  String _liveTranscript = '';
+  DateTime? _realtimeStartedAt;
 
   @override
   void initState() {
@@ -27,13 +41,127 @@ class _SpeakScreenState extends State<SpeakScreen> {
     // Initialize controller with the question's terms and play intro audio.
     speakController.setTerms(widget.question.flashcards);
     speakController.playIntroAudio();
+    if (_realtimeTalkEnabled) {
+      _realtimeTalk = TalkToLumiRealtimeService();
+      _realtimeEventsSubscription = _realtimeTalk!.events.listen(_handleRealtimeEvent);
+      _realtimeStateSubscription = _realtimeTalk!.states.listen((state) {
+        if (mounted) setState(() => _realtimeState = state);
+      });
+    }
   }
 
   @override
   void dispose() {
     // Reset all controller values when this screen is disposed.
     speakController.resetValues();
+    _realtimeEventsSubscription?.cancel();
+    _realtimeStateSubscription?.cancel();
+    unawaited(_realtimeTalk?.dispose() ?? Future<void>.value());
     super.dispose();
+  }
+
+  void _handleRealtimeEvent(TalkRealtimeEvent event) {
+    if (!mounted) return;
+    if (event.type == 'conversation.item.input_audio_transcription.delta' &&
+        event.transcript != null) {
+      setState(() => _liveTranscript += event.transcript!);
+    } else if (event.type ==
+            'conversation.item.input_audio_transcription.completed' &&
+        event.transcript != null) {
+      setState(() => _liveTranscript = event.transcript!);
+    } else if (event.type == 'error' && event.message != null) {
+      Get.snackbar('Talk to Lumi unavailable', 'You can still use the regular recorder.');
+    }
+  }
+
+  Future<void> _toggleRealtimeTalk() async {
+    if (_realtimeSession != null) {
+      await _finishRealtimeTalk();
+      return;
+    }
+    final service = _realtimeTalk;
+    if (service == null) return;
+    final token = await speakController.authController.getIdToken();
+    final lessonIndex = courseController.activeLessonIndex.value;
+    final lessons = courseController.lessons;
+    final lessonId = lessonIndex >= 0 && lessonIndex < lessons.length
+        ? lessons[lessonIndex]['id'] as String?
+        : null;
+    final courseId = courseController.selectedCourseId.value;
+    if (token == null || lessonId == null || courseId.isEmpty) {
+      Get.snackbar('Talk to Lumi unavailable', 'Please reopen this lesson and try again.');
+      return;
+    }
+    try {
+      setState(() {
+        _liveTranscript = '';
+        _realtimeState = TalkRealtimeConnectionState.connecting;
+      });
+      final session = await service.connect(
+        token: token,
+        courseId: courseId,
+        lessonId: lessonId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _realtimeSession = session;
+        _realtimeStartedAt = DateTime.now();
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _realtimeSession = null;
+          _realtimeState = TalkRealtimeConnectionState.idle;
+        });
+      }
+    }
+  }
+
+  Future<void> _finishRealtimeTalk() async {
+    final session = _realtimeSession;
+    final service = _realtimeTalk;
+    if (session == null || service == null) return;
+    final transcript = _liveTranscript.trim();
+    if (transcript.isEmpty) {
+      Get.snackbar('I didn’t hear that', 'Try talking for a moment, or use the regular recorder.');
+      return;
+    }
+    final token = await speakController.authController.getIdToken();
+    if (token == null) return;
+    try {
+      setState(() => _realtimeState = TalkRealtimeConnectionState.connecting);
+      final durationMs = DateTime.now()
+          .difference(_realtimeStartedAt ?? DateTime.now())
+          .inMilliseconds;
+      final response = await ApiService().assessTalkAttempt(
+        token: token,
+        attemptId: session.attemptId,
+        transcript: transcript,
+        turnId: const Uuid().v4(),
+        durationMs: durationMs,
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw StateError('Talk assessment failed (${response.statusCode})');
+      }
+      final assessment = jsonDecode(response.body) as Map<String, dynamic>;
+      speakController.applyTalkAssessment(
+        focusTerm: assessment['termId'] as String,
+        score: assessment['score'] as int,
+        feedbackText: assessment['feedbackText'] as String,
+        nextAction: assessment['nextAction'] as String,
+      );
+    } catch (_) {
+      Get.snackbar('Review unavailable', 'Your live answer was not submitted. Please try again.');
+    } finally {
+      await service.disconnect();
+      if (mounted) {
+        setState(() {
+          _realtimeSession = null;
+          _realtimeState = TalkRealtimeConnectionState.idle;
+          _realtimeStartedAt = null;
+        });
+      }
+    }
   }
 
   @override
@@ -180,6 +308,44 @@ class _SpeakScreenState extends State<SpeakScreen> {
                                         color: Colors.white54,
                                       ),
                                     ),
+                                  ),
+                                ),
+                              if (_realtimeTalkEnabled)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: OutlinedButton.icon(
+                                    onPressed: isLoading ||
+                                            speakController.isAudioPlaying.value ||
+                                            _realtimeState ==
+                                                TalkRealtimeConnectionState.connecting
+                                        ? null
+                                        : _toggleRealtimeTalk,
+                                    icon: Icon(_realtimeSession == null
+                                        ? Icons.graphic_eq
+                                        : Icons.done_outline),
+                                    label: Text(_realtimeSession == null
+                                        ? 'Talk it through (beta)'
+                                        : 'Finish live answer'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.lightBlueAccent,
+                                      side: const BorderSide(
+                                        color: Colors.lightBlueAccent,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (_realtimeTalkEnabled &&
+                                  _realtimeSession != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    _liveTranscript.isEmpty
+                                        ? 'Listening… explain it in your own words.'
+                                        : _liveTranscript,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.white70),
                                   ),
                                 ),
                             ],

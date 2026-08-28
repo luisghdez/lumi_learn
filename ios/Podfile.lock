@@ -1333,6 +1333,9 @@ PODS:
   - flutter_sound_core (9.28.0)
   - flutter_timezone (0.0.1):
     - Flutter
+  - flutter_webrtc (1.6.0):
+    - Flutter
+    - WebRTC-SDK (= 144.7559.09)
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
     - Flutter
@@ -1536,6 +1539,7 @@ PODS:
   - video_thumbnail (0.0.1):
     - Flutter
     - libwebp
+  - WebRTC-SDK (144.7559.09)
 
 DEPENDENCIES:
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
@@ -1552,6 +1556,7 @@ DEPENDENCIES:
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
   - flutter_timezone (from `.symlinks/plugins/flutter_timezone/ios`)
+  - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_cropper (from `.symlinks/plugins/image_cropper/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
@@ -1607,6 +1612,7 @@ SPEC REPOS:
     - SwiftyGif
     - TOCropViewController
     - Try
+    - WebRTC-SDK
 
 EXTERNAL SOURCES:
   audioplayers_darwin:
@@ -1637,6 +1643,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_sound/ios"
   flutter_timezone:
     :path: ".symlinks/plugins/flutter_timezone/ios"
+  flutter_webrtc:
+    :path: ".symlinks/plugins/flutter_webrtc/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   image_cropper:
@@ -1703,6 +1711,7 @@ SPEC CHECKSUMS:
   flutter_sound: b9236a5875299aaa4cef1690afd2f01d52a3f890
   flutter_sound_core: 427465f72d07ab8c3edbe8ffdde709ddacd3763c
   flutter_timezone: 7c838e17ffd4645d261e87037e5bebf6d38fe544
+  flutter_webrtc: f952258e6fa67477d481cfbad2885a4f117922a7
   google_sign_in_ios: 19297361f2c51d7d8ac0201b866ef1fa5d1f94a8
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
@@ -1737,7 +1746,8 @@ SPEC CHECKSUMS:
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
   video_thumbnail: b637e0ad5f588ca9945f6e2c927f73a69a661140
+  WebRTC-SDK: e6006119cd730d6315d875e4a421b6cc8bb88833
 
-PODFILE CHECKSUM: 3bbd066a64fc4bded24f39231f4758e401c81371
+PODFILE CHECKSUM: 1cd5ffe25b4fe010241e34cd32c0a6a4cfabab83
 
 COCOAPODS: 1.16.2

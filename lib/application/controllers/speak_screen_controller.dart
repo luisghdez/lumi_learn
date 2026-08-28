@@ -513,6 +513,39 @@ class SpeakController extends GetxController {
     }
   }
 
+  /// Applies an authoritative Talk to Lumi assessment returned by the API.
+  /// Unlike the legacy review request, the caller does not supply a score or
+  /// transition decision; both are derived and persisted on the server.
+  void applyTalkAssessment({
+    required String focusTerm,
+    required int score,
+    required String feedbackText,
+    required String nextAction,
+  }) {
+    final index = terms.indexWhere((term) => term.term == focusTerm);
+    if (index == -1) {
+      _trace('talk_assessment_ignored', details: {'reason': 'unknown_term'});
+      return;
+    }
+    termProgress[index] = (score / 100).clamp(0.0, 1.0);
+    feedbackMessage.value = feedbackText;
+    _trace('talk_assessment_applied', details: {
+      'score': score,
+      'nextAction': nextAction,
+    });
+
+    if (nextAction == 'next_term') {
+      currentTermIndex.value = (index + 1).clamp(0, terms.length - 1);
+      attemptNumber = 1;
+      conversationHistory.clear();
+    } else if (nextAction == 'retry') {
+      currentTermIndex.value = index;
+      attemptNumber++;
+    } else if (nextAction == 'complete') {
+      courseController.nextQuestion();
+    }
+  }
+
   Future<void> fetchReviewAudio({
     required String reviewSessionId,
     int attempt = 1,

@@ -16,6 +16,7 @@ class ApiService {
   /// can always leave its loading state and offer a recovery path.
   static const Duration reviewRequestTimeout = Duration(seconds: 20);
   static const Duration reviewAudioRequestTimeout = Duration(seconds: 6);
+  static const Duration talkSignalingTimeout = Duration(seconds: 10);
 
   Future<http.Response> createCourse({
     required String token,
@@ -451,6 +452,68 @@ class ApiService {
     ).timeout(reviewAudioRequestTimeout);
 
     return response;
+  }
+
+  Future<http.Response> createTalkSession({
+    required String token,
+    required String courseId,
+    required String lessonId,
+    required String clientAttemptId,
+  }) {
+    return http
+        .post(
+          Uri.parse('$_baseUrl/talk/sessions'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'courseId': courseId,
+            'lessonId': lessonId,
+            'clientAttemptId': clientAttemptId,
+          }),
+        )
+        .timeout(talkSignalingTimeout);
+  }
+
+  Future<http.Response> createTalkWebRtcOffer({
+    required String token,
+    required String attemptId,
+    required String sdp,
+  }) {
+    return http
+        .post(
+          Uri.parse('$_baseUrl/talk/attempts/$attemptId/offer'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'sdp': sdp}),
+        )
+        .timeout(talkSignalingTimeout);
+  }
+
+  Future<http.Response> assessTalkAttempt({
+    required String token,
+    required String attemptId,
+    required String transcript,
+    required String turnId,
+    required int durationMs,
+  }) {
+    return http
+        .post(
+          Uri.parse('$_baseUrl/talk/attempts/$attemptId/assess'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'transcript': transcript,
+            'turnId': turnId,
+            'durationMs': durationMs,
+          }),
+        )
+        .timeout(reviewRequestTimeout);
   }
 
   // update user profile picture
