@@ -398,7 +398,11 @@ class SpeakController extends GetxController {
       for (var i = 0; i < terms.length; i++) {
         final score = (termProgress[i] * 100).round(); // convert to 0–100 scale
         // Use terms[i].term to extract the string value.
-        termsData.add({'term': terms[i].term, 'score': score});
+        termsData.add({
+          'term': terms[i].term,
+          'definition': terms[i].definition,
+          'score': score,
+        });
       }
 
       // Add the user transcript to the conversation history.
@@ -435,17 +439,18 @@ class SpeakController extends GetxController {
           // 0-1 scale for progress bar
         }
 
-        // Optionally delay to let the audio be generated.
-        await Future.delayed(const Duration(seconds: 2));
-        await fetchReviewAudio();
-
-        // Set feedback message as provided by the API.
+        // Written feedback is the primary result. Never wait for optional TTS
+        // generation or playback before the learner can read it and continue.
         final original = data['feedbackMessage'] as String;
         final cleaned = original.replaceAll(RegExp(r'\[.*?\]'), '').trim();
         feedbackMessage.value = cleaned;
 
         conversationHistory
             .add({'role': 'tutor', 'message': data['feedbackMessage']});
+
+        // Audio is a best-effort enhancement. Snapshot this session so a later
+        // review cannot cause this background task to request the wrong audio.
+        unawaited(fetchReviewAudio(reviewSessionId: sessionId.value));
 
         attemptNumber++;
 
@@ -508,11 +513,15 @@ class SpeakController extends GetxController {
     }
   }
 
-  Future<void> fetchReviewAudio({int attempt = 1, int maxAttempts = 3}) async {
+  Future<void> fetchReviewAudio({
+    required String reviewSessionId,
+    int attempt = 1,
+    int maxAttempts = 3,
+  }) async {
     final requestStopwatch = Stopwatch()..start();
     _trace('review_audio_requested', details: {'attempt': attempt});
     try {
-      if (sessionId.value.isEmpty) {
+      if (reviewSessionId.isEmpty) {
         _trace('review_audio_blocked',
             details: {'reason': 'missing_session_id'});
         return;
@@ -525,7 +534,7 @@ class SpeakController extends GetxController {
       }
       final response = await ApiService().getReviewAudio(
         token: token,
-        sessionId: sessionId.value,
+        sessionId: reviewSessionId,
       );
       _trace('review_audio_response', details: {
         'attempt': attempt,
@@ -538,7 +547,11 @@ class SpeakController extends GetxController {
       } else if (response.statusCode == 404 && attempt < maxAttempts) {
         _trace('review_audio_retry_scheduled', details: {'attempt': attempt});
         await Future.delayed(const Duration(seconds: 1));
-        await fetchReviewAudio(attempt: attempt + 1, maxAttempts: maxAttempts);
+        await fetchReviewAudio(
+          reviewSessionId: reviewSessionId,
+          attempt: attempt + 1,
+          maxAttempts: maxAttempts,
+        );
       } else {
         _trace('review_audio_failed', details: {
           'attempt': attempt,
@@ -558,7 +571,11 @@ class SpeakController extends GetxController {
           'reason': 'request_exception',
         });
         await Future.delayed(const Duration(seconds: 1));
-        await fetchReviewAudio(attempt: attempt + 1, maxAttempts: maxAttempts);
+        await fetchReviewAudio(
+          reviewSessionId: reviewSessionId,
+          attempt: attempt + 1,
+          maxAttempts: maxAttempts,
+        );
       } else {
         _showAudioUnavailableMessage();
       }
