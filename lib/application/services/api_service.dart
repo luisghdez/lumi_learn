@@ -12,6 +12,11 @@ import 'package:lumi_learn_app/application/services/api_config.dart';
 class ApiService {
   static String get _baseUrl => ApiConfig.origin;
 
+  /// These endpoints can wait on AI and TTS work. Bound them so the Speak UI
+  /// can always leave its loading state and offer a recovery path.
+  static const Duration reviewRequestTimeout = Duration(seconds: 20);
+  static const Duration reviewAudioRequestTimeout = Duration(seconds: 6);
+
   Future<http.Response> createCourse({
     required String token,
     required List<File> files,
@@ -109,8 +114,7 @@ class ApiService {
     required String courseId,
     required int unitNumber,
   }) async {
-    final uri =
-        Uri.parse('$_baseUrl/courses/$courseId/notes/$unitNumber');
+    final uri = Uri.parse('$_baseUrl/courses/$courseId/notes/$unitNumber');
     final response = await http.get(
       uri,
       headers: {
@@ -416,14 +420,16 @@ class ApiService {
       'conversationHistory': conversationHistory ?? [],
     });
 
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: body,
-    );
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: body,
+        )
+        .timeout(reviewRequestTimeout);
 
     return response;
   }
@@ -442,7 +448,7 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-    );
+    ).timeout(reviewAudioRequestTimeout);
 
     return response;
   }
@@ -709,8 +715,10 @@ class ApiService {
     required String token,
     String? cursor,
     int limit = 20,
+
     /// Optional; server may ignore until supported.
     String? subject,
+
     /// Optional; server may ignore until supported.
     bool? friendsOnly,
   }) {
@@ -854,8 +862,7 @@ class ApiService {
     required String videoId,
     required String commentId,
   }) {
-    final uri =
-        Uri.parse('$_baseUrl/videos/$videoId/comments/$commentId/like');
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/comments/$commentId/like');
     return http.post(
       uri,
       headers: {
@@ -873,8 +880,7 @@ class ApiService {
     required String videoId,
     required String commentId,
   }) {
-    final uri =
-        Uri.parse('$_baseUrl/videos/$videoId/comments/$commentId/like');
+    final uri = Uri.parse('$_baseUrl/videos/$videoId/comments/$commentId/like');
     return http.delete(
       uri,
       headers: {

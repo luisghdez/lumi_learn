@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
@@ -474,7 +475,16 @@ class SpeakController extends GetxController {
         'error': e.toString(),
         'durationMs': requestStopwatch.elapsedMilliseconds,
       });
-      Get.snackbar("Error", "Something went wrong. Please try again.");
+      final timedOut = e is TimeoutException;
+      feedbackMessage.value = timedOut
+          ? "That took too long. Your explanation wasn't submitted—please try again."
+          : "I hit a snag with that explanation. Please try again.";
+      Get.snackbar(
+        timedOut ? "Review timed out" : "Review unavailable",
+        timedOut
+            ? "Please check your connection and try again."
+            : "Please try recording your explanation again.",
+      );
     } finally {
       isLoading.value = false;
       if (recordingState.value == SpeakRecordingState.submitting) {
@@ -522,6 +532,7 @@ class SpeakController extends GetxController {
           'attempt': attempt,
           'statusCode': response.statusCode,
         });
+        _showAudioUnavailableMessage();
       }
     } catch (e) {
       _trace('review_audio_exception', details: {
@@ -529,6 +540,16 @@ class SpeakController extends GetxController {
         'error': e.toString(),
         'durationMs': requestStopwatch.elapsedMilliseconds,
       });
+      if (attempt < maxAttempts) {
+        _trace('review_audio_retry_scheduled', details: {
+          'attempt': attempt,
+          'reason': 'request_exception',
+        });
+        await Future.delayed(const Duration(seconds: 1));
+        await fetchReviewAudio(attempt: attempt + 1, maxAttempts: maxAttempts);
+      } else {
+        _showAudioUnavailableMessage();
+      }
     }
   }
 
@@ -538,7 +559,7 @@ class SpeakController extends GetxController {
     try {
       isAudioPlaying.value = true;
       final tempDir = await getTemporaryDirectory();
-      final filePath = p.join(tempDir.path, 'review_audio.wav');
+      final filePath = p.join(tempDir.path, 'review_audio.mp3');
       final file = File(filePath);
       await file.writeAsBytes(bytes);
       await audioPlayer.play(DeviceFileSource(filePath));
@@ -585,5 +606,12 @@ class SpeakController extends GetxController {
       'from': previousState.name,
       'to': nextState.name,
     });
+  }
+
+  void _showAudioUnavailableMessage() {
+    Get.snackbar(
+      "Audio unavailable",
+      "Your written feedback is still available. Continue when you're ready.",
+    );
   }
 }
