@@ -269,6 +269,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
                               recordingState == SpeakRecordingState.submitting;
                           final isSpeechUnavailable =
                               recordingState == SpeakRecordingState.error;
+                          final isRealtimeConnecting = _realtimeState ==
+                              TalkRealtimeConnectionState.connecting;
 
                           return Column(
                             mainAxisSize: MainAxisSize.min,
@@ -316,16 +318,26 @@ class _SpeakScreenState extends State<SpeakScreen> {
                                   child: OutlinedButton.icon(
                                     onPressed: isLoading ||
                                             speakController.isAudioPlaying.value ||
-                                            _realtimeState ==
-                                                TalkRealtimeConnectionState.connecting
+                                            isRealtimeConnecting
                                         ? null
                                         : _toggleRealtimeTalk,
-                                    icon: Icon(_realtimeSession == null
-                                        ? Icons.graphic_eq
-                                        : Icons.done_outline),
-                                    label: Text(_realtimeSession == null
-                                        ? 'Talk it through (beta)'
-                                        : 'Finish live answer'),
+                                    icon: isRealtimeConnecting
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.lightBlueAccent,
+                                            ),
+                                          )
+                                        : Icon(_realtimeSession == null
+                                            ? Icons.graphic_eq
+                                            : Icons.done_outline),
+                                    label: Text(isRealtimeConnecting
+                                        ? 'Connecting live voice…'
+                                        : _realtimeSession == null
+                                            ? 'Talk it through (beta)'
+                                            : 'Finish live answer'),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: Colors.lightBlueAccent,
                                       side: const BorderSide(
