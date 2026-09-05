@@ -138,9 +138,7 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
       body: OnboardingVideoBackground(
         videoController: _videoController,
         child: AnimatedSwitcher(
-          duration: _currentStep == 2
-              ? Duration.zero
-              : const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 500),
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
           transitionBuilder: (Widget child, Animation<double> animation) {
