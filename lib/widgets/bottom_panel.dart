@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/dev_flags.dart';
 import 'dart:ui'; // For ImageFilter
 
 class BottomPanel extends StatelessWidget {
@@ -140,6 +141,41 @@ class BottomPanel extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 16),
+                              if (DevFlags.showTalkToLumiTester)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Obx(
+                                    () => GestureDetector(
+                                      onTap: () => DevFlags.forceTalkToLumi
+                                          .toggle(),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Switch.adaptive(
+                                            value: DevFlags
+                                                .forceTalkToLumi.value,
+                                            activeColor:
+                                                Colors.lightBlueAccent,
+                                            onChanged: (value) => DevFlags
+                                                .forceTalkToLumi
+                                                .value = value,
+                                          ),
+                                          const Flexible(
+                                            child: Text(
+                                              'Force Talk to Lumi',
+                                              style: TextStyle(
+                                                color: Colors.lightBlueAccent,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               // Secondary action row — Notes + Cards (AP only)
                               if (onViewUnitNotes != null || onViewUnitFlashcards != null) ...[
                                 Row(

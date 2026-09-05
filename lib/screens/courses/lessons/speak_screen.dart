@@ -10,6 +10,7 @@ import 'package:lumi_learn_app/application/controllers/speak_screen_controller.d
 import 'package:lumi_learn_app/application/models/question.dart';
 import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/application/services/talk_to_lumi_realtime_service.dart';
+import 'package:lumi_learn_app/dev_flags.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/terms_deck.dart';
 import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speech_bubble.dart';
@@ -23,8 +24,11 @@ class SpeakScreen extends StatefulWidget {
 }
 
 class _SpeakScreenState extends State<SpeakScreen> {
-  static const bool _realtimeTalkEnabled =
+  static const bool _compileTimeRealtimeTalkEnabled =
       bool.fromEnvironment('talk_to_lumi_realtime', defaultValue: false);
+  bool get _realtimeTalkEnabled =>
+      _compileTimeRealtimeTalkEnabled ||
+      (DevFlags.showTalkToLumiTester && DevFlags.forceTalkToLumi.value);
   final SpeakController speakController = Get.find<SpeakController>();
   final CourseController courseController = Get.find<CourseController>();
   TalkToLumiRealtimeService? _realtimeTalk;
@@ -144,8 +148,13 @@ class _SpeakScreenState extends State<SpeakScreen> {
         throw StateError('Talk assessment failed (${response.statusCode})');
       }
       final assessment = jsonDecode(response.body) as Map<String, dynamic>;
+      final assessedTerm = (assessment['focusTerm'] ??
+              assessment['term'] ??
+              assessment['termId'] ??
+              session.focusTerm)
+          .toString();
       speakController.applyTalkAssessment(
-        focusTerm: assessment['termId'] as String,
+        focusTerm: assessedTerm,
         score: assessment['score'] as int,
         feedbackText: assessment['feedbackText'] as String,
         nextAction: assessment['nextAction'] as String,
@@ -206,18 +215,33 @@ class _SpeakScreenState extends State<SpeakScreen> {
                   children: [
                     SizedBox(height: topPadding + 16),
 
-                    // Astronaut Image
-                    Center(
-                      child: Container(
-                        width: astronautSize,
-                        height: astronautSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.1),
-                          border: Border.all(color: Colors.white30, width: 2),
-                          image: const DecorationImage(
-                            image: AssetImage('assets/astronaut/thinking.png'),
-                            fit: BoxFit.cover,
+                    // Astronaut Image — Flexible so tester UI never pushes
+                    // the Talk to Lumi button off-screen.
+                    Flexible(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: astronautSize,
+                            maxHeight: astronautSize,
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.1),
+                                border: Border.all(
+                                  color: Colors.white30,
+                                  width: 2,
+                                ),
+                                image: const DecorationImage(
+                                  image: AssetImage(
+                                    'assets/astronaut/thinking.png',
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -243,7 +267,6 @@ class _SpeakScreenState extends State<SpeakScreen> {
 
                     const Spacer(),
 
-                    // Terms deck
                     Obx(() {
                       return TermsDeck(
                         terms:
@@ -271,6 +294,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
                               recordingState == SpeakRecordingState.error;
                           final isRealtimeConnecting = _realtimeState ==
                               TalkRealtimeConnectionState.connecting;
+                          final realtimeTalkEnabled = _realtimeTalkEnabled;
 
                           return Column(
                             mainAxisSize: MainAxisSize.min,
@@ -312,7 +336,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
                                     ),
                                   ),
                                 ),
-                              if (_realtimeTalkEnabled)
+                              if (realtimeTalkEnabled)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 12),
                                   child: OutlinedButton.icon(
@@ -346,7 +370,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
                                     ),
                                   ),
                                 ),
-                              if (_realtimeTalkEnabled &&
+                              if (realtimeTalkEnabled &&
                                   _realtimeSession != null)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
@@ -371,6 +395,21 @@ class _SpeakScreenState extends State<SpeakScreen> {
                 ),
               ),
             ),
+            Obx(() {
+              if (!(DevFlags.showTalkToLumiTester &&
+                  DevFlags.forceTalkToLumi.value)) {
+                return const SizedBox.shrink();
+              }
+              return Positioned(
+                left: 0,
+                right: 72,
+                top: topPadding,
+                child: _TalkToLumiAnswerSheet(
+                  cards: widget.question.flashcards,
+                  session: _realtimeSession,
+                ),
+              );
+            }),
             // Skip button in its own positioned widget so it doesn't affect the main layout
             Positioned(
               top: topPadding,
@@ -393,6 +432,56 @@ class _SpeakScreenState extends State<SpeakScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TalkToLumiAnswerSheet extends StatelessWidget {
+  const _TalkToLumiAnswerSheet({
+    required this.cards,
+    required this.session,
+  });
+
+  final List<Flashcard> cards;
+  final TalkRealtimeSession? session;
+
+  @override
+  Widget build(BuildContext context) {
+    final focusTerm = session?.focusTerm;
+    final lines = <String>[
+      if (focusTerm != null) 'Say this now: $focusTerm',
+      if (session?.focusDefinition != null &&
+          session!.focusDefinition.isNotEmpty)
+        session!.focusDefinition,
+      if (cards.isEmpty)
+        'This lesson has no flashcards, so Talk to Lumi has nothing to grade.',
+      ...cards.map((card) => '${card.term}: ${card.definition}'),
+    ];
+
+    return Material(
+      color: Colors.black.withValues(alpha: 0.72),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 72),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.lightBlueAccent.withValues(alpha: 0.45),
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Text(
+            lines.join('\n'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              height: 1.3,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ),
     );

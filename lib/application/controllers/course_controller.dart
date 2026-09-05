@@ -14,6 +14,7 @@ import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 import 'package:lumi_learn_app/screens/streak/streakScreen.dart';
 import 'package:lumi_learn_app/application/services/podcast_service.dart';
+import 'package:lumi_learn_app/dev_flags.dart';
 
 
 class CourseController extends GetxController {
@@ -78,6 +79,19 @@ class CourseController extends GetxController {
   void loadQuestions() {
     computedQuestions.value = getQuestions();
     questionsCount.value = computedQuestions.length;
+    if (DevFlags.showTalkToLumiTester && DevFlags.forceTalkToLumi.value) {
+      jumpToSpeakSection();
+    } else {
+      activeQuestionIndex.value = 0;
+    }
+  }
+
+  void jumpToSpeakSection() {
+    final speakIndex = computedQuestions
+        .indexWhere((question) => question.lessonType == LessonType.speakAll);
+    if (speakIndex != -1) {
+      activeQuestionIndex.value = speakIndex;
+    }
   }
 
   void addPlaceholderCourse(Map<String, dynamic> course) {

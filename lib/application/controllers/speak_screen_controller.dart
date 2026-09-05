@@ -522,10 +522,17 @@ class SpeakController extends GetxController {
     required String feedbackText,
     required String nextAction,
   }) {
-    final index = terms.indexWhere((term) => term.term == focusTerm);
-    if (index == -1) {
-      _trace('talk_assessment_ignored', details: {'reason': 'unknown_term'});
+    if (terms.isEmpty) {
+      _trace('talk_assessment_ignored', details: {'reason': 'no_terms'});
       return;
+    }
+    var index = terms.indexWhere((term) => term.term == focusTerm);
+    if (index == -1) {
+      index = currentTermIndex.value.clamp(0, terms.length - 1);
+      _trace('talk_assessment_term_fallback', details: {
+        'reason': 'unknown_term',
+        'fallbackIndex': index,
+      });
     }
     termProgress[index] = (score / 100).clamp(0.0, 1.0);
     feedbackMessage.value = feedbackText;
