@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
 
 //widgets
 import 'package:lumi_learn_app/widgets/regular_category_card.dart';
@@ -139,17 +140,23 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _SearchScreenHeader(
-                                  title: searchController.showSavedOnly.value
+                                  title: !AppFeatures
+                                              .publicCourseDiscoveryEnabled ||
+                                          searchController.showSavedOnly.value
                                       ? 'My Courses'
                                       : 'Explore Courses',
-                                  subtitle: searchController.showSavedOnly.value
+                                  subtitle: !AppFeatures
+                                              .publicCourseDiscoveryEnabled ||
+                                          searchController.showSavedOnly.value
                                       ? 'All saved courses'
                                       : 'Find your next lesson',
                                 ),
                                 const SizedBox(height: 18),
                                 _CourseSearchInput(
                                   controller: _courseSearchController,
-                                  hintText: searchController.showSavedOnly.value
+                                  hintText: !AppFeatures
+                                              .publicCourseDiscoveryEnabled ||
+                                          searchController.showSavedOnly.value
                                       ? 'Search saved courses'
                                       : 'Search courses, topics, or tags',
                                   onChanged: searchController.setSearchQuery,
@@ -173,14 +180,17 @@ class _SearchMainState extends State<SearchMain> with TickerProviderStateMixin {
                                         },
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    _SavedCoursesToggle(
-                                      isSelected:
-                                          searchController.showSavedOnly.value,
-                                      onToggle: () {
-                                        searchController.toggleSavedFilter();
-                                      },
-                                    ),
+                                    if (AppFeatures
+                                        .publicCourseDiscoveryEnabled) ...[
+                                      const SizedBox(width: 12),
+                                      _SavedCoursesToggle(
+                                        isSelected: searchController
+                                            .showSavedOnly.value,
+                                        onToggle: () {
+                                          searchController.toggleSavedFilter();
+                                        },
+                                      ),
+                                    ],
                                   ],
                                 ),
                                 const SizedBox(height: 20),
@@ -370,8 +380,10 @@ Widget _buildCourseList(
   }
 
   List<Map<String, dynamic>> filteredCourses = [];
+  final showSavedOnly = !AppFeatures.publicCourseDiscoveryEnabled ||
+      searchController.showSavedOnly.value;
 
-  if (searchController.showSavedOnly.value) {
+  if (showSavedOnly) {
     // When showing saved courses, use saved courses from SearchController (already filtered by backend)
     // Only apply client-side search query filtering since backend handles subject filtering
     filteredCourses = List<Map<String, dynamic>>.from(
@@ -401,7 +413,7 @@ Widget _buildCourseList(
 
   // Handle empty states
   if (filteredCourses.isEmpty) {
-    if (searchController.showSavedOnly.value) {
+    if (showSavedOnly) {
       return FadeTransition(
         opacity: CurvedAnimation(
           parent: animationController,
@@ -435,7 +447,7 @@ Widget _buildCourseList(
               ),
               const SizedBox(height: 8),
               const Text(
-                'Create or save some courses to see them here',
+                'Courses you save will appear here',
                 style: TextStyle(
                   color: Colors.white60,
                   fontSize: 14,
@@ -501,7 +513,7 @@ Widget _buildCourseList(
       final int index = entry.key;
       final Map<String, dynamic> course = entry.value;
       final galaxyImagePath = getGalaxyForCourse(course['id']);
-      final bool isSavedCourse = searchController.showSavedOnly.value;
+      final bool isSavedCourse = showSavedOnly;
 
       return FadeTransition(
         opacity: CurvedAnimation(
@@ -546,7 +558,8 @@ Widget _buildPaginationControls(
     }
 
     // Determine which controller to use based on the current mode
-    final bool showSavedOnly = searchController.showSavedOnly.value;
+    final bool showSavedOnly = !AppFeatures.publicCourseDiscoveryEnabled ||
+        searchController.showSavedOnly.value;
     final bool hasPreviousPage = showSavedOnly
         ? searchController.savedHasPreviousPage.value
         : searchController.hasPreviousPage.value;
