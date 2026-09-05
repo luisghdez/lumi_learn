@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/create/create_flow_transitions.dart';
 import 'package:lumi_learn_app/screens/videos/create_video_screen.dart';
@@ -37,30 +38,31 @@ class CreateFlowShell extends StatelessWidget {
                 final courseKey = flow.courseSessionKey.value;
                 final Widget switchChild = switch (page) {
                   0 => Padding(
-                        key: const ValueKey('type'),
-                        padding: EdgeInsets.only(bottom: bottomPad),
-                        child: _TypeChoicePage(flow: flow),
-                      ),
+                      key: const ValueKey('type'),
+                      padding: EdgeInsets.only(bottom: bottomPad),
+                      child: _TypeChoicePage(flow: flow),
+                    ),
                   1 => CreateVideoScreen(
-                        key: ValueKey('video_${flow.sessionKey.value}'),
-                        embeddedInCreateFlow: true,
-                      ),
+                      key: ValueKey('video_${flow.sessionKey.value}'),
+                      embeddedInCreateFlow: true,
+                    ),
                   2 => CourseCreation(
-                        key: ValueKey('course_$courseKey'),
-                        embeddedInCreateFlow: true,
-                      ),
+                      key: ValueKey('course_$courseKey'),
+                      embeddedInCreateFlow: true,
+                    ),
                   _ => Padding(
-                        key: const ValueKey('type_fallback'),
-                        padding: EdgeInsets.only(bottom: bottomPad),
-                        child: _TypeChoicePage(flow: flow),
-                      ),
+                      key: const ValueKey('type_fallback'),
+                      padding: EdgeInsets.only(bottom: bottomPad),
+                      child: _TypeChoicePage(flow: flow),
+                    ),
                 };
                 return AnimatedSwitcher(
                   duration: kCreateFlowFadeDuration,
                   switchInCurve: kCreateFlowFadeCurve,
                   switchOutCurve: kCreateFlowFadeCurve,
                   transitionBuilder: kCreateFlowFadeTransition,
-                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                  layoutBuilder:
+                      (Widget? currentChild, List<Widget> previousChildren) {
                     return Stack(
                       fit: StackFit.expand,
                       alignment: Alignment.center,
@@ -126,16 +128,18 @@ class _TypeChoicePage extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
               children: [
-                _settingsStyleTile(
-                  icon: Icons.menu_book_rounded,
-                  title: 'Create course',
-                  subtitle: 'Lessons, flashcards, and quizzes',
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    flow.goToCourseFlow();
-                  },
-                ),
-                const SizedBox(height: 18),
+                if (AppFeatures.courseCreationEnabled) ...[
+                  _settingsStyleTile(
+                    icon: Icons.menu_book_rounded,
+                    title: 'Create course',
+                    subtitle: 'Lessons, flashcards, and quizzes',
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      flow.goToCourseFlow();
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                ],
                 _settingsStyleTile(
                   icon: Icons.videocam_rounded,
                   title: 'Create video',

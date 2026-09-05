@@ -107,6 +107,18 @@ const List<SubjectCategory> subjectCatalog = [
   ),
 ];
 
+final List<SubjectCategory> apSubjectCatalog = subjectCatalog
+    .map(
+      (category) => SubjectCategory(
+        title: category.title,
+        subjects: category.subjects
+            .where((subject) => subject.startsWith('AP '))
+            .toList(growable: false),
+      ),
+    )
+    .where((category) => category.subjects.isNotEmpty)
+    .toList(growable: false);
+
 final List<String> allSubjects = subjectCatalog
     .expand((category) => category.subjects)
     .toList(growable: false);
