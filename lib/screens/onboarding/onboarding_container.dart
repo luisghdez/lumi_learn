@@ -80,10 +80,12 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
 
   void _completeOnboarding() {
     if (!AppFeatures.courseCreationEnabled) {
-      _shouldDisposeAudioPlayer = false; // Pass audio ownership to the picker.
+      _shouldDisposeVideoController = false;
+      _shouldDisposeAudioPlayer = false;
 
       Get.offAll(
         () => OnboardingSelectCourseScreen(
+          videoController: _videoController,
           onboardingAudioPlayer: _audioPlayer,
         ),
         transition: Transition.noTransition,
