@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
@@ -453,21 +454,25 @@ class _OnboardingSelectCourseScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Back button
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: Colors.white),
-                      onPressed: () {
-                        Get.off(
-                          () => CourseCreation(
-                            fromOnboarding: true,
-                            onboardingAudioPlayer: _onboardingAudio,
-                          ),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        );
-                      },
-                    ),
+                    // Keep the legacy creation route close to the onboarding UI
+                    // so restoring the feature only requires changing the flag.
+                    if (AppFeatures.courseCreationEnabled)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          Get.off(
+                            () => CourseCreation(
+                              fromOnboarding: true,
+                              onboardingAudioPlayer: _onboardingAudio,
+                            ),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 500),
+                          );
+                        },
+                      ),
 
                     // Header
                     SizedBox(
