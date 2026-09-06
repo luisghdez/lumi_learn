@@ -7,6 +7,7 @@ import 'package:camera/camera.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/search_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
 import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/screens/aiScanner/ai_scanner_main.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
@@ -43,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _courseSearchSubjectMenuOpen = false;
   late CourseCollection _courseSearchCollection = courseCollections.first;
   Subject? _courseSearchSubject;
-  bool _courseSearchSavedOnly = false;
+  bool _courseSearchSavedOnly = !AppFeatures.publicCourseDiscoveryEnabled;
 
   Subject get _effectiveSearchSubject =>
       _courseSearchSubject ?? _courseSearchCollection.defaultSubject;
@@ -493,8 +494,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   Get.to(
                                     () => const ApCatalogScreen(),
                                     transition: Transition.fadeIn,
-                                    duration:
-                                        const Duration(milliseconds: 300),
+                                    duration: const Duration(milliseconds: 300),
                                   );
                                 },
                               ),
@@ -599,7 +599,9 @@ class _CourseSearchEntry extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Search courses, topics, or subjects',
+                  AppFeatures.publicCourseDiscoveryEnabled
+                      ? 'Search courses, topics, or subjects'
+                      : 'Search saved courses',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -710,7 +712,9 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Search courses, topics, or subjects',
+                              AppFeatures.publicCourseDiscoveryEnabled
+                                  ? 'Search courses, topics, or subjects'
+                                  : 'Search saved courses',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -772,8 +776,8 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                                           ))
                                       .toList(),
                                   onSubjectChanged: (subject) => onTypeChanged(
-                                    collections.firstWhere(
-                                        (c) => c.id == subject.id),
+                                    collections
+                                        .firstWhere((c) => c.id == subject.id),
                                   ),
                                 ),
                                 const SizedBox(height: 10),
@@ -788,11 +792,15 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                                         onTap: onToggleSubjectMenu,
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    _HomeSavedToggle(
-                                      isSelected: savedOnly,
-                                      onTap: () => onSavedOnlyChanged(!savedOnly),
-                                    ),
+                                    if (AppFeatures
+                                        .publicCourseDiscoveryEnabled) ...[
+                                      const SizedBox(width: 10),
+                                      _HomeSavedToggle(
+                                        isSelected: savedOnly,
+                                        onTap: () =>
+                                            onSavedOnlyChanged(!savedOnly),
+                                      ),
+                                    ],
                                   ],
                                 ),
                                 // Inline subject list — lives inside this same
@@ -813,8 +821,8 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                                     child: Ink(
                                       height: 44,
                                       decoration: BoxDecoration(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.92),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.92),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: Row(
@@ -822,7 +830,9 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                                             MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            savedOnly
+                                            savedOnly ||
+                                                    !AppFeatures
+                                                        .publicCourseDiscoveryEnabled
                                                 ? Icons.bookmark_rounded
                                                 : Icons.travel_explore_rounded,
                                             color: Colors.black,
@@ -830,7 +840,9 @@ class _CourseSearchExpandedPanel extends StatelessWidget {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            savedOnly
+                                            savedOnly ||
+                                                    !AppFeatures
+                                                        .publicCourseDiscoveryEnabled
                                                 ? 'Search saved courses'
                                                 : 'Search courses',
                                             style: const TextStyle(
@@ -992,8 +1004,8 @@ class _HomeSubjectMenu extends StatelessWidget {
                         color: selected
                             ? Colors.white.withValues(alpha: 0.10)
                             : Colors.transparent,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 11),
                         child: Row(
                           children: [
                             Icon(
@@ -1006,7 +1018,8 @@ class _HomeSubjectMenu extends StatelessWidget {
                               child: Text(
                                 subject.name,
                                 style: TextStyle(
-                                  color: selected ? Colors.white : Colors.white70,
+                                  color:
+                                      selected ? Colors.white : Colors.white70,
                                   fontSize: 14,
                                   fontWeight: selected
                                       ? FontWeight.w700

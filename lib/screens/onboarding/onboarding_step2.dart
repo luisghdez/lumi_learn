@@ -26,7 +26,7 @@ class OnboardingStep2 extends StatefulWidget {
 }
 
 class _OnboardingStep2State extends State<OnboardingStep2> {
-  static final List<_SubjectCategory> _subjectCategories = subjectCatalog
+  static final List<_SubjectCategory> _subjectCategories = apSubjectCatalog
       .map(
         (category) => _SubjectCategory(
           title: category.title,

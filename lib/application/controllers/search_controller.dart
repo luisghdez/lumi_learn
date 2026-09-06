@@ -3,16 +3,22 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
 import 'package:lumi_learn_app/data/home_subject_catalog.dart';
 
 // Re-export so existing imports of this controller keep seeing `Subject`.
 export 'package:lumi_learn_app/data/home_subject_catalog.dart'
-    show Subject, CourseCollection, courseCollections, generalSubjects, apSubjects;
+    show
+        Subject,
+        CourseCollection,
+        courseCollections,
+        generalSubjects,
+        apSubjects;
 
 class LumiSearchController extends GetxController {
   // State variables
   final Rx<Subject?> selectedSubject = Rx<Subject?>(null);
-  final RxBool showSavedOnly = false.obs;
+  final RxBool showSavedOnly = (!AppFeatures.publicCourseDiscoveryEnabled).obs;
   final RxString searchQuery = ''.obs;
   final RxList<Map<String, dynamic>> allCourses = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> savedCourses =
@@ -48,8 +54,11 @@ class LumiSearchController extends GetxController {
     super.onInit();
     // Default to 'All Subjects' (first item)
     selectedSubject.value = subjects.first;
-    // Fetch all courses when controller initializes
-    fetchAllCourses(page: 1, limit: 10);
+    if (AppFeatures.publicCourseDiscoveryEnabled) {
+      fetchAllCourses(page: 1, limit: 10);
+    } else {
+      fetchSavedCourses(page: 1, limit: 10);
+    }
   }
 
   // Method to fetch all courses with optional subject filtering and pagination
@@ -58,7 +67,7 @@ class LumiSearchController extends GetxController {
       int page = 1,
       int limit = 10,
       bool isPagination = false}) async {
-    if (showSavedOnly.value) {
+    if (!AppFeatures.publicCourseDiscoveryEnabled || showSavedOnly.value) {
       // Don't fetch all courses when showing saved only
       return;
     }
@@ -199,7 +208,7 @@ class LumiSearchController extends GetxController {
 
   // Convenience methods for pagination
   Future<void> fetchNextPage() async {
-    if (showSavedOnly.value) {
+    if (!AppFeatures.publicCourseDiscoveryEnabled || showSavedOnly.value) {
       // Use saved courses pagination
       if (savedHasNextPage.value && !isPaginating.value) {
         final currentSubject = selectedSubject.value;
@@ -225,7 +234,7 @@ class LumiSearchController extends GetxController {
   }
 
   Future<void> fetchPreviousPage() async {
-    if (showSavedOnly.value) {
+    if (!AppFeatures.publicCourseDiscoveryEnabled || showSavedOnly.value) {
       // Use saved courses pagination
       if (savedHasPreviousPage.value && !isPaginating.value) {
         final currentSubject = selectedSubject.value;
@@ -254,7 +263,7 @@ class LumiSearchController extends GetxController {
   void setSelectedSubject(Subject subject) {
     selectedSubject.value = subject;
 
-    if (!showSavedOnly.value) {
+    if (AppFeatures.publicCourseDiscoveryEnabled && !showSavedOnly.value) {
       // Reset pagination when changing subjects
       currentPage.value = 1;
       // Fetch all courses for new subject
@@ -275,6 +284,11 @@ class LumiSearchController extends GetxController {
   }
 
   void toggleSavedFilter() {
+    if (!AppFeatures.publicCourseDiscoveryEnabled) {
+      showSavedOnly.value = true;
+      return;
+    }
+
     showSavedOnly.value = !showSavedOnly.value;
 
     if (showSavedOnly.value) {
@@ -298,9 +312,11 @@ class LumiSearchController extends GetxController {
   }
 
   void setSavedFilter(bool enabled) {
-    showSavedOnly.value = enabled;
+    final effectiveEnabled =
+        !AppFeatures.publicCourseDiscoveryEnabled || enabled;
+    showSavedOnly.value = effectiveEnabled;
 
-    if (enabled) {
+    if (effectiveEnabled) {
       // When switching to "saved courses" mode, fetch courses with current subject filter
       savedCurrentPage.value = 1;
       final currentSubject = selectedSubject.value;
@@ -326,7 +342,7 @@ class LumiSearchController extends GetxController {
 
   // Method to refresh current page after deletion
   Future<void> refreshCurrentPage() async {
-    if (showSavedOnly.value) {
+    if (!AppFeatures.publicCourseDiscoveryEnabled || showSavedOnly.value) {
       // Refresh saved courses with current filters
       final currentSubject = selectedSubject.value;
       await fetchSavedCourses(
@@ -421,13 +437,15 @@ class LumiSearchController extends GetxController {
     Subject? subject,
     bool savedOnly = false,
   }) {
+    final effectiveSavedOnly =
+        !AppFeatures.publicCourseDiscoveryEnabled || savedOnly;
     final nextSubject = subject ?? subjects.first;
     selectedSubject.value = nextSubject;
-    showSavedOnly.value = savedOnly;
+    showSavedOnly.value = effectiveSavedOnly;
     searchQuery.value = '';
 
     final subjectFilter = nextSubject.id == 'all' ? null : nextSubject.name;
-    if (savedOnly) {
+    if (effectiveSavedOnly) {
       savedCurrentPage.value = 1;
       fetchSavedCourses(subject: subjectFilter, page: 1, limit: 10);
     } else {
@@ -445,34 +463,39 @@ class LumiSearchController extends GetxController {
   }
 
   void showCoursesForSubject(String subjectId) {
+    showSavedOnly.value = !AppFeatures.publicCourseDiscoveryEnabled;
     final subject = subjects.firstWhereOrNull((s) => s.id == subjectId);
     if (subject != null) {
       selectedSubject.value = subject;
-      // Reset pagination when showing courses for a specific subject
-      currentPage.value = 1;
-      // Fetch courses for the selected subject
-      fetchAllCourses(
-          subject: subject.id == 'all' ? null : subject.name,
-          page: 1,
-          limit: 10);
+      final subjectFilter = subject.id == 'all' ? null : subject.name;
+      if (AppFeatures.publicCourseDiscoveryEnabled) {
+        currentPage.value = 1;
+        fetchAllCourses(subject: subjectFilter, page: 1, limit: 10);
+      } else {
+        savedCurrentPage.value = 1;
+        fetchSavedCourses(subject: subjectFilter, page: 1, limit: 10);
+      }
     }
-    showSavedOnly.value = false;
   }
 
   void resetFilters() {
     selectedSubject.value = subjects.first;
-    showSavedOnly.value = false;
+    showSavedOnly.value = !AppFeatures.publicCourseDiscoveryEnabled;
     searchQuery.value = '';
-    // Reset pagination and fetch all courses when resetting
-    currentPage.value = 1;
-    fetchAllCourses(page: 1, limit: 10);
+    if (AppFeatures.publicCourseDiscoveryEnabled) {
+      currentPage.value = 1;
+      fetchAllCourses(page: 1, limit: 10);
+    } else {
+      savedCurrentPage.value = 1;
+      fetchSavedCourses(page: 1, limit: 10);
+    }
   }
 
   // Getter for filtered courses that can be used by the UI
   List<Map<String, dynamic>> get filteredCourses {
     List<Map<String, dynamic>> courses = [];
 
-    if (showSavedOnly.value) {
+    if (!AppFeatures.publicCourseDiscoveryEnabled || showSavedOnly.value) {
       // When showing saved courses, use the existing logic from CourseController
       // This will be handled in the UI layer
       return [];
@@ -506,7 +529,7 @@ class LumiSearchController extends GetxController {
     String subjectName =
         selectedSubject.value?.name.toLowerCase() ?? 'all subjects';
 
-    if (showSavedOnly.value) {
+    if (!AppFeatures.publicCourseDiscoveryEnabled || showSavedOnly.value) {
       text += selectedSubject.value?.id == 'all'
           ? 'saved courses from all subjects'
           : 'saved $subjectName courses';

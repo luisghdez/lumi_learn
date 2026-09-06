@@ -4,10 +4,12 @@ import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
+import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_step1.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_step2.dart';
+import 'package:lumi_learn_app/screens/onboarding/onboarding_select_course_screen.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_video_transition.dart';
-import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
 import 'package:lumi_learn_app/widgets/onboarding_video_background.dart';
 
 /// Container that manages the video background and audio for all onboarding steps
@@ -27,7 +29,8 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
   // Onboarding state
   int _currentStep = 0; // 0: step1, 1: step2, 2: video transition
   String _username = '';
-  bool _shouldDisposeController = true;
+  bool _shouldDisposeVideoController = true;
+  bool _shouldDisposeAudioPlayer = true;
 
   @override
   void initState() {
@@ -66,15 +69,32 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
 
   @override
   void dispose() {
-    if (_shouldDisposeController) {
+    if (_shouldDisposeVideoController) {
       _videoController.dispose();
+    }
+    if (_shouldDisposeAudioPlayer) {
       _audioPlayer.dispose();
     }
     super.dispose();
   }
 
   void _completeOnboarding() {
-    _shouldDisposeController = false; // Pass ownership to next screen
+    if (!AppFeatures.courseCreationEnabled) {
+      _shouldDisposeVideoController = false;
+      _shouldDisposeAudioPlayer = false;
+
+      Get.offAll(
+        () => OnboardingSelectCourseScreen(
+          videoController: _videoController,
+          onboardingAudioPlayer: _audioPlayer,
+        ),
+        transition: Transition.noTransition,
+      );
+      return;
+    }
+
+    _shouldDisposeVideoController = false;
+    _shouldDisposeAudioPlayer = false;
 
     Get.offAll(
       () => CourseCreation(
@@ -118,9 +138,7 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
       body: OnboardingVideoBackground(
         videoController: _videoController,
         child: AnimatedSwitcher(
-          duration: _currentStep == 2
-              ? Duration.zero
-              : const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 500),
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
           transitionBuilder: (Widget child, Animation<double> animation) {
