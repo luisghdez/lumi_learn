@@ -31,11 +31,13 @@ class TalkRealtimeSession {
     required this.attemptId,
     required this.focusTerm,
     required this.focusDefinition,
+    this.progress,
   });
 
   final String attemptId;
   final String focusTerm;
   final String focusDefinition;
+  final Map<String, dynamic>? progress;
 }
 
 /// WebRTC transport for the feature-flagged Talk to Lumi prototype.
@@ -57,6 +59,8 @@ class TalkToLumiRealtimeService {
   bool _disposed = false;
   Completer<void>? _sessionReady;
   Timer? _diagnosticsTimer;
+  Completer<void>? _instructionsUpdated;
+  String? _expectedInstructions;
 
   Stream<TalkRealtimeEvent> get events => _events.stream;
   Stream<TalkRealtimeConnectionState> get states => _state.stream;
@@ -65,6 +69,7 @@ class TalkToLumiRealtimeService {
     required String token,
     required String courseId,
     required String lessonId,
+    bool continuous = false,
   }) async {
     _ensureNotDisposed();
     await disconnect();
@@ -76,6 +81,7 @@ class TalkToLumiRealtimeService {
         courseId: courseId,
         lessonId: lessonId,
         clientAttemptId: const Uuid().v4(),
+        continuous: continuous,
       );
       _ensureNotDisposed();
       final sessionJson = _decodeSuccess(sessionResponse, 'start Talk to Lumi');
@@ -83,8 +89,10 @@ class TalkToLumiRealtimeService {
         attemptId: sessionJson['attemptId'] as String,
         focusTerm: sessionJson['focusTerm'] as String,
         focusDefinition: sessionJson['focusDefinition'] as String,
+        progress: sessionJson['progress'] as Map<String, dynamic>?,
       );
 
+      if (session.progress?['complete'] == true) return session;
       await Helper.setAppleAudioConfiguration(AppleAudioConfiguration(
         appleAudioCategory: AppleAudioCategory.playAndRecord,
         appleAudioMode: AppleAudioMode.voiceChat,
@@ -162,13 +170,15 @@ class TalkToLumiRealtimeService {
           onTimeout: () => throw TimeoutException(
               'The live audio connection did not become ready. Please retry.'));
       _emitState(TalkRealtimeConnectionState.listening);
-      await _dataChannel!.send(RTCDataChannelMessage(jsonEncode({
-        'type': 'response.create',
-        'response': {
-          'instructions':
-              'Briefly invite the learner to explain ${session.focusTerm} in their own words. Do not give the definition.',
-        },
-      })));
+      if (!continuous) {
+        await _dataChannel!.send(RTCDataChannelMessage(jsonEncode({
+          'type': 'response.create',
+          'response': {
+            'instructions':
+                'Briefly invite the learner to explain ${session.focusTerm} in their own words. Do not give the definition.',
+          },
+        })));
+      }
       if (kDebugMode) {
         _diagnosticsTimer =
             Timer.periodic(const Duration(seconds: 5), (_) async {
@@ -198,7 +208,61 @@ class TalkToLumiRealtimeService {
     }
   }
 
+  void setMicrophoneEnabled(bool enabled) {
+    for (final track
+        in _localStream?.getAudioTracks() ?? <MediaStreamTrack>[]) {
+      track.enabled = enabled;
+    }
+  }
+
+  bool _responseInProgress = false;
+
+  Future<void> interruptPlayback() async {
+    final channel = _dataChannel;
+    if (channel == null) return;
+    if (_responseInProgress) {
+      await channel
+          .send(RTCDataChannelMessage(jsonEncode({'type': 'response.cancel'})));
+    }
+    await channel.send(RTCDataChannelMessage(
+        jsonEncode({'type': 'output_audio_buffer.clear'})));
+  }
+
+  Future<void> speakLessonReply(
+      {required String instructions, required String replyText}) async {
+    _ensureNotDisposed();
+    final channel = _dataChannel;
+    if (channel == null ||
+        channel.state != RTCDataChannelState.RTCDataChannelOpen) {
+      throw StateError('Live voice disconnected. Reconnect to continue.');
+    }
+    _expectedInstructions = instructions;
+    final updated = Completer<void>();
+    _instructionsUpdated = updated;
+    try {
+      await channel.send(RTCDataChannelMessage(jsonEncode({
+        'type': 'session.update',
+        'session': {'type': 'realtime', 'instructions': instructions},
+      })));
+      await updated.future.timeout(const Duration(seconds: 5));
+      _ensureNotDisposed();
+      await channel.send(RTCDataChannelMessage(jsonEncode({
+        'type': 'response.create',
+        'response': {
+          'instructions':
+              'Speak only the following server-approved reply, naturally, without adding anything: ${jsonEncode(replyText)}'
+        },
+      })));
+    } finally {
+      if (identical(_instructionsUpdated, updated)) {
+        _instructionsUpdated = null;
+        _expectedInstructions = null;
+      }
+    }
+  }
+
   Future<void> disconnect() async {
+    _responseInProgress = false;
     _diagnosticsTimer?.cancel();
     _diagnosticsTimer = null;
     _dataChannel?.onDataChannelState = null;
@@ -267,10 +331,18 @@ class TalkToLumiRealtimeService {
       debugPrint(
           '[TalkRealtime] event=$type transcriptLength=${transcript?.length ?? 0}'
           ' errorCode=${error?['code']}');
+      if (type == 'response.created') _responseInProgress = true;
       if (type == 'response.done') {
+        _responseInProgress = false;
         final usage = response?['usage'] as Map<String, dynamic>?;
         debugPrint('[TalkRealtime] responseStatus=${response?['status']} '
             'reason=${details?['reason']} outputTokens=${usage?['output_tokens']}');
+      }
+      if (type == 'session.updated' &&
+          (payload['session'] as Map<String, dynamic>?)?['instructions'] ==
+              _expectedInstructions &&
+          !(_instructionsUpdated?.isCompleted ?? true)) {
+        _instructionsUpdated!.complete();
       }
       if (type == 'session.created' && !(_sessionReady?.isCompleted ?? true)) {
         _sessionReady!.complete();

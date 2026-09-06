@@ -1,777 +1,449 @@
-import 'dart:math';
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lumi_learn_app/constants.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/speak_screen_controller.dart';
+import 'package:lumi_learn_app/application/controllers/talk_lesson_controller.dart';
 import 'package:lumi_learn_app/application/models/question.dart';
-import 'package:lumi_learn_app/application/services/api_service.dart';
-import 'package:lumi_learn_app/application/services/talk_to_lumi_realtime_service.dart';
-import 'package:lumi_learn_app/dev_flags.dart';
-import 'package:uuid/uuid.dart';
-import 'package:lumi_learn_app/screens/courses/lessons/widgets/terms_deck.dart';
-import 'package:lumi_learn_app/screens/courses/lessons/widgets/type_writer_speech_bubble.dart';
 
 class SpeakScreen extends StatefulWidget {
-  final Question question;
   const SpeakScreen({super.key, required this.question});
-
+  final Question question;
   @override
   State<SpeakScreen> createState() => _SpeakScreenState();
 }
 
 class _SpeakScreenState extends State<SpeakScreen> {
-  static const bool _compileTimeRealtimeTalkEnabled =
-      bool.fromEnvironment('talk_to_lumi_realtime', defaultValue: false);
-  bool get _realtimeTalkEnabled =>
-      _compileTimeRealtimeTalkEnabled ||
-      (DevFlags.showTalkToLumiTester && DevFlags.forceTalkToLumi.value);
-  final SpeakController speakController = Get.find<SpeakController>();
-  final CourseController courseController = Get.find<CourseController>();
-  TalkToLumiRealtimeService? _realtimeTalk;
-  TalkRealtimeSession? _realtimeSession;
-  StreamSubscription<TalkRealtimeEvent>? _realtimeEventsSubscription;
-  StreamSubscription<TalkRealtimeConnectionState>? _realtimeStateSubscription;
-  TalkRealtimeConnectionState _realtimeState = TalkRealtimeConnectionState.idle;
-  String _liveTranscript = '';
-  String _assistantTranscript = '';
-  String _liveStatus = '';
-  final Map<String, String> _learnerTurns = {};
-  final Set<String> _pendingTranscripts = {};
-  bool _startingLive = false;
-  bool _submittingLive = false;
-  String? _assessmentTurnId;
-  DateTime? _realtimeStartedAt;
+  late final TalkLessonController _lesson;
+  final CourseController _course = Get.find<CourseController>();
 
   @override
   void initState() {
     super.initState();
-    // Initialize controller with the question's terms and play intro audio.
-    speakController.setTerms(widget.question.flashcards);
-    speakController.playIntroAudio();
-    if (_realtimeTalkEnabled) {
-      _realtimeTalk = TalkToLumiRealtimeService();
-      _realtimeEventsSubscription =
-          _realtimeTalk!.events.listen(_handleRealtimeEvent);
-      _realtimeStateSubscription = _realtimeTalk!.states.listen((state) {
-        if (!mounted) return;
-        setState(() {
-          _realtimeState = state;
-          if (state == TalkRealtimeConnectionState.speaking) {
-            _liveStatus = 'Lumi is speaking… you can interrupt.';
-          } else if (state == TalkRealtimeConnectionState.listening) {
-            _liveStatus = 'Listening… explain it in your own words.';
-          } else if (state == TalkRealtimeConnectionState.disconnected &&
-              !_startingLive) {
-            _liveStatus = 'Live voice disconnected. End the session and retry.';
-          }
-        });
-      });
-    }
+    final speech = Get.find<SpeakController>();
+    unawaited(speech.audioPlayer.stop());
+    final index = _course.activeLessonIndex.value;
+    final lessonId = index >= 0 && index < _course.lessons.length
+        ? _course.lessons[index]['id'] as String?
+        : null;
+    _lesson = TalkLessonController(
+        courseId: _course.selectedCourseId.value,
+        lessonId: lessonId ?? '',
+        tokenProvider: speech.authController.getIdToken);
   }
 
   @override
   void dispose() {
-    // Reset all controller values when this screen is disposed.
-    speakController.resetValues();
-    _realtimeEventsSubscription?.cancel();
-    _realtimeStateSubscription?.cancel();
-    unawaited(_realtimeTalk?.dispose() ?? Future<void>.value());
+    _lesson.dispose();
     super.dispose();
   }
 
-  void _handleRealtimeEvent(TalkRealtimeEvent event) {
-    if (!mounted) return;
-    final itemId = event.itemId ?? 'current';
-    setState(() {
-      if (event.type == 'input_audio_buffer.speech_started') {
-        _pendingTranscripts.add(itemId);
-        _learnerTurns.putIfAbsent(itemId, () => '');
-        _liveStatus = 'I can hear you…';
-      } else if (event.type == 'input_audio_buffer.speech_stopped') {
-        _liveStatus = 'Finishing your transcript…';
-      } else if (event.type ==
-          'conversation.item.input_audio_transcription.delta') {
-        _learnerTurns[itemId] =
-            (_learnerTurns[itemId] ?? '') + (event.transcript ?? '');
-      } else if (event.type ==
-          'conversation.item.input_audio_transcription.completed') {
-        _pendingTranscripts.remove(itemId);
-        _learnerTurns[itemId] = event.transcript ?? '';
-        _liveStatus = 'Listening… you can keep talking.';
-      } else if (event.type == 'response.output_audio_transcript.delta') {
-        _assistantTranscript += event.transcript ?? '';
-      } else if (event.type == 'response.created') {
-        _assistantTranscript = '';
-      } else if (event.type == 'response.output_audio_transcript.done') {
-        _assistantTranscript = event.transcript ?? _assistantTranscript;
-      }
-      _liveTranscript = _learnerTurns.values
-          .where((text) => text.trim().isNotEmpty)
-          .join(' ');
-    });
-    if (event.type == 'error' ||
-        event.type == 'conversation.item.input_audio_transcription.failed') {
-      setState(() {
-        _pendingTranscripts.remove(itemId);
-        _liveStatus = 'Live voice needs attention.';
-      });
-      Get.snackbar('Live voice error',
-          event.message ?? 'Please end the session and retry.');
-    }
-  }
-
-  Future<void> _toggleRealtimeTalk() async {
-    if (_startingLive || _submittingLive) return;
-    if (_realtimeSession != null) {
-      await _finishRealtimeTalk();
-      return;
-    }
-    final service = _realtimeTalk;
-    if (service == null) return;
-    setState(() => _startingLive = true);
-    try {
-      final token = await speakController.authController.getIdToken();
-      if (!mounted) return;
-      final lessonIndex = courseController.activeLessonIndex.value;
-      final lessons = courseController.lessons;
-      final lessonId = lessonIndex >= 0 && lessonIndex < lessons.length
-          ? lessons[lessonIndex]['id'] as String?
-          : null;
-      final courseId = courseController.selectedCourseId.value;
-      if (token == null || lessonId == null || courseId.isEmpty) {
-        if (mounted) setState(() => _startingLive = false);
-        Get.snackbar('Talk to Lumi unavailable',
-            'Please reopen this lesson and try again.');
-        return;
-      }
-      setState(() {
-        _liveTranscript = '';
-        _learnerTurns.clear();
-        _pendingTranscripts.clear();
-        _assistantTranscript = '';
-        _assessmentTurnId = null;
-        _liveStatus = 'Connecting microphone…';
-        _realtimeState = TalkRealtimeConnectionState.connecting;
-      });
-      await speakController.audioPlayer.stop();
-      if (!mounted) return;
-      final session = await service.connect(
-        token: token,
-        courseId: courseId,
-        lessonId: lessonId,
-      );
-      if (!mounted) return;
-      setState(() {
-        _realtimeSession = session;
-        _realtimeStartedAt = DateTime.now();
-        _liveStatus = 'Listening… explain it in your own words.';
-      });
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _realtimeSession = null;
-          _realtimeState = TalkRealtimeConnectionState.idle;
-        });
-      }
-    } finally {
-      if (mounted) setState(() => _startingLive = false);
-    }
-  }
-
-  Future<void> _endRealtimeTalk() async {
-    await _realtimeTalk?.disconnect();
-    if (mounted) {
-      setState(() {
-        _realtimeSession = null;
-        _realtimeState = TalkRealtimeConnectionState.idle;
-        _realtimeStartedAt = null;
-      });
-    }
-  }
-
-  Future<void> _finishRealtimeTalk() async {
-    final session = _realtimeSession;
-    final service = _realtimeTalk;
-    if (session == null ||
-        service == null ||
-        _submittingLive ||
-        _pendingTranscripts.isNotEmpty) {
-      return;
-    }
-    final transcript = _liveTranscript.trim();
-    if (transcript.isEmpty) {
-      Get.snackbar('Waiting for your words',
-          'No transcript has arrived yet. Keep talking, or end live voice and retry.');
-      return;
-    }
-    setState(() => _submittingLive = true);
-    try {
-      final token = await speakController.authController.getIdToken();
-      if (!mounted) return;
-      if (token == null) {
-        if (mounted) setState(() => _submittingLive = false);
-        return;
-      }
-      setState(() => _realtimeState = TalkRealtimeConnectionState.connecting);
-      final durationMs = DateTime.now()
-          .difference(_realtimeStartedAt ?? DateTime.now())
-          .inMilliseconds;
-      final response = await ApiService().assessTalkAttempt(
-        token: token,
-        attemptId: session.attemptId,
-        transcript: transcript,
-        turnId: _assessmentTurnId ??= const Uuid().v4(),
-        durationMs: durationMs,
-      );
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw StateError('Talk assessment failed (${response.statusCode})');
-      }
-      final assessment = jsonDecode(response.body) as Map<String, dynamic>;
-      final assessedTerm = (assessment['focusTerm'] ??
-              assessment['term'] ??
-              assessment['termId'] ??
-              session.focusTerm)
-          .toString();
-      if (!mounted) return;
-      await _endRealtimeTalk();
-      if (!mounted) return;
-      speakController.applyTalkAssessment(
-        focusTerm: assessedTerm,
-        score: assessment['score'] as int,
-        feedbackText: assessment['feedbackText'] as String,
-        nextAction: assessment['nextAction'] as String,
-      );
-    } catch (_) {
-      Get.snackbar('Review unavailable',
-          'Your live answer was not submitted. Please try again.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _submittingLive = false;
-          if (_realtimeSession != null) {
-            _realtimeState = TalkRealtimeConnectionState.listening;
-          }
-        });
-      }
+  Future<void> _skip() async {
+    final leave = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFF101A30),
+              title: const Text('Leave this conversation?',
+                  style: TextStyle(color: Colors.white)),
+              content: const Text(
+                  'Your reviewed topics are saved. You can come back to finish.',
+                  style: TextStyle(color: Colors.white70)),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Keep talking')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Leave')),
+              ],
+            ));
+    if (leave == true) {
+      await _lesson.stop();
+      if (mounted) _course.nextQuestion();
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final SpeakController speakController = Get.find<SpeakController>();
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-
-    final bool isTablet = screenWidth >= 768;
-    final double rawTopPadding = isTablet
-        ? MediaQuery.of(context).padding.top + 50
-        : MediaQuery.of(context).padding.top - 50;
-    final double topPadding = max(rawTopPadding, 16);
-
-    final double textSize = isTablet ? 18.0 : 14.0;
-    final double astronautSize = min(screenHeight * 0.25, 320.0);
-    final double bubbleMaxHeight =
-        isTablet ? screenHeight * 0.20 : screenHeight * 0.1;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color.fromARGB(255, 0, 0, 0),
-            Color.fromARGB(255, 0, 11, 59),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Stack(
-          children: [
-            // Main content
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 700),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: topPadding + 16),
-
-                    // Astronaut Image — Flexible so tester UI never pushes
-                    // the Talk to Lumi button off-screen.
-                    Flexible(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: astronautSize,
-                            maxHeight: astronautSize,
-                          ),
-                          child: AspectRatio(
-                            aspectRatio: 1,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.1),
-                                border: Border.all(
-                                  color: Colors.white30,
-                                  width: 2,
-                                ),
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                    'assets/astronaut/thinking.png',
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Speech bubble
-                    Obx(
-                      () => TypewriterSpeechBubbleMessage(
-                        key: ValueKey(speakController.feedbackMessage.value),
-                        message: speakController.feedbackMessage.value.isEmpty
-                            ? "Okay... press record and teach me like I forgot EVERYTHING, because I did!"
-                            : speakController.feedbackMessage.value,
-                        speed: const Duration(milliseconds: 70),
-                        maxHeight: bubbleMaxHeight,
-                        textStyle: TextStyle(
-                          color: Colors.white,
-                          fontSize: isTablet ? 18 : 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        onFinished: () {},
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    Obx(() {
-                      return TermsDeck(
-                        terms:
-                            speakController.terms.map((fc) => fc.term).toList(),
-                        progressList: speakController.termProgress,
-                        currentTermIndex:
-                            speakController.currentTermIndex.value,
-                      );
-                    }),
-
-                    const SizedBox(height: 16),
-
-                    // Record button
-                    Center(
-                      child: Obx(
-                        () {
-                          final recordingState =
-                              speakController.recordingState.value;
-                          final isStarting =
-                              recordingState == SpeakRecordingState.starting;
-                          final isLoading = isStarting ||
-                              recordingState == SpeakRecordingState.stopping ||
-                              recordingState == SpeakRecordingState.submitting;
-                          final isSpeechUnavailable =
-                              recordingState == SpeakRecordingState.error;
-                          final isRealtimeConnecting = _startingLive;
-                          final realtimeTalkEnabled = _realtimeTalkEnabled;
-
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              RecordButton(
-                                onStartRecording:
-                                    speakController.startListening,
-                                onStopRecording: speakController.stopListening,
-                                isRecording: recordingState ==
-                                    SpeakRecordingState.listening,
-                                isLoading: isLoading,
-                                loadingLabel: isStarting
-                                    ? 'Starting microphone…'
-                                    : recordingState ==
-                                            SpeakRecordingState.stopping
-                                        ? 'Finishing up…'
-                                        : 'Reviewing…',
-                                isSpeechUnavailable: isSpeechUnavailable,
-                                isDisabled: _startingLive ||
-                                    _realtimeSession != null ||
-                                    speakController.isAudioPlaying.value ||
-                                    isLoading ||
-                                    recordingState ==
-                                        SpeakRecordingState.initializing ||
-                                    isSpeechUnavailable,
-                              ),
-                              if (isSpeechUnavailable)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: OutlinedButton.icon(
-                                    onPressed:
-                                        speakController.openMicrophoneSettings,
-                                    icon: const Icon(Icons.settings_outlined),
-                                    label: const Text('Open Settings'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      side: const BorderSide(
-                                        color: Colors.white54,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              if (realtimeTalkEnabled)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: OutlinedButton.icon(
-                                    onPressed: isLoading ||
-                                            speakController
-                                                .isAudioPlaying.value ||
-                                            isRealtimeConnecting ||
-                                            _submittingLive ||
-                                            _pendingTranscripts.isNotEmpty
-                                        ? null
-                                        : _toggleRealtimeTalk,
-                                    icon: isRealtimeConnecting
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.lightBlueAccent,
-                                            ),
-                                          )
-                                        : Icon(_realtimeSession == null
-                                            ? Icons.graphic_eq
-                                            : Icons.done_outline),
-                                    label: Text(_submittingLive
-                                        ? 'Reviewing…'
-                                        : isRealtimeConnecting
-                                            ? 'Connecting live voice…'
-                                            : _realtimeSession == null
-                                                ? 'Talk it through (beta)'
-                                                : 'Save live answer'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.lightBlueAccent,
-                                      side: const BorderSide(
-                                        color: Colors.lightBlueAccent,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              if (_realtimeSession != null)
-                                TextButton(
-                                  onPressed:
-                                      _submittingLive ? null : _endRealtimeTalk,
-                                  child: const Text('End live voice'),
-                                ),
-                              if (realtimeTalkEnabled &&
-                                  _realtimeSession != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    '${_realtimeState == TalkRealtimeConnectionState.processing ? 'Finishing your transcript…' : _liveStatus}\n$_liveTranscript'
-                                    '${_assistantTranscript.isEmpty ? '' : '\nLumi: $_assistantTranscript'}',
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                    style:
-                                        const TextStyle(color: Colors.white70),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ),
-            Obx(() {
-              if (!(DevFlags.showTalkToLumiTester &&
-                  DevFlags.forceTalkToLumi.value)) {
-                return const SizedBox.shrink();
-              }
-              return Positioned(
-                left: 0,
-                right: 72,
-                top: topPadding,
-                child: _TalkToLumiAnswerSheet(
-                  cards: widget.question.flashcards,
-                  session: _realtimeSession,
-                ),
-              );
-            }),
-            // Skip button in its own positioned widget so it doesn't affect the main layout
-            Positioned(
-              top: topPadding,
-              right: 16,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    showSkipConfirmationDialog(context, courseController),
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _lesson,
+        builder: (context, _) {
+          final progress = _lesson.progress;
+          final topics = progress?.topics ??
+              widget.question.flashcards
+                  .take(3)
+                  .toList()
+                  .asMap()
+                  .entries
+                  .map((entry) => TalkTopicProgress(
+                      term: entry.value.term,
+                      definition: entry.value.definition,
+                      score: 0,
+                      attempts: 0,
+                      status: entry.key == 0 ? 'active' : 'pending'))
+                  .toList();
+          final current = progress?.currentTermIndex ?? 0;
+          final reviewed = progress?.reviewedCount ?? 0;
+          final complete = _lesson.complete;
+          final busy = _lesson.starting || _lesson.assessing;
+          return Container(
+            decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                    colors: [Color(0xFF000000), Color(0xFF000B3B)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter)),
+            child: SafeArea(
+                top: true,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-                  child: Text(
-                    "Skip",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: textSize,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+                    padding: const EdgeInsets.only(top: 52),
+                    child: Center(
+                        child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 700),
+                      child: LayoutBuilder(
+                          builder:
+                              (context, constraints) => SingleChildScrollView(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        24, 10, 24, 22),
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Row(children: [
+                                            const Expanded(
+                                                child: Text('Speak to Lumi',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 22,
+                                                        fontWeight:
+                                                            FontWeight.w700))),
+                                            TextButton(
+                                                onPressed: busy ? null : _skip,
+                                                child: const Text('Skip',
+                                                    style: TextStyle(
+                                                        color:
+                                                            Colors.white60))),
+                                          ]),
+                                          Row(children: [
+                                            Expanded(
+                                                child: Text(
+                                                    complete
+                                                        ? 'All ${topics.length} topics reviewed'
+                                                        : 'Topic ${current + 1} of ${topics.length}',
+                                                    style: const TextStyle(
+                                                        color:
+                                                            Color(0xFF89D4FF),
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600))),
+                                            Text(
+                                                '$reviewed / ${topics.length} reviewed',
+                                                style: const TextStyle(
+                                                    color: Colors.white54,
+                                                    fontSize: 12)),
+                                          ]),
+                                          const SizedBox(height: 10),
+                                          Row(
+                                              children: List.generate(
+                                                  topics.length,
+                                                  (index) => Expanded(
+                                                          child: Padding(
+                                                        padding: EdgeInsets.only(
+                                                            right: index ==
+                                                                    topics.length -
+                                                                        1
+                                                                ? 0
+                                                                : 6),
+                                                        child: AnimatedContainer(
+                                                            duration: const Duration(milliseconds: 350),
+                                                            height: 4,
+                                                            decoration: BoxDecoration(
+                                                                borderRadius: BorderRadius.circular(6),
+                                                                color: topics[index].reviewed
+                                                                    ? const Color(0xFF9AF0CD)
+                                                                    : index == current
+                                                                        ? const Color(0xFF70C9FF)
+                                                                        : Colors.white12)),
+                                                      )))),
+                                          const SizedBox(height: 16),
+                                          Center(
+                                              child: AnimatedContainer(
+                                            duration: const Duration(
+                                                milliseconds: 300),
+                                            width: constraints.maxHeight < 650
+                                                ? 86
+                                                : 120,
+                                            height: constraints.maxHeight < 650
+                                                ? 86
+                                                : 120,
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color: _lesson.speaking
+                                                        ? const Color(
+                                                            0xFF89D4FF)
+                                                        : Colors.white24,
+                                                    width: 2),
+                                                boxShadow: _lesson.speaking
+                                                    ? [
+                                                        BoxShadow(
+                                                            color: const Color(
+                                                                    0xFF70C9FF)
+                                                                .withValues(
+                                                                    alpha: .2),
+                                                            blurRadius: 24)
+                                                      ]
+                                                    : [],
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        'assets/astronaut/thinking.png'),
+                                                    fit: BoxFit.cover)),
+                                          )),
+                                          const SizedBox(height: 14),
+                                          Container(
+                                            constraints: const BoxConstraints(
+                                                minHeight: 76, maxHeight: 150),
+                                            padding: const EdgeInsets.all(14),
+                                            decoration: BoxDecoration(
+                                                color: Colors.white
+                                                    .withValues(alpha: .06),
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                border: Border.all(
+                                                    color: Colors.white12)),
+                                            child: SingleChildScrollView(
+                                                child: Text(
+                                                    _lesson.reply.isNotEmpty
+                                                        ? _lesson.reply
+                                                        : 'Let’s work through these ${topics.length} topics together. Tap the microphone once, then explain each idea in your own words.',
+                                                    style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 15,
+                                                        height: 1.45))),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          ...topics.asMap().entries.map(
+                                              (entry) => _TopicProgressRow(
+                                                  topic: entry.value,
+                                                  number: entry.key + 1,
+                                                  active: !complete &&
+                                                      entry.key == current)),
+                                          if (_lesson.caption.isNotEmpty)
+                                            Padding(
+                                                padding: const EdgeInsets.only(
+                                                    top: 8),
+                                                child: Text(
+                                                    'You: ${_lesson.caption}',
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                    style: const TextStyle(
+                                                        color: Colors.white60,
+                                                        fontSize: 12,
+                                                        height: 1.4))),
+                                          const SizedBox(height: 14),
+                                          if (_lesson.error != null) ...[
+                                            Text(_lesson.error!,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                    color: Color(0xFFFFC59C),
+                                                    fontSize: 13)),
+                                            if (_lesson.canRetryTurn)
+                                              TextButton(
+                                                  onPressed: busy
+                                                      ? null
+                                                      : _lesson.retryTurn,
+                                                  child: const Text('Retry')),
+                                            const SizedBox(height: 8),
+                                          ],
+                                          if (complete)
+                                            FilledButton(
+                                              onPressed: _lesson.connected ||
+                                                      busy
+                                                  ? null
+                                                  : () =>
+                                                      _course.nextQuestion(),
+                                              style: FilledButton.styleFrom(
+                                                  backgroundColor:
+                                                      const Color(0xFF9AF0CD),
+                                                  foregroundColor:
+                                                      const Color(0xFF071626),
+                                                  minimumSize:
+                                                      const Size.fromHeight(
+                                                          48)),
+                                              child: Text(_lesson.connected
+                                                  ? 'Finishing with Lumi…'
+                                                  : 'Continue'),
+                                            )
+                                          else
+                                            Center(
+                                                child: Column(children: [
+                                              Semantics(
+                                                button: true,
+                                                label: _lesson.connected
+                                                    ? (_lesson.speaking
+                                                        ? 'Interrupt Lumi'
+                                                        : _lesson.paused
+                                                            ? 'Resume microphone'
+                                                            : 'Pause microphone')
+                                                    : 'Start speaking to Lumi',
+                                                child: SizedBox(
+                                                    width: 72,
+                                                    height: 72,
+                                                    child: FilledButton(
+                                                      style: FilledButton.styleFrom(
+                                                          padding:
+                                                              EdgeInsets.zero,
+                                                          shape:
+                                                              const CircleBorder(),
+                                                          backgroundColor:
+                                                              _lesson.connected
+                                                                  ? const Color(
+                                                                      0xFF85D2FF)
+                                                                  : Colors
+                                                                      .white,
+                                                          foregroundColor:
+                                                              const Color(
+                                                                  0xFF091D37)),
+                                                      onPressed: busy
+                                                          ? null
+                                                          : _lesson.connected
+                                                              ? (_lesson
+                                                                      .speaking
+                                                                  ? _lesson
+                                                                      .interrupt
+                                                                  : _lesson
+                                                                      .toggleMicrophone)
+                                                              : _lesson.start,
+                                                      child: busy
+                                                          ? const SizedBox(
+                                                              width: 26,
+                                                              height: 26,
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2))
+                                                          : Icon(
+                                                              _lesson.paused
+                                                                  ? Icons
+                                                                      .mic_off_rounded
+                                                                  : Icons
+                                                                      .mic_rounded,
+                                                              size: 30),
+                                                    )),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(_lesson.status,
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 13)),
+                                              if (!_lesson.connected && !busy)
+                                                const Padding(
+                                                    padding:
+                                                        EdgeInsets.only(top: 4),
+                                                    child: Text(
+                                                        'No stop button needed between answers',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white38,
+                                                            fontSize: 11))),
+                                              if (_lesson.connected)
+                                                TextButton(
+                                                    onPressed: busy
+                                                        ? null
+                                                        : _lesson.stop,
+                                                    child: const Text(
+                                                        'End session',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white38,
+                                                            fontSize: 12))),
+                                            ])),
+                                        ]),
+                                  )),
+                    )))),
+          );
+        },
+      );
 }
 
-class _TalkToLumiAnswerSheet extends StatelessWidget {
-  const _TalkToLumiAnswerSheet({
-    required this.cards,
-    required this.session,
-  });
-
-  final List<Flashcard> cards;
-  final TalkRealtimeSession? session;
-
+class _TopicProgressRow extends StatelessWidget {
+  const _TopicProgressRow(
+      {required this.topic, required this.number, required this.active});
+  final TalkTopicProgress topic;
+  final int number;
+  final bool active;
   @override
   Widget build(BuildContext context) {
-    final focusTerm = session?.focusTerm;
-    final lines = <String>[
-      if (focusTerm != null) 'Say this now: $focusTerm',
-      if (session?.focusDefinition != null &&
-          session!.focusDefinition.isNotEmpty)
-        session!.focusDefinition,
-      if (cards.isEmpty)
-        'This lesson has no flashcards, so Talk to Lumi has nothing to grade.',
-      ...cards.map((card) => '${card.term}: ${card.definition}'),
-    ];
-
-    return Material(
-      color: Colors.black.withValues(alpha: 0.72),
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        constraints: const BoxConstraints(maxHeight: 72),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+    final color = topic.status == 'mastered'
+        ? const Color(0xFF9AF0CD)
+        : active
+            ? const Color(0xFF89D4FF)
+            : Colors.white54;
+    final label = topic.status == 'mastered'
+        ? 'Mastered'
+        : topic.status == 'review_later'
+            ? 'Review later'
+            : active
+                ? 'Current topic'
+                : 'Up next';
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      margin: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFF122941)
+              : Colors.white.withValues(alpha: .035),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.lightBlueAccent.withValues(alpha: 0.45),
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Text(
-            lines.join('\n'),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              height: 1.3,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
+              color: active ? const Color(0xFF427C9E) : Colors.white10)),
+      child: Row(children: [
+        SizedBox(
+            width: 26,
+            child: topic.reviewed
+                ? Icon(
+                    topic.status == 'mastered'
+                        ? Icons.check_circle_outline
+                        : Icons.bookmark_border,
+                    color: color,
+                    size: 20)
+                : Text('$number',
+                    style:
+                        TextStyle(color: color, fontWeight: FontWeight.bold))),
+        const SizedBox(width: 8),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(topic.term,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  color:
+                      active || topic.reviewed ? Colors.white : Colors.white60,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Row(children: [
+            Expanded(
+                child:
+                    Text(label, style: TextStyle(color: color, fontSize: 10))),
+            Text('${topic.score}%',
+                style: TextStyle(color: color, fontSize: 11))
+          ]),
+          const SizedBox(height: 5),
+          TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 450),
+              tween: Tween(begin: 0, end: topic.score / 100),
+              builder: (context, value, _) => ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                      value: value,
+                      minHeight: 3,
+                      backgroundColor: Colors.white10,
+                      color: color))),
+        ])),
+      ]),
     );
   }
-}
-
-class RecordButton extends StatelessWidget {
-  final VoidCallback onStartRecording;
-  final VoidCallback onStopRecording;
-  final bool isRecording;
-  final bool isLoading;
-  final bool isDisabled;
-  final bool isSpeechUnavailable;
-  final String loadingLabel;
-
-  const RecordButton({
-    super.key,
-    required this.onStartRecording,
-    required this.onStopRecording,
-    required this.isRecording,
-    required this.isLoading,
-    required this.isDisabled,
-    required this.isSpeechUnavailable,
-    required this.loadingLabel,
-  });
-
-  void _toggleRecording() {
-    if (isDisabled) return;
-
-    if (isRecording) {
-      onStopRecording();
-    } else {
-      onStartRecording();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Visually fade out if disabled
-    final double opacityValue = isDisabled ? 0.5 : 1.0;
-
-    return GestureDetector(
-      onTap: _toggleRecording,
-      child: Opacity(
-        opacity: opacityValue,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSpeechUnavailable
-                    ? Colors.redAccent.withValues(alpha: 0.25)
-                    : isDisabled
-                        ? Colors.grey.withValues(alpha: 0.3)
-                        : isLoading
-                            ? Colors.white.withValues(alpha: 0.3)
-                            : isRecording
-                                ? Colors.redAccent.withValues(alpha: 0.5)
-                                : Colors.white.withValues(alpha: 0.9),
-              ),
-              child: isLoading
-                  ? const Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 36,
-                          height: 36,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 4,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(greyBorder),
-                          ),
-                        ),
-                        Icon(
-                          Icons.mic_outlined,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ],
-                    )
-                  : Icon(
-                      isSpeechUnavailable
-                          ? Icons.mic_off_outlined
-                          : isRecording
-                              ? Icons.mic_off
-                              : Icons.mic_outlined,
-                      color: isSpeechUnavailable || isRecording
-                          ? Colors.white
-                          : Colors.black87,
-                      size: 28,
-                    ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isSpeechUnavailable
-                  ? "Speech unavailable"
-                  : isDisabled
-                      ? ""
-                      : isLoading
-                          ? loadingLabel
-                          : (isRecording ? "Tap to stop" : "Tap to record"),
-              style: const TextStyle(
-                color: Color.fromARGB(129, 255, 255, 255),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-void showSkipConfirmationDialog(
-    BuildContext context, CourseController courseController) {
-  Get.dialog(
-    Align(
-      alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 700),
-        child: Container(
-          margin: const EdgeInsets.all(12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 12, 12, 12),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: greyBorder, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text(
-                "Don't leave Lumi hanging!",
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  fontSize: 20,
-                  decoration: TextDecoration.none,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Image.asset(
-                'assets/astronaut/phone_sad.png',
-                height: 220,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "Studies show that teaching others can boost your understanding and memory by up to 90%",
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white54,
-                  fontSize: 14,
-                  decoration: TextDecoration.none,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back(); // Close dialog
-                    courseController.nextQuestion(); // Skip
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    'Skip Anyway',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    ),
-    barrierDismissible: true,
-  );
 }

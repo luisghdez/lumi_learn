@@ -459,6 +459,7 @@ class ApiService {
     required String courseId,
     required String lessonId,
     required String clientAttemptId,
+    bool continuous = false,
   }) {
     return http
         .post(
@@ -471,6 +472,7 @@ class ApiService {
             'courseId': courseId,
             'lessonId': lessonId,
             'clientAttemptId': clientAttemptId,
+            'continuous': continuous,
           }),
         )
         .timeout(talkSignalingTimeout);
@@ -492,6 +494,28 @@ class ApiService {
         )
         .timeout(talkSignalingTimeout);
   }
+
+  Future<http.Response> assessTalkLessonTurn({
+    required String token,
+    required String attemptId,
+    required String turnId,
+    required String transcript,
+    required int expectedRevision,
+  }) =>
+      http
+          .post(
+            Uri.parse('$_baseUrl/talk/attempts/$attemptId/turns'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token'
+            },
+            body: jsonEncode({
+              'turnId': turnId,
+              'transcript': transcript,
+              'expectedRevision': expectedRevision
+            }),
+          )
+          .timeout(reviewRequestTimeout);
 
   Future<http.Response> assessTalkAttempt({
     required String token,

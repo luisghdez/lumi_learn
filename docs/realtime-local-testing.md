@@ -24,11 +24,22 @@ For a physical phone, use the Mac's LAN address instead of localhost. The phone
 and Mac must be able to reach each other, and the API must listen on the LAN.
 
 Open AP Biology → Unit 2 / Cell Structure and Function → Start with the existing
-Force Talk to Lumi tester enabled. Tap **Talk it through (beta)** once. Lumi
-invites an explanation; speak normally, then pause. Do not press a button to
-finish a conversational turn. **Save live answer** separately requests grading
-of the accumulated learner transcript. **End live voice** releases the microphone
-without grading, including when the transcript is empty.
+Force Talk to Lumi tester enabled. Tap the main microphone once. Explain the
+current topic and pause: the server grades the final transcript, saves progress,
+and supplies Lumi's feedback and the next topic on the same WebRTC connection.
+The three topic cards show scores, the active topic, and reviewed status. There
+is no separate beta panel or save-answer button.
+
+A correct explanation masters the topic. After three answer attempts, an
+unfinished topic is marked for later review and the conversation moves on.
+Questions and requests for help do not consume answer attempts. Reconnecting
+resumes saved progress; failed assessments retry the same turn without counting
+it twice. Continue becomes available after the final spoken feedback drains.
+
+The microphone is muted during grading and Lumi's playback to prevent speaker
+feedback from being graded as learner speech. It reopens automatically afterward.
+Tap the microphone while Lumi speaks to interrupt early. End session releases
+the microphone and keeps saved topic progress.
 
 ## What the diagnostics mean
 
@@ -67,7 +78,7 @@ I/O → Audio Input to the Mac microphone. Headphones and echo cancellation can
 prevent the generated speaker audio from reaching the input; a human microphone
 test is still needed for natural pauses, interruption, and device routing.
 
-## Verified on 2026-09-06
+## Initial transport verification on 2026-09-06
 
 On the iPhone 17 Pro / iOS 26.4 simulator against localhost:3000:
 
@@ -84,7 +95,7 @@ On the iPhone 17 Pro / iOS 26.4 simulator against localhost:3000:
   and the backend Talk feature-gate checks passed. The existing Flutter tests do
   not cover native audio; the acoustic simulator test supplies that evidence.
 
-Remaining observed issue outside audio transport: the assessment's written
+Issue observed in the initial recorder flow (addressed by continuous assessment): the assessment's written
 feedback suggested moving to Nucleus even though its structured result was
 95 / retry. The review model's prose and server-owned progression need to be
 aligned before relying on the prose to guide navigation. Physical-device audio
@@ -108,3 +119,18 @@ For future cutoffs, distinguish `max_output_tokens` from speech-start followed
 by playback clearing. Only tune VAD sensitivity or acoustic echo handling when
 the latter is observed. Silence duration governs end-of-user-turn detection;
 it is not a minimum duration for a valid interruption.
+
+## Continuous main UI verification
+
+The integrated flow was tested on the same simulator with generated explanations
+for prokaryotic cells, nucleus, and rough ER. All three topics reached 100% on
+one WebRTC connection. Each pause automatically submitted the answer, updated
+the topic cards, and requested the next spoken reply. Final playback completed
+with 247 output tokens and the microphone was released afterward.
+
+An acoustic echo loop was observed during the first two topics before the
+playback microphone guard was added. With that guard, the final reply completed
+without an echo interruption. Tests cover automatic microphone reopening,
+explicit interruption, final playback draining, duplicate submissions, retry
+IDs, and ignoring late assessments after leaving. A physical-device test remains
+useful for microphone routing and the feel of turn timing.
