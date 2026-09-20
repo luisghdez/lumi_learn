@@ -80,8 +80,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       );
 
       // Perform the purchase
-      final customerInfo = await Purchases.purchasePackage(matchingPackage);
-      final isPro = customerInfo.entitlements.active
+      final customerInfo = await Purchases.purchase(
+        PurchaseParams.package(matchingPackage),
+      );
+      final isPro = customerInfo.customerInfo.entitlements.active
           .containsKey("Pro"); // replace "Pro" with your entitlement ID
 
       if (isPro) {
@@ -112,9 +114,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         );
       }
     } on PlatformException catch (error) {
-      if (error.code == "1") {
+      final errorCode = PurchasesErrorHelper.getErrorCode(error);
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
         return;
-      } else if (error.code == PurchasesErrorCode.networkError) {
+      } else if (errorCode == PurchasesErrorCode.networkError) {
         Get.snackbar(
           "Network Error",
           "Please check your internet connection and try again.",

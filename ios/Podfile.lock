@@ -1333,9 +1333,6 @@ PODS:
   - flutter_sound_core (9.28.0)
   - flutter_timezone (0.0.1):
     - Flutter
-  - flutter_webrtc (1.6.0):
-    - Flutter
-    - WebRTC-SDK (= 144.7559.09)
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
     - Flutter
@@ -1504,15 +1501,15 @@ PODS:
   - permission_handler_apple (9.3.0):
     - Flutter
   - PromisesObjC (2.4.0)
-  - purchases_flutter (8.7.2):
+  - purchases_flutter (10.13.1):
     - Flutter
-    - PurchasesHybridCommon (= 13.28.0)
-  - PurchasesHybridCommon (13.28.0):
-    - RevenueCat (= 5.21.0)
+    - PurchasesHybridCommon (= 19.2.0)
+  - PurchasesHybridCommon (19.2.0):
+    - RevenueCat (= 5.90.1)
   - RecaptchaInterop (101.0.0)
   - record_darwin (1.0.0):
     - Flutter
-  - RevenueCat (5.21.0)
+  - RevenueCat (5.90.1)
   - SDWebImage (5.21.2):
     - SDWebImage/Core (= 5.21.2)
   - SDWebImage/Core (5.21.2)
@@ -1539,7 +1536,6 @@ PODS:
   - video_thumbnail (0.0.1):
     - Flutter
     - libwebp
-  - WebRTC-SDK (144.7559.09)
 
 DEPENDENCIES:
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
@@ -1556,7 +1552,6 @@ DEPENDENCIES:
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
   - flutter_timezone (from `.symlinks/plugins/flutter_timezone/ios`)
-  - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_cropper (from `.symlinks/plugins/image_cropper/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
@@ -1612,7 +1607,6 @@ SPEC REPOS:
     - SwiftyGif
     - TOCropViewController
     - Try
-    - WebRTC-SDK
 
 EXTERNAL SOURCES:
   audioplayers_darwin:
@@ -1643,8 +1637,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_sound/ios"
   flutter_timezone:
     :path: ".symlinks/plugins/flutter_timezone/ios"
-  flutter_webrtc:
-    :path: ".symlinks/plugins/flutter_webrtc/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   image_cropper:
@@ -1711,7 +1703,6 @@ SPEC CHECKSUMS:
   flutter_sound: b9236a5875299aaa4cef1690afd2f01d52a3f890
   flutter_sound_core: 427465f72d07ab8c3edbe8ffdde709ddacd3763c
   flutter_timezone: 7c838e17ffd4645d261e87037e5bebf6d38fe544
-  flutter_webrtc: f952258e6fa67477d481cfbad2885a4f117922a7
   google_sign_in_ios: 19297361f2c51d7d8ac0201b866ef1fa5d1f94a8
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
@@ -1729,11 +1720,11 @@ SPEC CHECKSUMS:
   pdfx: 77f4dddc48361fbb01486fa2bdee4532cbb97ef3
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  purchases_flutter: bd645b9bea1c536b34d24778de8da95cc6a65235
-  PurchasesHybridCommon: f0d344e7073314988b3d98fbb9da69db85aaff38
+  purchases_flutter: e6d8940221d596f33a25f789a76b63d0ec8c0dd3
+  PurchasesHybridCommon: d3ac1e960252e66c535d5bde6ac6dc7c9716d7eb
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   record_darwin: fb1f375f1d9603714f55b8708a903bbb91ffdb0a
-  RevenueCat: 57028a8673201fdaacd1354065e8adbcba5739a4
+  RevenueCat: fafa0b7c0c2f6b04333f4a2c81624723c672f38e
   SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
   share: a34936589f3090d59481bcdc5c30cc9dd47c75f6
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
@@ -1746,8 +1737,7 @@ SPEC CHECKSUMS:
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
   video_thumbnail: b637e0ad5f588ca9945f6e2c927f73a69a661140
-  WebRTC-SDK: e6006119cd730d6315d875e4a421b6cc8bb88833
 
-PODFILE CHECKSUM: 3bbd066a64fc4bded24f39231f4758e401c81371
+PODFILE CHECKSUM: 62eb13f3b01b1f36829cc805130d61c202943420
 
 COCOAPODS: 1.16.2

@@ -54,10 +54,12 @@ Future<void> _purchasePlan(String productId, AuthController authController) asyn
     );
 
     // Perform the purchase
-    final customerInfo = await Purchases.purchasePackage(selectedPackage);
+    final customerInfo = await Purchases.purchase(
+      PurchaseParams.package(selectedPackage),
+    );
 
     // Check your entitlement ID in RevenueCat (e.g., "pro" or "premium")
-    final isPro = customerInfo.entitlements.active.containsKey("Pro");
+    final isPro = customerInfo.customerInfo.entitlements.active.containsKey("Pro");
 
     if (isPro) {
       authController.isPremium.value = true;
@@ -70,9 +72,10 @@ Future<void> _purchasePlan(String productId, AuthController authController) asyn
       Get.snackbar("Pending", "Purchase completed but entitlement not yet active.");
     }
   } on PlatformException catch (error) {
-    if (error.code == PurchasesErrorCode.purchaseCancelledError) {
+    final errorCode = PurchasesErrorHelper.getErrorCode(error);
+    if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
       return;
-    } else if (error.code == PurchasesErrorCode.networkError) {
+    } else if (errorCode == PurchasesErrorCode.networkError) {
       Get.snackbar("Network Error", "Please check your internet connection and try again.");
     } else {
       Get.snackbar("Error", "Something went wrong: ${error.message}");
