@@ -1,0 +1,9 @@
+{
+  "id" : "ae01b08c-b616-4a6e-857d-b8e813edd09b",
+  "targets" : [
+    {
+      "id" : "7F68B40F-429B-4758-8CB0-261B23128C76",
+      "name" : "lumi_learn_app"
+    }
+  ]
+}

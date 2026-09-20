@@ -2,8 +2,8 @@
 
 This is the checklist for every App Store update. Follow the steps in order.
 
-**Current shipping version:** `2.2.0+13`  
-(`2.2.0` is the user-facing version. `13` is the App Store Connect build number.)
+**Current shipping version:** `2.2.1+13`  
+(`2.2.1` is the user-facing version. `13` is the App Store Connect build number.)
 
 ---
 
@@ -19,14 +19,14 @@ version: MAJOR.MINOR.PATCH+BUILD_NUMBER
 |---|---|---|
 | **MAJOR** | Breaking change users will notice | `2.0.0` → `3.0.0` |
 | **MINOR** | New features | `2.1.0` → `2.2.0` |
-| **PATCH** | Bug fixes / small polish only | `2.2.0` → `2.2.1` |
+| **PATCH** | Bug fixes / small polish only | `2.2.1` → `2.2.2` |
 | **BUILD_NUMBER** | **Every** App Store upload | `+13` → `+14` |
 
 - The marketing version (`MAJOR.MINOR.PATCH`) is what users see in the App Store.
 - The build number must always go **up by at least 1** from the last upload. Apple rejects reused or lower numbers, even if the previous build was cancelled or rejected.
 - Do **not** change `RunnerTests` versions in `project.pbxproj` (`MARKETING_VERSION = 1.0`). Only the **Runner** target.
 
-This release is a **build** bump: `2.2.0+12` → `2.2.0+13`. Keep the same marketing version.
+This release is a **patch** bump: `2.2.0+12` → `2.2.1+13`.
 
 ---
 
@@ -41,7 +41,7 @@ This release is a **build** bump: `2.2.0+12` → `2.2.0+13`. Keep the same marke
 ### 2. Bump version in `pubspec.yaml`
 
 ```yaml
-version: 2.2.0+13
+version: 2.2.1+13
 ```
 
 ### 3. Sync `ios/Runner.xcodeproj/project.pbxproj`
@@ -50,12 +50,12 @@ These fields are hardcoded on the **Runner** target and override Flutter’s gen
 
 | Field | This release |
 |---|---|
-| `FLUTTER_BUILD_NAME` | `2.2.0` |
+| `FLUTTER_BUILD_NAME` | `2.2.1` |
 | `FLUTTER_BUILD_NUMBER` | `13` |
 | `CURRENT_PROJECT_VERSION` | `13` |
-| `MARKETING_VERSION` | `2.2.0` |
+| `MARKETING_VERSION` | `2.2.1` |
 
-Use find & replace **only** for the Runner values (`12` → `13`), not the test target (`1.0` / `1`).
+Use find & replace **only** for the Runner values (`2.2.0` / `12`), not the test target (`1.0` / `1`).
 
 Then run:
 
@@ -72,7 +72,7 @@ grep -n "version:" pubspec.yaml | head -1
 grep -n "FLUTTER_BUILD_NAME\|FLUTTER_BUILD_NUMBER\|CURRENT_PROJECT_VERSION\|MARKETING_VERSION" ios/Runner.xcodeproj/project.pbxproj
 ```
 
-You should see `2.2.0` / `13` on Runner (three configs). Tests can stay at `1.0` / `1`.
+You should see `2.2.1` / `13` on Runner (three configs). Tests can stay at `1.0` / `1`.
 
 ### 5. Build the IPA
 
@@ -112,7 +112,7 @@ Processing on App Store Connect usually takes 5–20 minutes. The build appears 
 In [App Store Connect](https://appstoreconnect.apple.com):
 
 1. Open the **Lumi** app.
-2. Create a new iOS version if one does not already exist for `2.2.0` (or select the existing `2.2.0` version).
+2. Create a new iOS version if one does not already exist for `2.2.1` (or select the existing `2.2.1` version).
 3. Select the processed build **13**.
 4. Fill in **What’s New** (user-facing; keep it short). Draft for this release:
 
@@ -130,7 +130,7 @@ In [App Store Connect](https://appstoreconnect.apple.com):
 ### 8. After submit
 
 - Watch email / App Store Connect for “Waiting for Review” → “In Review” → “Pending Developer Release” or “Ready for Sale”.
-- If Apple rejects the build, fix the issue, **increment the build number again** (for example `2.2.0+14`), rebuild, and upload. You can keep the same marketing version.
+- If Apple rejects the build, fix the issue, **increment the build number again** (for example `2.2.1+14`), rebuild, and upload. You can keep the same marketing version.
 
 ---
 

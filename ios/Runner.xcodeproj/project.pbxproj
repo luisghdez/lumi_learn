@@ -515,7 +515,7 @@
 				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = D7FAZ4W8U9;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 2.2.0;
+				FLUTTER_BUILD_NAME = 2.2.1;
 				FLUTTER_BUILD_NUMBER = 13;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -529,7 +529,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.2.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
@@ -717,7 +717,7 @@
 				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = D7FAZ4W8U9;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 2.2.0;
+				FLUTTER_BUILD_NAME = 2.2.1;
 				FLUTTER_BUILD_NUMBER = 13;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -731,7 +731,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.2.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
@@ -756,7 +756,7 @@
 				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = D7FAZ4W8U9;
 				ENABLE_BITCODE = NO;
-				FLUTTER_BUILD_NAME = 2.2.0;
+				FLUTTER_BUILD_NAME = 2.2.1;
 				FLUTTER_BUILD_NUMBER = 13;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -770,7 +770,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.2.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-framework",
