@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:video_player/video_player.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/app_features.dart';
 import 'package:lumi_learn_app/screens/auth/loading_screen.dart';
 import 'package:lumi_learn_app/screens/courses/course_overview_screen.dart';
 import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
@@ -11,10 +13,12 @@ import 'package:lumi_learn_app/widgets/regular_category_card.dart';
 import 'package:lumi_learn_app/widgets/tag_chip.dart';
 
 class OnboardingSelectCourseScreen extends StatefulWidget {
+  final VideoPlayerController? videoController;
   final AudioPlayer? onboardingAudioPlayer;
 
   const OnboardingSelectCourseScreen({
     Key? key,
+    this.videoController,
     this.onboardingAudioPlayer,
   }) : super(key: key);
 
@@ -80,9 +84,14 @@ class _OnboardingSelectCourseScreenState
   final Map<String, bool> _loadingSubjects = {};
   bool _isInitialLoading = true;
   late AnimationController _animationController;
+  late AnimationController _entryController;
+  late Animation<double> _entryFadeAnimation;
   late final AudioPlayer _audioPlayer;
   late final AudioPlayer _onboardingAudio;
   bool _shouldDisposeOnboardingAudio = false;
+  bool _showVideoBackground = false;
+  bool _isCompletingVideoHandoff = false;
+  bool _videoControllerDisposed = false;
 
   @override
   void initState() {
@@ -102,17 +111,109 @@ class _OnboardingSelectCourseScreenState
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _entryFadeAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOut,
+    );
+
+    final videoController = widget.videoController;
+    if (videoController != null && videoController.value.isInitialized) {
+      _showVideoBackground = true;
+      videoController.addListener(_handleVideoProgress);
+      _entryController.forward();
+    } else {
+      _entryController.value = 1;
+    }
+
     _fetchCoursesBySubject();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _entryController.dispose();
     _audioPlayer.dispose();
+    _disposeVideoController();
     if (_shouldDisposeOnboardingAudio) {
       _onboardingAudio.dispose();
     }
     super.dispose();
+  }
+
+  void _handleVideoProgress() {
+    if (_isCompletingVideoHandoff || _videoControllerDisposed) return;
+
+    final videoController = widget.videoController;
+    if (videoController == null) return;
+
+    final duration = videoController.value.duration;
+    final position = videoController.value.position;
+    if (duration.inMilliseconds > 0 &&
+        position.inMilliseconds >= duration.inMilliseconds - 100) {
+      _completeVideoHandoff();
+    }
+  }
+
+  Future<void> _completeVideoHandoff() async {
+    _isCompletingVideoHandoff = true;
+    if (mounted) {
+      setState(() {
+        _showVideoBackground = false;
+      });
+    }
+
+    await Future.delayed(const Duration(milliseconds: 850));
+    _disposeVideoController();
+  }
+
+  void _disposeVideoController() {
+    if (_videoControllerDisposed) return;
+
+    final videoController = widget.videoController;
+    if (videoController == null) return;
+
+    videoController.removeListener(_handleVideoProgress);
+    videoController.dispose();
+    _videoControllerDisposed = true;
+  }
+
+  Widget _buildBackground() {
+    final staticBackground = Image.asset(
+      'assets/images/black_moons_lighter.png',
+      key: const ValueKey('static-onboarding-course-background'),
+      fit: BoxFit.cover,
+      alignment: Alignment.center,
+    );
+
+    final videoController = widget.videoController;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 800),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeOut,
+      child: _showVideoBackground &&
+              videoController != null &&
+              videoController.value.isInitialized
+          ? Stack(
+              key: const ValueKey('onboarding-video-background'),
+              fit: StackFit.expand,
+              children: [
+                FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: videoController.value.size.width,
+                    height: videoController.value.size.height,
+                    child: VideoPlayer(videoController),
+                  ),
+                ),
+                ColoredBox(color: Colors.black.withValues(alpha: 0.3)),
+              ],
+            )
+          : staticBackground,
+    );
   }
 
   Future<void> _playLoadSound() async {
@@ -432,85 +533,86 @@ class _OnboardingSelectCourseScreenState
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/black_moons_lighter.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: SizedBox(
-              height: screenHeight,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: isTablet ? screenWidth * 0.15 : 24,
-                  right: isTablet ? screenWidth * 0.15 : 24,
-                  top: 16,
-                  bottom: 20,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Back button
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: Colors.white),
-                      onPressed: () {
-                        Get.off(
-                          () => CourseCreation(
-                            fromOnboarding: true,
-                            onboardingAudioPlayer: _onboardingAudio,
+          Positioned.fill(child: _buildBackground()),
+          FadeTransition(
+            opacity: _entryFadeAnimation,
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                height: screenHeight,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: isTablet ? screenWidth * 0.15 : 24,
+                    right: isTablet ? screenWidth * 0.15 : 24,
+                    top: 16,
+                    bottom: 20,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Keep the legacy creation route close to the onboarding UI
+                      // so restoring the feature only requires changing the flag.
+                      if (AppFeatures.courseCreationEnabled)
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
                           ),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        );
-                      },
-                    ),
+                          onPressed: () {
+                            Get.off(
+                              () => CourseCreation(
+                                fromOnboarding: true,
+                                onboardingAudioPlayer: _onboardingAudio,
+                              ),
+                              transition: Transition.fadeIn,
+                              duration: const Duration(milliseconds: 500),
+                            );
+                          },
+                        ),
 
-                    // Header
-                    SizedBox(
-                      width: double.infinity,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Select an \nexisting course",
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.playfairDisplay(
-                              color: Colors.white,
-                              fontSize: isTablet ? 60 : 44,
-                              fontWeight: FontWeight.w400,
-                              letterSpacing: -1.5,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Text(
-                            "Choose a course to get started",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.75),
-                              fontSize: isTablet ? 20 : 16,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    // Course List by Subject
-                    _isInitialLoading
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(40.0),
-                              child: CircularProgressIndicator(
+                      // Header
+                      SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Select an \nexisting course",
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
+                                fontSize: isTablet ? 60 : 44,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: -1.5,
                               ),
                             ),
-                          )
-                        : _buildCoursesBySubject(courseController),
-                  ],
+                            SizedBox(height: screenHeight * 0.02),
+                            Text(
+                              "Choose a course to get started",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.75),
+                                fontSize: isTablet ? 20 : 16,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      // Course List by Subject
+                      _isInitialLoading
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : _buildCoursesBySubject(courseController),
+                    ],
+                  ),
                 ),
               ),
             ),
