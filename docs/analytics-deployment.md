@@ -5,6 +5,7 @@ This is the implementation companion to `product-analytics-execution-plan.md`. C
 ## Activation verification (November 6, 2026)
 
 - Normal builds leave onboarding preview off. Explicit previews use `--dart-define=FORCE_ONBOARDING_PREVIEW=true`.
+- The dev-based PR aligns the iOS minimum deployment target to 15, matching main and the current Xcode toolchain. Its existing app version and purchase SDK are preserved.
 - AP catalog navigation requires a successful save and successful lesson load. A failed request keeps the learner on the current screen and allows retry.
 - Onboarding passes the chosen profile name to the persisted onboarding update, then launches up to five non-speaking activities from the first incomplete lesson.
 - Lesson victory waits for server persistence; retries reuse the lesson attempt ID and only apply server-awarded XP.
