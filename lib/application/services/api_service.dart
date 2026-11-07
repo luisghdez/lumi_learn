@@ -213,6 +213,8 @@ class ApiService {
     required String courseId,
     required String lessonId,
     required int xp,
+    required String lessonAttemptId,
+    required int durationMs,
   }) async {
     final uri = Uri.parse(
         '$_baseUrl/saved-courses/$courseId/lessons/$lessonId/complete');
@@ -224,6 +226,8 @@ class ApiService {
       },
       body: jsonEncode({
         'xp': xp,
+        'lessonAttemptId': lessonAttemptId,
+        'durationMs': durationMs,
       }),
     );
     debugPrint("response.body: ${response.body}");
@@ -503,9 +507,9 @@ class ApiService {
   }
 
   static Future<void> updateOnboardingStatus(
-      String token, bool hasCompletedOnboarding) async {
+      String token, bool hasCompletedOnboarding, {List<String>? courseIds, String? displayName}) async {
     final uri = Uri.parse('$_baseUrl/users/me');
-    await http.patch(
+    final response = await http.patch(
       uri,
       headers: {
         'Authorization': 'Bearer $token',
@@ -513,8 +517,13 @@ class ApiService {
       },
       body: jsonEncode({
         'hasCompletedOnboarding': hasCompletedOnboarding,
+        if (courseIds != null) 'onboardingCourseIds': courseIds,
+        if (displayName != null && displayName.isNotEmpty) 'name': displayName,
       }),
     );
+    if (response.statusCode != 200) {
+      throw StateError('Onboarding update failed: ${response.statusCode}');
+    }
   }
 
   static Future<void> deleteUserData(String token) async {

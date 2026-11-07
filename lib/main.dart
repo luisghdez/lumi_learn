@@ -1,9 +1,11 @@
 import 'dart:io' show Platform;
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:camera/camera.dart';
 
 import 'firebase_options.dart';
@@ -20,6 +22,7 @@ import 'notifications/local_notifications.dart';
 import 'utils/keyboard.dart';
 import 'utils/keyboard_dismiss_observer.dart';
 import 'routing/app_route_observer.dart';
+import 'application/services/analytics_service.dart';
 
 // Deep link handler is now initialized in AuthGate after authentication
 
@@ -29,6 +32,12 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+  await AnalyticsService.instance.initialize();
 
   // <<< NEW: Init local + FCM notifications
   final localNotificationsService = LocalNotificationsService.instance();

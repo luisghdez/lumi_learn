@@ -8,6 +8,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
 import 'package:lumi_learn_app/screens/create/create_flow_transitions.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/course_step_indicator.dart';
 import 'package:lumi_learn_app/screens/courses/widgets/input_type_selection_step.dart';
@@ -489,6 +490,7 @@ class _CourseCreationState extends State<CourseCreation>
 
   Future<void> _createCourse() async {
     if (!_canCreateCourse) {
+      AnalyticsService.instance.log('course_create_blocked', {'reason': 'missing_content'});
       Get.snackbar(
           "Missing Content", "Please add content before creating the course.");
       return;
@@ -498,8 +500,17 @@ class _CourseCreationState extends State<CourseCreation>
 
     // Check if user has available course slots before proceeding
     if (!courseController.checkCourseSlotAvailable()) {
+      AnalyticsService.instance.log('course_create_blocked', {'reason': 'slot_limit'});
       return; // Popup is shown, don't navigate
     }
+
+    AnalyticsService.instance.log('course_create_submitted', {
+      'source': widget.fromOnboarding ? 'onboarding' : 'main',
+      'file_count': selectedFiles.length,
+      'image_count': selectedImages.length,
+      'has_text': text.trim().isNotEmpty,
+      'has_class': widget.classId != null,
+    });
 
     // Stop and dispose onboarding audio if it exists
     if (widget.fromOnboarding) {

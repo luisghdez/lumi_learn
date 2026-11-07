@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 
@@ -16,8 +17,24 @@ class SubscriptionScreen extends StatefulWidget {
 class _SubscriptionScreenState extends State<SubscriptionScreen>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = -1;
+  bool _purchaseSucceeded = false;
   final courseController = Get.find<CourseController>();
   final authController = Get.find<AuthController>();
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.screen('subscription_screen');
+    AnalyticsService.instance.log('paywall_viewed', {'surface': 'subscription_screen'});
+  }
+
+  @override
+  void dispose() {
+    if (!_purchaseSucceeded) {
+      AnalyticsService.instance.log('paywall_dismissed', {'surface': 'subscription_screen'});
+    }
+    super.dispose();
+  }
 
   final List<Map<String, dynamic>> _plans = [
     {
@@ -58,10 +75,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     }
 
     final selectedIdentifier = _plans[_selectedIndex]['identifier'] as String;
+    await AnalyticsService.instance.log('purchase_started', {'surface': 'subscription_screen', 'product_id': selectedIdentifier});
 
     try {
       final offerings = await Purchases.getOfferings();
       if (offerings.current == null) {
+        await AnalyticsService.instance.log('purchase_failed', {'surface': 'subscription_screen', 'error_code': 'no_offerings'});
         Get.snackbar(
             "Unavailable", "No offerings found. Please try again later.");
         return;
@@ -69,15 +88,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
       final availablePackages = offerings.current!.availablePackages;
       if (availablePackages.isEmpty) {
+        await AnalyticsService.instance.log('purchase_failed', {'surface': 'subscription_screen', 'error_code': 'no_packages'});
         Get.snackbar("Oops", "No subscription packages available.");
         return;
       }
 
-      // Match the selected plan to the RevenueCat product
-      final matchingPackage = availablePackages.firstWhere(
+      final matchingPackages = availablePackages.where(
         (p) => p.storeProduct.identifier == selectedIdentifier,
-        orElse: () => availablePackages.first,
       );
+      if (matchingPackages.isEmpty) {
+        await AnalyticsService.instance.log('purchase_failed', {'surface': 'subscription_screen', 'error_code': 'product_unavailable'});
+        Get.snackbar('Unavailable', 'This plan is unavailable. Please try again later.');
+        return;
+      }
+      final matchingPackage = matchingPackages.first;
 
       // Perform the purchase
       final customerInfo = await Purchases.purchasePackage(matchingPackage);
@@ -85,6 +109,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           .containsKey("Pro"); // replace "Pro" with your entitlement ID
 
       if (isPro) {
+        _purchaseSucceeded = true;
+        await AnalyticsService.instance.log('purchase_succeeded', {'surface': 'subscription_screen', 'product_id': matchingPackage.storeProduct.identifier});
         // ✅ Update subscription state
         authController.isPremium.value = true;
         authController.activeProductId.value =
@@ -106,26 +132,32 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         // 🎉 Show success dialog instead of snackbar
         Get.dialog(const LumiProSuccessDialog(), barrierDismissible: false);
       } else {
+        await AnalyticsService.instance.log('purchase_pending', {'surface': 'subscription_screen'});
         Get.snackbar(
           "Pending",
           "Purchase complete but entitlement not yet active.",
         );
       }
     } on PlatformException catch (error) {
-      if (error.code == "1") {
+      final errorCode = PurchasesErrorHelper.getErrorCode(error);
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        await AnalyticsService.instance.log('purchase_cancelled', {'surface': 'subscription_screen'});
         return;
-      } else if (error.code == PurchasesErrorCode.networkError) {
+      } else if (errorCode == PurchasesErrorCode.networkError) {
+        await AnalyticsService.instance.log('purchase_failed', {'surface': 'subscription_screen', 'error_code': 'network'});
         Get.snackbar(
           "Network Error",
           "Please check your internet connection and try again.",
         );
       } else {
+        await AnalyticsService.instance.log('purchase_failed', {'surface': 'subscription_screen', 'error_code': 'store'});
         Get.snackbar(
           "Error",
           "Something went wrong: ${error.message}",
         );
       }
     } catch (_) {
+      await AnalyticsService.instance.log('purchase_failed', {'surface': 'subscription_screen', 'error_code': 'unexpected'});
       Get.snackbar("Error", "An unexpected error occurred.");
     }
   }
@@ -326,6 +358,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       onTap: () {
         if (!authController.isPremium.value) {
           setState(() => _selectedIndex = index);
+          AnalyticsService.instance.log('paywall_plan_selected', {
+            'surface': 'subscription_screen',
+            'product_id': plan['identifier'] as String,
+          });
         }
       },
       child: Container(

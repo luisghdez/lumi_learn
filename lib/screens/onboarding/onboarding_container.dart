@@ -4,12 +4,12 @@ import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
-import 'package:lumi_learn_app/app_features.dart';
-import 'package:lumi_learn_app/screens/courses/add_course_screen.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_step1.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_step2.dart';
-import 'package:lumi_learn_app/screens/onboarding/onboarding_select_course_screen.dart';
 import 'package:lumi_learn_app/screens/onboarding/onboarding_video_transition.dart';
+import 'package:lumi_learn_app/screens/onboarding/onboarding_start_course_screen.dart';
+import 'package:lumi_learn_app/screens/ap_catalog/models/ap_subject.dart';
 import 'package:lumi_learn_app/widgets/onboarding_video_background.dart';
 
 /// Container that manages the video background and audio for all onboarding steps
@@ -29,12 +29,14 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
   // Onboarding state
   int _currentStep = 0; // 0: step1, 1: step2, 2: video transition
   String _username = '';
-  bool _shouldDisposeVideoController = true;
-  bool _shouldDisposeAudioPlayer = true;
+  List<ApSubject> _selectedApCourses = const [];
+  bool _shouldDisposeController = true;
 
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.screen('onboarding_profile');
+    AnalyticsService.instance.log('onboarding_started');
     _initializeMedia();
   }
 
@@ -69,36 +71,24 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
 
   @override
   void dispose() {
-    if (_shouldDisposeVideoController) {
+    if (_shouldDisposeController) {
       _videoController.dispose();
-    }
-    if (_shouldDisposeAudioPlayer) {
       _audioPlayer.dispose();
     }
     super.dispose();
   }
 
   void _completeOnboarding() {
-    if (!AppFeatures.courseCreationEnabled) {
-      _shouldDisposeVideoController = false;
-      _shouldDisposeAudioPlayer = false;
+    if (_selectedApCourses.isEmpty) return;
 
-      Get.offAll(
-        () => OnboardingSelectCourseScreen(
-          videoController: _videoController,
-          onboardingAudioPlayer: _audioPlayer,
-        ),
-        transition: Transition.noTransition,
-      );
-      return;
-    }
-
-    _shouldDisposeVideoController = false;
-    _shouldDisposeAudioPlayer = false;
+    // Preserve the original onboarding handoff: the transition video keeps
+    // playing behind the next screen and the onboarding music is uninterrupted.
+    _shouldDisposeController = false;
 
     Get.offAll(
-      () => CourseCreation(
-        fromOnboarding: true,
+      () => OnboardingStartCourseScreen(
+        selectedCourses: _selectedApCourses,
+        displayName: _username,
         videoController: _videoController,
         onboardingAudioPlayer: _audioPlayer,
       ),
@@ -107,6 +97,10 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
   }
 
   void _goToStep2(String username, int avatarIndex) {
+    AnalyticsService.instance.log('onboarding_step_completed', {
+      'step_id': 'profile', 'avatar_index': avatarIndex,
+    });
+    AnalyticsService.instance.screen('onboarding_courses');
     setState(() {
       _username = username;
       _currentStep = 1;
@@ -119,10 +113,17 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
     });
   }
 
-  void _goToVideoTransition(List<String> selectedSubjects) {
-    // Save selected subjects to CourseController
+  void _goToVideoTransition(List<ApSubject> selectedCourses) {
+    AnalyticsService.instance.log('onboarding_step_completed', {
+      'step_id': 'courses', 'course_count': selectedCourses.length,
+    });
+    _selectedApCourses = List<ApSubject>.unmodifiable(selectedCourses);
+
+    // Keep the selected titles available to the legacy onboarding state while
+    // the new flow passes the exact AP course IDs forward.
     final courseController = Get.find<CourseController>();
-    courseController.onboardingSelectedSubjects.value = selectedSubjects;
+    courseController.onboardingSelectedSubjects.value =
+        selectedCourses.map((course) => course.title).toList();
 
     setState(() {
       _currentStep = 2;
@@ -138,7 +139,9 @@ class _OnboardingContainerState extends State<OnboardingContainer> {
       body: OnboardingVideoBackground(
         videoController: _videoController,
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
+          duration: _currentStep == 2
+              ? Duration.zero
+              : const Duration(milliseconds: 300),
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
           transitionBuilder: (Widget child, Animation<double> animation) {

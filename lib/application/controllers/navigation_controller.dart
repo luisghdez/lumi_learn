@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/create_flow_controller.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
 
 class NavigationController extends GetxController {
   RxInt currentIndex = 0.obs;
@@ -13,6 +14,11 @@ class NavigationController extends GetxController {
     }
     final previousIndex = currentIndex.value;
     currentIndex.value = index;
+    if (previousIndex != index) {
+      final tab = switch (index) { 0 => 'home', 1 => 'feed', 2 => 'profile', _ => 'other' };
+      AnalyticsService.instance.log('main_tab_selected', {'tab': tab, 'previous_tab_index': previousIndex});
+      AnalyticsService.instance.screen(tab);
+    }
     showNavBar();
 
     // When returning to the home tab, refresh the short “my courses” strip.
