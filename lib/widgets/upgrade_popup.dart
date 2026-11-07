@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/auth_controller.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 class UpgradePopup extends StatefulWidget {
@@ -21,10 +22,13 @@ class UpgradePopup extends StatefulWidget {
 class _UpgradePopupState extends State<UpgradePopup>
     with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
+  bool _purchaseSucceeded = false;
 
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.screen('upgrade_popup');
+    AnalyticsService.instance.log('paywall_viewed', {'surface': 'upgrade_popup'});
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -33,33 +37,44 @@ class _UpgradePopupState extends State<UpgradePopup>
 
   @override
   void dispose() {
+    if (!_purchaseSucceeded) {
+      AnalyticsService.instance.log('paywall_dismissed', {'surface': 'upgrade_popup'});
+    }
     _shimmerController.dispose();
     super.dispose();
   }
 
 Future<void> _purchasePlan(String productId, AuthController authController) async {
+  await AnalyticsService.instance.log('purchase_started', {'surface': 'upgrade_popup', 'product_id': productId});
   try {
     final offerings = await Purchases.getOfferings();
     final current = offerings.current;
 
     if (current == null || current.availablePackages.isEmpty) {
+      await AnalyticsService.instance.log('purchase_failed', {'surface': 'upgrade_popup', 'error_code': 'no_offerings'});
       Get.snackbar("Unavailable", "No subscription packages found. Please try again later.");
       return;
     }
 
-    // Match the correct product by identifier
-    final selectedPackage = current.availablePackages.firstWhere(
-      (p) => p.storeProduct.identifier == productId,
-      orElse: () => current.availablePackages.first,
-    );
+    final matches = current.availablePackages.where((p) => p.storeProduct.identifier == productId);
+    if (matches.isEmpty) {
+      await AnalyticsService.instance.log('purchase_failed', {'surface': 'upgrade_popup', 'error_code': 'product_unavailable'});
+      Get.snackbar('Unavailable', 'This plan is unavailable. Please try again later.');
+      return;
+    }
+    final selectedPackage = matches.first;
 
     // Perform the purchase
-    final customerInfo = await Purchases.purchasePackage(selectedPackage);
+    final customerInfo = await Purchases.purchase(
+      PurchaseParams.package(selectedPackage),
+    );
 
     // Check your entitlement ID in RevenueCat (e.g., "pro" or "premium")
-    final isPro = customerInfo.entitlements.active.containsKey("Pro");
+    final isPro = customerInfo.customerInfo.entitlements.active.containsKey("Pro");
 
     if (isPro) {
+      _purchaseSucceeded = true;
+      await AnalyticsService.instance.log('purchase_succeeded', {'surface': 'upgrade_popup', 'product_id': selectedPackage.storeProduct.identifier});
       authController.isPremium.value = true;
       authController.activeProductId.value = selectedPackage.storeProduct.identifier;
 
@@ -67,17 +82,23 @@ Future<void> _purchasePlan(String productId, AuthController authController) asyn
       Get.dialog(const LumiProSuccessDialog());
       Get.snackbar("Success", "Welcome to Lumi PRO!");
     } else {
+      await AnalyticsService.instance.log('purchase_pending', {'surface': 'upgrade_popup'});
       Get.snackbar("Pending", "Purchase completed but entitlement not yet active.");
     }
   } on PlatformException catch (error) {
-    if (error.code == PurchasesErrorCode.purchaseCancelledError) {
+    final errorCode = PurchasesErrorHelper.getErrorCode(error);
+    if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+      await AnalyticsService.instance.log('purchase_cancelled', {'surface': 'upgrade_popup'});
       return;
-    } else if (error.code == PurchasesErrorCode.networkError) {
+    } else if (errorCode == PurchasesErrorCode.networkError) {
+      await AnalyticsService.instance.log('purchase_failed', {'surface': 'upgrade_popup', 'error_code': 'network'});
       Get.snackbar("Network Error", "Please check your internet connection and try again.");
     } else {
+      await AnalyticsService.instance.log('purchase_failed', {'surface': 'upgrade_popup', 'error_code': 'store'});
       Get.snackbar("Error", "Something went wrong: ${error.message}");
     }
   } catch (_) {
+    await AnalyticsService.instance.log('purchase_failed', {'surface': 'upgrade_popup', 'error_code': 'unexpected'});
     Get.snackbar("Error", "An unexpected error occurred.");
   }
 }

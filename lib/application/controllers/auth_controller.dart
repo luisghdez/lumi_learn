@@ -12,6 +12,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lumi_learn_app/application/services/api_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
 
 enum UserRole { student, teacher }
 
@@ -52,12 +53,17 @@ class AuthController extends GetxController {
     _auth.authStateChanges().listen((User? user) async {
       isAuthInitialized.value = false;
       firebaseUser.value = user;
+      await AnalyticsService.instance.identify(user?.uid);
 
       try {
         if (user != null) {
           // Link RevenueCat to Firebase user UID
-          await Purchases.logIn(user.uid);
-          await updateProStatus();
+          try {
+            await Purchases.logIn(user.uid);
+            await updateProStatus();
+          } catch (error, stack) {
+            await AnalyticsService.instance.failure('revenuecat_login_failed', 'revenuecat_login', error, stack);
+          }
 
           await fetchUserData();
         } else {
@@ -151,10 +157,13 @@ class AuthController extends GetxController {
   // Login Method
   Future<void> login(String email, String password) async {
     clearAuthFormError();
+    AnalyticsService.instance.log('auth_started', {'method': 'password'});
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      AnalyticsService.instance.log('auth_succeeded', {'method': 'password'});
       _navigateToAuthGate();
     } catch (e) {
+      AnalyticsService.instance.log('auth_failed', {'method': 'password', 'error_code': e is FirebaseAuthException ? e.code : 'unexpected'});
       authFormError.value = _authFailureMessage(e);
     }
   }
@@ -164,12 +173,14 @@ class AuthController extends GetxController {
     if (isLoading.value) return;
     clearAuthFormError();
     isLoading.value = true;
+    AnalyticsService.instance.log('auth_started', {'method': 'google'});
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       // If the user cancels the sign-in, return early.
       if (googleUser == null) {
+        AnalyticsService.instance.log('auth_cancelled', {'method': 'google'});
         isLoading.value = false;
         return;
       }
@@ -210,8 +221,10 @@ class AuthController extends GetxController {
         );
       }
 
+      AnalyticsService.instance.log('auth_succeeded', {'method': 'google'});
       _navigateToAuthGate();
     } catch (e) {
+      AnalyticsService.instance.log('auth_failed', {'method': 'google', 'error_code': e is FirebaseAuthException ? e.code : 'unexpected'});
       authFormError.value = _authFailureMessage(e);
     } finally {
       isLoading.value = false;
@@ -222,9 +235,11 @@ class AuthController extends GetxController {
     if (isLoading.value) return;
     clearAuthFormError();
     isLoading.value = true;
+    AnalyticsService.instance.log('auth_started', {'method': 'apple'});
     try {
       // Check if Apple Sign In is available on the current device.
       if (!await SignInWithApple.isAvailable()) {
+        AnalyticsService.instance.log('auth_failed', {'method': 'apple', 'error_code': 'unavailable'});
         authFormError.value =
             'Sign in with Apple isn\'t available on this device.';
         isLoading.value = false;
@@ -290,8 +305,10 @@ class AuthController extends GetxController {
         );
       }
 
+      AnalyticsService.instance.log('auth_succeeded', {'method': 'apple'});
       _navigateToAuthGate();
     } catch (e) {
+      AnalyticsService.instance.log('auth_failed', {'method': 'apple', 'error_code': e is FirebaseAuthException ? e.code : 'unexpected'});
       authFormError.value = _authFailureMessage(e);
     } finally {
       isLoading.value = false;
@@ -400,28 +417,25 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> completeOnboarding() async {
-    // Update local state
-    hasCompletedOnboarding.value = true;
-    userDoc.update('user', (value) {
-      if (value is Map<String, dynamic>) {
-        return {
-          ...value,
-          'hasCompletedOnboarding': true,
-        };
-      }
-      return value;
-    }, ifAbsent: () => {'hasCompletedOnboarding': true});
-
-    // Send backend request to update onboarding status
+  Future<bool> completeOnboarding({List<String>? courseIds, String? displayName}) async {
     try {
       final token = await getIdToken();
-      if (token != null) {
-        await ApiService.updateOnboardingStatus(token, true);
-      }
-    } catch (e) {
-      print('Error updating onboarding status: $e');
-      // Continue even if API call fails
+      if (token == null) return false;
+      await ApiService.updateOnboardingStatus(token, true,
+          courseIds: courseIds, displayName: displayName);
+      hasCompletedOnboarding.value = true;
+      userDoc.update('user', (value) => {
+        if (value is Map<String, dynamic>) ...value,
+        'hasCompletedOnboarding': true,
+        if (courseIds != null) 'onboardingCourseIds': courseIds,
+      }, ifAbsent: () => {'hasCompletedOnboarding': true});
+      await AnalyticsService.instance.log('onboarding_completed', {
+        'course_count': courseIds?.length ?? 0,
+      });
+      return true;
+    } catch (error, stack) {
+      await AnalyticsService.instance.failure('onboarding_save_failed', 'complete_onboarding', error, stack);
+      return false;
     }
   }
 

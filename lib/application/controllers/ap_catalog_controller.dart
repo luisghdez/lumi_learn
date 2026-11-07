@@ -15,6 +15,7 @@ class ApCatalogController extends GetxController {
   final RxList<ApSubject> subjects = <ApSubject>[].obs;
   final RxBool isLoading = true.obs;
   final RxString error = ''.obs;
+  final RxBool isStartingCourse = false.obs;
 
   @override
   void onInit() {
@@ -25,38 +26,28 @@ class ApCatalogController extends GetxController {
   /// Saves the AP course (if not already saved), loads its lessons into
   /// [CourseController], then navigates to [ApCourseOverviewScreen].
   Future<void> startCourse(ApSubject subject) async {
+    if (isStartingCourse.value) return;
+    isStartingCourse.value = true;
     final courseController = Get.find<CourseController>();
-
-    final token = await _auth.getIdToken();
-    if (token == null) {
-      Get.snackbar(
-        'Not signed in',
-        'Please sign in to start a course.',
-        backgroundColor: Colors.black87,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    // Save the course — silently ignore 409 (already saved).
     try {
-      await ApiService().createSavedCourse(
-        token: token,
-        courseId: subject.courseId,
+      final saved = courseController.courses.any((c) => c['id'] == subject.courseId) ||
+          await courseController.saveSharedCourse(subject.courseId, subject.title);
+      if (!saved) throw StateError('Could not save course');
+      final loaded = await courseController.setSelectedCourseId(subject.courseId, subject.title);
+      if (!loaded || courseController.lessons.isEmpty) {
+        throw StateError('Could not load course');
+      }
+      Get.to(
+        () => const ApCourseOverviewScreen(),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 300),
       );
     } catch (_) {
-      // Network errors are non-fatal; the user can still navigate.
+      Get.snackbar('Could not start course', 'Please check your connection and try again.',
+          backgroundColor: Colors.black87, colorText: Colors.white);
+    } finally {
+      isStartingCourse.value = false;
     }
-
-    // Load lessons into CourseController (awaits API response).
-    await courseController.setSelectedCourseId(subject.courseId, subject.title);
-
-    // Navigate to AP-specific overview.
-    Get.to(
-      () => const ApCourseOverviewScreen(),
-      transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 300),
-    );
   }
 
   Future<void> fetchCatalog() async {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -14,9 +15,13 @@ import 'package:lumi_learn_app/utils/latex_text.dart';
 import 'package:lumi_learn_app/widgets/upgrade_popup.dart';
 import 'package:lumi_learn_app/screens/streak/streakScreen.dart';
 import 'package:lumi_learn_app/application/services/podcast_service.dart';
+import 'package:lumi_learn_app/application/services/analytics_service.dart';
+import 'package:uuid/uuid.dart';
 
 
 class CourseController extends GetxController {
+  CourseController({ApiService? apiService}) : _apiService = apiService ?? ApiService();
+  final ApiService _apiService;
   final AuthController authController = Get.find();
   RxBool isInitialized = false.obs;
 
@@ -49,6 +54,9 @@ class CourseController extends GetxController {
   RxBool showGreenGlow = false.obs;
   final AudioPlayer _audioPlayer = AudioPlayer();
   int totalXP = 15; // 50 default
+  String lessonAttemptId = const Uuid().v4();
+  DateTime lessonStartedAt = DateTime.now();
+  bool _completingLesson = false;
 
   // Add a reactive search string.
   var searchQuery = ''.obs;
@@ -71,13 +79,64 @@ class CourseController extends GetxController {
   }
 
   void setActiveLessonIndex(int lessonIndex) {
+    _completingLesson = false;
     activeLessonIndex.value = lessonIndex;
     activeQuestionIndex.value = 0;
+    lessonAttemptId = const Uuid().v4();
+    lessonStartedAt = DateTime.now();
+    final lessonId = lessonIndex < lessons.length ? lessons[lessonIndex]['id']?.toString() : null;
+    unawaited(AnalyticsService.instance.log('lesson_started', {
+      'course_id': selectedCourseId.value,
+      'lesson_id': lessonId,
+      'lesson_attempt_id': lessonAttemptId,
+      'lesson_ordinal': lessonIndex + 1,
+    }));
   }
 
-  void loadQuestions() {
-    computedQuestions.value = getQuestions();
+  void loadQuestions({bool quickStart = false}) {
+    final allQuestions = getQuestions(includeSpeaking: !quickStart);
+
+    if (quickStart) {
+      // The onboarding lesson is deliberately short and never asks for
+      // microphone access. Prefer quick tap-based questions, then fill any
+      // remaining spots with other non-speaking activities.
+      final quickQuestions = allQuestions
+          .where((question) =>
+              question.lessonType == LessonType.multipleChoice ||
+              question.lessonType == LessonType.fillInTheBlank)
+          .take(5)
+          .toList();
+
+      if (quickQuestions.length < 3) {
+        final alreadyIncluded = quickQuestions.toSet();
+        quickQuestions.addAll(
+          allQuestions
+              .where((question) =>
+                  question.lessonType != LessonType.speakAll &&
+                  question.lessonType != LessonType.writeAll &&
+                  !alreadyIncluded.contains(question))
+              .take(5 - quickQuestions.length),
+        );
+      }
+
+      computedQuestions.value = quickQuestions;
+    } else {
+      computedQuestions.value = allQuestions;
+    }
     questionsCount.value = computedQuestions.length;
+    if (computedQuestions.isNotEmpty) _trackQuestionViewed();
+  }
+
+  void _trackQuestionViewed() {
+    final index = activeQuestionIndex.value;
+    if (index >= computedQuestions.length) return;
+    unawaited(AnalyticsService.instance.log('question_viewed', {
+      'course_id': selectedCourseId.value,
+      'lesson_attempt_id': lessonAttemptId,
+      'question_ordinal': index + 1,
+      'question_count': computedQuestions.length,
+      'question_type': computedQuestions[index].lessonType.name,
+    }));
   }
 
   void addPlaceholderCourse(Map<String, dynamic> course) {
@@ -98,17 +157,30 @@ class CourseController extends GetxController {
   }
 
   void nextQuestion() async {
+    if (_completingLesson) return;
     if (activeQuestionIndex.value < computedQuestions.length - 1) {
       activeQuestionIndex.value++;
+      _trackQuestionViewed();
     } else {
+      _completingLesson = true;
       // Last question → complete lesson
-      final streakInfo = await completeCurrentLesson();
+      final completion = await completeCurrentLesson();
+      if (completion == null) {
+        _completingLesson = false;
+        Get.dialog(AlertDialog(
+          title: const Text('Progress not saved'),
+          content: const Text('Your lesson is finished, but we could not save it yet. Please retry.'),
+          actions: [TextButton(onPressed: () { Get.back(); nextQuestion(); }, child: const Text('Retry'))],
+        ), barrierDismissible: false);
+        return;
+      }
+      final streakInfo = completion['streakInfo'];
 
       // Show LessonResultScreen first (stars)
       playLessonCompleteSound();
       await Get.offAll(() => LessonResultScreen(
             backgroundImage: activePlanet.value!.backgroundPaths.first,
-            xp: totalXP,
+            xp: (completion['xpAwarded'] as num?)?.toInt() ?? 0,
           ));
 
       // 🔥 Always update local streak, even if not extended
@@ -216,7 +288,7 @@ class CourseController extends GetxController {
   //   ];
   // }
 
-  List<Question> getQuestions() {
+  List<Question> getQuestions({bool includeSpeaking = true}) {
     // Check if lessons have been loaded
     if (lessons.isEmpty) return [];
 
@@ -317,8 +389,8 @@ class CourseController extends GetxController {
       questions.shuffle();
     }
 
-    // After processing and shuffling the standard questions,
-    // always add a "speak all" question at the end of every lesson.
+    // After processing and shuffling the standard questions, optionally add a
+    // "speak all" question. Quick-start onboarding lessons skip this step.
     // Use the first 3 flashcards from the lesson (or all if there are fewer).
     final speakFlashcards = (lesson['flashcards'] as List<dynamic>?)
             ?.take(3)
@@ -335,13 +407,15 @@ class CourseController extends GetxController {
         ? speakQuestionJson['prompt']
         : null;
 
-    questions.add(Question(
-      questionText:
-          customPrompt ?? "Explain everything you remember about this lesson.",
-      options: [],
-      flashcards: speakFlashcards,
-      lessonType: LessonType.speakAll,
-    ));
+    if (includeSpeaking) {
+      questions.add(Question(
+        questionText: customPrompt ??
+            "Explain everything you remember about this lesson.",
+        options: [],
+        flashcards: speakFlashcards,
+        lessonType: LessonType.speakAll,
+      ));
+    }
 
     questionsCount.value = questions.length;
     return questions;
@@ -413,6 +487,7 @@ class CourseController extends GetxController {
     DateTime? dueDate,
   }) async {
     isLoading.value = true;
+    final generationStartedAt = DateTime.now();
 
     try {
       // Check if user has available course slots
@@ -420,6 +495,9 @@ class CourseController extends GetxController {
         isLoading.value = false;
         return {}; // Return empty map to indicate no course was created
       }
+      unawaited(AnalyticsService.instance.log('course_generation_submitted', {
+        'input_count': files.length, 'has_plain_input': content.trim().isNotEmpty,
+      }));
 
       final token = await authController.getIdToken();
       if (token == null) {
@@ -447,19 +525,22 @@ class CourseController extends GetxController {
         final courseTitle = responseData['title'] ?? 'New Course';
         final courseDescription =responseData['description'] ?? 'Course description';
         final courseSubject = responseData['subject'] ?? '';
+        unawaited(AnalyticsService.instance.log('course_generation_completed_client', {
+          'course_id': courseId,
+          'duration_ms': DateTime.now().difference(generationStartedAt).inMilliseconds,
+          'lesson_count': lessonCount,
+        }));
 
-        // 🎙️ Automatically start podcast generation for the new course
+        // Podcast generation is optional and must not delay the usable course.
+        unawaited(() async {
           try {
-            final podcastService = PodcastService();
-            await podcastService.createPodcast(
-              token: token,
-              courseId: courseId,
-              title: courseTitle,
+            await PodcastService().createPodcast(
+              token: token, courseId: courseId, title: courseTitle,
             );
-            print("✅ Podcast generation started for course $courseId");
-          } catch (e) {
-            print("⚠️ Podcast generation failed or skipped: $e");
+          } catch (error, stack) {
+            await AnalyticsService.instance.failure('podcast_generation_failed', 'create_podcast', error, stack);
           }
+        }());
 
 
         final newCourse = {
@@ -484,6 +565,10 @@ class CourseController extends GetxController {
           'hasEmbeddings': hasEmbeddings
         };
       } else {
+        unawaited(AnalyticsService.instance.log('course_generation_failed_client', {
+          'http_status': response.statusCode,
+          'duration_ms': DateTime.now().difference(generationStartedAt).inMilliseconds,
+        }));
         Get.snackbar(
           "Error",
           "Failed to create course.",
@@ -526,8 +611,7 @@ class CourseController extends GetxController {
       }
 
       // Call the API service to create a saved course.
-      final apiService = ApiService();
-      final response = await apiService.createSavedCourse(
+      final response = await _apiService.createSavedCourse(
         token: token,
         courseId: courseId,
       );
@@ -811,7 +895,7 @@ class CourseController extends GetxController {
     }
   }
 
-  Future<void> setSelectedCourseId(
+  Future<bool> setSelectedCourseId(
     String courseId,
     String courseTitle, [
     bool hasEmbeddings = false,
@@ -827,13 +911,11 @@ class CourseController extends GetxController {
       if (token == null) {
         print('No user token found.');
         isLoading.value = false;
-        Get.back(); // Remove loading screen
-        return;
+        return false;
       }
 
-      final apiService = ApiService();
       final response =
-          await apiService.getLessons(token: token, courseId: courseId);
+          await _apiService.getLessons(token: token, courseId: courseId);
 
       final index = courses.indexWhere((course) => course['id'] == courseId);
       if (index != -1) {
@@ -876,8 +958,11 @@ class CourseController extends GetxController {
         print(
             'Error fetching lessons: ${response.statusCode} - ${response.body}');
       }
+      return response.statusCode == 200 && lessons.isNotEmpty;
     } catch (e) {
       print('Exception while fetching lessons: $e');
+      lessons.clear();
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -927,12 +1012,13 @@ class CourseController extends GetxController {
         return null;
       }
 
-      final apiService = ApiService();
-      final response = await apiService.completeLesson(
+      final response = await _apiService.completeLesson(
         token: token,
         courseId: selectedCourseId.value,
         lessonId: lessonId,
         xp: totalXP,
+        lessonAttemptId: lessonAttemptId,
+        durationMs: DateTime.now().difference(lessonStartedAt).inMilliseconds,
       );
 
       if (response.statusCode == 200) {
@@ -940,8 +1026,12 @@ class CourseController extends GetxController {
         print('Lesson completed successfully: $responseData');
 
         // Update local XP + mark lesson completed locally
-        authController.xpCount.value += totalXP;
+        authController.xpCount.value += (responseData['xpAwarded'] as num?)?.toInt() ?? 0;
         lessons[activeLessonIndex.value]['completed'] = true;
+        unawaited(AnalyticsService.instance.log('lesson_completed_client', {
+          'course_id': selectedCourseId.value, 'lesson_id': lessonId,
+          'lesson_attempt_id': lessonAttemptId,
+        }));
 
         // --- Streak handling ---
         final streakInfo = responseData['streakInfo'];
@@ -952,7 +1042,7 @@ class CourseController extends GetxController {
           authController.streakCount.value = newStreak;
         }
 
-        return responseData['streakInfo'];
+        return responseData;
       } else {
         print('Failed to complete lesson: ${response.statusCode}');
         Get.snackbar(
@@ -982,6 +1072,13 @@ class CourseController extends GetxController {
     required String selectedAnswer,
     required BuildContext context,
   }) {
+    unawaited(AnalyticsService.instance.log('question_answered', {
+      'course_id': selectedCourseId.value,
+      'lesson_attempt_id': lessonAttemptId,
+      'question_ordinal': activeQuestionIndex.value + 1,
+      'question_type': question.lessonType.name,
+      'is_correct': selectedAnswer == question.correctAnswer,
+    }));
     if (selectedAnswer == question.correctAnswer) {
       // Trigger the green glow:
       showGreenGlow.value = true;
