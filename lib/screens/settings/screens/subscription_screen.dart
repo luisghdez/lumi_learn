@@ -104,8 +104,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       final matchingPackage = matchingPackages.first;
 
       // Perform the purchase
-      final customerInfo = await Purchases.purchasePackage(matchingPackage);
-      final isPro = customerInfo.entitlements.active
+      final customerInfo = await Purchases.purchase(
+        PurchaseParams.package(matchingPackage),
+      );
+      final isPro = customerInfo.customerInfo.entitlements.active
           .containsKey("Pro"); // replace "Pro" with your entitlement ID
 
       if (isPro) {

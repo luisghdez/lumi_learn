@@ -65,10 +65,12 @@ Future<void> _purchasePlan(String productId, AuthController authController) asyn
     final selectedPackage = matches.first;
 
     // Perform the purchase
-    final customerInfo = await Purchases.purchasePackage(selectedPackage);
+    final customerInfo = await Purchases.purchase(
+      PurchaseParams.package(selectedPackage),
+    );
 
     // Check your entitlement ID in RevenueCat (e.g., "pro" or "premium")
-    final isPro = customerInfo.entitlements.active.containsKey("Pro");
+    final isPro = customerInfo.customerInfo.entitlements.active.containsKey("Pro");
 
     if (isPro) {
       _purchaseSucceeded = true;
