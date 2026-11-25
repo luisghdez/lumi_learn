@@ -43,16 +43,43 @@ class FirebaseMessagingService {
     }
   }
 
-  Future<void> _handlePushNotificationsToken() async {
-    final token = await FirebaseMessaging.instance.getToken();
-
-    if (token != null) {
-      await _notifService.sendFcmTokenToServer(token);
-    }
-
+  /// The initial token upload happens in [registerTokenForCurrentUser], called
+  /// by `AuthController` whenever a user signs in (including app start).
+  void _handlePushNotificationsToken() {
     FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) async {
-      await _notifService.sendFcmTokenToServer(fcmToken);
+      try {
+        await _notifService.sendFcmTokenToServer(fcmToken);
+      } catch (e) {
+        debugPrint('FCM token refresh upload failed: $e');
+      }
     });
+  }
+
+  /// Links this device's FCM token to the signed-in user on the backend.
+  Future<void> registerTokenForCurrentUser() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await _notifService.sendFcmTokenToServer(token);
+      }
+    } catch (e) {
+      debugPrint('FCM token registration failed: $e');
+    }
+  }
+
+  /// Unlinks this device from the signed-in user so the next account on this
+  /// device doesn't also receive the previous account's pushes.
+  Future<void> unregisterTokenForCurrentUser() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await _notifService
+            .removeFcmTokenFromServer(token)
+            .timeout(const Duration(seconds: 5));
+      }
+    } catch (e) {
+      debugPrint('FCM token unregistration failed: $e');
+    }
   }
 
   Future<void> _requestPermission() async {
