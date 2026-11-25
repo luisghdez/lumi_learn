@@ -30,4 +30,27 @@ class NotifService {
           "❌ Failed to send FCM token to backend. Status: ${response.statusCode}");
     }
   }
+
+  /// Unlinks this device's token from the signed-in user. Call before signing out.
+  Future<void> removeFcmTokenFromServer(String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final idToken = await user.getIdToken();
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/users/token'),
+      headers: {
+        "Authorization": "Bearer $idToken",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "fcmToken": token,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      print(
+          "❌ Failed to remove FCM token from backend. Status: ${response.statusCode}");
+    }
+  }
 }

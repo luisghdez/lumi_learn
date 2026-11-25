@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:lumi_learn_app/application/controllers/course_controller.dart';
 import 'package:lumi_learn_app/application/controllers/friends_controller.dart';
 import 'package:lumi_learn_app/application/services/deeplink.dart';
+import 'package:lumi_learn_app/notifications/firebase_messaging.dart';
 import 'package:lumi_learn_app/screens/auth/auth_gate.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lumi_learn_app/application/services/api_service.dart';
@@ -55,6 +56,9 @@ class AuthController extends GetxController {
 
       try {
         if (user != null) {
+          // Push notifications go to whoever is signed in on this device.
+          FirebaseMessagingService.instance().registerTokenForCurrentUser();
+
           // Link RevenueCat to Firebase user UID
           await Purchases.logIn(user.uid);
           await updateProStatus();
@@ -300,6 +304,8 @@ class AuthController extends GetxController {
 
   // Logout Method
   Future<void> signOut() async {
+    // Must run while still authenticated.
+    await FirebaseMessagingService.instance().unregisterTokenForCurrentUser();
     await _auth.signOut();
     await Purchases.logOut();
 
